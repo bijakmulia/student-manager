@@ -13399,7 +13399,7 @@ function escRun(THREE, sid, ac){
   const got = [];                                     // sumber kunci mengikut urutan diperoleh (untuk toyol)
   const keys = () => got.length;
   const kb = {};
-  ESC = { close: () => quit(), dbg: () => ({ P, G, got, found, CODE, staffDoor, lives, paused, near: near && (near.kind + (near.bd ? ':' + near.bd.label : '')), gKind, inter, rooms }) };
+  ESC = { close: () => quit() };
 
   /* ---------- bunyi (WebAudio, dijana) ---------- */
   const A = (() => {
