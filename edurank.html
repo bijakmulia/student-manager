@@ -10174,8 +10174,8 @@ function arenaUi(){ S.ui.arena = S.ui.arena || { ta:[], tb:[], tAI:true, tChap:'
 function viewGame(){
   const g = arenaUi().game || 'arena';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[13px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
-  return '<div class="flex gap-2 mt-3">' + tab('arena','fa-chess-board','TAKTIKAL') + tab('story','fa-book-open','CERITA') + tab('cards','fa-box-open','KAD') + '</div>' +
-    (g === 'cards' ? viewCards() : g === 'story' ? viewStory() : viewArena());
+  return '<div class="flex gap-2 mt-3">' + tab('arena','fa-chess-board','TAKTIKAL') + tab('story','fa-book-open','CERITA') + tab('cards','fa-box-open','KAD') + tab('escape','fa-ghost','SERAM') + '</div>' +
+    (g === 'cards' ? viewCards() : g === 'story' ? viewStory() : g === 'escape' ? viewEscape() : viewArena());
 }
 /* ============ MOD CERITA ============
    Satu kempen = beberapa babak. Setiap babak = satu pertempuran taktikal
@@ -11588,6 +11588,7 @@ const bgmOn = () => !(S && S.config && S.config.bgmOn === 0);
 /* Skrin mana sedang dipaparkan? Pentas lakonan dekat di atas papan, papan
    di atas menu. */
 function bgmScene(){
+  if (document.querySelector('#escRoot')) return 'escape';      // sekolah berhantu: senyap, guna bunyi sendiri
   if (document.querySelector('#dcStage')) return 'duel';
   if (document.querySelector('#tgBoard')) return 'map';
   return 'menu';
@@ -12929,7 +12930,7 @@ function escRun(THREE, sid, ac){
   const boards = [];
   rooms.forEach((r, i) => {
     const far = r.side < 0 ? r.z1 : r.z2;
-    wall(r.x1, Math.min(far, far - .2 * r.side), r.x2, Math.max(far, far - .2 * r.side));
+    wall(r.x1, Math.min(far, far + .2 * r.side), r.x2, Math.max(far, far + .2 * r.side));
     wall(r.x1 - .2, r.z1, r.x1, r.z2); wall(r.x2, r.z1, r.x2 + .2, r.z2);
     // meja dalam dua lajur, laluan tengah dibiarkan kosong menuju papan
     [-2.8, 2.8].forEach(dx => [3, 5.2, 7.4].forEach(dep => {
@@ -13024,7 +13025,7 @@ function escRun(THREE, sid, ac){
   /* ---------- keadaan permainan ---------- */
   const P = { x: 1.5, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0 };
   let keys = 0, lives = ESC_LIVES, elapsed = 0, paused = false, alive = true, ended = false;
-  let answered = 0, correct = 0, near = null, lastStep = 0;
+  let answered = 0, correct = 0, near = null, lastStep = 0, actLabel = '';
   const kb = {};
   ESC = { close: () => quit() };
 
@@ -13246,6 +13247,7 @@ function escRun(THREE, sid, ac){
     });
     R.dispose();
     root.remove(); unlockBody();
+    if (answered) save();                            // statistik kuiz pelajar
     if (S.ui.tab === 'arena') renderTab();
   }
 
@@ -13259,10 +13261,9 @@ function escRun(THREE, sid, ac){
     if (kb['s'] || kb['arrowdown']) my += 1;
     if (kb['a'] || kb['arrowleft']) mx -= 1;
     if (kb['d'] || kb['arrowright']) mx += 1;
-    if (kb['q']) P.yaw += dt * 2; if (kb['r']) P.yaw -= dt * 2;
     const m = Math.min(1, Math.hypot(mx, my));
     if (m > .05){
-      const sp = 3.3 * m / Math.max(1, Math.hypot(mx, my)) * Math.max(1, Math.hypot(mx, my));
+      const sp = 3.3 * m;
       const sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
       const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
       P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt;
@@ -13302,11 +13303,12 @@ function escRun(THREE, sid, ac){
       const ox = o.pos.x - P.x, oz = o.pos.z - P.z, d = Math.hypot(ox, oz);
       if (d < best && (fwd.x * ox + fwd.z * oz) / (d || 1) > .2){ best = d; near = o; }
     });
-    const act = $e('#escAct');
-    if (near){
-      act.innerHTML = near === exitPt ? '<i class="fa-solid fa-door-open"></i> BUKA PINTU' : '<i class="fa-solid fa-chalkboard"></i> JAWAB SOALAN';
-      act.style.display = 'block';
-    } else act.style.display = 'none';
+    const label = !near ? '' : near === exitPt ? '<i class="fa-solid fa-door-open"></i> BUKA PINTU' : '<i class="fa-solid fa-chalkboard"></i> JAWAB SOALAN';
+    if (label !== actLabel){                         // tulis semula hanya bila berubah, supaya ketikan tidak hilang
+      actLabel = label;
+      const act = $e('#escAct');
+      act.innerHTML = label; act.style.display = label ? 'block' : 'none';
+    }
   }
   function ambient(dt){
     flick.forEach(f => {
