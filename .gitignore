@@ -1,0 +1,20 @@
+# Secrets - never push these to the public repo
+.env
+.env.*
+*.key
+*.pem
+
+# Dependencies and build output
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+dist/
+build/
+
+# Editor / OS files
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
