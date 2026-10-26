@@ -349,7 +349,8 @@ const APP_NAME = 'LagendaTP';
 const APP_AUTHOR = 'Arif Aziz';
 const SYS_BADGES = [
   { id:'sys_tp4',  name:'Streak TP4',   color:'#00C2D4', system:true },
-  { id:'sys_tp5',  name:'Streak TP5',   color:'#FF6B00', system:true }
+  { id:'sys_tp5',  name:'Streak TP5',   color:'#FF6B00', system:true },
+  { id:'sys_esc',  name:'Pelarian Seram', color:'#E23B3B', system:true }
 ];
 const isSysBadge = id => SYS_BADGES.some(b => b.id === id);
 const APP_ICON = 'https://i.ibb.co/LXsmk9d5/20260922-130525-0000.png';
@@ -600,9 +601,9 @@ function streakCount(studentId, subjectId){
 function bannerBadges(r){
   if (r.badgeList) return r.badgeList;                 // paparan awam: senarai dari snapshot
   const s = r.s;
-  const sb = streakBadge(s.id, r.sj);
-  const manual = (s.badges||[]).filter(id => !isSysBadge(id)).map(id => S.badges.find(b=>b.id===id)).filter(Boolean).slice(0, sb ? 4 : 5);
-  return (sb ? [sb] : []).concat(manual);     // streak sentiasa di slot teratas bila ada
+  const auto = [streakBadge(s.id, r.sj), escBadge(s.id)].filter(Boolean);   // lencana sistem automatik
+  const manual = (s.badges||[]).filter(id => !isSysBadge(id)).map(id => S.badges.find(b=>b.id===id)).filter(Boolean).slice(0, 5 - auto.length);
+  return auto.concat(manual);                 // streak sentiasa di slot teratas bila ada
 }
 const rewardTotal = (sid, sj) => rewardsOf(sid, sj).reduce((a,x)=>a+x.count, 0);
 const fmtScore = n => (Math.round((n||0)*10)/10).toFixed(1);
@@ -2126,7 +2127,7 @@ function viewSettings(){
       '<div class="panel clip-s p-2 flex flex-col items-center gap-1 edge-c">' + badgeSvg(b,28) +
       '<span class="text-[9px] text-center leading-tight">'+esc(b.name)+'</span>' +
       '<button class="btn clip-s !px-2 !py-0.5 text-[10px] w-full" data-act="bdg-edit" data-id="'+b.id+'"><i class="fa-solid fa-upload text-cyan"></i></button></div>').join('') + '</div>' +
-    '<div class="text-[10px] text-muted mt-1">Diberi automatik: '+((S.config.streakDays)||5)+' sesi TP4/TP5 berturut-turut. Muncul di slot teratas banner; jika belum dicapai, tiada lencana streak dipaparkan.</div>' +
+    '<div class="text-[10px] text-muted mt-1">Diberi automatik: '+((S.config.streakDays)||5)+' sesi TP4/TP5 berturut-turut. Muncul di slot teratas banner; jika belum dicapai, tiada lencana streak dipaparkan. <b>Pelarian Seram</b>: berjaya keluar dari Sekolah Berhantu (Game → Seram).</div>' +
     '<div class="lbl mt-3 mb-1">LENCANA MANUAL</div>' +
     (S.badges.filter(b=>!isSysBadge(b.id)).length ? '' : '<div class="text-[12px] text-muted mb-2">Tiada lencana manual. Muat naik ikon PNG 1:1 (latar telus).</div>') +
     '<div class="grid grid-cols-4 gap-2">' + S.badges.filter(b=>!isSysBadge(b.id)).map(b =>
@@ -3065,6 +3066,24 @@ function rewardHtml(o, pre){
     '<div style="margin-top:6px;padding:6px 8px;background:rgba(255,215,106,.10);border:1px solid rgba(255,215,106,.4);font-size:clamp(9px,2.6vw,12px);color:#E6EEF7;line-height:1.35">' +
       '<b style="color:#FFD76A">PERATURAN:</b> Hanya mata positif dikira. Ganjaran yang sudah diperoleh <b>kekal</b> — tidak akan ditarik balik.</div>', '#FFD76A');
 }
+/* Slaid Sekolah Berhantu: pelarian terpantas dalam skop */
+const escTop = list => { const d = (S.escape || {}).best || {}; return list.filter(s => d[s.id]).map(s => ({ s, t: d[s.id] })).sort((a, b) => a.t - b.t).slice(0, 5); };
+function escapeHtml(o, pre){
+  const top = pre ? pre.esc : escTop(scopeStudents(o));
+  const rows = top.map((x, k) => '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;margin-top:5px;background:rgba(8,13,19,.75);border-left:4px solid '+(['#FFD76A','#DCE8F2','#E08E4A'][k] || '#E23B3B')+'">' +
+    '<span class="num" style="width:26px;font-size:clamp(13px,3.8vw,18px);color:'+(['#FFD76A','#DCE8F2','#E08E4A'][k] || '#E6EEF7')+'">#'+(k + 1)+'</span>' +
+    avatarHtml(x.s, 30) +
+    '<span style="flex:1;min-width:0;font-size:clamp(11px,3.2vw,15px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.s.name)+'</span>' +
+    '<span class="num" style="font-size:clamp(13px,3.8vw,18px);color:#4ADE80">'+fmtSec(x.t)+'</span></div>').join('');
+  return promoCard(
+    '<div style="font-size:9px;letter-spacing:.3em;color:#00F0FF">CABARAN BERANI</div>' +
+    '<div style="font-weight:700;font-size:clamp(20px,6vw,34px);line-height:1;color:#E23B3B;text-shadow:0 0 14px rgba(226,59,59,.6)">SEKOLAH BERHANTU</div>' +
+    '<div style="font-size:clamp(10px,2.8vw,13px);color:#B8C7D6;margin:4px 0 2px">Pelarian terpantas — selesaikan teka-teki, kumpul kunci dan lari sebelum hantu menangkap!</div>' +
+    '<div style="text-align:center;margin:6px 0"><i class="fa-solid fa-ghost" style="font-size:42px;color:#E8ECF1;filter:drop-shadow(0 0 14px rgba(226,59,59,.8))"></i></div>' +
+    '<div style="flex:1;overflow:hidden">' + rows + '</div>' +
+    '<div style="margin-top:6px;padding:6px 8px;background:rgba(226,59,59,.10);border:1px solid rgba(226,59,59,.4);font-size:clamp(9px,2.6vw,12px);color:#E6EEF7;line-height:1.35">' +
+      '<b style="color:#E23B3B">GANJARAN:</b> Setiap kali berjaya keluar = RP tambahan. Kali pertama = lencana <b>Pelarian Seram</b>!</div>', '#E23B3B');
+}
 function waitingHtml(){
   return promoCard('<div style="margin:auto;text-align:center"><i class="fa-solid fa-satellite-dish" style="font-size:34px;color:#00F0FF"></i>' +
     '<div style="margin-top:10px;font-weight:700;letter-spacing:.1em">MENUNGGU PENILAIAN</div>' +
@@ -3076,6 +3095,7 @@ function showcaseSlides(o){
   if (promo) slides.push({ type:'ladder', key:'ladder' });
   showcaseRank(o).forEach((r,k) => slides.push({ type:'student', key:'s:'+r.s.id, r, pos:k+1 }));
   if (promo && rewardMetrics(scopeSubject(o), (o.scope==='ctx'||o.scope==='class')?S.ui.activeClassId:null).length) slides.push({ type:'reward', key:'reward' });
+  if (promo && escTop(scopeStudents(o)).length) slides.push({ type:'escape', key:'escape' });
   if (!slides.length) slides.push({ type:'wait', key:'wait' });
   return slides;
 }
@@ -3135,7 +3155,7 @@ const warmHtml = (html, max) => Promise.race([
 /* HTML satu slaid showcase (dalam app) */
 function scSlideHtml(o, sl){
   return sl.type === 'student' ? bannerHtml(sl.r, sl.pos) : sl.type === 'ladder' ? ladderHtml(o)
-       : sl.type === 'reward' ? rewardHtml(o) : waitingHtml();
+       : sl.type === 'reward' ? rewardHtml(o) : sl.type === 'escape' ? escapeHtml(o) : waitingHtml();
 }
 /* Dalam app: skrin memuat dahulu, kemudian showcase. */
 async function showcaseOpen(o){
@@ -3163,11 +3183,11 @@ function showcaseRun(o){
   });
   const bd = $('[data-modal="'+id+'"]');
   const stage = $('#scStage', bd);
-  const render = sl => sl.type==='student' ? bannerHtml(sl.r, sl.pos) : sl.type==='ladder' ? ladderHtml(o) : sl.type==='reward' ? rewardHtml(o) : waitingHtml();
+  const render = sl => sl.type==='student' ? bannerHtml(sl.r, sl.pos) : sl.type==='ladder' ? ladderHtml(o) : sl.type==='reward' ? rewardHtml(o) : sl.type==='escape' ? escapeHtml(o) : waitingHtml();
   const label = () => {
     const sl = slides[i];
     const nStu = slides.filter(x=>x.type==='student').length;
-    $('#scPos',bd).textContent = sl.type==='student' ? ('#'+sl.pos+' / '+nStu) : (sl.type==='ladder'?'TANGGA RANK':sl.type==='reward'?'GANJARAN':'MENUNGGU');
+    $('#scPos',bd).textContent = sl.type==='student' ? ('#'+sl.pos+' / '+nStu) : (sl.type==='ladder'?'TANGGA RANK':sl.type==='reward'?'GANJARAN':sl.type==='escape'?'SEKOLAH BERHANTU':'MENUNGGU');
     $('#scLive',bd).innerHTML = '<span style="color:#4ADE80">●</span> LIVE · '+lastSync.toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   };
   const paint = (dir, instant) => {
@@ -3268,6 +3288,7 @@ function buildShareSnapshot(sh){
         i:s.id, n:s.name, c:clsName(s.classId), sj: sj ? subjName(sj) : 'Semua Subjek',
         sc:x.score, a:x.avgTP, f:x.finalTP, se:x.sessions, rp: rpOf(s.id, sj),
         rw: rewardsOf(s.id, sj),
+        es: ((S.escape || {}).best || {})[s.id] || 0,
         b: bannerBadges({ s, sj }).filter(b => b && b.url).slice(0,5).map(b=>({ n:b.name, u:b.url, c:b.color||'' })),
         bn: s.bannerUrl || '', ic: s.iconUrl || ''
       };
@@ -3380,7 +3401,7 @@ function snapToState(snap){
   st.classes = Object.keys(cls).map(n => ({ id:'c:'+n, name:n }));
   return st;
 }
-const vRows = () => (V.snap.st||[]).map(x => ({ s: stu(x.i), score:x.sc||0, avgTP:x.a||0, finalTP:x.f||0, sessions:x.se||0, rp:x.rp||0, sj:null, subjLabel:x.sj, rewards:x.rw||[],
+const vRows = () => (V.snap.st||[]).map(x => ({ s: stu(x.i), score:x.sc||0, avgTP:x.a||0, finalTP:x.f||0, sessions:x.se||0, rp:x.rp||0, sj:null, subjLabel:x.sj, rewards:x.rw||[], es:x.es||0,
   badgeList: (x.b||[]).map(b => ({ id:'v', name:b.n, url:b.u, color:b.c })) }));
 function vRanked(){
   const o = V.snap.opt || {};
@@ -3393,13 +3414,15 @@ function vPre(){
   const items = (V.snap.rw||[]).map(x => ({ name:x.n, reward:{ emoji:x.e, per:x.p } }));
   const top = vRows().map(r => ({ s:r.s, rw:r.rewards, n:r.rewards.reduce((a,y)=>a+y.count,0) }))
     .filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,3);
-  return { counts, items, top };
+  const esc5 = vRows().filter(r => r.es).sort((a,b) => a.es - b.es).slice(0,5).map(r => ({ s:r.s, t:r.es }));
+  return { counts, items, top, esc: esc5 };
 }
 function vSlides(){
   const o = V.snap.opt || {}, out = [];
   if (o.promo !== false) out.push({ type:'ladder', key:'ladder' });
   vRanked().slice(0, o.count || 5).forEach((r,k) => out.push({ type:'student', key:'s:'+r.s.id, r, pos:k+1 }));
   if (o.promo !== false && (V.snap.rw||[]).length) out.push({ type:'reward', key:'reward' });
+  if (o.promo !== false && (V.snap.st||[]).some(x => x.es)) out.push({ type:'escape', key:'escape' });
   if (!out.length) out.push({ type:'wait', key:'wait' });
   return out;
 }
@@ -3408,6 +3431,7 @@ function vRender(sl){
   if (sl.type === 'student') return bannerHtml(sl.r, sl.pos);
   if (sl.type === 'ladder') return ladderHtml(o, vPre());
   if (sl.type === 'reward') return rewardHtml(o, vPre());
+  if (sl.type === 'escape') return escapeHtml(o, vPre());
   return waitingHtml();
 }
 async function vFetch(force){
@@ -3438,7 +3462,7 @@ function vPaint(dir, instant){
   const st = $('#vStage'), sl = V.slides[V.i];
   const nStu = V.slides.filter(x=>x.type==='student').length;
   const lab = () => {
-    $('#vPos').textContent = sl.type==='student' ? ('#'+sl.pos+' / '+nStu) : (sl.type==='ladder'?'TANGGA RANK':sl.type==='reward'?'GANJARAN':'MENUNGGU');
+    $('#vPos').textContent = sl.type==='student' ? ('#'+sl.pos+' / '+nStu) : (sl.type==='ladder'?'TANGGA RANK':sl.type==='reward'?'GANJARAN':sl.type==='escape'?'SEKOLAH BERHANTU':'MENUNGGU');
     $('#vLive').innerHTML = '<span style="color:#4ADE80">●</span> LIVE' + (V.last ? ' · '+V.last.toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'}) : '');
   };
   if (instant){ st.innerHTML = vRender(sl); lab(); return; }
@@ -12725,34 +12749,59 @@ async function autoAssetPack(){
 }
 
 /* ============ GAME 3: SEKOLAH BERHANTU (3D) ============
-   Pelajar terperangkap di sekolah pada waktu malam. Cari 3 papan hitam
-   bercahaya, jawab soalan untuk mendapatkan kunci, kemudian lari ke pintu
-   KELUAR sebelum hantu menangkap. Soalan diambil dari bank soalan subjek
-   aktif; jika kosong, soalan matematik dijana sendiri.
+   Pelajar terperangkap di sekolah dua tingkat pada waktu malam. Kunci
+   diperoleh dengan menyelesaikan teka-teki: papan soalan di kelas, padanan
+   kad di perpustakaan, dan kunci Bilik Guru (kod 3 digit — setiap digit
+   tertulis di dinding di serata sekolah). Cukup kunci → lari ke KELUAR.
+   Hantu (Hantu Putih / Pontianak / Toyol) memburu; loker merah = tempat
+   sembunyi. Soalan dari bank soalan subjek aktif; jika kosong → matematik.
    Three.js dimuat hanya bila permainan dibuka (tidak membebankan app).   */
 const ESC_THREE = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-const ESC_KEYS = 3, ESC_LIVES = 3, ESC_QTIME = 25;
+const ESC_DIFF = {
+  mudah:     { name:'MUDAH',     keys:3, lives:5, qtime:40, hunt:1.8,  sight:8,  match:90, rpx:.8 },
+  sederhana: { name:'SEDERHANA', keys:4, lives:3, qtime:25, hunt:2.15, sight:9,  match:70, rpx:1 },
+  sukar:     { name:'SUKAR',     keys:5, lives:2, qtime:15, hunt:2.5,  sight:11, match:50, rpx:1.3 }
+};
+const ESC_GHOSTS = {
+  putih:     { name:'Hantu Putih', hunt:0,   sight:0,  roam:1.3, note:'Seimbang. Merayau perlahan, mengejar bila nampak kamu.' },
+  pontianak: { name:'Pontianak',   hunt:.15, sight:1,  roam:1.1, note:'Ketawanya bergema — bila bunyinya perlahan, dia sebenarnya DEKAT!' },
+  toyol:     { name:'Toyol',       hunt:.55, sight:-3, roam:1.7, note:'Kecil, pantas tetapi rabun. Jika menangkap, dia MENCURI satu kunci.' }
+};
+const ESC_LIGHT = {
+  gelap:  { fog:.13, torch:22, amb:.25 },
+  biasa:  { fog:.1,  torch:30, amb:.5 },
+  terang: { fog:.06, torch:40, amb:1.1 }
+};
 let ESC = null;                                   // permainan yang sedang berjalan
+function escCfg(){
+  S.config.esc = Object.assign({ scare:'penuh', diff:'sederhana', ghost:'rawak', light:'biasa', rp:30 }, S.config.esc || {});
+  return S.config.esc;
+}
 function escData(){
   S.escape = S.escape || {};
   S.escape.best = S.escape.best || {}; S.escape.wins = S.escape.wins || {};
   return S.escape;
 }
 const fmtSec = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
-/* RP kemenangan: lebih pantas = lebih banyak (30 → minimum 15) */
-const escRP = sec => clamp(30 - Math.floor(sec / 30), 15, 30);
+/* RP kemenangan: lebih pantas = lebih banyak (maksimum → separuh), didarab ikut tahap */
+const escRP = (sec, c) => Math.round(clamp(c.rp - Math.floor(sec / 30), Math.round(c.rp / 2), c.rp) * (ESC_DIFF[c.diff] || ESC_DIFF.sederhana).rpx);
+/* Lencana sistem "Pelarian Seram": dipegang selepas berjaya keluar sekurang-kurangnya sekali */
+const escBadge = sid => (((S.escape || {}).wins || {})[sid]) ? (S.badges.find(b => b.id === 'sys_esc') || null) : null;
 
 function viewEscape(){
   if (!ctxOk()) return emptyState('fa-ghost','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan teka-teki diambil dari bank soalan subjek itu.');
-  const o = arenaUi();
+  const o = arenaUi(), c = escCfg(), D = ESC_DIFF[c.diff] || ESC_DIFF.sederhana;
   const sid = o.escStu && stu(o.escStu) ? o.escStu : '';
   const bank = qBank(S.ui.activeSubjectId);
   const d = escData();
   const board = studentsOf(S.ui.activeClassId).filter(s => d.best[s.id]).sort((a, b) => d.best[a.id] - d.best[b.id]).slice(0, 5);
+  const seg = (k, opts) => '<div class="flex gap-1 mt-1">' + opts.map(([v, l]) =>
+    '<button class="btn clip-s flex-1 !py-1.5 !px-1 text-[11px] '+(String(c[k]) === String(v) ? 'btn-o' : '')+'" data-act="esc-opt" data-k="'+k+'" data-v="'+v+'">'+l+'</button>').join('') + '</div>';
+  const gName = c.ghost === 'rawak' ? 'Hantu Rawak' : ESC_GHOSTS[c.ghost].name;
   let h = '<div class="panel clip p-4 mt-3 text-center" style="background:radial-gradient(circle at 50% 0%,rgba(226,59,59,.2),transparent 70%),var(--panel,#141C26)">' +
     '<i class="fa-solid fa-ghost text-4xl" style="color:#E8ECF1;filter:drop-shadow(0 0 12px rgba(226,59,59,.8))"></i>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#E23B3B;text-shadow:0 0 12px rgba(226,59,59,.6)">SEKOLAH BERHANTU</div>' +
-    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kamu terperangkap di sekolah pada waktu malam. Cari <b class="text-cyan">3 papan hitam bercahaya</b>, jawab soalan untuk mendapatkan kunci, kemudian lari ke pintu <b style="color:#E23B3B">KELUAR</b>. Jangan biar hantu menangkap kamu!</div></div>';
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kamu terperangkap di sekolah dua tingkat pada waktu malam. Selesaikan teka-teki untuk mengumpul <b style="color:#FFD76A">'+D.keys+' kunci</b>, kemudian lari ke pintu <b style="color:#E23B3B">KELUAR</b>. Sembunyi dalam <b style="color:#E2803B">loker merah</b> jika dikejar!</div></div>';
   h += '<div class="panel clip p-3 mt-3"><div class="lbl">PEMAIN</div>' +
     '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="esc-stu">' +
       (sid ? avatarHtml(stu(sid), 28) : '<i class="fa-solid fa-user text-muted"></i>') +
@@ -12761,13 +12810,31 @@ function viewEscape(){
     '<div class="text-[11px] text-muted mt-2"><i class="fa-solid fa-circle-question"></i> ' +
       (bank.length ? bank.length + ' soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b>'
                    : 'Bank soalan subjek ini kosong — soalan <b>matematik</b> dijana automatik') + '</div>' +
-    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Berjaya keluar = <span class="text-orange">+15 hingga +30 RP</span> (lebih pantas, lebih banyak)</div>' +
+    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Berjaya keluar = <span class="text-orange">sehingga +'+Math.round(c.rp * D.rpx)+' RP</span> + lencana <b>Pelarian Seram</b></div>' +
     '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="esc-start"><i class="fa-solid fa-door-open"></i> MASUK SEKOLAH</button>' +
     '<div class="text-[10px] text-muted mt-2 text-center leading-relaxed">Telefon: sentuh kiri untuk berjalan, seret kanan untuk melihat<br>Komputer: WASD / anak panah + seret tetikus · E untuk berinteraksi</div></div>';
+  h += '<details class="panel clip p-3 mt-3"'+(o.escSet ? ' open' : '')+' ontoggle="arenaUi().escSet=this.open">' +
+    '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">'+D.name+'</span> · '+esc(gName)+'</summary>' +
+    '<div class="lbl mt-3">TAHAP KESUKARAN</div>' + seg('diff', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']]) +
+    '<div class="text-[10px] text-muted mt-1">'+D.keys+' kunci · '+D.lives+' nyawa · '+D.qtime+' saat setiap soalan</div>' +
+    '<div class="lbl mt-3">TAHAP SERAM</div>' + seg('scare', [['penuh','Penuh'],['lembut','Lembut']]) +
+    '<div class="text-[10px] text-muted mt-1">'+(c.scare === 'lembut' ? 'Tiada wajah mengejut dan jeritan — sesuai untuk murid kecil.' : 'Wajah mengejut + jeritan bila ditangkap.')+'</div>' +
+    '<div class="lbl mt-3">HANTU</div>' + seg('ghost', [['rawak','Rawak'],['putih','Putih'],['pontianak','Pontianak'],['toyol','Toyol']]) +
+    '<div class="text-[10px] text-muted mt-1">'+(c.ghost === 'rawak' ? 'Hantu dipilih secara rawak setiap permainan.' : ESC_GHOSTS[c.ghost].note)+'</div>' +
+    '<div class="lbl mt-3">KECERAHAN</div>' + seg('light', [['gelap','Gelap'],['biasa','Biasa'],['terang','Terang']]) +
+    '<div class="lbl mt-3">RP MAKSIMUM</div>' + seg('rp', [[15,'15'],[30,'30'],[50,'50']]) +
+    '<div class="text-[10px] text-muted mt-1">Mudah ×0.8 · Sukar ×1.3. Lencana <b>Pelarian Seram</b>: muat naik gambarnya di Tetapan → Lencana.</div>' +
+  '</details>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">MASA TERPANTAS</div>' + board.map((s, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">'+(i+1)+'</span>' + avatarHtml(s, 24) +
     '<span class="flex-1 text-[13px] truncate">'+esc(s.name)+'</span><span class="num text-cyan text-[12px]">'+fmtSec(d.best[s.id])+'</span></div>').join('') + '</div>';
   return h;
+}
+function escOpt(d){
+  const c = escCfg();
+  c[d.k] = d.k === 'rp' ? +d.v : d.v;
+  arenaUi().escSet = true;
+  save(); renderTab();
 }
 function escStuPick(){
   const list = studentsOf(S.ui.activeClassId);
@@ -12794,7 +12861,7 @@ function escMathQ(){
   else { b = 2 + r(11); ans = 1 + r(12); a = b * ans; sym = '÷'; }
   const opts = new Set([ans]);
   while (opts.size < 4){ const d = (1 + r(10)) * (Math.random() < .5 ? -1 : 1); if (ans + d >= 0) opts.add(ans + d); }
-  return { q: a + ' ' + sym + ' ' + b + ' = ?', c: Array.from(opts).map(String), a: 0 };
+  return { q: a + ' ' + sym + ' ' + b + ' = ?', c: Array.from(opts).map(String), a: 0, ans: String(ans), short: a + ' ' + sym + ' ' + b };
 }
 function escQuestion(){
   const bank = qBank(S.ui.activeSubjectId);
@@ -12802,6 +12869,20 @@ function escQuestion(){
   const q = nextQ(bank);
   const keep = [0,1,2,3].filter(i => q.c[i] !== undefined && q.c[i] !== '');
   return { q: q.q, c: keep.map(i => q.c[i]), a: keep.indexOf(q.a) };
+}
+/* 4 pasangan untuk teka-teki padanan: soalan ↔ jawapan betul (hasil unik) */
+function escPairs(){
+  const bank = qBank(S.ui.activeSubjectId).filter(q => q.c && q.c[q.a] !== undefined);
+  const out = [], seen = new Set();
+  bank.slice().sort(() => Math.random() - .5).forEach(q => {
+    const a = String(q.c[q.a]);
+    if (out.length < 4 && !seen.has(a)){ seen.add(a); out.push([q.q.length > 60 ? q.q.slice(0, 57) + '…' : q.q, a]); }
+  });
+  for (let n = 0; out.length < 4 && n < 200; n++){
+    const m = escMathQ();
+    if (!seen.has(m.ans)){ seen.add(m.ans); out.push([m.short, m.ans]); }
+  }
+  return out;
 }
 async function escStart(){
   const o = arenaUi();
@@ -12815,30 +12896,41 @@ async function escStart(){
   let THREE;
   try { THREE = await import(ESC_THREE); }
   catch(e){ ESC = null; return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
-  escRun(THREE, o.escStu, ac);
+  try { escRun(THREE, o.escStu, ac); }
+  catch(e){ ESC = null; const r = $('#escRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
 function escRun(THREE, sid, ac){
+  const cfg = escCfg();
+  const D = ESC_DIFF[cfg.diff] || ESC_DIFF.sederhana, LT = ESC_LIGHT[cfg.light] || ESC_LIGHT.biasa;
+  const gKind = ESC_GHOSTS[cfg.ghost] ? cfg.ghost : ['putih','pontianak','toyol'][Math.floor(Math.random() * 3)];
+  const GT = ESC_GHOSTS[gKind];
+  const soft = cfg.scare === 'lembut';
   const player = stu(sid);
+
+  /* ---------- lapisan paparan ---------- */
   const root = document.createElement('div');
   root.id = 'escRoot';
   root.style.cssText = 'position:fixed;inset:0;z-index:950;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit';
-  const ovl = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:20px;';
+  const ovl = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;';
   root.innerHTML =
     '<canvas id="escCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
+    '<div id="escSlit" style="position:absolute;inset:0;pointer-events:none;display:none;background:repeating-linear-gradient(180deg,#040507 0 30px,transparent 30px 38px),linear-gradient(90deg,#040507 0 12%,transparent 12% 88%,#040507 88%)"></div>' +
     '<div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.9) 100%)"></div>' +
     '<div id="escRed" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,rgba(150,0,0,.6) 100%);opacity:0;transition:opacity .25s"></div>' +
-    '<div style="position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--safe-t,0px)) 12px 0;display:flex;align-items:center;gap:14px;pointer-events:none">' +
-      '<div id="escKeys" class="num text-[15px]"></div><div id="escLives" class="text-[14px]"></div>' +
+    '<div id="escFade" style="position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .35s"></div>' +
+    '<div style="position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--safe-t,0px)) 12px 0;display:flex;align-items:center;gap:12px;pointer-events:none">' +
+      '<div id="escKeys" class="num text-[15px]"></div><div id="escLives" class="text-[13px]"></div><div id="escCode" class="num text-[13px]"></div>' +
       '<div id="escTime" class="num text-[13px] ml-auto" style="color:#7E93A8"></div>' +
       '<button id="escQuit" class="btn clip-s !px-3 !py-1 text-[13px]" style="pointer-events:auto"><i class="fa-solid fa-xmark"></i></button></div>' +
-    '<div id="escMsg" style="position:absolute;left:16px;right:16px;top:calc(56px + var(--safe-t,0px));text-align:center;font-size:15px;font-weight:700;color:#E8ECF1;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .4s"></div>' +
-    '<div id="escCross" style="position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.35);pointer-events:none"></div>' +
+    '<div id="escWhere" class="num" style="position:absolute;left:12px;top:calc(40px + var(--safe-t,0px));font-size:10px;letter-spacing:.15em;color:rgba(200,215,230,.45);pointer-events:none"></div>' +
+    '<div id="escMsg" style="position:absolute;left:16px;right:16px;top:calc(62px + var(--safe-t,0px));text-align:center;font-size:15px;font-weight:700;color:#E8ECF1;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .4s"></div>' +
+    '<div style="position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.35);pointer-events:none"></div>' +
     '<div id="escJoy" style="position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);display:none;pointer-events:none">' +
       '<div id="escKnob" style="position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(255,255,255,.22)"></div></div>' +
     '<div id="escHint" style="position:absolute;left:16px;bottom:calc(20px + var(--safe-b,0px));font-size:11px;color:rgba(255,255,255,.35);pointer-events:none">sentuh &amp; seret di sini untuk berjalan</div>' +
     '<button id="escAct" class="btn btn-o clip-s" style="position:absolute;right:18px;bottom:calc(110px + var(--safe-b,0px));padding:14px 18px;font-size:14px;display:none"></button>' +
-    '<div id="escQ" style="'+ovl+'background:rgba(0,0,0,.72)"></div>' +
+    '<div id="escQ" style="'+ovl+'background:rgba(0,0,0,.75)"></div>' +
     '<div id="escScare" style="'+ovl+'background:#000"></div>' +
     '<div id="escEnd" style="'+ovl+'background:rgba(0,0,0,.85)"></div>';
   document.body.appendChild(root);
@@ -12851,13 +12943,13 @@ function escRun(THREE, sid, ac){
   R.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x020304);
-  scene.fog = new THREE.FogExp2(0x020304, 0.1);
+  scene.fog = new THREE.FogExp2(0x020304, LT.fog);
   const cam = new THREE.PerspectiveCamera(72, 1, 0.05, 60);
   cam.rotation.order = 'YXZ';
   scene.add(cam);
   const resize = () => { const w = root.clientWidth, h = root.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
   resize(); window.addEventListener('resize', resize);
-  scene.add(new THREE.HemisphereLight(0x2a3a4a, 0x0a0806, 0.5));
+  scene.add(new THREE.HemisphereLight(0x2a3a4a, 0x0a0806, LT.amb));
 
   /* ---------- tekstur dilukis sendiri (tiada fail luar) ---------- */
   const canvasTex = (w, h, draw) => {
@@ -12869,6 +12961,7 @@ function escRun(THREE, sid, ac){
     return t;
   };
   const grime = (g, w, h, n, a) => { for (let i = 0; i < n; i++){ g.fillStyle = 'rgba(0,0,0,'+(Math.random()*a)+')'; const s = 2 + Math.random()*6; g.fillRect(Math.random()*w, Math.random()*h, s, s); } };
+  const textLines = (g, lines, x, y, lh) => lines.forEach((l, i) => g.fillText(l, x, y + i * lh));
   const floorTex = canvasTex(256, 256, (g, w, h) => {
     for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++){ g.fillStyle = (x + y) % 2 ? '#3B4237' : '#262A25'; g.fillRect(x*w/2, y*h/2, w/2, h/2); }
     grime(g, w, h, 900, .35);
@@ -12878,9 +12971,7 @@ function escRun(THREE, sid, ac){
     g.fillStyle = '#2C3034'; g.fillRect(0, h*.55, w, h*.45);
     g.fillStyle = '#7A1E1E'; g.fillRect(0, h*.53, w, 6);
     grime(g, w, h, 700, .3);
-    for (let i = 0; i < 4; i++){                                  // kesan air menitis
-      g.fillStyle = 'rgba(20,25,20,.35)'; g.fillRect(Math.random()*w, 0, 3 + Math.random()*4, Math.random()*h*.6);
-    }
+    for (let i = 0; i < 4; i++){ g.fillStyle = 'rgba(20,25,20,.35)'; g.fillRect(Math.random()*w, 0, 3 + Math.random()*4, Math.random()*h*.6); }
   });
   const ceilTex = canvasTex(128, 128, (g, w, h) => {
     g.fillStyle = '#1B1D1F'; g.fillRect(0, 0, w, h);
@@ -12892,69 +12983,180 @@ function escRun(THREE, sid, ac){
     for (let x = 0; x < w; x += 32){ g.fillStyle = '#1E2733'; g.fillRect(x, 0, 2, h); g.fillRect(x + 22, h*.45, 5, 12); for (let y = 10; y < 34; y += 6) g.fillRect(x + 7, y, 16, 2); }
     grime(g, w, h, 300, .35);
   });
+  const hideTex = canvasTex(64, 128, (g, w, h) => {
+    g.fillStyle = '#7A2E22'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2A0E0B'; for (let y = 10; y < 40; y += 6) g.fillRect(12, y, 40, 3);
+    g.fillRect(46, h*.45, 6, 14); g.fillRect(0, 0, 3, h);
+    grime(g, w, h, 160, .45);
+  });
+  const bookTex = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#2A1C12'; g.fillRect(0, 0, w, h);
+    const cols = ['#6B1F1F','#1F3B6B','#2F5A2A','#6B5A1F','#4A2A5A','#1F5A5A','#5A3A22'];
+    for (let row = 0; row < 4; row++){
+      g.fillStyle = '#1A110A'; g.fillRect(0, row * 64 + 58, w, 6);
+      for (let x = 2; x < w - 6; ){
+        const bw = 6 + Math.random() * 10, bh = 34 + Math.random() * 20;
+        g.fillStyle = cols[Math.floor(Math.random() * cols.length)];
+        g.fillRect(x, row * 64 + 58 - bh, bw, bh); x += bw + 1;
+      }
+    }
+    grime(g, w, h, 300, .4);
+  });
+  const flagTex = canvasTex(280, 140, (g, w, h) => {
+    for (let i = 0; i < 14; i++){ g.fillStyle = i % 2 ? '#FFFFFF' : '#CC0001'; g.fillRect(0, i*h/14, w, h/14 + 1); }
+    g.fillStyle = '#010066'; g.fillRect(0, 0, w/2, h*8/14);
+    const cy = h*4/14, cx = w*.17, r = h*.2;
+    g.fillStyle = '#FFCC00'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI*2); g.fill();
+    g.fillStyle = '#010066'; g.beginPath(); g.arc(cx + r*.28, cy, r*.82, 0, Math.PI*2); g.fill();
+    g.fillStyle = '#FFCC00'; g.beginPath();
+    for (let k = 0; k < 28; k++){ const a = -Math.PI/2 + k*Math.PI/14, rr = k % 2 ? r*.45 : r*.95; g.lineTo(w*.33 + Math.cos(a)*rr, cy + Math.sin(a)*rr); }
+    g.closePath(); g.fill();
+    grime(g, w, h, 150, .25);
+  });
+  const rukunTex = canvasTex(256, 320, (g, w, h) => {
+    g.fillStyle = '#E8DCC0'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#7A1E1E'; g.fillRect(0, 0, w, 54);
+    g.fillStyle = '#FFE9A8'; g.font = 'bold 28px serif'; g.textAlign = 'center'; g.fillText('RUKUN NEGARA', w/2, 37);
+    g.fillStyle = '#2A2016'; g.font = 'bold 15px serif'; g.textAlign = 'left';
+    textLines(g, ['1. Kepercayaan kepada Tuhan','2. Kesetiaan kepada Raja','    dan Negara','3. Keluhuran Perlembagaan','4. Kedaulatan Undang-Undang','5. Kesopanan dan Kesusilaan'], 16, 92, 34);
+    grime(g, w, h, 500, .3);
+    g.fillStyle = 'rgba(90,10,10,.55)'; g.fillRect(w*.7, h*.6, 6, h*.4);
+  });
+  const noticeTex = canvasTex(320, 220, (g, w, h) => {
+    g.fillStyle = '#7A5A36'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#B08A5A'; g.fillRect(8, 8, w - 16, h - 16);
+    g.fillStyle = '#3A2A1A'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center'; g.fillText('PAPAN KENYATAAN', w/2, 30);
+    [['#F2E6A0', 20, 44, 'JADUAL BERTUGAS'], ['#BFE0F2', 120, 52, 'PBD MINGGU 9'], ['#F2C0C0', 214, 40, 'LAWATAN']].forEach(([c, x, y, t]) => {
+      g.fillStyle = c; g.fillRect(x, y, 86, 70); g.fillStyle = '#C0392B'; g.beginPath(); g.arc(x + 43, y + 6, 4, 0, 7); g.fill();
+      g.fillStyle = '#333'; g.font = 'bold 10px sans-serif'; g.fillText(t, x + 43, y + 26);
+      g.fillStyle = 'rgba(0,0,0,.35)'; for (let k = 0; k < 4; k++) g.fillRect(x + 10, y + 36 + k * 8, 66, 2);
+    });
+    g.fillStyle = '#F4F4F0'; g.fillRect(70, 132, 180, 70);
+    g.fillStyle = '#8B0000'; g.font = 'bold 15px sans-serif'; g.fillText('JANGAN TINGGAL DI', 160, 160); g.fillText('SEKOLAH SELEPAS GELAP', 160, 182);
+    grime(g, w, h, 300, .3);
+  });
+  const periodicTex = canvasTex(320, 200, (g, w, h) => {
+    g.fillStyle = '#D8D8CC'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#222'; g.font = 'bold 15px sans-serif'; g.textAlign = 'center'; g.fillText('JADUAL BERKALA', w/2, 20);
+    const cols = ['#E8A0A0','#A0C8E8','#A0E8B0','#E8D8A0','#C8A0E8'];
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 18; c++){
+      if (r === 0 && c > 0 && c < 17) continue;
+      if ((r === 1 || r === 2) && c > 1 && c < 12) continue;
+      g.fillStyle = cols[(r + c) % 5]; g.fillRect(8 + c * 17, 30 + r * 23, 15, 21);
+    }
+    grime(g, w, h, 300, .3);
+  });
+  const welcomeTex = canvasTex(512, 96, (g, w, h) => {
+    g.fillStyle = '#1F3B6B'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#FFD76A'; g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.fillText('SELAMAT DATANG KE SK LAGENDA', w/2, 42);
+    g.fillStyle = '#E8ECF1'; g.font = 'italic 18px serif'; g.fillText('Ilmu · Iman · Amal', w/2, 74);
+    grime(g, w, h, 400, .45);
+  });
+  const plateTex = txt => canvasTex(256, 48, (g, w, h) => {
+    g.fillStyle = '#1C2A22'; g.fillRect(0, 0, w, h); g.strokeStyle = '#C8D8C8'; g.lineWidth = 3; g.strokeRect(3, 3, w - 6, h - 6);
+    g.fillStyle = '#E8F0E8'; g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, w/2, h/2 + 1);
+    grime(g, w, h, 80, .35);
+  });
+  const scrawlTex = txt => canvasTex(512, 128, (g, w, h) => {
+    g.font = 'bold 44px serif'; g.fillStyle = '#8B0000'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, w/2, h/2);
+  });
+  const clockTex = canvasTex(128, 128, (g, w, h) => {
+    g.fillStyle = '#F0EEE6'; g.beginPath(); g.arc(64, 64, 60, 0, 7); g.fill();
+    g.strokeStyle = '#222'; g.lineWidth = 5; g.stroke();
+    g.fillStyle = '#222';
+    for (let k = 0; k < 12; k++){ const a = k * Math.PI / 6; g.fillRect(64 + Math.sin(a) * 48 - 2, 64 - Math.cos(a) * 48 - 2, 4, 4); }
+    g.lineCap = 'round'; g.lineWidth = 5; g.beginPath(); g.moveTo(64, 64); g.lineTo(64, 30); g.stroke();   // jam terhenti tepat 12:00
+    g.lineWidth = 3; g.beginPath(); g.moveTo(64, 64); g.lineTo(64, 18); g.stroke();
+    grime(g, w, h, 60, .25);
+  });
 
-  /* ---------- binaan: dinding, lantai, bilik darjah ---------- */
+  /* ---------- binaan ---------- */
   const H = 3.2;
   const solids = [];
   const box = (x1, z1, x2, z2, h, y0, mat, solid) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(Math.max(.04, x2 - x1), h, Math.max(.04, z2 - z1)), mat);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(Math.max(.04, Math.abs(x2 - x1)), h, Math.max(.04, Math.abs(z2 - z1))), mat);
     m.position.set((x1 + x2) / 2, y0 + h / 2, (z1 + z2) / 2);
     scene.add(m);
-    if (solid) solids.push({ x1, z1, x2, z2 });
+    if (solid){ const s = { x1: Math.min(x1, x2), z1: Math.min(z1, z2), x2: Math.max(x1, x2), z2: Math.max(z1, z2) }; solids.push(s); m.userData.solid = s; }
     return m;
   };
   const texMat = (tex, rx, ry, extra) => { const t = tex.clone(); t.needsUpdate = true; t.repeat.set(rx, ry); return new THREE.MeshStandardMaterial(Object.assign({ map: t, roughness: .95, metalness: 0 }, extra || {})); };
-  const wall = (x1, z1, x2, z2) => box(x1, z1, x2, z2, H, 0, texMat(wallTex, Math.max(x2 - x1, z2 - z1) / 3, 1), true);
-  const lintel = (x1, z1, x2, z2) => box(x1, z1, x2, z2, H - 2.3, 2.3, new THREE.MeshStandardMaterial({ color: 0x1a1410, roughness: 1 }), false);
+  const wall = (x1, z1, x2, z2) => box(x1, z1, x2, z2, H, 0, texMat(wallTex, Math.max(Math.abs(x2 - x1), Math.abs(z2 - z1)) / 3, 1), true);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x1a1410, roughness: 1 });
+  const FACE = { '+z': 0, '-z': Math.PI, '+x': Math.PI / 2, '-x': -Math.PI / 2 };
+  const decal = (x, y, z, w, h, tex, face, emis, transp) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({
+      map: tex, transparent: !!transp, roughness: .9,
+      emissive: emis ? 0xffffff : 0x000000, emissiveMap: emis ? tex : null, emissiveIntensity: emis || 0 }));
+    m.position.set(x, y, z); m.rotation.y = FACE[face]; scene.add(m); return m;
+  };
+  const M = {
+    desk: new THREE.MeshStandardMaterial({ color: 0x5A3E28, roughness: .9 }),
+    chair: new THREE.MeshStandardMaterial({ color: 0x2E3A46, roughness: .9 }),
+    white: new THREE.MeshStandardMaterial({ color: 0xBFC5C8, roughness: .7 }),
+    steel: new THREE.MeshStandardMaterial({ color: 0x5A6670, roughness: .5, metalness: .4 }),
+    black: new THREE.MeshStandardMaterial({ color: 0x0E0E10, roughness: .4 }),
+    mirror: new THREE.MeshStandardMaterial({ color: 0x1A2630, roughness: .08, metalness: .9 }),
+    shelf: new THREE.MeshStandardMaterial({ color: 0x3A2616, roughness: .9 }),
+    hide: texMat(hideTex, 1, 1)
+  };
+  const books = texMat(bookTex, 1, 1);
 
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(52, 28), texMat(floorTex, 26, 14));
-  floor.rotation.x = -Math.PI / 2; floor.position.set(24, 0, 0); scene.add(floor);
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(52, 28), texMat(ceilTex, 26, 14));
-  ceil.rotation.x = Math.PI / 2; ceil.position.set(24, H, 0); scene.add(ceil);
-
-  // koridor x 0..48, z -2..2 · pintu bilik: utara x=9 & x=37, selatan x=23
-  [[0, 8], [10, 36], [38, 48]].forEach(([a, b]) => wall(a, -2.1, b, -1.9));
-  [[0, 22], [24, 48]].forEach(([a, b]) => wall(a, 1.9, b, 2.1));
-  wall(-.2, -2.1, 0, 2.1); wall(48, -2.1, 48.2, 2.1);
-  lintel(8, -2.1, 10, -1.9); lintel(36, -2.1, 38, -1.9); lintel(22, 1.9, 24, 2.1);
-  // loker sepanjang dinding selatan
-  [[1, 21], [25, 47]].forEach(([a, b]) => box(a, 1.55, b, 1.9, 2, 0, texMat(lockerTex, (b - a) / 4, 1), true));
-
+  const FLOORS = [ { z0: 0, len: 56, name: 'TINGKAT BAWAH' }, { z0: 40, len: 40, name: 'TINGKAT ATAS' } ];
   const rooms = [
-    { x1: 4,  x2: 14, z1: -12, z2: -2, door: 9,  side: -1 },
-    { x1: 18, x2: 28, z1: 2,   z2: 12, door: 23, side:  1 },
-    { x1: 32, x2: 42, z1: -12, z2: -2, door: 37, side: -1 }
+    { f:0, side:-1, x1:4,  x2:14, door:9,  kind:'class',   name:'KELAS 1 BESTARI' },
+    { f:0, side:-1, x1:18, x2:34, door:26, kind:'library', name:'PERPUSTAKAAN' },
+    { f:0, side:-1, x1:38, x2:48, door:43, kind:'class',   name:'KELAS 2 CEMERLANG' },
+    { f:0, side: 1, x1:4,  x2:12, door:8,  kind:'toilet',  name:'TANDAS' },
+    { f:0, side: 1, x1:16, x2:26, door:21, kind:'class',   name:'KELAS 3 DINAMIK' },
+    { f:0, side: 1, x1:30, x2:40, door:35, kind:'staff',   name:'BILIK GURU' },
+    { f:0, side: 1, x1:44, x2:52, door:48, kind:'stairs',  name:'TANGGA' },
+    { f:1, side:-1, x1:4,  x2:14, door:9,  kind:'lab',     name:'MAKMAL SAINS' },
+    { f:1, side: 1, x1:14, x2:24, door:19, kind:'class',   name:'KELAS 4 GEMILANG' },
+    { f:1, side:-1, x1:26, x2:36, door:31, kind:'music',   name:'BILIK MUZIK' },
+    { f:1, side: 1, x1:30, x2:38, door:34, kind:'stairs',  name:'TANGGA' }
   ];
-  const deskMat = new THREE.MeshStandardMaterial({ color: 0x5A3E28, roughness: .9 });
-  const chairMat = new THREE.MeshStandardMaterial({ color: 0x2E3A46, roughness: .9 });
-  const boards = [];
-  rooms.forEach((r, i) => {
-    const far = r.side < 0 ? r.z1 : r.z2;
-    wall(r.x1, Math.min(far, far + .2 * r.side), r.x2, Math.max(far, far + .2 * r.side));
-    wall(r.x1 - .2, r.z1, r.x1, r.z2); wall(r.x2, r.z1, r.x2 + .2, r.z2);
-    // meja dalam dua lajur, laluan tengah dibiarkan kosong menuju papan
-    [-2.8, 2.8].forEach(dx => [3, 5.2, 7.4].forEach(dep => {
-      const cx = r.door + dx + (Math.random() - .5) * .4, cz = r.side * (2 + dep);
-      const d = box(cx - .5, cz - .32, cx + .5, cz + .32, .75, 0, deskMat, true);
-      d.rotation.y = (Math.random() - .5) * .35;
-      box(cx - .22, cz + r.side * .5 - .2, cx + .22, cz + r.side * .5 + .2, .45, 0, chairMat, false);
-    }));
-    // papan hitam bercahaya (teka-teki)
-    const tex = canvasTex(512, 256, () => {});
-    const mat = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .55, roughness: 1 });
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.6), mat);
-    mesh.position.set(r.door, 1.6, far - r.side * .12);
-    mesh.rotation.y = r.side < 0 ? 0 : Math.PI;
-    scene.add(mesh);
-    const glow = new THREE.PointLight(0x44ff99, 4, 6, 2);
-    glow.position.set(r.door, 1.8, far - r.side * 1.2); scene.add(glow);
-    const bd = { i, tex, glow, solved: false, pos: new THREE.Vector3(r.door, 0, far - r.side * 1.4), label: 'PAPAN ' + (i + 1) };
-    drawBoard(bd); boards.push(bd);
+  rooms.forEach(r => {
+    r.zc = FLOORS[r.f].z0; r.zn = r.zc + r.side * 2; r.zf = r.zc + r.side * 12;
+    r.cx = (r.x1 + r.x2) / 2; r.cz = r.zc + r.side * 7; r.inF = r.side < 0 ? '+z' : '-z';
   });
+  const HIDES = [ [0, 3], [0, 14], [0, 28], [0, 41], [1, 6], [1, 26] ];
+  const fixtures = [], fans = [], clocks = [], sources = [], inter = [];
+
+  FLOORS.forEach((F, fi) => {
+    const zc = F.z0;
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(F.len + 2, 25), texMat(floorTex, (F.len + 2) / 2, 12.5));
+    fl.rotation.x = -Math.PI / 2; fl.position.set(F.len / 2, 0, zc); scene.add(fl);
+    const ce = new THREE.Mesh(new THREE.PlaneGeometry(F.len + 2, 25), texMat(ceilTex, (F.len + 2) / 2, 12.5));
+    ce.rotation.x = Math.PI / 2; ce.position.set(F.len / 2, H, zc); scene.add(ce);
+    [-1, 1].forEach(side => {
+      const doors = rooms.filter(r => r.f === fi && r.side === side).map(r => r.door).sort((a, b) => a - b);
+      const zA = zc + side * 1.9, zB = zc + side * 2.1;
+      let x = 0;
+      doors.concat([F.len + 1]).forEach(d => { const e = Math.min(d - 1, F.len); if (e > x) wall(x, zA, e, zB); x = d + 1; });
+      doors.forEach(d => box(d - 1, zA, d + 1, zB, H - 2.3, 2.3, dark, false));
+      if (side > 0){                                             // loker sepanjang dinding selatan
+        const hs = HIDES.filter(h => h[0] === fi).map(h => h[1]);
+        const cuts = doors.map(d => [d - 1.6, d + 1.6]).concat(hs.map(h => [h - .5, h + .5])).sort((a, b) => a[0] - b[0]);
+        let a = 1;
+        cuts.concat([[F.len - 1, F.len]]).forEach(([c0, c1]) => { if (c0 - a > .3) box(a, zc + 1.55, c0, zc + 1.9, 2, 0, texMat(lockerTex, (c0 - a) / 4, 1), true); a = Math.max(a, c1); });
+        hs.forEach(h => {
+          box(h - .45, zc + 1.45, h + .45, zc + 1.9, 2.1, 0, M.hide, true);
+          inter.push({ f: fi, x: h, z: zc + .95, kind: 'hide', spot: { f: fi, x: h, zc } });
+        });
+      }
+    });
+    wall(-.2, zc - 2.1, 0, zc + 2.1); wall(F.len, zc - 2.1, F.len + .2, zc + 2.1);
+    for (let x = 4; x < F.len; x += 8) fixtures.push({ f: fi, x, z: zc });
+  });
+
+  /* ---------- isi bilik ---------- */
+  const boards = [];
   function drawBoard(bd){
     const c = bd.tex.userData.canvas, g = c.getContext('2d'), w = c.width, h = c.height;
+    const match = bd.type === 'match';
     g.fillStyle = '#4A2E1A'; g.fillRect(0, 0, w, h);
-    g.fillStyle = bd.solved ? '#13301F' : '#163A28'; g.fillRect(10, 10, w - 20, h - 20);
+    g.fillStyle = bd.solved ? '#13301F' : match ? '#2A1A40' : '#163A28'; g.fillRect(10, 10, w - 20, h - 20);
     g.fillStyle = 'rgba(255,255,255,.08)';
     for (let k = 0; k < 14; k++) g.fillRect(20 + Math.random() * (w - 80), 20 + Math.random() * (h - 40), 20 + Math.random() * 60, 2);
     g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -12962,22 +13164,154 @@ function escRun(THREE, sid, ac){
       g.fillStyle = '#4ADE80'; g.font = 'bold 120px sans-serif'; g.fillText('✓', w / 2, h / 2 - 10);
       g.font = 'bold 26px sans-serif'; g.fillText('KUNCI DIAMBIL', w / 2, h - 40);
     } else {
-      g.fillStyle = '#E8F5EC'; g.shadowColor = '#7CFFB2'; g.shadowBlur = 18;
-      g.font = 'bold 130px sans-serif'; g.fillText('?', w / 2, h / 2 - 8);
-      g.shadowBlur = 0; g.font = 'bold 24px sans-serif'; g.fillStyle = 'rgba(232,245,236,.75)'; g.fillText('JAWAB UNTUK KUNCI', w / 2, h - 36);
+      const glow = match ? '#C8A0FF' : '#7CFFB2';
+      g.fillStyle = '#F2ECF8'; g.shadowColor = glow; g.shadowBlur = 18;
+      g.font = 'bold ' + (match ? 96 : 130) + 'px sans-serif'; g.fillText(match ? '⇄' : '?', w / 2, h / 2 - 8);
+      g.shadowBlur = 0; g.font = 'bold 24px sans-serif'; g.fillStyle = 'rgba(242,236,248,.8)';
+      g.fillText(match ? 'PADANKAN UNTUK KUNCI' : 'JAWAB UNTUK KUNCI', w / 2, h - 36);
     }
     bd.tex.needsUpdate = true;
   }
-  // tulisan menyeramkan di dinding
-  const scrawl = canvasTex(512, 128, (g, w, h) => {
-    g.fillStyle = 'rgba(0,0,0,0)'; g.fillRect(0, 0, w, h);
-    g.font = 'bold 44px serif'; g.fillStyle = '#8B0000'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText('JAWAB... ATAU KEKAL DI SINI', w / 2, h / 2);
-  });
-  const sc = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshStandardMaterial({ map: scrawl, transparent: true, emissive: 0x550000, emissiveMap: scrawl, emissiveIntensity: .6 }));
-  sc.position.set(4, 1.9, -1.88); scene.add(sc);
+  function addBoard(r, type){
+    const tex = canvasTex(512, 256, () => {});
+    const mesh = decal(r.door, 1.6, r.zf - r.side * .06, 3.2, 1.6, tex, r.inF, .55);
+    const bd = { type, tex, mesh, solved: false, label: r.name, name: r.name,
+      reset(){ bd.solved = false; drawBoard(bd); } };
+    drawBoard(bd); boards.push(bd); sources.push(bd);
+    inter.push({ f: r.f, x: r.door, z: r.zf - r.side * 1.4, kind: 'board', bd });
+    return bd;
+  }
+  const desks = (r, rows) => [-2.8, 2.8].forEach(dx => rows.forEach(dep => {
+    const cx = r.door + dx + (Math.random() - .5) * .4, cz = r.zc + r.side * (2 + dep);
+    const d = box(cx - .5, cz - .32, cx + .5, cz + .32, .75, 0, M.desk, true);
+    d.rotation.y = (Math.random() - .5) * .35;
+    box(cx - .22, cz + r.side * .5 - .2, cx + .22, cz + r.side * .5 + .2, .45, 0, M.chair, false);
+  }));
+  const addFan = (x, z) => {
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(.08, .1, .25, 10), M.steel));
+    for (let k = 0; k < 3; k++){ const b = new THREE.Mesh(new THREE.BoxGeometry(1.1, .02, .16), M.white); b.position.x = .6; const arm = new THREE.Group(); arm.add(b); arm.rotation.y = k * Math.PI * 2 / 3; g.add(arm); }
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .3, 6), M.steel); rod.position.y = .25; g.add(rod);
+    g.position.set(x, H - .45, z); scene.add(g); fans.push({ g, sp: .8 + Math.random() * 1.6 });
+  };
+  const addClock = (x, y, z, face) => {
+    decal(x, y, z, .55, .55, clockTex, face);
+    const hand = new THREE.Mesh(new THREE.BoxGeometry(.012, .22, .01), new THREE.MeshBasicMaterial({ color: 0xaa1111 }));
+    hand.geometry.translate(0, .1, 0);
+    const pivot = new THREE.Group(); pivot.position.set(x, y, z); pivot.rotation.y = FACE[face];
+    hand.position.z = .012; pivot.add(hand); scene.add(pivot);
+    clocks.push({ hand, x, z, f: null, sec: 0 });
+    return clocks[clocks.length - 1];
+  };
+  /* digit kod Bilik Guru — tersembunyi di dinding */
+  const CODE = [0, 0, 0].map(() => Math.floor(Math.random() * 10));
+  const found = [false, false, false];
+  const digits = [];
+  const addDigit = (idx, f, x, y, z, face) => {
+    const tex = canvasTex(256, 256, (g, w, h) => {
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = '#9B0000'; g.shadowColor = '#ff2020'; g.shadowBlur = 14; g.font = 'bold 170px serif'; g.fillText(String(CODE[idx]), w / 2, h / 2 - 16);
+      g.shadowBlur = 0; g.font = 'bold 24px sans-serif'; g.fillStyle = '#C04040'; g.fillText('nombor ke-' + (idx + 1), w / 2, h - 30);
+    });
+    decal(x, y, z, .9, .9, tex, face, .45, true);
+    digits.push({ idx, f, x, z, face });
+  };
 
-  // pintu KELUAR di hujung timur
+  let staffDoor = null;
+  const MATCH_ROOM = rooms.find(r => r.kind === 'library');
+  rooms.forEach((r, ri) => {
+    const { side, zc, zf, zn } = r;
+    wall(r.x1, Math.min(zf, zf + side * .2), r.x2, Math.max(zf, zf + side * .2));
+    wall(r.x1 - .2, Math.min(zn, zf), r.x1, Math.max(zn, zf));
+    wall(r.x2, Math.min(zn, zf), r.x2 + .2, Math.max(zn, zf));
+    decal(r.door, 2.62, zc + side * 1.88, 1.9, .36, plateTex(r.name), side < 0 ? '+z' : '-z', .5);
+    fixtures.push({ f: r.f, x: r.cx, z: r.cz });
+    if (r.kind === 'class'){
+      desks(r, [3, 5.2, 7.4]);
+      addBoard(r, 'mcq');
+      addClock(r.door + 2.6, 2.6, zf - side * .04, r.inF);
+      addFan(r.cx + 2, r.cz);
+      const posters = [flagTex, rukunTex, noticeTex, flagTex];
+      const pt = posters[ri % posters.length], tall = pt === rukunTex;
+      decal(r.x1 + .03, 1.75, r.cz, tall ? 1 : 1.5, tall ? 1.25 : (pt === flagTex ? .75 : 1.03), pt, '+x');
+    } else if (r.kind === 'library'){
+      box(r.x1, zn + side * .5, r.x1 + .5, zf - side * .5, 2.3, 0, books, true);
+      box(r.x2 - .5, zn + side * .5, r.x2, zf - side * .5, 2.3, 0, books, true);
+      [r.cx - 4.5, r.cx + 4.5].forEach(x => box(x - .25, zc + side * 4.5, x + .25, zc + side * 9, 2.1, 0, books, true));
+      box(r.door - 1.2, zc + side * 4.2, r.door + 1.2, zc + side * 5.4, .78, 0, M.desk, true);
+      addBoard(r, 'match');
+      decal(r.door - 3.4, 2.2, zf - side * .04, 1.8, .45, scrawlTex('SILA SENYAP'), r.inF, .3, true);
+    } else if (r.kind === 'toilet'){
+      for (let k = 0; k < 3; k++){                           // pintu tandas
+        const x = r.x1 + 1 + k * 2.1;
+        box(x, zf - side * 1.7, x + .06, zf, 2, 0, M.white, true);
+      }
+      box(r.x2 - .06, zf - side * 1.7, r.x2, zf, 2, 0, M.white, false);
+      box(r.x1 + .9, zf - side * 1.7, r.x2 - .1, zf - side * 1.66, 2, 0, M.white, false);
+      [zc + side * 3.5, zc + side * 5.5].forEach(z => box(r.x1, z - .4, r.x1 + .6, z + .4, .85, 0, M.white, true));
+      const mir = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.1), M.mirror); mir.position.set(r.x1 + .03, 1.75, zc + side * 4.5); mir.rotation.y = FACE['+x']; scene.add(mir);
+      addDigit(0, r.f, r.x1 + .05, 1.75, zc + side * 4.5, '+x');
+    } else if (r.kind === 'staff'){
+      box(r.cx - 1.4, zf - side * 2.4, r.cx + 1.4, zf - side * 1.6, .8, 0, M.desk, true);
+      box(r.x1 + .5, zc + side * 4, r.x1 + 1.6, zc + side * 5.2, .78, 0, M.desk, true);
+      box(r.x2 - .6, zn + side * 1, r.x2, zn + side * 3.5, 1.9, 0, M.steel, true);
+      decal(r.x2 - .03, 1.7, r.cz + side * 2, 1.5, 1.03, noticeTex, '-x');
+      // pintu berkunci (dibuka dengan kod)
+      const pad = canvasTex(256, 360, (g, w, h) => {
+        g.fillStyle = '#4A2A1A'; g.fillRect(0, 0, w, h); grime(g, w, h, 300, .4);
+        g.fillStyle = '#C8A040'; g.fillRect(w/2 - 34, h/2 - 20, 68, 56); g.strokeStyle = '#C8A040'; g.lineWidth = 10;
+        g.beginPath(); g.arc(w/2, h/2 - 20, 24, Math.PI, 0); g.stroke();
+        g.fillStyle = '#FFE9A8'; g.font = 'bold 26px sans-serif'; g.textAlign = 'center'; g.fillText('KOD ? ? ?', w/2, h/2 + 90);
+      });
+      const dm = decal(r.door, 1.15, zc + side * 1.92, 2, 2.3, pad, '-z');
+      const ds = { x1: r.door - 1, z1: zc + 1.85, x2: r.door + 1, z2: zc + 2.1 };
+      solids.push(ds);
+      staffDoor = { mesh: dm, solid: ds, open: false };
+      inter.push({ f: r.f, x: r.door, z: zc + side * 1.1, kind: 'lock' });
+      // kunci emas di atas meja guru
+      const key = new THREE.Group();
+      const gold = new THREE.MeshStandardMaterial({ color: 0xFFD76A, emissive: 0xAA7A10, emissiveIntensity: .9, metalness: .8, roughness: .3 });
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.09, .025, 8, 16), gold); ring.position.x = -.14; key.add(ring);
+      const shaft = new THREE.Mesh(new THREE.BoxGeometry(.24, .03, .03), gold); shaft.position.x = .04; key.add(shaft);
+      const bit = new THREE.Mesh(new THREE.BoxGeometry(.03, .08, .03), gold); bit.position.set(.14, -.04, 0); key.add(bit);
+      key.position.set(r.cx, 1.0, zf - side * 2); scene.add(key);
+      const src = { name: 'BILIK GURU', solved: false, mesh: key, reset(){ src.solved = false; key.visible = true; } };
+      sources.push(src);
+      inter.push({ f: r.f, x: r.cx, z: zf - side * 3.2, kind: 'pickup', src });
+    } else if (r.kind === 'lab'){
+      [zc + side * 4.5, zc + side * 7.5].forEach(z => box(r.cx - 3.2, z - .45, r.cx + 3.2, z + .45, .9, 0, M.black, true));
+      box(r.x2 - .7, zf - side * 3, r.x2, zf - side * 1, 1, 0, M.white, true);
+      decal(r.cx, 1.8, zf - side * .03, 2.4, 1.5, periodicTex, r.inF);
+      addDigit(1, r.f, r.x1 + .05, 1.8, r.cz, '+x');
+      addFan(r.cx + 2, r.cz);
+    } else if (r.kind === 'music'){
+      box(r.x1 + .4, zc + side * 8, r.x1 + 2.2, zc + side * 9.4, 1.05, 0, M.black, true);   // piano
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(.4, .4, .5, 16), new THREE.MeshStandardMaterial({ color: 0x8B1A1A })); drum.position.set(r.x2 - 1.5, .25, r.cz); scene.add(drum);
+      solids.push({ x1: r.x2 - 1.9, z1: r.cz - .4, x2: r.x2 - 1.1, z2: r.cz + .4 });
+      [[-1.5, 4], [1.5, 4], [0, 6]].forEach(([dx, dep]) => box(r.cx + dx - .22, zc + side * dep - .2, r.cx + dx + .22, zc + side * dep + .2, .45, 0, M.chair, false));
+      addDigit(2, r.f, r.cx, 1.8, zf - side * .05, r.inF);
+      addClock(r.x2 - .03, 2.5, r.cz, '-x');
+    } else if (r.kind === 'stairs'){
+      const up = r.f === 0;
+      for (let k = 0; k < 7; k++){
+        const za = zc + side * (6 + k * .8), zb = zc + side * (6.8 + k * .8);
+        box(r.x1 + .8, za, r.x2 - .8, zb, up ? .2 * (k + 1) : .2 * (7 - k), 0, M.steel, true);
+      }
+      decal(r.x1 + .03, 2.1, zc + side * 4, 2, .5, plateTex(up ? 'NAIK ↑ TINGKAT ATAS' : 'TURUN ↓ TINGKAT BAWAH'), '+x', .4);
+      inter.push({ f: r.f, x: r.door, z: zc + side * 4.6, kind: 'stairs', to: up ? 1 : 0 });
+    }
+  });
+  const STAIRS = [0, 1].map(f => rooms.find(r => r.f === f && r.kind === 'stairs'));
+  clocks.forEach(c => { c.f = c.z > 20 ? 1 : 0; });
+
+  // hiasan koridor
+  decal(5, 2.5, -1.88, 5, .94, welcomeTex, '+z', .25);
+  decal(16, 1.9, -1.88, 4, 1, scrawlTex('JAWAB... ATAU KEKAL DI SINI'), '+z', .6, true);
+  decal(20, 1.9, 40 - 1.88, 4, 1, scrawlTex('DIA ADA DI ATAS...'), '+z', .6, true);
+  decal(36, 1.8, -1.88, 1.4, .7, flagTex, '+z');
+
+  // pintu KELUAR di hujung timur tingkat bawah
+  const EXIT_X = FLOORS[0].len;
   const signTex = canvasTex(256, 64, () => {});
   const drawSign = open => {
     const c = signTex.userData.canvas, g = c.getContext('2d');
@@ -12986,80 +13320,131 @@ function escRun(THREE, sid, ac){
     g.fillText(open ? 'KELUAR ➜' : 'KELUAR', 128, 34); signTex.needsUpdate = true;
   };
   drawSign(false);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .35), new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 1 }));
-  sign.position.set(47.88, 2.75, 0); sign.rotation.y = -Math.PI / 2; scene.add(sign);
+  decal(EXIT_X - .12, 2.75, 0, 1.4, .35, signTex, '-x', 1);
   const door = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.3), new THREE.MeshStandardMaterial({ color: 0x4A1A12, roughness: .8, metalness: .2 }));
-  door.position.set(47.88, 1.15, 0); door.rotation.y = -Math.PI / 2; scene.add(door);
-  const exitLight = new THREE.PointLight(0xff2020, 6, 7, 2); exitLight.position.set(46.8, 2.4, 0); scene.add(exitLight);
-  const exitPt = { pos: new THREE.Vector3(47, 0, 0) };
+  door.position.set(EXIT_X - .12, 1.15, 0); door.rotation.y = FACE['-x']; scene.add(door);
+  const exitLight = new THREE.PointLight(0xff2020, 6, 7, 2); exitLight.position.set(EXIT_X - 1.2, 2.4, 0); scene.add(exitLight);
+  inter.push({ f: 0, x: EXIT_X - 1, z: 0, kind: 'exit' });
 
-  // lampu siling koridor yang berkelip
-  const flick = [8, 23, 37].map(x => {
-    const l = new THREE.PointLight(0xcfe8d8, 7, 11, 2); l.position.set(x, H - .25, 0); scene.add(l);
-    const tube = box(x - .6, -.08, x + .6, .08, .05, H - .1, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xcfe8d8, emissiveIntensity: 1 }), false);
-    return { l, tube, base: 7, t: Math.random() * 5 };
-  });
-  // lampu suluh
-  const torch = new THREE.SpotLight(0xfff1d6, 30, 20, .5, .55, 1.6);
+  /* ---------- lampu: tiub di setiap lekapan, 4 cahaya sebenar diagih ke yang terdekat ---------- */
+  const tubeMat = () => new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xcfe8d8, emissiveIntensity: 1 });
+  fixtures.forEach(fx => { fx.tube = box(fx.x - .6, fx.z - .08, fx.x + .6, fx.z + .08, .05, H - .1, tubeMat(), false); fx.t = Math.random() * 5; fx.v = 1; fx.dead = Math.random() < .18; });
+  const pool = [0, 1, 2, 3].map(() => { const l = new THREE.PointLight(0xcfe8d8, 0, 11, 2); scene.add(l); return l; });
+  const torch = new THREE.SpotLight(0xfff1d6, LT.torch, 20, .5, .55, 1.6);
   torch.position.set(0, -.1, 0); cam.add(torch); cam.add(torch.target); torch.target.position.set(0, -.15, -1);
 
   /* ---------- hantu ---------- */
-  const ghost = new THREE.Group();
-  const gMat = new THREE.MeshStandardMaterial({ color: 0xE6ECF2, emissive: 0x6A7A8C, emissiveIntensity: .55, transparent: true, opacity: .85, side: THREE.DoubleSide, roughness: 1 });
-  const robeGeo = new THREE.CylinderGeometry(.24, .62, 1.6, 18, 5, true);
-  { const p = robeGeo.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) < -.7) p.setY(i, p.getY(i) - Math.random() * .25); robeGeo.computeVertexNormals(); }
-  const robe = new THREE.Mesh(robeGeo, gMat); robe.position.y = 1.0; ghost.add(robe);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.34, 18, 14), gMat); head.position.y = 1.95; head.scale.y = 1.15; ghost.add(head);
-  const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff2a2a });
-  [-.12, .12].forEach(x => {
-    const hole = new THREE.Mesh(new THREE.SphereGeometry(.08, 10, 8), holeMat); hole.position.set(x, 2.0, .28); hole.scale.z = .5; ghost.add(hole);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), eyeMat); eye.position.set(x, 2.0, .33); ghost.add(eye);
-  });
-  const mouth = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), holeMat); mouth.position.set(0, 1.78, .29); mouth.scale.set(.8, 1.4, .4); ghost.add(mouth);
-  const gLight = new THREE.PointLight(0xff3030, 2.5, 4, 2); gLight.position.y = 1.6; ghost.add(gLight);
+  function buildGhost(kind){
+    const g = new THREE.Group();
+    const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: kind === 'toyol' ? 0xff3010 : 0xff2a2a });
+    const ragged = (geo, below, amt) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) < below) p.setY(i, p.getY(i) - Math.random() * amt); geo.computeVertexNormals(); return geo; };
+    const eyes = (y, z, sx, r) => [-sx, sx].forEach(x => {
+      const hole = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), holeMat); hole.position.set(x, y, z); hole.scale.z = .5; g.add(hole);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(r * .35, 8, 6), eyeMat); eye.position.set(x, y, z + .05); g.add(eye);
+    });
+    if (kind === 'pontianak'){
+      const dress = new THREE.MeshStandardMaterial({ color: 0xEDEDE8, emissive: 0x707878, emissiveIntensity: .5, transparent: true, opacity: .9, side: THREE.DoubleSide, roughness: 1 });
+      const skin = new THREE.MeshStandardMaterial({ color: 0xE8E4DC, emissive: 0x605A55, emissiveIntensity: .45, roughness: 1 });
+      const hair = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1, side: THREE.DoubleSide });
+      const body = new THREE.Mesh(ragged(new THREE.CylinderGeometry(.2, .55, 1.95, 18, 6, true), -.8, .3), dress); body.position.y = 1.05; g.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(.24, 18, 14), skin); head.position.y = 2.2; head.scale.y = 1.2; g.add(head);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(.27, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), hair); cap.position.y = 2.22; g.add(cap);
+      const locks = new THREE.Mesh(ragged(new THREE.CylinderGeometry(.27, .42, 1.6, 20, 5, true, .7, Math.PI * 2 - 1.4), 1.0 - .8, .25), hair); locks.position.y = 1.5; g.add(locks);
+      const fringe = new THREE.Mesh(new THREE.PlaneGeometry(.3, .5), hair); fringe.position.set(.08, 2.05, .2); fringe.rotation.z = .15; g.add(fringe);
+      eyes(2.2, .19, .085, .055);
+      const mouth = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), holeMat); mouth.position.set(0, 2.03, .21); mouth.scale.set(1.2, .6, .4); g.add(mouth);
+      [-1, 1].forEach(s => {                                   // lengan panjang menjangkau ke depan
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(.035, .03, .9, 6), skin);
+        arm.geometry.translate(0, -.45, 0); arm.position.set(s * .3, 1.75, .05); arm.rotation.x = -1.1; arm.rotation.z = s * .15; g.add(arm);
+      });
+      return { g, light: 0xff2020, eyeY: 2.2 };
+    }
+    if (kind === 'toyol'){
+      const skin = new THREE.MeshStandardMaterial({ color: 0x4E7A4A, emissive: 0x1E3A1C, emissiveIntensity: .6, roughness: .8 });
+      const body = new THREE.Mesh(new THREE.SphereGeometry(.32, 16, 12), skin); body.position.y = .55; body.scale.set(1, 1.15, .9); g.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(.3, 18, 14), skin); head.position.y = 1.08; g.add(head);
+      [-1, 1].forEach(s => {
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(.08, .22, 8), skin); ear.position.set(s * .3, 1.18, 0); ear.rotation.z = -s * 1.2; g.add(ear);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(.07, .06, .35, 6), skin); leg.position.set(s * .14, .17, 0); g.add(leg);
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(.05, .04, .45, 6), skin); arm.position.set(s * .36, .6, .1); arm.rotation.z = s * .5; arm.rotation.x = -.6; g.add(arm);
+      });
+      eyes(1.12, .24, .11, .085);
+      const grin = new THREE.Mesh(new THREE.TorusGeometry(.12, .025, 6, 14, Math.PI), holeMat); grin.position.set(0, .98, .26); grin.rotation.z = Math.PI; g.add(grin);
+      return { g, light: 0x30ff40, eyeY: 1.1 };
+    }
+    const gMat = new THREE.MeshStandardMaterial({ color: 0xE6ECF2, emissive: 0x6A7A8C, emissiveIntensity: .55, transparent: true, opacity: .85, side: THREE.DoubleSide, roughness: 1 });
+    const robe = new THREE.Mesh(ragged(new THREE.CylinderGeometry(.24, .62, 1.6, 18, 5, true), -.7, .25), gMat); robe.position.y = 1.0; g.add(robe);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(.34, 18, 14), gMat); head.position.y = 1.95; head.scale.y = 1.15; g.add(head);
+    eyes(2.0, .28, .12, .08);
+    const mouth = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), holeMat); mouth.position.set(0, 1.78, .29); mouth.scale.set(.8, 1.4, .4); g.add(mouth);
+    return { g, light: 0xff3030, eyeY: 2.0 };
+  }
+  const GB = buildGhost(gKind), ghost = GB.g;
+  const gLight = new THREE.PointLight(GB.light, 2.5, 4, 2); gLight.position.y = 1.4; ghost.add(gLight);
   scene.add(ghost);
-  const WAYS = [[6, 0], [16, 0], [30, 0], [44, 0], [9, -7], [23, 7], [37, -7]];
-  const G = { x: 44, z: 0, wx: 30, wz: 0, hunt: false, grace: 6 };
+  const WAYS = [0, 1].map(f => {
+    const F = FLOORS[f], pts = [];
+    for (let x = 3; x < F.len; x += 7) pts.push([x, F.z0]);
+    rooms.filter(r => r.f === f && r.kind !== 'staff').forEach(r => pts.push([r.cx, r.cz]));
+    return pts;
+  });
+  const G = { f: 0, x: 44, z: 0, wx: 30, wz: 0, hunt: false, grace: 7, follow: 0 };
+  const huntSp = D.hunt + GT.hunt, sight = D.sight + GT.sight;
 
   /* ---------- keadaan permainan ---------- */
-  const P = { x: 1.5, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0 };
-  let keys = 0, lives = ESC_LIVES, elapsed = 0, paused = false, alive = true, ended = false;
-  let answered = 0, correct = 0, near = null, lastStep = 0, actLabel = '';
+  const P = { f: 0, x: 1.5, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0, hide: null };
+  let lives = D.lives, elapsed = 0, paused = false, alive = true, ended = false;
+  let answered = 0, correct = 0, near = null, lastStep = 0, actLabel = '', room = null, laughT = 14;
+  const got = [];                                     // sumber kunci mengikut urutan diperoleh (untuk toyol)
+  const keys = () => got.length;
   const kb = {};
-  ESC = { close: () => quit() };
+  ESC = { close: () => quit(), dbg: () => ({ P, G, got, found, CODE, staffDoor, lives, paused, near: near && (near.kind + (near.bd ? ':' + near.bd.label : '')), gKind, inter, rooms }) };
 
   /* ---------- bunyi (WebAudio, dijana) ---------- */
   const A = (() => {
     if (!ac) return null;
     const out = ac.createGain(); out.gain.value = .75; out.connect(ac.destination);
     const nodes = [];
-    // dengung latar
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
     const dg = ac.createGain(); dg.gain.value = .07; lp.connect(dg); dg.connect(out);
     [55, 58.3, 82.4].forEach(f => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(); nodes.push(o); });
     const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = .07; lg.gain.value = 120; lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); nodes.push(lfo);
-    const noiseBuf = (() => { const b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+    const noiseBuf = (() => { const b = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+    // angin: hingar berterusan yang naik turun perlahan
+    const wind = ac.createBufferSource(); wind.buffer = noiseBuf; wind.loop = true;
+    const wf = ac.createBiquadFilter(); wf.type = 'bandpass'; wf.frequency.value = 380; wf.Q.value = .7;
+    const wg = ac.createGain(); wg.gain.value = .025; wind.connect(wf); wf.connect(wg); wg.connect(out); wind.start(); nodes.push(wind);
+    const wl = ac.createOscillator(), wlg = ac.createGain(); wl.frequency.value = .11; wlg.gain.value = .02; wl.connect(wlg); wlg.connect(wg.gain); wl.start(); nodes.push(wl);
     const tone = (type, f0, f1, dur, vol, delay) => {
       const t = ac.currentTime + (delay || 0), o = ac.createOscillator(), g = ac.createGain();
       o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
       o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + .05);
     };
-    const noise = (fc, q, dur, vol, f1) => {
-      const t = ac.currentTime, s = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
-      s.buffer = noiseBuf; bp.type = 'bandpass'; bp.frequency.setValueAtTime(fc, t); if (f1) bp.frequency.exponentialRampToValueAtTime(f1, t + dur); bp.Q.value = q;
+    const noise = (fc, q, dur, vol, f1, delay, type) => {
+      const t = ac.currentTime + (delay || 0), s = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = noiseBuf; bp.type = type || 'bandpass'; bp.frequency.setValueAtTime(fc, t); if (f1) bp.frequency.exponentialRampToValueAtTime(f1, t + dur); bp.Q.value = q;
       g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-      s.connect(bp); bp.connect(g); g.connect(out); s.start(t); s.stop(t + dur + .05);
+      s.connect(bp); bp.connect(g); g.connect(out); s.start(t, Math.random()); s.stop(t + dur + .05);
     };
+    const cackle = (f, n, gap, vol) => { for (let i = 0; i < n; i++){ tone('square', f * (1 - i * .03), f * .82, gap * .8, vol, i * gap); tone('sine', f * 2.02, 0, gap * .6, vol * .4, i * gap); } };
     return {
       step:   () => noise(300 + Math.random() * 200, 1.2, .12, .12),
       beat:   v => { tone('sine', 65, 40, .16, .5 * v); tone('sine', 60, 38, .16, .38 * v, .22); },
       chime:  () => { tone('sine', 880, 0, .5, .25); tone('sine', 1320, 0, .7, .2, .12); },
       buzz:   () => tone('square', 110, 70, .45, .18),
-      sting:  () => [740, 784, 831, 1108].forEach(f => tone('sawtooth', f, f * .97, 1.6, .05)),
+      sting:  () => [740, 784, 831, 1108].forEach(f => tone('sawtooth', f, f * .97, 1.6, soft ? .02 : .05)),
       scream: () => { noise(2200, 3, 1.3, .9, 500); tone('sawtooth', 720, 140, 1.2, .35); tone('square', 1000, 220, .9, .12); },
+      whoosh: () => noise(900, .6, 1.1, .35, 120, 0, 'lowpass'),
       win:    () => [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, 0, .6, .22, i * .14)),
+      tick:   v => noise(3200, 8, .03, .25 * v),
+      creak:  () => { tone('sawtooth', 140, 85, .9, .07); noise(500, 4, .9, .12, 300); },
+      clank:  () => { noise(900, 3, .25, .4); tone('square', 210, 160, .18, .08); },
+      flip:   () => noise(2400, 1, .08, .18),
+      stairs: () => { for (let i = 0; i < 6; i++) noise(260 + Math.random() * 120, 1.2, .14, .16, 0, i * .22); },
+      laugh:  v => cackle(930, 7, .13, .1 * v),
+      giggle: v => cackle(1350, 6, .09, .08 * v),
       stop:   () => { nodes.forEach(n => { try { n.stop(); } catch(e){} }); try { out.gain.setTargetAtTime(0, ac.currentTime, .05); setTimeout(() => out.disconnect(), 300); } catch(e){} }
     };
   })();
@@ -13067,13 +13452,16 @@ function escRun(THREE, sid, ac){
 
   /* ---------- HUD ---------- */
   const hud = () => {
-    $e('#escKeys').innerHTML = '<i class="fa-solid fa-key" style="color:#FFD76A"></i> <span style="color:#FFD76A">'+keys+'/'+ESC_KEYS+'</span>';
-    $e('#escLives').innerHTML = Array.from({ length: ESC_LIVES }, (_, i) => '<i class="fa-solid fa-heart" style="color:'+(i < lives ? '#E23B3B' : '#3A1A1A')+'"></i>').join(' ');
+    $e('#escKeys').innerHTML = '<i class="fa-solid fa-key" style="color:#FFD76A"></i> <span style="color:#FFD76A">'+keys()+'/'+D.keys+'</span>';
+    $e('#escLives').innerHTML = Array.from({ length: D.lives }, (_, i) => '<i class="fa-solid fa-heart" style="color:'+(i < lives ? '#E23B3B' : '#3A1A1A')+'"></i>').join(' ');
+    $e('#escCode').innerHTML = found.some(Boolean) && !(staffDoor && staffDoor.open)
+      ? '<i class="fa-solid fa-lock" style="color:#C8A040"></i> <span style="color:#E8C870">'+CODE.map((d, i) => found[i] ? d : '_').join(' ')+'</span>' : '';
   };
   let msgT = null;
   const msg = (t, ms) => { const m = $e('#escMsg'); m.innerHTML = t; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 2600); };
   hud();
-  msg('Cari <span style="color:#7CFFB2">3 papan hitam bercahaya</span> di dalam kelas…', 4200);
+  msg('Kumpul <span style="color:#FFD76A">'+D.keys+' kunci</span>: papan soalan, padanan di perpustakaan &amp; Bilik Guru berkod.<br><span style="font-size:12px;color:#E2803B">Loker merah = tempat sembunyi</span>', 5500);
+  setTimeout(() => { if (alive && !ended) msg('Sesuatu sedang merayau… Ia ialah <span style="color:#E23B3B">'+GT.name.toUpperCase()+'</span>.', 3200); }, 6000);
 
   /* ---------- kawalan ---------- */
   const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, look = { id: null, lx: 0, ly: 0 };
@@ -13116,6 +13504,7 @@ function escRun(THREE, sid, ac){
   window.addEventListener('keyup', onKey);
   $e('#escQuit').onclick = () => quit();
   $e('#escAct').onclick = () => { if (!paused && near) interact(); };
+  const stopInput = () => { joy.id = look.id = null; joy.x = joy.y = 0; $e('#escJoy').style.display = 'none'; Object.keys(kb).forEach(k => kb[k] = false); };
 
   /* ---------- fizik ringkas ---------- */
   const collide = (p, r) => {
@@ -13131,80 +13520,211 @@ function escRun(THREE, sid, ac){
     }
   };
 
+  /* ---------- kunci ---------- */
+  function gainKey(src, text){
+    src.solved = true; got.push(src);
+    sfx('chime'); hud();
+    if (keys() >= D.keys){ drawSign(true); exitLight.color.set(0x30ff60); msg('Cukup kunci! Lari ke pintu <span style="color:#4ADE80">KELUAR</span> di hujung koridor tingkat bawah!', 4200); }
+    else msg('<i class="fa-solid fa-key" style="color:#FFD76A"></i> '+(text || 'Kunci')+' — '+keys()+'/'+D.keys);
+  }
+  function summon(){                                   // jawapan salah: hantu muncul berhampiran
+    const a = Math.random() * Math.PI * 2;
+    G.f = P.f; G.x = P.x + Math.cos(a) * 7; G.z = P.z + Math.sin(a) * 7; G.hunt = true; G.grace = .6;
+    fixtures.forEach(f => f.t = -1.2);
+  }
+
   /* ---------- interaksi ---------- */
   function interact(){
-    if (near === exitPt){
-      if (keys < ESC_KEYS){ sfx('buzz'); return msg('Pintu berkunci. Perlu <span style="color:#FFD76A">'+ESC_KEYS+' kunci</span> ('+keys+'/'+ESC_KEYS+').'); }
+    const n = near;
+    if (!n) return;
+    if (n.kind === 'unhide') return unhide();
+    if (n.kind === 'hide') return hide(n.spot);
+    if (n.kind === 'exit'){
+      if (keys() < D.keys){ sfx('buzz'); return msg('Pintu berkunci. Perlu <span style="color:#FFD76A">'+D.keys+' kunci</span> ('+keys()+'/'+D.keys+').'); }
       return win();
     }
-    if (near && !near.solved) askBoard(near);
+    if (n.kind === 'stairs') return takeStairs(n.to);
+    if (n.kind === 'board') return n.bd.type === 'match' ? askMatch(n.bd) : askBoard(n.bd);
+    if (n.kind === 'lock') return askCode();
+    if (n.kind === 'pickup'){ n.src.mesh.visible = false; sfx('flip'); gainKey(n.src, 'Kunci Bilik Guru diambil'); }
   }
+  const openUi = html => { paused = true; stopInput(); const ui = $e('#escQ'); ui.innerHTML = html; ui.style.display = 'flex'; return ui; };
+  const closeUi = () => { const ui = $e('#escQ'); ui.style.display = 'none'; ui.innerHTML = ''; ui.onclick = null; paused = false; };
+  const timerBar = id => '<div style="height:6px;background:#0E151E;margin-top:8px"><div id="'+id+'" style="height:100%;width:100%;background:#4ADE80"></div></div>';
+  const runTimer = (id, secs, onEnd) => {
+    const t0 = performance.now(); let raf = 0, stopped = false;
+    const tick = () => {
+      if (stopped) return;
+      const left = Math.max(0, secs - (performance.now() - t0) / 1000), bar = $e('#' + id);
+      if (bar){ bar.style.width = (left / secs * 100) + '%'; bar.style.background = left > secs * .4 ? '#4ADE80' : left > secs * .2 ? '#FACC15' : '#E23B3B'; }
+      if (left <= 0){ stopped = true; return onEnd(); }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { stopped = true; cancelAnimationFrame(raf); };
+  };
   function askBoard(bd){
-    paused = true; joy.id = look.id = null; $e('#escJoy').style.display = 'none';
     const q = escQuestion();
     const order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
-    const box = $e('#escQ');
-    box.innerHTML =
+    const ui = openUi(
       '<div class="panel clip p-4 w-full" style="max-width:440px;border-color:#2F6B4A;box-shadow:0 0 40px rgba(60,255,150,.15)">' +
-        '<div class="lbl" style="color:#7CFFB2"><i class="fa-solid fa-chalkboard"></i> '+bd.label+' — JAWAB UNTUK KUNCI</div>' +
-        '<div style="height:6px;background:#0E151E;margin-top:8px"><div id="escQBar" style="height:100%;width:100%;background:#4ADE80"></div></div>' +
+        '<div class="lbl" style="color:#7CFFB2"><i class="fa-solid fa-chalkboard"></i> '+esc(bd.label)+' — JAWAB UNTUK KUNCI</div>' + timerBar('escQBar') +
         '<div class="text-[17px] font-bold leading-snug mt-3">'+esc(q.q)+'</div>' +
         '<div class="mt-3">' + order.map((i, k) =>
           '<button class="btn clip-s w-full mb-2 !py-3 text-left text-[15px]" data-ans="'+i+'"><span class="num text-orange mr-2">'+String.fromCharCode(65 + k)+'.</span>'+esc(q.c[i])+'</button>').join('') +
-        '</div></div>';
-    box.style.display = 'flex';
-    const t0 = performance.now(); let done = false, raf = 0;
-    const tick = () => {
-      const left = Math.max(0, ESC_QTIME - (performance.now() - t0) / 1000), bar = $e('#escQBar');
-      if (bar){ bar.style.width = (left / ESC_QTIME * 100) + '%'; bar.style.background = left > 10 ? '#4ADE80' : left > 5 ? '#FACC15' : '#E23B3B'; }
-      if (left <= 0) return finish(-1);
-      raf = requestAnimationFrame(tick);
-    };
+        '</div></div>');
+    let done = false;
     const finish = pick => {
-      if (done) return; done = true; cancelAnimationFrame(raf);
+      if (done) return; done = true; stop();
       const ok = pick === q.a;
       answered++; if (ok) correct++;
       quizRecord(sid, ok);
-      box.style.display = 'none'; box.innerHTML = ''; paused = false;
-      if (ok){
-        bd.solved = true; keys++; drawBoard(bd); bd.glow.color.set(0x4ADE80); bd.glow.intensity = 1.5;
-        sfx('chime'); hud();
-        if (keys >= ESC_KEYS){ drawSign(true); exitLight.color.set(0x30ff60); msg('Semua kunci ditemui! Lari ke pintu <span style="color:#4ADE80">KELUAR</span> di hujung koridor!', 4000); }
-        else msg('<i class="fa-solid fa-key" style="color:#FFD76A"></i> Kunci '+keys+'/'+ESC_KEYS+' ditemui!');
-      } else {
+      closeUi();
+      if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Papan '+bd.label); }
+      else {
         sfx('buzz');
         msg('<span style="color:#FF5A5A">'+(pick === -1 ? 'Masa tamat!' : 'Salah!')+' Hantu semakin dekat…</span><br><span style="font-size:12px;color:#B8C4D0">Jawapan: '+esc(q.c[q.a])+'</span>', 3500);
-        const a = Math.random() * Math.PI * 2;              // hantu muncul berhampiran
-        G.x = P.x + Math.cos(a) * 7; G.z = P.z + Math.sin(a) * 7; G.hunt = true; G.grace = .6;
-        flick.forEach(f => f.t = -1.2);
+        summon();
       }
     };
-    box.onclick = e => { const b = e.target.closest('[data-ans]'); if (b) finish(+b.dataset.ans); };
-    raf = requestAnimationFrame(tick);
+    const stop = runTimer('escQBar', D.qtime, () => finish(-1));
+    ui.onclick = e => { const b = e.target.closest('[data-ans]'); if (b) finish(+b.dataset.ans); };
+  }
+  function askMatch(bd){
+    const pairs = escPairs();
+    const cards = [];
+    pairs.forEach((p, i) => { cards.push({ p: i, t: p[0], q: true }); cards.push({ p: i, t: p[1], q: false }); });
+    cards.sort(() => Math.random() - .5);
+    const ui = openUi(
+      '<div class="panel clip p-4 w-full" style="max-width:520px;border-color:#5A3A8A;box-shadow:0 0 40px rgba(180,120,255,.15)">' +
+        '<div class="lbl" style="color:#C8A0FF"><i class="fa-solid fa-shuffle"></i> PERPUSTAKAAN — PADANKAN SOALAN DENGAN JAWAPAN</div>' + timerBar('escMBar') +
+        '<div class="grid grid-cols-4 gap-2 mt-3">' + cards.map((c, i) =>
+          '<button class="btn clip-s !p-1 text-[12px] leading-tight" style="min-height:74px;word-break:break-word" data-card="'+i+'"><i class="fa-solid fa-book text-[18px]" style="color:#7A5AAA"></i></button>').join('') +
+        '</div><div class="text-[11px] text-muted mt-2 text-center">Buka dua kad: soalan + jawapannya. Padankan semua 4 pasangan.</div></div>');
+    let open = [], matched = 0, lock = false, done = false;
+    const face = (i, show) => {
+      const b = ui.querySelector('[data-card="'+i+'"]');
+      b.innerHTML = show ? '<span style="color:'+(cards[i].q ? '#E8ECF1' : '#FFD76A')+'">'+esc(cards[i].t)+'</span>' : '<i class="fa-solid fa-book text-[18px]" style="color:#7A5AAA"></i>';
+    };
+    const finish = ok => {
+      if (done) return; done = true; stop();
+      answered++; if (ok) correct++;
+      quizRecord(sid, ok);
+      closeUi();
+      if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Teka-teki perpustakaan selesai'); }
+      else { sfx('buzz'); msg('<span style="color:#FF5A5A">Masa tamat! Buku-buku berterbangan… hantu datang!</span>', 3200); summon(); }
+    };
+    const stop = runTimer('escMBar', D.match, () => finish(false));
+    ui.onclick = e => {
+      const b = e.target.closest('[data-card]'); if (!b || lock) return;
+      const i = +b.dataset.card;
+      if (cards[i].done || open.indexOf(i) >= 0) return;
+      sfx('flip'); face(i, true); open.push(i);
+      if (open.length < 2) return;
+      const [a, c] = open; open = [];
+      if (cards[a].p === cards[c].p && cards[a].q !== cards[c].q){
+        cards[a].done = cards[c].done = true; matched++;
+        [a, c].forEach(k => { const el = ui.querySelector('[data-card="'+k+'"]'); el.style.borderColor = '#4ADE80'; el.style.background = 'rgba(74,222,128,.12)'; });
+        sfx('chime');
+        if (matched === pairs.length) setTimeout(() => finish(true), 350);
+      } else { lock = true; setTimeout(() => { face(a, false); face(c, false); lock = false; }, 800); }
+    };
+  }
+  function askCode(){
+    if (staffDoor.open) return;
+    const val = [0, 0, 0];
+    const ui = openUi(
+      '<div class="panel clip p-4 w-full text-center" style="max-width:340px;border-color:#8A6A2A">' +
+        '<div class="lbl" style="color:#E8C870"><i class="fa-solid fa-lock"></i> BILIK GURU — MANGGA KOD</div>' +
+        '<div class="text-[11px] text-muted mt-1">'+(found.some(Boolean) ? 'Nombor dijumpai: <span class="num" style="color:#E8C870">'+CODE.map((d, i) => found[i] ? d : '_').join(' ')+'</span>' : 'Cari 3 nombor merah yang tertulis di dinding sekolah…')+'</div>' +
+        '<div class="flex justify-center gap-3 mt-3">' + [0, 1, 2].map(i =>
+          '<div class="flex flex-col items-center gap-1"><button class="btn clip-s !px-4 !py-1" data-d="'+i+'" data-s="1"><i class="fa-solid fa-chevron-up"></i></button>' +
+          '<div class="num text-[34px]" style="color:#FFE9A8;width:54px;background:#0E151E;border:1px solid #8A6A2A" id="escDial'+i+'">0</div>' +
+          '<button class="btn clip-s !px-4 !py-1" data-d="'+i+'" data-s="-1"><i class="fa-solid fa-chevron-down"></i></button></div>').join('') + '</div>' +
+        '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-2" data-c="no">Batal</button><button class="btn btn-o clip-s flex-1 !py-2" data-c="ok"><i class="fa-solid fa-unlock"></i> BUKA</button></div></div>');
+    ui.onclick = e => {
+      const d = e.target.closest('[data-d]');
+      if (d){ const i = +d.dataset.d; val[i] = (val[i] + (+d.dataset.s) + 10) % 10; $e('#escDial' + i).textContent = val[i]; sfx('tick', 1); return; }
+      const c = e.target.closest('[data-c]'); if (!c) return;
+      if (c.dataset.c === 'no') return closeUi();
+      if (val.join('') === CODE.join('')){
+        closeUi();
+        staffDoor.open = true; staffDoor.mesh.visible = false;
+        const i = solids.indexOf(staffDoor.solid); if (i >= 0) solids.splice(i, 1);
+        sfx('creak'); hud(); msg('Mangga terbuka! Ambil <span style="color:#FFD76A">kunci emas</span> di meja guru.');
+      } else { sfx('buzz'); ui.querySelector('.panel').style.borderColor = '#E23B3B'; setTimeout(() => { const p = ui.querySelector('.panel'); if (p) p.style.borderColor = '#8A6A2A'; }, 500); }
+    };
+  }
+  /* sembunyi dalam loker merah */
+  function hide(spot){
+    const dist = G.f === P.f ? Math.hypot(G.x - P.x, G.z - P.z) : 99;
+    if (G.hunt && dist < 2.5){ sfx('buzz'); return msg('<span style="color:#FF5A5A">Terlalu dekat — ia nampak kamu!</span>'); }
+    P.hide = spot; stopInput(); sfx('clank');
+    P.x = spot.x; P.z = spot.zc + 1.72; P.yaw = 0; P.pitch = 0;
+    $e('#escSlit').style.display = 'block'; torch.intensity = 0;
+    if (G.hunt){ G.hunt = false; const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; }
+    msg('Kamu bersembunyi… tahan nafas.', 2200);
+  }
+  function unhide(){
+    const s = P.hide; P.hide = null; sfx('clank');
+    P.x = s.x; P.z = s.zc + 1.0; P.yaw = 0;
+    $e('#escSlit').style.display = 'none'; torch.intensity = LT.torch;
+  }
+  function takeStairs(to){
+    paused = true; stopInput(); sfx('stairs');
+    const fade = $e('#escFade'); fade.style.opacity = 1;
+    setTimeout(() => {
+      const r = STAIRS[to];
+      P.f = to; P.x = r.door; P.z = r.zc + r.side * 3.2; P.yaw = 0; P.pitch = 0;
+      fade.style.opacity = 0; paused = false;
+      msg(FLOORS[to].name, 1800);
+    }, 1300);
   }
 
   /* ---------- tamat ---------- */
+  const SCARE = {
+    putih: '<ellipse cx="100" cy="95" rx="78" ry="92" fill="#E6ECF2"/><ellipse cx="68" cy="80" rx="20" ry="26" fill="#000"/><ellipse cx="132" cy="80" rx="20" ry="26" fill="#000"/><circle cx="68" cy="84" r="5" fill="#ff2020"/><circle cx="132" cy="84" r="5" fill="#ff2020"/><ellipse cx="100" cy="145" rx="26" ry="38" fill="#000"/>',
+    pontianak: '<path d="M20 200 C10 90 40 10 100 8 C160 10 190 90 180 200 Z" fill="#060606"/><ellipse cx="100" cy="98" rx="52" ry="68" fill="#E8E4DC"/><path d="M48 70 C60 30 140 30 152 70 C130 52 70 52 48 70Z" fill="#060606"/><ellipse cx="78" cy="92" rx="13" ry="9" fill="#000"/><ellipse cx="122" cy="92" rx="13" ry="9" fill="#000"/><circle cx="78" cy="92" r="4" fill="#ff1010"/><circle cx="122" cy="92" r="4" fill="#ff1010"/><path d="M80 135 Q100 150 120 135 Q100 160 80 135Z" fill="#300"/><path d="M88 139 l4 10 l3 -9 M106 140 l3 10 l4 -10" stroke="#fff" stroke-width="2" fill="none"/>',
+    toyol: '<ellipse cx="100" cy="105" rx="80" ry="78" fill="#4E7A4A"/><path d="M22 90 L0 60 L35 78Z M178 90 L200 60 L165 78Z" fill="#4E7A4A"/><circle cx="68" cy="92" r="24" fill="#000"/><circle cx="132" cy="92" r="24" fill="#000"/><circle cx="68" cy="92" r="10" fill="#ff3010"/><circle cx="132" cy="92" r="10" fill="#ff3010"/><path d="M50 140 Q100 185 150 140" stroke="#000" stroke-width="10" fill="none"/><path d="M62 146 l6 10 l6 -8 l6 10 l6 -8 l6 10 l6 -8 l6 10 l6 -8 l6 10 l6 -9" stroke="#eee" stroke-width="3" fill="none"/>'
+  };
   function caught(){
-    paused = true; lives--; hud(); sfx('scream'); vibrate([200, 80, 300]);
+    paused = true; stopInput();
+    // toyol mencuri kunci dan bukannya nyawa
+    if (gKind === 'toyol' && got.length){
+      const src = got.pop(); src.reset();
+      if (keys() < D.keys){ drawSign(false); exitLight.color.set(0xff2020); }
+      sfx('giggle', 1); hud();
+      msg('<span style="color:#7CFF7C">Toyol mencuri satu kunci!</span><br><span style="font-size:12px;color:#B8C4D0">'+esc(src.name || 'Kunci')+' perlu diselesaikan semula.</span>', 3600);
+      const far = WAYS[G.f].slice().sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.z) - Math.hypot(a[0] - P.x, a[1] - P.z))[0];
+      G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
+      paused = false;
+      return;
+    }
+    lives--; hud(); vibrate(soft ? 120 : [200, 80, 300]);
     const s = $e('#escScare');
-    s.innerHTML = '<svg viewBox="0 0 200 200" style="width:min(92vw,92vh);height:auto;animation:escShake .08s infinite">' +
-      '<ellipse cx="100" cy="95" rx="78" ry="92" fill="#E6ECF2"/>' +
-      '<ellipse cx="68" cy="80" rx="20" ry="26" fill="#000"/><ellipse cx="132" cy="80" rx="20" ry="26" fill="#000"/>' +
-      '<circle cx="68" cy="84" r="5" fill="#ff2020"/><circle cx="132" cy="84" r="5" fill="#ff2020"/>' +
-      '<ellipse cx="100" cy="145" rx="26" ry="38" fill="#000"/></svg>' +
-      '<style>@keyframes escShake{0%{transform:translate(4px,-3px) scale(1.04)}50%{transform:translate(-5px,4px) scale(1.08)}100%{transform:translate(3px,5px) scale(1.05)}}</style>';
+    if (soft){
+      sfx('whoosh');
+      s.style.background = 'radial-gradient(ellipse at center,rgba(90,0,0,.85),#000)';
+      s.innerHTML = '<div class="text-center"><i class="fa-solid fa-ghost text-5xl" style="color:#E8ECF1;opacity:.8"></i><div class="font-bold tracking-widest mt-3" style="color:#FF7A7A">'+esc(GT.name.toUpperCase())+' MENANGKAP KAMU!</div></div>';
+    } else {
+      sfx('scream');
+      s.style.background = '#000';
+      s.innerHTML = '<svg viewBox="0 0 200 200" style="width:min(92vw,92vh);height:auto;animation:escShake .08s infinite">' + SCARE[gKind] + '</svg>' +
+        '<style>@keyframes escShake{0%{transform:translate(4px,-3px) scale(1.04)}50%{transform:translate(-5px,4px) scale(1.08)}100%{transform:translate(3px,5px) scale(1.05)}}</style>';
+    }
     s.style.display = 'flex';
     setTimeout(() => {
+      if (!alive) return;
       s.style.display = 'none'; s.innerHTML = '';
       if (lives <= 0) return lose();
-      P.x = 1.5; P.z = 0; P.yaw = -Math.PI / 2; P.pitch = 0;
-      const far = WAYS.slice().sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.z) - Math.hypot(a[0] - P.x, a[1] - P.z))[0];
-      G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
+      P.f = 0; P.x = 1.5; P.z = 0; P.yaw = -Math.PI / 2; P.pitch = 0;
+      const far = WAYS[0].slice().sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.z) - Math.hypot(a[0] - P.x, a[1] - P.z))[0];
+      G.f = 0; G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
       paused = false; msg('Kamu terjaga semula di pintu masuk… <span style="color:#E23B3B">'+lives+' nyawa</span> lagi.', 3000);
-    }, 1500);
+    }, soft ? 1300 : 1500);
   }
   function endScreen(html){
-    ended = true; paused = true; $e('#escAct').style.display = 'none';
+    ended = true; paused = true; stopInput(); $e('#escAct').style.display = 'none'; actLabel = '';
     const e = $e('#escEnd'); e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:400px">' + html +
       '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button></div></div>';
     e.style.display = 'flex';
@@ -13212,8 +13732,8 @@ function escRun(THREE, sid, ac){
   }
   function win(){
     sfx('win');
-    const sec = Math.round(elapsed), rp = escRP(sec), d = escData();
-    const prev = d.best[sid];
+    const sec = Math.round(elapsed), rp = escRP(sec, cfg), d = escData();
+    const prev = d.best[sid], first = !d.wins[sid];
     if (!prev || sec < prev) d.best[sid] = sec;
     d.wins[sid] = (d.wins[sid] || 0) + 1;
     S.arena = S.arena || { points:{}, wins:{}, losses:{}, history:[] };
@@ -13222,17 +13742,18 @@ function escRun(THREE, sid, ac){
     save(true);
     endScreen('<i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i>' +
       '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#4ADE80">BERJAYA KELUAR!</div>' +
-      '<div class="text-[13px] text-muted mt-1">'+esc(player ? player.name : '')+' melarikan diri dari sekolah berhantu.</div>' +
+      '<div class="text-[13px] text-muted mt-1">'+esc(player ? player.name : '')+' melarikan diri dari '+esc(GT.name)+' · '+D.name+'</div>' +
       '<div class="grid grid-cols-3 gap-2 mt-4 num">' +
         '<div class="panel clip-s p-2"><div class="text-[18px] text-cyan">'+fmtSec(sec)+'</div><div class="text-[10px] text-muted">MASA'+(!prev || sec < prev ? ' · REKOD!' : '')+'</div></div>' +
         '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FFD76A">'+correct+'/'+answered+'</div><div class="text-[10px] text-muted">BETUL</div></div>' +
-        '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+'+rp+'</div><div class="text-[10px] text-muted">RP</div></div></div>');
+        '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+'+rp+'</div><div class="text-[10px] text-muted">RP</div></div></div>' +
+      (first ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#E23B3B"><i class="fa-solid fa-certificate" style="color:#E23B3B"></i> Lencana baharu: <b>Pelarian Seram</b></div>' : ''));
   }
   function lose(){
     endScreen('<i class="fa-solid fa-ghost text-4xl" style="color:#E23B3B"></i>' +
-      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#E23B3B">HANTU MENANGKAP KAMU</div>' +
-      '<div class="text-[13px] text-muted mt-1">Kunci ditemui: '+keys+'/'+ESC_KEYS+' · Jawapan betul: '+correct+'/'+answered+'</div>' +
-      '<div class="text-[12px] text-muted mt-2">Tip: jawab dengan teliti — jawapan salah memanggil hantu.</div>');
+      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#E23B3B">'+esc(GT.name.toUpperCase())+' MENANGKAP KAMU</div>' +
+      '<div class="text-[13px] text-muted mt-1">Kunci: '+keys()+'/'+D.keys+' · Jawapan betul: '+correct+'/'+answered+'</div>' +
+      '<div class="text-[12px] text-muted mt-2">Tip: sembunyi dalam loker merah bila dikejar, dan jawab dengan teliti.</div>');
   }
   function quit(){
     if (!alive) return;
@@ -13253,77 +13774,126 @@ function escRun(THREE, sid, ac){
 
   /* ---------- gelung utama ---------- */
   const fwd = new THREE.Vector3();
-  let last = performance.now(), beatT = 0;
+  let last = performance.now(), beatT = 0, tickT = 0;
   function update(dt, now){
-    // gerakan pemain
-    let mx = joy.x, my = joy.y;
-    if (kb['w'] || kb['arrowup']) my -= 1;
-    if (kb['s'] || kb['arrowdown']) my += 1;
-    if (kb['a'] || kb['arrowleft']) mx -= 1;
-    if (kb['d'] || kb['arrowright']) mx += 1;
-    const m = Math.min(1, Math.hypot(mx, my));
-    if (m > .05){
-      const sp = 3.3 * m;
-      const sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
-      const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
-      P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt;
-      P.bob += dt * 9 * m;
-      if (now - lastStep > 430){ lastStep = now; sfx('step'); }
+    if (!P.hide){
+      let mx = joy.x, my = joy.y;
+      if (kb['w'] || kb['arrowup']) my -= 1;
+      if (kb['s'] || kb['arrowdown']) my += 1;
+      if (kb['a'] || kb['arrowleft']) mx -= 1;
+      if (kb['d'] || kb['arrowright']) mx += 1;
+      const m = Math.min(1, Math.hypot(mx, my));
+      if (m > .05){
+        const sp = 3.3 * m, sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
+        const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
+        P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt;
+        P.bob += dt * 9 * m;
+        if (now - lastStep > 430){ lastStep = now; sfx('step'); }
+      }
+      collide(P, .3);
     }
-    collide(P, .3);
-    cam.position.set(P.x, 1.6 + Math.sin(P.bob) * .04, P.z);
+    cam.position.set(P.x, (P.hide ? 1.55 : 1.6 + Math.sin(P.bob) * .04), P.z);
     cam.rotation.set(P.pitch, P.yaw, 0);
     // hantu
-    const dx = P.x - G.x, dz = P.z - G.z, dist = Math.hypot(dx, dz);
+    if (G.f !== P.f){
+      G.hunt = false;
+      if (!P.hide && (G.follow += dt) > 10){
+        const r = STAIRS[P.f]; G.f = P.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.follow = 0; G.grace = 1.5;
+        sfx('creak'); msg('Kamu terdengar sesuatu di <span style="color:#E23B3B">tangga</span>…', 2600);
+      }
+    } else G.follow = 0;
+    const same = G.f === P.f;
+    const dx = P.x - G.x, dz = P.z - G.z, dist = same ? Math.hypot(dx, dz) : 99;
     if (G.grace > 0) G.grace -= dt;
-    else {
-      if (!G.hunt && dist < 9){ G.hunt = true; sfx('sting'); msg('<span style="color:#FF5A5A">Ia nampak kamu… LARI!</span>', 2000); }
-      if (G.hunt && dist > 16) G.hunt = false;
+    else if (same){
+      if (!G.hunt && !P.hide && dist < sight){ G.hunt = true; sfx('sting'); msg('<span style="color:#FF5A5A">Ia nampak kamu… LARI!</span>', 2000); }
+      if (G.hunt && (dist > sight + 7 || P.hide)) G.hunt = false;
       let tx, tz, sp;
-      if (G.hunt){ tx = P.x; tz = P.z; sp = 2.15 + keys * .3; }
+      if (G.hunt){ tx = P.x; tz = P.z; sp = huntSp + keys() * .2; }
       else {
-        if (Math.hypot(G.wx - G.x, G.wz - G.z) < .5){ const w = WAYS[Math.floor(Math.random() * WAYS.length)]; G.wx = w[0]; G.wz = w[1]; }
-        tx = G.wx; tz = G.wz; sp = 1.3;
+        if (Math.hypot(G.wx - G.x, G.wz - G.z) < .5){ const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; }
+        tx = G.wx; tz = G.wz; sp = GT.roam;
       }
       const gx = tx - G.x, gz = tz - G.z, gl = Math.hypot(gx, gz) || 1;
       G.x += gx / gl * sp * dt; G.z += gz / gl * sp * dt;
-      if (dist < .75) return caught();
+      if (dist < .75 && !P.hide) return caught();
     }
-    ghost.position.set(G.x, Math.sin(now / 400) * .12 + .1, G.z);
+    ghost.visible = same;
+    const jitter = gKind === 'toyol' ? Math.abs(Math.sin(now / 90)) * .08 : Math.sin(now / 400) * .12 + .1;
+    ghost.position.set(G.x, jitter, G.z);
     ghost.lookAt(P.x, ghost.position.y, P.z);
+    // bunyi khas hantu (pontianak: ketawa PERLAHAN bila dekat, KUAT bila jauh)
+    if ((laughT -= dt) <= 0){
+      laughT = 11 + Math.random() * 9;
+      if (gKind === 'pontianak') sfx('laugh', same ? clamp(dist / 18, .15, 1) : .35);
+      else if (gKind === 'toyol') sfx('giggle', same ? clamp(1 - dist / 25, .2, 1) : .2);
+    }
     // detak jantung & tepi merah bila dekat
     const fear = clamp(1 - dist / 10, 0, 1);
     $e('#escRed').style.opacity = (fear * .9).toFixed(2);
     beatT -= dt;
     if (fear > 0 && beatT <= 0){ sfx('beat', .4 + fear * .6); beatT = 1.1 - fear * .65; }
-    // benda yang boleh disentuh berhampiran
+    // jam berdetik
+    if ((tickT += dt) >= 1){
+      tickT = 0;
+      clocks.forEach(c => { c.sec = (c.sec + 1) % 60; c.hand.rotation.z = -c.sec * Math.PI / 30; if (c.f === P.f){ const d = Math.hypot(c.x - P.x, c.z - P.z); if (d < 6) sfx('tick', 1 - d / 6); } });
+    }
     cam.getWorldDirection(fwd);
-    near = null; let best = 2.4;
-    boards.filter(b => !b.solved).concat([exitPt]).forEach(o => {
-      const ox = o.pos.x - P.x, oz = o.pos.z - P.z, d = Math.hypot(ox, oz);
-      if (d < best && (fwd.x * ox + fwd.z * oz) / (d || 1) > .2){ best = d; near = o; }
+    // nombor kod tersembunyi: dijumpai bila dilihat dari dekat
+    digits.forEach(dg => {
+      if (found[dg.idx] || dg.f !== P.f) return;
+      const ox = dg.x - P.x, oz = dg.z - P.z, d = Math.hypot(ox, oz);
+      if (d < 3.6 && (fwd.x * ox + fwd.z * oz) / (d || 1) > .55){
+        found[dg.idx] = true; sfx('chime'); hud();
+        msg('Kamu jumpa nombor tertulis: <span style="color:#FF5A5A">nombor ke-'+(dg.idx + 1)+' = '+CODE[dg.idx]+'</span>', 3200);
+      }
     });
-    const label = !near ? '' : near === exitPt ? '<i class="fa-solid fa-door-open"></i> BUKA PINTU' : '<i class="fa-solid fa-chalkboard"></i> JAWAB SOALAN';
+    // di mana pemain berada
+    const inRoom = rooms.find(r => r.f === P.f && P.x > r.x1 && P.x < r.x2 && (P.z - r.zc) * r.side > 2 && (P.z - r.zc) * r.side < 12) || null;
+    if (inRoom !== room){ room = inRoom; $e('#escWhere').textContent = FLOORS[P.f].name + (room ? ' · ' + room.name : ' · KORIDOR'); }
+    // benda yang boleh disentuh berhampiran
+    near = null; let best = 2.4;
+    if (P.hide) near = { kind: 'unhide' };
+    else inter.forEach(o => {
+      if (o.f !== P.f) return;
+      if (o.kind === 'board' && o.bd.solved) return;
+      if (o.kind === 'pickup' && (o.src.solved || !staffDoor.open)) return;
+      if (o.kind === 'lock' && staffDoor.open) return;
+      const ox = o.x - P.x, oz = o.z - P.z, d = Math.hypot(ox, oz);
+      const facing = o.kind === 'hide' || o.kind === 'stairs' ? 0 : .2;
+      if (d < best && (fwd.x * ox + fwd.z * oz) / (d || 1) > facing - (o.kind === 'hide' ? 1 : 0)){ best = d; near = o; }
+    });
+    const LBL = { unhide: 'fa-door-open|KELUAR LOKER', hide: 'fa-box-archive|SEMBUNYI', exit: 'fa-door-open|BUKA PINTU', lock: 'fa-lock|MASUKKAN KOD',
+      pickup: 'fa-key|AMBIL KUNCI', board: 'fa-chalkboard|JAWAB SOALAN', match: 'fa-shuffle|PADANKAN KAD' };
+    let lk = near ? (near.kind === 'board' && near.bd.type === 'match' ? 'match' : near.kind) : '';
+    let label = '';
+    if (near && near.kind === 'stairs') label = '<i class="fa-solid fa-stairs"></i> ' + (near.to ? 'NAIK TANGGA' : 'TURUN TANGGA');
+    else if (lk){ const [ic, t] = LBL[lk].split('|'); label = '<i class="fa-solid '+ic+'"></i> ' + t; }
     if (label !== actLabel){                         // tulis semula hanya bila berubah, supaya ketikan tidak hilang
       actLabel = label;
       const act = $e('#escAct');
       act.innerHTML = label; act.style.display = label ? 'block' : 'none';
     }
   }
-  function ambient(dt){
-    flick.forEach(f => {
+  function ambient(dt, now){
+    // 4 cahaya sebenar diletak di lekapan terdekat pada tingkat pemain
+    fixtures.forEach(f => {
       f.t += dt;
-      const on = f.t < 0 ? Math.random() < .25 : Math.random() > .015;
-      const v = on ? f.base * (.85 + Math.random() * .15) : 0;
-      f.l.intensity = v; f.tube.material.emissiveIntensity = v / f.base;
+      const on = !f.dead && (f.t < 0 ? Math.random() < .25 : Math.random() > .015);
+      f.v = on ? .85 + Math.random() * .15 : 0;
+      f.tube.material.emissiveIntensity = f.v;
     });
-    exitLight.intensity = 5 + Math.sin(performance.now() / 300) * 1.5;
+    const nearFx = fixtures.filter(f => f.f === P.f).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z)).slice(0, pool.length);
+    pool.forEach((l, i) => { const f = nearFx[i]; if (!f){ l.intensity = 0; return; } l.position.set(f.x, H - .25, f.z); l.intensity = 7 * f.v; });
+    exitLight.intensity = P.f === 0 ? 5 + Math.sin(now / 300) * 1.5 : 0;
+    fans.forEach(f => f.g.rotation.y += f.sp * dt);
+    const gk = ghost.children.find(c => c.isPointLight); if (gk) gk.intensity = ghost.visible ? 2.5 : 0;
   }
   function frame(now){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!paused && !ended){ elapsed += dt; $e('#escTime').textContent = fmtSec(elapsed); update(dt, now); }
-    ambient(dt);
+    ambient(dt, now);
     R.render(scene, cam);
     requestAnimationFrame(frame);
   }
@@ -13334,6 +13904,7 @@ function escRun(THREE, sid, ac){
 const ACTS = {
   'esc-stu': escStuPick,
   'esc-start': escStart,
+  'esc-opt': escOpt,
   'go-settings': ()=>setTab('settings'),
   'go-students': ()=>setTab('students'),
   'showcase-open': showcaseSetup,
