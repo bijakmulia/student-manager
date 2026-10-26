@@ -12723,8 +12723,615 @@ async function autoAssetPack(){
   toast('Grafik sedia digunakan.');
 }
 
+/* ============ GAME 3: SEKOLAH BERHANTU (3D) ============
+   Pelajar terperangkap di sekolah pada waktu malam. Cari 3 papan hitam
+   bercahaya, jawab soalan untuk mendapatkan kunci, kemudian lari ke pintu
+   KELUAR sebelum hantu menangkap. Soalan diambil dari bank soalan subjek
+   aktif; jika kosong, soalan matematik dijana sendiri.
+   Three.js dimuat hanya bila permainan dibuka (tidak membebankan app).   */
+const ESC_THREE = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const ESC_KEYS = 3, ESC_LIVES = 3, ESC_QTIME = 25;
+let ESC = null;                                   // permainan yang sedang berjalan
+function escData(){
+  S.escape = S.escape || {};
+  S.escape.best = S.escape.best || {}; S.escape.wins = S.escape.wins || {};
+  return S.escape;
+}
+const fmtSec = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+/* RP kemenangan: lebih pantas = lebih banyak (30 → minimum 15) */
+const escRP = sec => clamp(30 - Math.floor(sec / 30), 15, 30);
+
+function viewEscape(){
+  if (!ctxOk()) return emptyState('fa-ghost','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan teka-teki diambil dari bank soalan subjek itu.');
+  const o = arenaUi();
+  const sid = o.escStu && stu(o.escStu) ? o.escStu : '';
+  const bank = qBank(S.ui.activeSubjectId);
+  const d = escData();
+  const board = studentsOf(S.ui.activeClassId).filter(s => d.best[s.id]).sort((a, b) => d.best[a.id] - d.best[b.id]).slice(0, 5);
+  let h = '<div class="panel clip p-4 mt-3 text-center" style="background:radial-gradient(circle at 50% 0%,rgba(226,59,59,.2),transparent 70%),var(--panel,#141C26)">' +
+    '<i class="fa-solid fa-ghost text-4xl" style="color:#E8ECF1;filter:drop-shadow(0 0 12px rgba(226,59,59,.8))"></i>' +
+    '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#E23B3B;text-shadow:0 0 12px rgba(226,59,59,.6)">SEKOLAH BERHANTU</div>' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kamu terperangkap di sekolah pada waktu malam. Cari <b class="text-cyan">3 papan hitam bercahaya</b>, jawab soalan untuk mendapatkan kunci, kemudian lari ke pintu <b style="color:#E23B3B">KELUAR</b>. Jangan biar hantu menangkap kamu!</div></div>';
+  h += '<div class="panel clip p-3 mt-3"><div class="lbl">PEMAIN</div>' +
+    '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="esc-stu">' +
+      (sid ? avatarHtml(stu(sid), 28) : '<i class="fa-solid fa-user text-muted"></i>') +
+      '<span class="flex-1 text-left text-[13px]">'+(sid ? esc(stu(sid).name) : '— pilih pelajar —')+'</span>' +
+      '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>' +
+    '<div class="text-[11px] text-muted mt-2"><i class="fa-solid fa-circle-question"></i> ' +
+      (bank.length ? bank.length + ' soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b>'
+                   : 'Bank soalan subjek ini kosong — soalan <b>matematik</b> dijana automatik') + '</div>' +
+    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Berjaya keluar = <span class="text-orange">+15 hingga +30 RP</span> (lebih pantas, lebih banyak)</div>' +
+    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="esc-start"><i class="fa-solid fa-door-open"></i> MASUK SEKOLAH</button>' +
+    '<div class="text-[10px] text-muted mt-2 text-center leading-relaxed">Telefon: sentuh kiri untuk berjalan, seret kanan untuk melihat<br>Komputer: WASD / anak panah + seret tetikus · E untuk berinteraksi</div></div>';
+  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">MASA TERPANTAS</div>' + board.map((s, i) =>
+    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">'+(i+1)+'</span>' + avatarHtml(s, 24) +
+    '<span class="flex-1 text-[13px] truncate">'+esc(s.name)+'</span><span class="num text-cyan text-[12px]">'+fmtSec(d.best[s.id])+'</span></div>').join('') + '</div>';
+  return h;
+}
+function escStuPick(){
+  const list = studentsOf(S.ui.activeClassId);
+  if (!list.length) return toast('Tiada pelajar dalam kelas aktif.', null, true);
+  const d = escData();
+  const id = openModal({ icon:'fa-user', title:'Pilih Pemain',
+    body: list.map(s =>
+      '<button class="btn clip-s w-full mb-1 flex items-center gap-2 !py-2 text-left" data-p="'+s.id+'">' +
+        avatarHtml(s, 28) + '<div class="flex-1 min-w-0"><div class="text-[13px] truncate">'+esc(s.name)+'</div>' +
+        '<div class="num text-[10px] text-muted">'+(d.best[s.id] ? 'terpantas '+fmtSec(d.best[s.id])+' · '+(d.wins[s.id]||0)+'× berjaya' : 'belum pernah keluar')+'</div></div>' +
+        '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>').join('') });
+  $('[data-modal="'+id+'"]').addEventListener('click', e => {
+    const b = e.target.closest('[data-p]'); if (!b) return;
+    arenaUi().escStu = b.dataset.p; save(); closeModal(id); renderTab();
+  });
+}
+/* Soalan: bank guru dahulu (ikut urutan, sama seperti mod lain), jika tiada → matematik */
+function escMathQ(){
+  const r = n => Math.floor(Math.random() * n);
+  const op = r(4); let a, b, ans, sym;
+  if (op === 0){ a = 10 + r(90); b = 10 + r(90); ans = a + b; sym = '+'; }
+  else if (op === 1){ a = 20 + r(80); b = 1 + r(a); ans = a - b; sym = '−'; }
+  else if (op === 2){ a = 2 + r(11); b = 2 + r(11); ans = a * b; sym = '×'; }
+  else { b = 2 + r(11); ans = 1 + r(12); a = b * ans; sym = '÷'; }
+  const opts = new Set([ans]);
+  while (opts.size < 4){ const d = (1 + r(10)) * (Math.random() < .5 ? -1 : 1); if (ans + d >= 0) opts.add(ans + d); }
+  return { q: a + ' ' + sym + ' ' + b + ' = ?', c: Array.from(opts).map(String), a: 0 };
+}
+function escQuestion(){
+  const bank = qBank(S.ui.activeSubjectId);
+  if (!bank.length) return escMathQ();
+  const q = nextQ(bank);
+  const keep = [0,1,2,3].filter(i => q.c[i] !== undefined && q.c[i] !== '');
+  return { q: q.q, c: keep.map(i => q.c[i]), a: keep.indexOf(q.a) };
+}
+async function escStart(){
+  const o = arenaUi();
+  if (!o.escStu || !stu(o.escStu)) return toast('Pilih pemain dahulu.', null, true);
+  if (ESC) return;
+  /* AudioContext mesti dicipta semasa sentuhan pengguna, sebelum await */
+  let ac = null;
+  try { ac = (typeof audCtx === 'function' && audCtx()) || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch(e){}
+  ESC = { loading:true };
+  toast('Memuatkan sekolah…');
+  let THREE;
+  try { THREE = await import(ESC_THREE); }
+  catch(e){ ESC = null; return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
+  escRun(THREE, o.escStu, ac);
+}
+
+function escRun(THREE, sid, ac){
+  const player = stu(sid);
+  const root = document.createElement('div');
+  root.id = 'escRoot';
+  root.style.cssText = 'position:fixed;inset:0;z-index:950;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit';
+  const ovl = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:20px;';
+  root.innerHTML =
+    '<canvas id="escCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
+    '<div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.9) 100%)"></div>' +
+    '<div id="escRed" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,rgba(150,0,0,.6) 100%);opacity:0;transition:opacity .25s"></div>' +
+    '<div style="position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--safe-t,0px)) 12px 0;display:flex;align-items:center;gap:14px;pointer-events:none">' +
+      '<div id="escKeys" class="num text-[15px]"></div><div id="escLives" class="text-[14px]"></div>' +
+      '<div id="escTime" class="num text-[13px] ml-auto" style="color:#7E93A8"></div>' +
+      '<button id="escQuit" class="btn clip-s !px-3 !py-1 text-[13px]" style="pointer-events:auto"><i class="fa-solid fa-xmark"></i></button></div>' +
+    '<div id="escMsg" style="position:absolute;left:16px;right:16px;top:calc(56px + var(--safe-t,0px));text-align:center;font-size:15px;font-weight:700;color:#E8ECF1;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .4s"></div>' +
+    '<div id="escCross" style="position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.35);pointer-events:none"></div>' +
+    '<div id="escJoy" style="position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);display:none;pointer-events:none">' +
+      '<div id="escKnob" style="position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(255,255,255,.22)"></div></div>' +
+    '<div id="escHint" style="position:absolute;left:16px;bottom:calc(20px + var(--safe-b,0px));font-size:11px;color:rgba(255,255,255,.35);pointer-events:none">sentuh &amp; seret di sini untuk berjalan</div>' +
+    '<button id="escAct" class="btn btn-o clip-s" style="position:absolute;right:18px;bottom:calc(110px + var(--safe-b,0px));padding:14px 18px;font-size:14px;display:none"></button>' +
+    '<div id="escQ" style="'+ovl+'background:rgba(0,0,0,.72)"></div>' +
+    '<div id="escScare" style="'+ovl+'background:#000"></div>' +
+    '<div id="escEnd" style="'+ovl+'background:rgba(0,0,0,.85)"></div>';
+  document.body.appendChild(root);
+  lockBody();
+  const $e = s => root.querySelector(s);
+
+  /* ---------- pemapar & pentas ---------- */
+  const R = new THREE.WebGLRenderer({ canvas: $e('#escCv'), antialias: false, powerPreference: 'high-performance' });
+  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  R.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020304);
+  scene.fog = new THREE.FogExp2(0x020304, 0.1);
+  const cam = new THREE.PerspectiveCamera(72, 1, 0.05, 60);
+  cam.rotation.order = 'YXZ';
+  scene.add(cam);
+  const resize = () => { const w = root.clientWidth, h = root.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
+  resize(); window.addEventListener('resize', resize);
+  scene.add(new THREE.HemisphereLight(0x2a3a4a, 0x0a0806, 0.5));
+
+  /* ---------- tekstur dilukis sendiri (tiada fail luar) ---------- */
+  const canvasTex = (w, h, draw) => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    t.userData.canvas = c;
+    return t;
+  };
+  const grime = (g, w, h, n, a) => { for (let i = 0; i < n; i++){ g.fillStyle = 'rgba(0,0,0,'+(Math.random()*a)+')'; const s = 2 + Math.random()*6; g.fillRect(Math.random()*w, Math.random()*h, s, s); } };
+  const floorTex = canvasTex(256, 256, (g, w, h) => {
+    for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++){ g.fillStyle = (x + y) % 2 ? '#3B4237' : '#262A25'; g.fillRect(x*w/2, y*h/2, w/2, h/2); }
+    grime(g, w, h, 900, .35);
+  });
+  const wallTex = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#56695B'; g.fillRect(0, 0, w, h*.55);
+    g.fillStyle = '#2C3034'; g.fillRect(0, h*.55, w, h*.45);
+    g.fillStyle = '#7A1E1E'; g.fillRect(0, h*.53, w, 6);
+    grime(g, w, h, 700, .3);
+    for (let i = 0; i < 4; i++){                                  // kesan air menitis
+      g.fillStyle = 'rgba(20,25,20,.35)'; g.fillRect(Math.random()*w, 0, 3 + Math.random()*4, Math.random()*h*.6);
+    }
+  });
+  const ceilTex = canvasTex(128, 128, (g, w, h) => {
+    g.fillStyle = '#1B1D1F'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#0D0E0F'; g.lineWidth = 3; g.strokeRect(0, 0, w, h);
+    grime(g, w, h, 200, .4);
+  });
+  const lockerTex = canvasTex(256, 128, (g, w, h) => {
+    g.fillStyle = '#3A4A5E'; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 32){ g.fillStyle = '#1E2733'; g.fillRect(x, 0, 2, h); g.fillRect(x + 22, h*.45, 5, 12); for (let y = 10; y < 34; y += 6) g.fillRect(x + 7, y, 16, 2); }
+    grime(g, w, h, 300, .35);
+  });
+
+  /* ---------- binaan: dinding, lantai, bilik darjah ---------- */
+  const H = 3.2;
+  const solids = [];
+  const box = (x1, z1, x2, z2, h, y0, mat, solid) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(Math.max(.04, x2 - x1), h, Math.max(.04, z2 - z1)), mat);
+    m.position.set((x1 + x2) / 2, y0 + h / 2, (z1 + z2) / 2);
+    scene.add(m);
+    if (solid) solids.push({ x1, z1, x2, z2 });
+    return m;
+  };
+  const texMat = (tex, rx, ry, extra) => { const t = tex.clone(); t.needsUpdate = true; t.repeat.set(rx, ry); return new THREE.MeshStandardMaterial(Object.assign({ map: t, roughness: .95, metalness: 0 }, extra || {})); };
+  const wall = (x1, z1, x2, z2) => box(x1, z1, x2, z2, H, 0, texMat(wallTex, Math.max(x2 - x1, z2 - z1) / 3, 1), true);
+  const lintel = (x1, z1, x2, z2) => box(x1, z1, x2, z2, H - 2.3, 2.3, new THREE.MeshStandardMaterial({ color: 0x1a1410, roughness: 1 }), false);
+
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(52, 28), texMat(floorTex, 26, 14));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(24, 0, 0); scene.add(floor);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(52, 28), texMat(ceilTex, 26, 14));
+  ceil.rotation.x = Math.PI / 2; ceil.position.set(24, H, 0); scene.add(ceil);
+
+  // koridor x 0..48, z -2..2 · pintu bilik: utara x=9 & x=37, selatan x=23
+  [[0, 8], [10, 36], [38, 48]].forEach(([a, b]) => wall(a, -2.1, b, -1.9));
+  [[0, 22], [24, 48]].forEach(([a, b]) => wall(a, 1.9, b, 2.1));
+  wall(-.2, -2.1, 0, 2.1); wall(48, -2.1, 48.2, 2.1);
+  lintel(8, -2.1, 10, -1.9); lintel(36, -2.1, 38, -1.9); lintel(22, 1.9, 24, 2.1);
+  // loker sepanjang dinding selatan
+  [[1, 21], [25, 47]].forEach(([a, b]) => box(a, 1.55, b, 1.9, 2, 0, texMat(lockerTex, (b - a) / 4, 1), true));
+
+  const rooms = [
+    { x1: 4,  x2: 14, z1: -12, z2: -2, door: 9,  side: -1 },
+    { x1: 18, x2: 28, z1: 2,   z2: 12, door: 23, side:  1 },
+    { x1: 32, x2: 42, z1: -12, z2: -2, door: 37, side: -1 }
+  ];
+  const deskMat = new THREE.MeshStandardMaterial({ color: 0x5A3E28, roughness: .9 });
+  const chairMat = new THREE.MeshStandardMaterial({ color: 0x2E3A46, roughness: .9 });
+  const boards = [];
+  rooms.forEach((r, i) => {
+    const far = r.side < 0 ? r.z1 : r.z2;
+    wall(r.x1, Math.min(far, far - .2 * r.side), r.x2, Math.max(far, far - .2 * r.side));
+    wall(r.x1 - .2, r.z1, r.x1, r.z2); wall(r.x2, r.z1, r.x2 + .2, r.z2);
+    // meja dalam dua lajur, laluan tengah dibiarkan kosong menuju papan
+    [-2.8, 2.8].forEach(dx => [3, 5.2, 7.4].forEach(dep => {
+      const cx = r.door + dx + (Math.random() - .5) * .4, cz = r.side * (2 + dep);
+      const d = box(cx - .5, cz - .32, cx + .5, cz + .32, .75, 0, deskMat, true);
+      d.rotation.y = (Math.random() - .5) * .35;
+      box(cx - .22, cz + r.side * .5 - .2, cx + .22, cz + r.side * .5 + .2, .45, 0, chairMat, false);
+    }));
+    // papan hitam bercahaya (teka-teki)
+    const tex = canvasTex(512, 256, () => {});
+    const mat = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .55, roughness: 1 });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.6), mat);
+    mesh.position.set(r.door, 1.6, far - r.side * .12);
+    mesh.rotation.y = r.side < 0 ? 0 : Math.PI;
+    scene.add(mesh);
+    const glow = new THREE.PointLight(0x44ff99, 4, 6, 2);
+    glow.position.set(r.door, 1.8, far - r.side * 1.2); scene.add(glow);
+    const bd = { i, tex, glow, solved: false, pos: new THREE.Vector3(r.door, 0, far - r.side * 1.4), label: 'PAPAN ' + (i + 1) };
+    drawBoard(bd); boards.push(bd);
+  });
+  function drawBoard(bd){
+    const c = bd.tex.userData.canvas, g = c.getContext('2d'), w = c.width, h = c.height;
+    g.fillStyle = '#4A2E1A'; g.fillRect(0, 0, w, h);
+    g.fillStyle = bd.solved ? '#13301F' : '#163A28'; g.fillRect(10, 10, w - 20, h - 20);
+    g.fillStyle = 'rgba(255,255,255,.08)';
+    for (let k = 0; k < 14; k++) g.fillRect(20 + Math.random() * (w - 80), 20 + Math.random() * (h - 40), 20 + Math.random() * 60, 2);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (bd.solved){
+      g.fillStyle = '#4ADE80'; g.font = 'bold 120px sans-serif'; g.fillText('✓', w / 2, h / 2 - 10);
+      g.font = 'bold 26px sans-serif'; g.fillText('KUNCI DIAMBIL', w / 2, h - 40);
+    } else {
+      g.fillStyle = '#E8F5EC'; g.shadowColor = '#7CFFB2'; g.shadowBlur = 18;
+      g.font = 'bold 130px sans-serif'; g.fillText('?', w / 2, h / 2 - 8);
+      g.shadowBlur = 0; g.font = 'bold 24px sans-serif'; g.fillStyle = 'rgba(232,245,236,.75)'; g.fillText('JAWAB UNTUK KUNCI', w / 2, h - 36);
+    }
+    bd.tex.needsUpdate = true;
+  }
+  // tulisan menyeramkan di dinding
+  const scrawl = canvasTex(512, 128, (g, w, h) => {
+    g.fillStyle = 'rgba(0,0,0,0)'; g.fillRect(0, 0, w, h);
+    g.font = 'bold 44px serif'; g.fillStyle = '#8B0000'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('JAWAB... ATAU KEKAL DI SINI', w / 2, h / 2);
+  });
+  const sc = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshStandardMaterial({ map: scrawl, transparent: true, emissive: 0x550000, emissiveMap: scrawl, emissiveIntensity: .6 }));
+  sc.position.set(4, 1.9, -1.88); scene.add(sc);
+
+  // pintu KELUAR di hujung timur
+  const signTex = canvasTex(256, 64, () => {});
+  const drawSign = open => {
+    const c = signTex.userData.canvas, g = c.getContext('2d');
+    g.fillStyle = open ? '#0B3B1E' : '#3B0B0B'; g.fillRect(0, 0, 256, 64);
+    g.fillStyle = open ? '#4ADE80' : '#FF3B3B'; g.font = 'bold 40px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(open ? 'KELUAR ➜' : 'KELUAR', 128, 34); signTex.needsUpdate = true;
+  };
+  drawSign(false);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .35), new THREE.MeshStandardMaterial({ map: signTex, emissive: 0xffffff, emissiveMap: signTex, emissiveIntensity: 1 }));
+  sign.position.set(47.88, 2.75, 0); sign.rotation.y = -Math.PI / 2; scene.add(sign);
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.3), new THREE.MeshStandardMaterial({ color: 0x4A1A12, roughness: .8, metalness: .2 }));
+  door.position.set(47.88, 1.15, 0); door.rotation.y = -Math.PI / 2; scene.add(door);
+  const exitLight = new THREE.PointLight(0xff2020, 6, 7, 2); exitLight.position.set(46.8, 2.4, 0); scene.add(exitLight);
+  const exitPt = { pos: new THREE.Vector3(47, 0, 0) };
+
+  // lampu siling koridor yang berkelip
+  const flick = [8, 23, 37].map(x => {
+    const l = new THREE.PointLight(0xcfe8d8, 7, 11, 2); l.position.set(x, H - .25, 0); scene.add(l);
+    const tube = box(x - .6, -.08, x + .6, .08, .05, H - .1, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xcfe8d8, emissiveIntensity: 1 }), false);
+    return { l, tube, base: 7, t: Math.random() * 5 };
+  });
+  // lampu suluh
+  const torch = new THREE.SpotLight(0xfff1d6, 30, 20, .5, .55, 1.6);
+  torch.position.set(0, -.1, 0); cam.add(torch); cam.add(torch.target); torch.target.position.set(0, -.15, -1);
+
+  /* ---------- hantu ---------- */
+  const ghost = new THREE.Group();
+  const gMat = new THREE.MeshStandardMaterial({ color: 0xE6ECF2, emissive: 0x6A7A8C, emissiveIntensity: .55, transparent: true, opacity: .85, side: THREE.DoubleSide, roughness: 1 });
+  const robeGeo = new THREE.CylinderGeometry(.24, .62, 1.6, 18, 5, true);
+  { const p = robeGeo.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) < -.7) p.setY(i, p.getY(i) - Math.random() * .25); robeGeo.computeVertexNormals(); }
+  const robe = new THREE.Mesh(robeGeo, gMat); robe.position.y = 1.0; ghost.add(robe);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.34, 18, 14), gMat); head.position.y = 1.95; head.scale.y = 1.15; ghost.add(head);
+  const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff2a2a });
+  [-.12, .12].forEach(x => {
+    const hole = new THREE.Mesh(new THREE.SphereGeometry(.08, 10, 8), holeMat); hole.position.set(x, 2.0, .28); hole.scale.z = .5; ghost.add(hole);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), eyeMat); eye.position.set(x, 2.0, .33); ghost.add(eye);
+  });
+  const mouth = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), holeMat); mouth.position.set(0, 1.78, .29); mouth.scale.set(.8, 1.4, .4); ghost.add(mouth);
+  const gLight = new THREE.PointLight(0xff3030, 2.5, 4, 2); gLight.position.y = 1.6; ghost.add(gLight);
+  scene.add(ghost);
+  const WAYS = [[6, 0], [16, 0], [30, 0], [44, 0], [9, -7], [23, 7], [37, -7]];
+  const G = { x: 44, z: 0, wx: 30, wz: 0, hunt: false, grace: 6 };
+
+  /* ---------- keadaan permainan ---------- */
+  const P = { x: 1.5, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0 };
+  let keys = 0, lives = ESC_LIVES, elapsed = 0, paused = false, alive = true, ended = false;
+  let answered = 0, correct = 0, near = null, lastStep = 0;
+  const kb = {};
+  ESC = { close: () => quit() };
+
+  /* ---------- bunyi (WebAudio, dijana) ---------- */
+  const A = (() => {
+    if (!ac) return null;
+    const out = ac.createGain(); out.gain.value = .75; out.connect(ac.destination);
+    const nodes = [];
+    // dengung latar
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
+    const dg = ac.createGain(); dg.gain.value = .07; lp.connect(dg); dg.connect(out);
+    [55, 58.3, 82.4].forEach(f => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(); nodes.push(o); });
+    const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = .07; lg.gain.value = 120; lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); nodes.push(lfo);
+    const noiseBuf = (() => { const b = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+    const tone = (type, f0, f1, dur, vol, delay) => {
+      const t = ac.currentTime + (delay || 0), o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + .05);
+    };
+    const noise = (fc, q, dur, vol, f1) => {
+      const t = ac.currentTime, s = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = noiseBuf; bp.type = 'bandpass'; bp.frequency.setValueAtTime(fc, t); if (f1) bp.frequency.exponentialRampToValueAtTime(f1, t + dur); bp.Q.value = q;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      s.connect(bp); bp.connect(g); g.connect(out); s.start(t); s.stop(t + dur + .05);
+    };
+    return {
+      step:   () => noise(300 + Math.random() * 200, 1.2, .12, .12),
+      beat:   v => { tone('sine', 65, 40, .16, .5 * v); tone('sine', 60, 38, .16, .38 * v, .22); },
+      chime:  () => { tone('sine', 880, 0, .5, .25); tone('sine', 1320, 0, .7, .2, .12); },
+      buzz:   () => tone('square', 110, 70, .45, .18),
+      sting:  () => [740, 784, 831, 1108].forEach(f => tone('sawtooth', f, f * .97, 1.6, .05)),
+      scream: () => { noise(2200, 3, 1.3, .9, 500); tone('sawtooth', 720, 140, 1.2, .35); tone('square', 1000, 220, .9, .12); },
+      win:    () => [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, 0, .6, .22, i * .14)),
+      stop:   () => { nodes.forEach(n => { try { n.stop(); } catch(e){} }); try { out.gain.setTargetAtTime(0, ac.currentTime, .05); setTimeout(() => out.disconnect(), 300); } catch(e){} }
+    };
+  })();
+  const sfx = (k, v) => { try { A && A[k] && A[k](v); } catch(e){} };
+
+  /* ---------- HUD ---------- */
+  const hud = () => {
+    $e('#escKeys').innerHTML = '<i class="fa-solid fa-key" style="color:#FFD76A"></i> <span style="color:#FFD76A">'+keys+'/'+ESC_KEYS+'</span>';
+    $e('#escLives').innerHTML = Array.from({ length: ESC_LIVES }, (_, i) => '<i class="fa-solid fa-heart" style="color:'+(i < lives ? '#E23B3B' : '#3A1A1A')+'"></i>').join(' ');
+  };
+  let msgT = null;
+  const msg = (t, ms) => { const m = $e('#escMsg'); m.innerHTML = t; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 2600); };
+  hud();
+  msg('Cari <span style="color:#7CFFB2">3 papan hitam bercahaya</span> di dalam kelas…', 4200);
+
+  /* ---------- kawalan ---------- */
+  const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, look = { id: null, lx: 0, ly: 0 };
+  const onDown = e => {
+    if (paused || e.target.closest('button') || e.target.closest('#escQ,#escEnd')) return;
+    const w = root.clientWidth;
+    if (e.pointerType !== 'mouse' && e.clientX < w * .45 && joy.id === null){
+      joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
+      const j = $e('#escJoy'); j.style.display = 'block'; j.style.left = e.clientX + 'px'; j.style.top = e.clientY + 'px';
+      $e('#escKnob').style.transform = ''; $e('#escHint').style.display = 'none';
+    } else if (look.id === null){ look.id = e.pointerId; look.lx = e.clientX; look.ly = e.clientY; }
+  };
+  const onMove = e => {
+    if (e.pointerId === joy.id){
+      let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const d = Math.hypot(dx, dy), m = 48;
+      if (d > m){ dx *= m / d; dy *= m / d; }
+      joy.x = dx / m; joy.y = dy / m;
+      $e('#escKnob').style.transform = 'translate('+dx+'px,'+dy+'px)';
+    } else if (e.pointerId === look.id){
+      const s = e.pointerType === 'mouse' ? .0045 : .0065;
+      P.yaw -= (e.clientX - look.lx) * s; P.pitch = clamp(P.pitch - (e.clientY - look.ly) * s, -1.2, 1.2);
+      look.lx = e.clientX; look.ly = e.clientY;
+    }
+  };
+  const onUp = e => {
+    if (e.pointerId === joy.id){ joy.id = null; joy.x = joy.y = 0; $e('#escJoy').style.display = 'none'; }
+    if (e.pointerId === look.id) look.id = null;
+  };
+  const onKey = e => {
+    const k = e.key.toLowerCase();
+    kb[k] = e.type === 'keydown';
+    if (e.type === 'keydown' && (k === 'e' || k === 'enter') && !paused && near) interact();
+    if (['arrowup','arrowdown','arrowleft','arrowright',' '].indexOf(k) >= 0) e.preventDefault();
+  };
+  root.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('keyup', onKey);
+  $e('#escQuit').onclick = () => quit();
+  $e('#escAct').onclick = () => { if (!paused && near) interact(); };
+
+  /* ---------- fizik ringkas ---------- */
+  const collide = (p, r) => {
+    for (const s of solids){
+      const cx = clamp(p.x, s.x1, s.x2), cz = clamp(p.z, s.z1, s.z2);
+      const dx = p.x - cx, dz = p.z - cz, d2 = dx * dx + dz * dz;
+      if (d2 >= r * r) continue;
+      if (d2 > 1e-8){ const d = Math.sqrt(d2), k = (r - d) / d; p.x += dx * k; p.z += dz * k; }
+      else {
+        const l = p.x - s.x1, rr = s.x2 - p.x, t = p.z - s.z1, b = s.z2 - p.z, m = Math.min(l, rr, t, b);
+        if (m === l) p.x = s.x1 - r; else if (m === rr) p.x = s.x2 + r; else if (m === t) p.z = s.z1 - r; else p.z = s.z2 + r;
+      }
+    }
+  };
+
+  /* ---------- interaksi ---------- */
+  function interact(){
+    if (near === exitPt){
+      if (keys < ESC_KEYS){ sfx('buzz'); return msg('Pintu berkunci. Perlu <span style="color:#FFD76A">'+ESC_KEYS+' kunci</span> ('+keys+'/'+ESC_KEYS+').'); }
+      return win();
+    }
+    if (near && !near.solved) askBoard(near);
+  }
+  function askBoard(bd){
+    paused = true; joy.id = look.id = null; $e('#escJoy').style.display = 'none';
+    const q = escQuestion();
+    const order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
+    const box = $e('#escQ');
+    box.innerHTML =
+      '<div class="panel clip p-4 w-full" style="max-width:440px;border-color:#2F6B4A;box-shadow:0 0 40px rgba(60,255,150,.15)">' +
+        '<div class="lbl" style="color:#7CFFB2"><i class="fa-solid fa-chalkboard"></i> '+bd.label+' — JAWAB UNTUK KUNCI</div>' +
+        '<div style="height:6px;background:#0E151E;margin-top:8px"><div id="escQBar" style="height:100%;width:100%;background:#4ADE80"></div></div>' +
+        '<div class="text-[17px] font-bold leading-snug mt-3">'+esc(q.q)+'</div>' +
+        '<div class="mt-3">' + order.map((i, k) =>
+          '<button class="btn clip-s w-full mb-2 !py-3 text-left text-[15px]" data-ans="'+i+'"><span class="num text-orange mr-2">'+String.fromCharCode(65 + k)+'.</span>'+esc(q.c[i])+'</button>').join('') +
+        '</div></div>';
+    box.style.display = 'flex';
+    const t0 = performance.now(); let done = false, raf = 0;
+    const tick = () => {
+      const left = Math.max(0, ESC_QTIME - (performance.now() - t0) / 1000), bar = $e('#escQBar');
+      if (bar){ bar.style.width = (left / ESC_QTIME * 100) + '%'; bar.style.background = left > 10 ? '#4ADE80' : left > 5 ? '#FACC15' : '#E23B3B'; }
+      if (left <= 0) return finish(-1);
+      raf = requestAnimationFrame(tick);
+    };
+    const finish = pick => {
+      if (done) return; done = true; cancelAnimationFrame(raf);
+      const ok = pick === q.a;
+      answered++; if (ok) correct++;
+      quizRecord(sid, ok);
+      box.style.display = 'none'; box.innerHTML = ''; paused = false;
+      if (ok){
+        bd.solved = true; keys++; drawBoard(bd); bd.glow.color.set(0x4ADE80); bd.glow.intensity = 1.5;
+        sfx('chime'); hud();
+        if (keys >= ESC_KEYS){ drawSign(true); exitLight.color.set(0x30ff60); msg('Semua kunci ditemui! Lari ke pintu <span style="color:#4ADE80">KELUAR</span> di hujung koridor!', 4000); }
+        else msg('<i class="fa-solid fa-key" style="color:#FFD76A"></i> Kunci '+keys+'/'+ESC_KEYS+' ditemui!');
+      } else {
+        sfx('buzz');
+        msg('<span style="color:#FF5A5A">'+(pick === -1 ? 'Masa tamat!' : 'Salah!')+' Hantu semakin dekat…</span><br><span style="font-size:12px;color:#B8C4D0">Jawapan: '+esc(q.c[q.a])+'</span>', 3500);
+        const a = Math.random() * Math.PI * 2;              // hantu muncul berhampiran
+        G.x = P.x + Math.cos(a) * 7; G.z = P.z + Math.sin(a) * 7; G.hunt = true; G.grace = .6;
+        flick.forEach(f => f.t = -1.2);
+      }
+    };
+    box.onclick = e => { const b = e.target.closest('[data-ans]'); if (b) finish(+b.dataset.ans); };
+    raf = requestAnimationFrame(tick);
+  }
+
+  /* ---------- tamat ---------- */
+  function caught(){
+    paused = true; lives--; hud(); sfx('scream'); vibrate([200, 80, 300]);
+    const s = $e('#escScare');
+    s.innerHTML = '<svg viewBox="0 0 200 200" style="width:min(92vw,92vh);height:auto;animation:escShake .08s infinite">' +
+      '<ellipse cx="100" cy="95" rx="78" ry="92" fill="#E6ECF2"/>' +
+      '<ellipse cx="68" cy="80" rx="20" ry="26" fill="#000"/><ellipse cx="132" cy="80" rx="20" ry="26" fill="#000"/>' +
+      '<circle cx="68" cy="84" r="5" fill="#ff2020"/><circle cx="132" cy="84" r="5" fill="#ff2020"/>' +
+      '<ellipse cx="100" cy="145" rx="26" ry="38" fill="#000"/></svg>' +
+      '<style>@keyframes escShake{0%{transform:translate(4px,-3px) scale(1.04)}50%{transform:translate(-5px,4px) scale(1.08)}100%{transform:translate(3px,5px) scale(1.05)}}</style>';
+    s.style.display = 'flex';
+    setTimeout(() => {
+      s.style.display = 'none'; s.innerHTML = '';
+      if (lives <= 0) return lose();
+      P.x = 1.5; P.z = 0; P.yaw = -Math.PI / 2; P.pitch = 0;
+      const far = WAYS.slice().sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.z) - Math.hypot(a[0] - P.x, a[1] - P.z))[0];
+      G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
+      paused = false; msg('Kamu terjaga semula di pintu masuk… <span style="color:#E23B3B">'+lives+' nyawa</span> lagi.', 3000);
+    }, 1500);
+  }
+  function endScreen(html){
+    ended = true; paused = true; $e('#escAct').style.display = 'none';
+    const e = $e('#escEnd'); e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:400px">' + html +
+      '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button></div></div>';
+    e.style.display = 'flex';
+    e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const again = b.dataset.end === 'again'; quit(); if (again) setTimeout(escStart, 50); };
+  }
+  function win(){
+    sfx('win');
+    const sec = Math.round(elapsed), rp = escRP(sec), d = escData();
+    const prev = d.best[sid];
+    if (!prev || sec < prev) d.best[sid] = sec;
+    d.wins[sid] = (d.wins[sid] || 0) + 1;
+    S.arena = S.arena || { points:{}, wins:{}, losses:{}, history:[] };
+    S.arena.rp = S.arena.rp || {};
+    S.arena.rp[sid] = (S.arena.rp[sid] || 0) + rp;
+    save(true);
+    endScreen('<i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i>' +
+      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#4ADE80">BERJAYA KELUAR!</div>' +
+      '<div class="text-[13px] text-muted mt-1">'+esc(player ? player.name : '')+' melarikan diri dari sekolah berhantu.</div>' +
+      '<div class="grid grid-cols-3 gap-2 mt-4 num">' +
+        '<div class="panel clip-s p-2"><div class="text-[18px] text-cyan">'+fmtSec(sec)+'</div><div class="text-[10px] text-muted">MASA'+(!prev || sec < prev ? ' · REKOD!' : '')+'</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FFD76A">'+correct+'/'+answered+'</div><div class="text-[10px] text-muted">BETUL</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+'+rp+'</div><div class="text-[10px] text-muted">RP</div></div></div>');
+  }
+  function lose(){
+    endScreen('<i class="fa-solid fa-ghost text-4xl" style="color:#E23B3B"></i>' +
+      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#E23B3B">HANTU MENANGKAP KAMU</div>' +
+      '<div class="text-[13px] text-muted mt-1">Kunci ditemui: '+keys+'/'+ESC_KEYS+' · Jawapan betul: '+correct+'/'+answered+'</div>' +
+      '<div class="text-[12px] text-muted mt-2">Tip: jawab dengan teliti — jawapan salah memanggil hantu.</div>');
+  }
+  function quit(){
+    if (!alive) return;
+    alive = false; ESC = null;
+    window.removeEventListener('resize', resize);
+    window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp);
+    window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey);
+    if (A) A.stop();
+    scene.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); if (m.emissiveMap) m.emissiveMap.dispose(); m.dispose(); });
+    });
+    R.dispose();
+    root.remove(); unlockBody();
+    if (S.ui.tab === 'arena') renderTab();
+  }
+
+  /* ---------- gelung utama ---------- */
+  const fwd = new THREE.Vector3();
+  let last = performance.now(), beatT = 0;
+  function update(dt, now){
+    // gerakan pemain
+    let mx = joy.x, my = joy.y;
+    if (kb['w'] || kb['arrowup']) my -= 1;
+    if (kb['s'] || kb['arrowdown']) my += 1;
+    if (kb['a'] || kb['arrowleft']) mx -= 1;
+    if (kb['d'] || kb['arrowright']) mx += 1;
+    if (kb['q']) P.yaw += dt * 2; if (kb['r']) P.yaw -= dt * 2;
+    const m = Math.min(1, Math.hypot(mx, my));
+    if (m > .05){
+      const sp = 3.3 * m / Math.max(1, Math.hypot(mx, my)) * Math.max(1, Math.hypot(mx, my));
+      const sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
+      const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
+      P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt;
+      P.bob += dt * 9 * m;
+      if (now - lastStep > 430){ lastStep = now; sfx('step'); }
+    }
+    collide(P, .3);
+    cam.position.set(P.x, 1.6 + Math.sin(P.bob) * .04, P.z);
+    cam.rotation.set(P.pitch, P.yaw, 0);
+    // hantu
+    const dx = P.x - G.x, dz = P.z - G.z, dist = Math.hypot(dx, dz);
+    if (G.grace > 0) G.grace -= dt;
+    else {
+      if (!G.hunt && dist < 9){ G.hunt = true; sfx('sting'); msg('<span style="color:#FF5A5A">Ia nampak kamu… LARI!</span>', 2000); }
+      if (G.hunt && dist > 16) G.hunt = false;
+      let tx, tz, sp;
+      if (G.hunt){ tx = P.x; tz = P.z; sp = 2.15 + keys * .3; }
+      else {
+        if (Math.hypot(G.wx - G.x, G.wz - G.z) < .5){ const w = WAYS[Math.floor(Math.random() * WAYS.length)]; G.wx = w[0]; G.wz = w[1]; }
+        tx = G.wx; tz = G.wz; sp = 1.3;
+      }
+      const gx = tx - G.x, gz = tz - G.z, gl = Math.hypot(gx, gz) || 1;
+      G.x += gx / gl * sp * dt; G.z += gz / gl * sp * dt;
+      if (dist < .75) return caught();
+    }
+    ghost.position.set(G.x, Math.sin(now / 400) * .12 + .1, G.z);
+    ghost.lookAt(P.x, ghost.position.y, P.z);
+    // detak jantung & tepi merah bila dekat
+    const fear = clamp(1 - dist / 10, 0, 1);
+    $e('#escRed').style.opacity = (fear * .9).toFixed(2);
+    beatT -= dt;
+    if (fear > 0 && beatT <= 0){ sfx('beat', .4 + fear * .6); beatT = 1.1 - fear * .65; }
+    // benda yang boleh disentuh berhampiran
+    cam.getWorldDirection(fwd);
+    near = null; let best = 2.4;
+    boards.filter(b => !b.solved).concat([exitPt]).forEach(o => {
+      const ox = o.pos.x - P.x, oz = o.pos.z - P.z, d = Math.hypot(ox, oz);
+      if (d < best && (fwd.x * ox + fwd.z * oz) / (d || 1) > .2){ best = d; near = o; }
+    });
+    const act = $e('#escAct');
+    if (near){
+      act.innerHTML = near === exitPt ? '<i class="fa-solid fa-door-open"></i> BUKA PINTU' : '<i class="fa-solid fa-chalkboard"></i> JAWAB SOALAN';
+      act.style.display = 'block';
+    } else act.style.display = 'none';
+  }
+  function ambient(dt){
+    flick.forEach(f => {
+      f.t += dt;
+      const on = f.t < 0 ? Math.random() < .25 : Math.random() > .015;
+      const v = on ? f.base * (.85 + Math.random() * .15) : 0;
+      f.l.intensity = v; f.tube.material.emissiveIntensity = v / f.base;
+    });
+    exitLight.intensity = 5 + Math.sin(performance.now() / 300) * 1.5;
+  }
+  function frame(now){
+    if (!alive) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (!paused && !ended){ elapsed += dt; $e('#escTime').textContent = fmtSec(elapsed); update(dt, now); }
+    ambient(dt);
+    R.render(scene, cam);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 /* ============ EVENT DELEGATION ============ */
 const ACTS = {
+  'esc-stu': escStuPick,
+  'esc-start': escStart,
   'go-settings': ()=>setTab('settings'),
   'go-students': ()=>setTab('students'),
   'showcase-open': showcaseSetup,
