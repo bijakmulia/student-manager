@@ -6633,9 +6633,13 @@ let ST_PROBED = null;
 function storProbe(){
   if (ST_PROBED) return ST_PROBED;
   const tryOne = (id, ext) => new Promise(r => { const im = new Image(); im.onload = () => r(true); im.onerror = () => r(false); im.src = 'assets/stor/' + id + '.' + ext; });
-  ST_PROBED = Promise.all(ST_ASSETS.map(async a => {
-    for (const ext of ['webp', 'png']) if (await tryOne(a.id, ext)){ ST_HAVE.set(a.id, 'assets/stor/' + a.id + '.' + ext); return; }
-  }));
+  // senarai.json ditulis oleh shrink-assets.ps1 (auto-push): satu muat turun kecil, gambar dimuat bila dipapar sahaja.
+  // Tanpa senarai (cth. fail dimuat naik terus ke GitHub), semak setiap fail satu persatu.
+  ST_PROBED = fetch('assets/stor/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : Promise.reject())
+    .then(m => { Object.keys(m).forEach(id => ST_HAVE.set(id, 'assets/stor/' + m[id])); })
+    .catch(() => Promise.all(ST_ASSETS.map(async a => {
+      for (const ext of ['webp', 'png', 'jpg']) if (await tryOne(a.id, ext)){ ST_HAVE.set(a.id, 'assets/stor/' + a.id + '.' + ext); return; }
+    })));
   return ST_PROBED;
 }
 const stImg = (id, emo, cls) => ST_HAVE.has(id) ? '<img src="' + ST_HAVE.get(id) + '" class="' + (cls || '') + '" draggable="false" alt="">' : '<span class="st-emo ' + (cls || '') + '">' + emo + '</span>';
@@ -6651,7 +6655,7 @@ function storAssetsModal(){
       '2. Tekan <b>Salin</b> pada satu prompt, tampal, jana. Untuk gaya seragam: selepas gambar pertama cantik, lampirkan gambar itu bersama prompt seterusnya dan tambah "same art style as the attached image".<br>' +
       '3. Jika latar tidak lutsinar, buang latar di <b>remove.bg</b> atau <b>Adobe Express</b> (percuma).<br>' +
       '4. Simpan dengan nama fail <b>tepat</b> seperti di bawah (cth. <span class="num">bola_sepak.png</span>), format .png atau .webp.<br>' +
-      '5. Letak dalam folder <span class="num">student manager\\assets\\stor\\</span> di komputer. Auto-push menghantarnya ke GitHub dalam 5 minit. Gambar terus muncul dalam game; yang belum ada guna ikon lukisan app.' +
+      '5. Letak dalam folder <span class="num">student manager\\assets\\stor\\</span> di komputer. Auto-push <b>mengecilkan gambar secara automatik</b> (ikut saiz \"simpan\", nama dikemas, latar jadi .jpg) lalu menghantarnya ke GitHub dalam 5 minit. Gambar terus muncul dalam game; yang belum ada guna ikon lukisan app.' +
     '</div>' +
     '<button class="btn clip-s w-full mt-2 text-[12px]" data-sa="all"><i class="fa-solid fa-copy text-cyan"></i> Salin SEMUA prompt yang belum siap</button>' +
     Object.keys(grp).map(g => '<div class="lbl mt-4">' + esc(g).toUpperCase() + ' · ' + grp[g].filter(a => ST_HAVE.has(a.id)).length + '/' + grp[g].length + '</div>' +

@@ -13,5 +13,10 @@ Letak gambar yang dijana AI di dalam folder ini.
 
 3. Latar belakang mesti LUTSINAR (transparent), kecuali bg_lantai & bg_menu.
 
-4. Auto-push akan menghantar fail ke GitHub dalam masa ~5 minit.
+4. Auto-push (setiap ~5 minit) akan SECARA AUTOMATIK:
+   - kemas nama fail (cth. "Bola Sepak.PNG" -> bola_sepak.png)
+   - kecilkan gambar ikut saiz cadangan (barang 256, watak/rak 512x768, latar 1600x1000)
+   - tukar latar (bg_*) kepada .jpg supaya ringan
+   - kemas kini senarai.json (jangan ubah fail ini sendiri)
+   lalu menghantarnya ke GitHub. Nama yang tidak dikenali dilaporkan di tetingkap auto-push.
    Gambar yang belum ada akan guna ikon lukisan app — game tetap boleh dimain.
