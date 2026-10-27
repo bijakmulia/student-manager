@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buang Magenta</title>
+<meta name="description" content="Buang latar magenta (#FF00FF) daripada sprite game dengan tepi yang bersih — hasil PNG lutsinar.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#0B1220;--panel:#121B2E;--line:#22304D;--tx:#E6EEF7;--mut:#8DA2BF;--acc:#22D3EE;--mag:#FF00FF;--ok:#4ADE80;--bad:#F87171;--warn:#FACC15}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:#1B2742;border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);color:#04202A;border-color:var(--acc);font-weight:700}
+button:disabled{opacity:.45;cursor:default}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{margin:0;font-size:18px;letter-spacing:.04em}
+header h1 b{color:var(--mag)}
+header .sp{flex:1}
+main{display:grid;grid-template-columns:300px 1fr;gap:12px;padding:12px;min-height:calc(100vh - 58px)}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--mut);margin:12px 0 4px}
+.lbl:first-child{margin-top:0}
+.row{display:flex;align-items:center;gap:8px}
+.row label{flex:1}
+input[type=range]{width:100%;accent-color:var(--acc)}
+input[type=text],select{background:#0E172A;border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:100%}
+.val{font-variant-numeric:tabular-nums;color:var(--acc);min-width:38px;text-align:right}
+.chk{display:flex;align-items:center;gap:8px;margin:6px 0}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--mut)}
+#drop.over{border-color:var(--acc);color:var(--tx);background:rgba(34,211,238,.06)}
+#list{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:46vh;overflow:auto}
+.it{display:flex;align-items:center;gap:8px;padding:6px;border-radius:8px;border:1px solid transparent;cursor:pointer;background:#0E172A}
+.it.sel{border-color:var(--acc)}
+.it canvas{width:44px;height:44px;border-radius:6px;background:repeating-conic-gradient(#3a465e 0 25%,#2a3448 0 50%) 0 0/12px 12px;flex-shrink:0}
+.it .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.st{font-size:11px;padding:2px 6px;border-radius:99px;background:#22304D;white-space:nowrap}
+.st.siap{background:rgba(74,222,128,.18);color:var(--ok)}.st.ralat{background:rgba(248,113,113,.18);color:var(--bad)}.st.memproses{color:var(--warn)}
+#view{display:flex;flex-direction:column;gap:8px;min-width:0}
+#tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#tools .grp{display:flex;gap:4px;align-items:center}
+#tools button.on{border-color:var(--acc);color:var(--acc)}
+#stage{position:relative;flex:1;min-height:360px;border-radius:12px;border:1px solid var(--line);overflow:hidden;cursor:grab;touch-action:none}
+#stage.bg-checker{background:repeating-conic-gradient(#3a465e 0 25%,#2a3448 0 50%) 0 0/20px 20px}
+#stage.bg-black{background:#000}#stage.bg-white{background:#fff}#stage.bg-red{background:#D32F2F}#stage.bg-green{background:#2E7D32}
+#wrap{position:absolute;left:0;top:0;transform-origin:0 0}
+#wrap canvas{position:absolute;left:0;top:0;image-rendering:auto}
+#cvA{z-index:1}#cvB{z-index:2}
+#split{position:absolute;top:0;bottom:0;width:2px;background:var(--acc);z-index:5;cursor:ew-resize;box-shadow:0 0 0 1px #000}
+#split::after{content:'⟷';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--acc);color:#04202A;border-radius:99px;padding:2px 6px;font-size:12px;font-weight:800}
+#info{font-size:12px;color:var(--mut)}
+#empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mut);text-align:center;padding:20px}
+dialog{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:12px;max-width:760px;width:calc(100% - 32px);max-height:86vh}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog pre{background:#0E172A;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left}
+.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
+#toast{position:fixed;right:16px;bottom:16px;background:#1B2742;border:1px solid var(--line);border-radius:10px;padding:10px 14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid #fff4;vertical-align:-2px}
+small{color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+  <h1>✂ Buang <b>Magenta</b></h1>
+  <small>Latar #FF00FF → PNG lutsinar, tepi bersih</small>
+  <span class="sp"></span>
+  <button id="bm-test">🧪 Uji</button>
+  <button id="bm-help">❓ Bantuan</button>
+</header>
+<main>
+  <section class="panel">
+    <div id="drop">Seret & lepas gambar di sini<br><small>atau tampal (Ctrl+V)</small>
+      <div class="row" style="justify-content:center;margin-top:10px;flex-wrap:wrap">
+        <button class="pri" id="bPick">Pilih fail</button><button id="bFolder">Pilih folder</button>
+      </div>
+      <input type="file" id="bm-input" accept="image/png,image/jpeg,image/webp" multiple hidden>
+      <input type="file" id="bm-folder" webkitdirectory multiple hidden>
+    </div>
+    <div class="row" style="margin-top:10px;flex-wrap:wrap">
+      <button id="bm-download-all" class="pri" disabled>⬇ Muat turun semua (ZIP)</button>
+      <button id="bClear">Kosongkan</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="bm-auto-download"> Auto muat turun setiap gambar siap</label>
+    <div id="list"></div>
+
+    <div class="lbl">TETAPAN</div>
+    <div id="settings"></div>
+    <div class="row" style="margin-top:10px"><button id="bReproc" style="flex:1">↻ Proses semula gambar ini</button><button id="bReset">Set semula</button></div>
+  </section>
+
+  <section id="view">
+    <div id="tools">
+      <div class="grp"><small>Zum</small><button data-z="fit" class="on">Muat</button><button data-z="1">100%</button><button data-z="2">200%</button><button data-z="4">400%</button></div>
+      <div class="grp"><small>Latar</small><button data-bg="checker" class="on">Petak</button><button data-bg="black">Hitam</button><button data-bg="white">Putih</button><button data-bg="red">Merah</button><button data-bg="green">Hijau</button></div>
+      <label class="chk" style="margin:0"><input type="checkbox" id="cResidue"> Tunjuk sisa magenta</label>
+      <label class="chk" style="margin:0"><input type="checkbox" id="cCompare" checked> Banding sebelum/selepas</label>
+      <button id="bOne" disabled>⬇ Muat turun</button>
+    </div>
+    <div id="stage" class="bg-checker">
+      <div id="wrap"><canvas id="cvA"></canvas><canvas id="cvB"></canvas></div>
+      <div id="split"></div>
+      <div id="empty">Tiada gambar dipilih.<br>Masukkan gambar berlatar magenta untuk bermula.</div>
+    </div>
+    <div id="info"></div>
+  </section>
+</main>
+
+<dialog id="dHelp"><div id="helpBody"></div><div class="row" style="justify-content:flex-end;margin-top:10px"><button onclick="this.closest('dialog').close()">Tutup</button></div></dialog>
+<dialog id="dTest"><h3 style="margin-top:0">Ujian kualiti</h3><div id="testBody">Menjalankan…</div><div class="row" style="justify-content:flex-end;margin-top:10px"><button onclick="this.closest('dialog').close()">Tutup</button></div></dialog>
+<div id="toast"></div>
+
+<script>
+/* =====================================================================
+   ENJIN: matte chroma-key untuk latar magenta.
+   Dijalankan dalam Web Worker (fungsi ini disalin ke worker sebagai teks).
+   ===================================================================== */
+function bmCore(px, w, h, o){
+  const N = w * h, K = o.key;                                   // px: RGBA Uint8ClampedArray (diubah terus)
+  // --- 1. peta persamaan: unjuran kroma (YCbCr) ke arah kroma kunci, didenda bila menyimpang
+  const cb = (r, g, b) => -0.168736 * r - 0.331264 * g + 0.5 * b;
+  const cr = (r, g, b) => 0.5 * r - 0.418688 * g - 0.081312 * b;
+  const kx = cb(K[0], K[1], K[2]), ky = cr(K[0], K[1], K[2]), kk = kx * kx + ky * ky || 1, kl = Math.sqrt(kk);
+  let sim = new Float32Array(N);
+  for (let i = 0, p = 0; i < N; i++, p += 4){
+    const r = px[p], g = px[p + 1], b = px[p + 2];
+    const x = cb(r, g, b), y = cr(r, g, b);
+    const t = (x * kx + y * ky) / kk;                            // 1 = kunci penuh, 0 = neutral
+    const ex = x - t * kx, ey = y - t * ky;
+    const perp = Math.sqrt(ex * ex + ey * ey) / kl;              // jauh dari paksi magenta (merah, ungu...)
+    sim[i] = (t - perp * 1.5) * (px[p + 3] / 255);
+  }
+  // --- 2. tapis median 3x3 pada peta persamaan sahaja (hingar JPEG / gradien)
+  if (o.denoise){
+    const s2 = new Float32Array(N), win = new Float32Array(9);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){
+      let n = 0;
+      for (let dy = -1; dy <= 1; dy++){ const yy = Math.min(h - 1, Math.max(0, y + dy));
+        for (let dx = -1; dx <= 1; dx++){ const xx = Math.min(w - 1, Math.max(0, x + dx)); win[n++] = sim[yy * w + xx]; } }
+      win.sort(); s2[y * w + x] = win[4];
+    }
+    // median hanya untuk kawasan rata; tepi tajam kekal guna nilai asal
+    for (let i = 0; i < N; i++) if (Math.abs(s2[i] - sim[i]) < 0.25) sim[i] = s2[i];
+  }
+  // --- 3. latar = kawasan bersambung dengan tepi gambar (8-arah) + lubang tertutup yang magenta tulen
+  const FILL = (o.lo + o.hi) / 2, bg = new Uint8Array(N), stack = new Int32Array(N);
+  let sp = 0;
+  const seed = i => { if (!bg[i] && sim[i] > FILL){ bg[i] = 1; stack[sp++] = i; } };
+  for (let x = 0; x < w; x++){ seed(x); seed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++){ seed(y * w); seed(y * w + w - 1); }
+  const flood = () => {
+    while (sp){ const i = stack[--sp], x = i % w, y = (i - x) / w;
+      for (let dy = -1; dy <= 1; dy++){ const yy = y + dy; if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++){ const xx = x + dx; if (xx < 0 || xx >= w) continue; seed(yy * w + xx); } } }
+  };
+  flood();
+  let holes = 0;
+  if (o.holes){
+    const seen = new Uint8Array(N), comp = new Int32Array(N);
+    for (let s = 0; s < N; s++){
+      if (seen[s] || bg[s] || sim[s] < o.strict) continue;
+      let n = 0, q = 0; comp[n++] = s; seen[s] = 1;
+      while (q < n){ const i = comp[q++], x = i % w, y = (i - x) / w;
+        for (let dy = -1; dy <= 1; dy++){ const yy = y + dy; if (yy < 0 || yy >= h) continue;
+          for (let dx = -1; dx <= 1; dx++){ const xx = x + dx; if (xx < 0 || xx >= w) continue; const j = yy * w + xx;
+            if (!seen[j] && !bg[j] && sim[j] >= o.strict){ seen[j] = 1; comp[n++] = j; } } } }
+      if (n >= o.minHole){ holes++; for (let k = 0; k < n; k++) seed(comp[k]); flood(); }
+    }
+  }
+  // --- 4. jalur tepi: piksel dalam jarak 3 px daripada latar
+  const band = new Uint8Array(N);
+  { let cur = bg.slice();
+    for (let pass = 0; pass < 3; pass++){ const nx = cur.slice();
+      for (let i = 0; i < N; i++){ if (cur[i]) continue; const x = i % w, y = (i - x) / w;
+        if ((x > 0 && cur[i - 1]) || (x < w - 1 && cur[i + 1]) || (y > 0 && cur[i - w]) || (y < h - 1 && cur[i + w])) nx[i] = 1; }
+      cur = nx; }
+    for (let i = 0; i < N; i++) band[i] = cur[i] && !bg[i] ? 1 : 0; }
+  // --- 5. alfa lembut (antialias) di latar & jalur tepi; objek di dalam kekal 100%
+  const A = new Float32Array(N), span = Math.max(0.01, o.hi - o.lo);
+  for (let i = 0; i < N; i++){
+    const a0 = px[i * 4 + 3] / 255;
+    A[i] = (bg[i] || band[i]) ? Math.min(a0, 1 - Math.min(1, Math.max(0, (sim[i] - o.lo) / span))) : a0;
+  }
+  // --- 6. kecutkan tepi (hakisan alfa, sub-piksel) & lembutkan tepi (kabur alfa dalam jalur)
+  const edge = i => bg[i] || band[i];
+  const erode = (src) => { const d = src.slice();
+    for (let i = 0; i < N; i++){ if (!edge(i)) continue; const x = i % w, y = (i - x) / w; let m = src[i];
+      for (let dy = -1; dy <= 1; dy++){ const yy = y + dy; if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++){ const xx = x + dx; if (xx < 0 || xx >= w) continue; const v = src[yy * w + xx]; if (v < m) m = v; } }
+      d[i] = m; } return d; };
+  let cur = A;
+  for (let n = Math.floor(o.choke); n > 0; n--) cur = erode(cur);          // >= 1 px: hakis betul-betul
+  const fr = o.choke % 1;
+  if (fr > 0){ const t = fr * 0.2; for (let i = 0; i < N; i++) if (edge(i) && cur[i] < 1) cur[i] = Math.max(0, (cur[i] - t) / (1 - t)); }   // < 1 px: buang kabus tepi sahaja
+  if (o.feather > 0){
+    const r = Math.max(1, Math.ceil(o.feather)), f = Math.min(1, o.feather / r), b2 = cur.slice();
+    for (let i = 0; i < N; i++){ if (!edge(i)) continue; const x = i % w, y = (i - x) / w; let s = 0, n = 0;
+      for (let dy = -r; dy <= r; dy++){ const yy = y + dy; if (yy < 0 || yy >= h) continue;
+        for (let dx = -r; dx <= r; dx++){ const xx = x + dx; if (xx < 0 || xx >= w) continue; s += cur[yy * w + xx]; n++; } }
+      b2[i] = cur[i] + (s / n - cur[i]) * f; }
+    cur = b2;
+  }
+  // --- 7. buang bintik legap kecil yang terasing
+  let specks = 0;
+  if (o.speck > 0){
+    const seen = new Uint8Array(N), comp = new Int32Array(N);
+    for (let s = 0; s < N; s++){
+      if (seen[s] || cur[s] <= 0.1) continue;
+      let n = 0, q = 0; comp[n++] = s; seen[s] = 1;
+      while (q < n){ const i = comp[q++], x = i % w, y = (i - x) / w;
+        for (let dy = -1; dy <= 1; dy++){ const yy = y + dy; if (yy < 0 || yy >= h) continue;
+          for (let dx = -1; dx <= 1; dx++){ const xx = x + dx; if (xx < 0 || xx >= w) continue; const j = yy * w + xx;
+            if (!seen[j] && cur[j] > 0.1){ seen[j] = 1; comp[n++] = j; } } } }
+      if (n < o.speck){ specks++; for (let k = 0; k < n; k++){ const j = comp[k]; cur[j] = 0; bg[j] = 1; } }
+    }
+  }
+  // --- 8. nyahcemar warna (un-mix kunci) + tekan sisa magenta pada tepi
+  for (let i = 0, p = 0; i < N; i++, p += 4){
+    let a = cur[i];
+    if (a < 0.02){ px[p] = px[p + 1] = px[p + 2] = 0; px[p + 3] = 0; continue; }
+    if (edge(i)){
+      if (a < 0.999) for (let c = 0; c < 3; c++) px[p + c] = Math.max(0, Math.min(255, (px[p + c] - (1 - a) * K[c]) / a));
+      const r = px[p], g = px[p + 1], b = px[p + 2], m = Math.min(r, b);
+      if (m > g && o.despill > 0){ const ex = (m - g) * o.despill; px[p] = r - ex; px[p + 2] = b - ex; }
+    }
+    px[p + 3] = Math.round(a * 255);
+  }
+  return { holes, specks };
+}
+
+/* ---------- tetapan ---------- */
+const VERSION = '1.0.0';
+const DEF = { lo: 0.15, hi: 0.75, strict: 0.8, despill: 1, choke: 0.5, feather: 0, speck: 12, holes: true, minHole: 30,
+  denoise: true, trim: true, pad: 2, max: 0, prefix: '', suffix: '', autoKey: true, key: '#FF00FF' };
+const LS = 'buangMagenta.v2';
+let SET = Object.assign({}, DEF);
+try { Object.assign(SET, JSON.parse(localStorage.getItem(LS) || '{}')); } catch(e){}
+const saveSet = () => { try { localStorage.setItem(LS, JSON.stringify(SET)); } catch(e){} };
+// parameter URL: ?auto=1 &zip=1 &trim=0 &max=512 &lo=.. &hi=..
+const QS = new URLSearchParams(location.search);
+const URLSET = {};
+if (QS.has('trim')) URLSET.trim = QS.get('trim') !== '0';
+if (QS.has('max')) URLSET.max = +QS.get('max') || 0;
+['lo', 'hi', 'tol'].forEach(k => { if (QS.has(k)) URLSET[k === 'tol' ? 'hi' : k] = +QS.get(k); });
+Object.assign(SET, URLSET);
+
+const FIELDS = [
+  ['lo', 'Toleransi luar', 'range', 0, 0.6, 0.01, 'Mula lutsinar (rendah = lebih banyak tepi dikekalkan)'],
+  ['hi', 'Toleransi dalam', 'range', 0.4, 1, 0.01, 'Lutsinar penuh bila sama magenta melebihi nilai ini'],
+  ['despill', 'Buang sisa merah jambu', 'range', 0, 1, 0.05],
+  ['choke', 'Kecutkan tepi (px)', 'range', 0, 3, 0.25],
+  ['feather', 'Lembutkan tepi (px)', 'range', 0, 2, 0.25],
+  ['speck', 'Buang bintik < (px)', 'range', 0, 100, 1],
+  ['holes', 'Buang lubang tertutup', 'check'],
+  ['minHole', 'Saiz lubang minimum (px)', 'range', 5, 400, 5],
+  ['denoise', 'Tapis hingar JPEG', 'check'],
+  ['trim', 'Potong ruang kosong', 'check'],
+  ['pad', 'Ruang tepi (%)', 'range', 0, 15, 0.5],
+  ['max', 'Saiz maksimum', 'select', [[0, 'Asal'], [256, '256 px'], [512, '512 px'], [768, '768 px'], [1024, '1024 px']]],
+  ['autoKey', 'Kesan warna kunci automatik', 'check'],
+  ['key', 'Warna kunci', 'color'],
+  ['prefix', 'Awalan nama fail', 'text'],
+  ['suffix', 'Akhiran nama fail', 'text']
+];
+function renderSettings(){
+  document.getElementById('settings').innerHTML = FIELDS.map(([k, t, ty, a, b, st, tip]) => {
+    if (ty === 'check') return '<label class="chk" title="' + (tip || '') + '"><input type="checkbox" data-k="' + k + '"' + (SET[k] ? ' checked' : '') + '> ' + t + '</label>';
+    if (ty === 'select') return '<div class="row" style="margin:6px 0"><label>' + t + '</label><select data-k="' + k + '" style="width:110px">' + a.map(([v, l]) => '<option value="' + v + '"' + (+SET[k] === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>';
+    if (ty === 'text') return '<div class="row" style="margin:6px 0"><label>' + t + '</label><input type="text" data-k="' + k + '" value="' + String(SET[k]).replace(/"/g, '&quot;') + '" style="width:110px"></div>';
+    if (ty === 'color') return '<div class="row" style="margin:6px 0"><label>' + t + ' <span class="swatch" id="sw" style="background:' + SET.key + '"></span></label><input type="color" data-k="key" value="' + SET.key + '"></div>';
+    return '<div title="' + (tip || '') + '"><div class="row"><label>' + t + '</label><span class="val" id="v_' + k + '">' + SET[k] + '</span></div><input type="range" data-k="' + k + '" min="' + a + '" max="' + b + '" step="' + st + '" value="' + SET[k] + '"></div>';
+  }).join('');
+}
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.k; if (!k) return;
+  const el = e.target;
+  SET[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' || el.tagName === 'SELECT' ? +el.value : el.value;
+  const v = document.getElementById('v_' + k); if (v) v.textContent = SET[k];
+  if (k === 'key'){ const s = document.getElementById('sw'); if (s) s.style.background = SET.key; }
+  saveSet();
+});
+
+/* ---------- worker ---------- */
+let WK = null, wkId = 0;
+const wkWait = {};
+try {
+  const src = bmCore.toString() + '\nonmessage=e=>{const d=e.data;const px=new Uint8ClampedArray(d.buf);const r=bmCore(px,d.w,d.h,d.o);postMessage({id:d.id,buf:px.buffer,r},[px.buffer]);};';
+  WK = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  WK.onmessage = e => { const f = wkWait[e.data.id]; delete wkWait[e.data.id]; f && f(e.data); };
+  WK.onerror = () => { WK = null; };
+} catch(e){ WK = null; }
+function runCore(img, o){
+  if (!WK){ const r = bmCore(img.data, img.width, img.height, o); return Promise.resolve(r); }
+  return new Promise(res => {
+    const id = ++wkId, buf = img.data.slice().buffer;
+    wkWait[id] = d => { img.data.set(new Uint8ClampedArray(d.buf)); res(d.r); };
+    WK.postMessage({ id, buf, w: img.width, h: img.height, o }, [buf]);
+  });
+}
+
+/* ---------- bantu ---------- */
+const hex = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); const n = m ? parseInt(m[1], 16) : 0xFF00FF; return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+function detectKey(d, w, h){
+  const rs = [], gs = [], bs = [];
+  const take = i => { const p = i * 4, r = d[p], g = d[p + 1], b = d[p + 2]; if (d[p + 3] > 200 && r > 120 && b > 120 && g < Math.min(r, b) * .6){ rs.push(r); gs.push(g); bs.push(b); } };
+  const step = Math.max(1, Math.floor((w + h) / 400));
+  for (let x = 0; x < w; x += step){ take(x); take((h - 1) * w + x); }
+  for (let y = 0; y < h; y += step){ take(y * w); take(y * w + w - 1); }
+  if (rs.length < 8) return null;
+  const med = a => a.sort((x, y) => x - y)[a.length >> 1];
+  return [med(rs), med(gs), med(bs)];
+}
+const cleanName = (n, s) => {
+  const base = String(n || 'gambar').replace(/\.[^.]+$/, '').trim().toLowerCase().replace(/[\s\-]+/g, '_').replace(/[^a-z0-9_]/g, '') || 'gambar';
+  return (s.prefix || '') + base + (s.suffix || '') + '.png';
+};
+async function toImageData(input){
+  let blob = input;
+  if (typeof input === 'string'){
+    blob = await (await fetch(input)).blob();                     // dataURL atau URL http(s)
+  }
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bmp, 0, 0);
+  return g.getImageData(0, 0, c.width, c.height);
+}
+function finishCanvas(img, s){
+  // potong ruang kosong + ruang tepi, kemudian kecilkan berperingkat (kualiti tinggi)
+  let x0 = 0, y0 = 0, x1 = img.width - 1, y1 = img.height - 1;
+  const src = document.createElement('canvas'); src.width = img.width; src.height = img.height; src.getContext('2d').putImageData(img, 0, 0);
+  if (s.trim){
+    const d = img.data, W = img.width, H = img.height; let found = false;
+    x0 = W; y0 = H; x1 = -1; y1 = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 8){ found = true; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (!found){ x0 = 0; y0 = 0; x1 = W - 1; y1 = H - 1; }
+  }
+  const cw = x1 - x0 + 1, chh = y1 - y0 + 1, pad = s.trim ? Math.round(Math.max(cw, chh) * s.pad / 100) : 0;
+  let out = document.createElement('canvas'); out.width = cw + pad * 2; out.height = chh + pad * 2;
+  out.getContext('2d').drawImage(src, x0, y0, cw, chh, pad, pad, cw, chh);
+  if (s.max && Math.max(out.width, out.height) > s.max){
+    const k = s.max / Math.max(out.width, out.height), tw = Math.max(1, Math.round(out.width * k)), th = Math.max(1, Math.round(out.height * k));
+    while (out.width / 2 >= tw && out.height / 2 >= th){ const h2 = document.createElement('canvas'); h2.width = Math.round(out.width / 2); h2.height = Math.round(out.height / 2);
+      const g = h2.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(out, 0, 0, h2.width, h2.height); out = h2; }
+    const f = document.createElement('canvas'); f.width = tw; f.height = th; const g = f.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(out, 0, 0, tw, th); out = f;
+  }
+  return out;
+}
+const blobOf = c => new Promise(r => c.toBlob(r, 'image/png'));
+const dataURLOf = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+
+/* ---------- proses satu gambar ---------- */
+async function processInput(input, options, name){
+  const s = Object.assign({}, SET, options || {});
+  const orig = await toImageData(input);
+  const work = new ImageData(new Uint8ClampedArray(orig.data), orig.width, orig.height);
+  const key = (s.autoKey && detectKey(orig.data, orig.width, orig.height)) || hex(s.key);
+  const stats = await runCore(work, { key, lo: s.lo, hi: s.hi, strict: s.strict, despill: s.despill, choke: s.choke, feather: s.feather,
+    speck: s.speck, holes: s.holes, minHole: s.minHole, denoise: s.denoise });
+  const canvas = finishCanvas(work, s), blob = await blobOf(canvas);
+  return { name: cleanName(name || (input && input.name) || 'gambar', s), blob, width: canvas.width, height: canvas.height, orig, result: work, canvas, key, stats };
+}
+
+/* ---------- senarai & UI ---------- */
+const ITEMS = [];   // { id, file, name, status, res, opts }
+let SEL = null, uid = 0;
+const $ = s => document.querySelector(s);
+const toast = t => { const e = $('#toast'); e.textContent = t; e.style.opacity = 1; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.opacity = 0, 2200); };
+function renderList(){
+  $('#list').innerHTML = ITEMS.map(it => '<div class="it' + (it.id === SEL ? ' sel' : '') + '" data-id="' + it.id + '"><canvas width="88" height="88" id="th' + it.id + '"></canvas>' +
+    '<div class="nm" title="' + it.name + '">' + it.name + '</div><span class="st ' + it.status + '">' + ({ menunggu: 'menunggu', memproses: 'memproses…', siap: 'siap', ralat: 'ralat' }[it.status]) + '</span></div>').join('');
+  ITEMS.forEach(it => { if (it.res){ const c = $('#th' + it.id), g = c.getContext('2d'), r = it.res.canvas, k = Math.min(88 / r.width, 88 / r.height);
+    g.drawImage(r, (88 - r.width * k) / 2, (88 - r.height * k) / 2, r.width * k, r.height * k); } });
+  $('#bm-download-all').disabled = !ITEMS.some(i => i.res);
+}
+let queue = Promise.resolve(), pending = 0;
+function enqueue(file, name, opts){
+  const it = { id: ++uid, file, name: cleanName(name || file.name, SET), status: 'menunggu', res: null, opts: opts || null };
+  ITEMS.push(it); pending++; renderList();
+  const p = queue = queue.then(() => doItem(it));
+  return p.then(() => it);
+}
+async function doItem(it){
+  it.status = 'memproses'; renderList();
+  try {
+    it.res = await processInput(it.file, it.opts, it.file.name || it.name);
+    it.name = it.res.name; it.status = 'siap';
+    if (SEL == null || SEL === it.id){ SEL = it.id; show(); }
+    const dataURL = await dataURLOf(it.res.blob);
+    document.dispatchEvent(new CustomEvent('bm:done', { detail: { name: it.name, dataURL, width: it.res.width, height: it.res.height } }));
+    if ($('#bm-auto-download').checked) download(it.res);
+  } catch(e){ console.error(e); it.status = 'ralat'; it.err = String(e && e.message || e); }
+  pending--; renderList();
+  if (!pending){
+    document.dispatchEvent(new CustomEvent('bm:all-done', { detail: { count: ITEMS.filter(i => i.res).length } }));
+    if (QS.get('zip') === '1') downloadZip(ITEMS.filter(i => i.res).map(i => i.res));
+  }
+}
+function addFiles(list){ [...list].filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|webp)$/i.test(f.name)).forEach(f => enqueue(f, f.name)); }
+
+/* ---------- pratonton ---------- */
+let zoom = 'fit', scale = 1, panX = 0, panY = 0, splitX = 0.5;
+function show(){
+  const it = ITEMS.find(i => i.id === SEL);
+  $('#empty').style.display = it && it.res ? 'none' : 'flex';
+  $('#bOne').disabled = !(it && it.res);
+  if (!it || !it.res) return;
+  const r = it.res, A = $('#cvA'), B = $('#cvB');
+  // A = asal (dipotong sama seperti hasil supaya sejajar), B = hasil
+  const o = document.createElement('canvas'); o.width = r.orig.width; o.height = r.orig.height; o.getContext('2d').putImageData(r.orig, 0, 0);
+  A.width = B.width = r.canvas.width; A.height = B.height = r.canvas.height;
+  A.getContext('2d').clearRect(0, 0, A.width, A.height);
+  // padankan asal dengan kedudukan hasil: proses semula tanpa potong untuk bandingan tepat
+  const t = finishCanvas(r.orig, Object.assign({}, SET, it.opts || {}, { trim: false, max: 0 }));
+  const bb = trimBox(r.result, Object.assign({}, SET, it.opts || {}));
+  A.getContext('2d').drawImage(t, bb.x, bb.y, bb.w, bb.h, bb.pad * bb.k, bb.pad * bb.k, bb.w * bb.k, bb.h * bb.k);
+  const g = B.getContext('2d'); g.clearRect(0, 0, B.width, B.height); g.drawImage(r.canvas, 0, 0);
+  if ($('#cResidue').checked){
+    const d = g.getImageData(0, 0, B.width, B.height), p = d.data; let n = 0;
+    for (let i = 0; i < p.length; i += 4){ if (p[i + 3] > 12 && Math.min(p[i], p[i + 2]) - p[i + 1] > 30){ p[i] = 0; p[i + 1] = 255; p[i + 2] = 0; p[i + 3] = 255; n++; } }
+    g.putImageData(d, 0, 0);
+    $('#info').dataset.res = n;
+  } else delete $('#info').dataset.res;
+  layout();
+  const res = $('#info').dataset.res;
+  $('#info').innerHTML = '<b>' + it.name + '</b> · ' + r.width + '×' + r.height + ' px · ' + Math.round(r.blob.size / 1024) + ' KB · kunci <span class="swatch" style="background:rgb(' + r.key.join(',') + ')"></span> rgb(' + r.key.join(', ') + ')' +
+    ' · lubang dibuang: ' + r.stats.holes + ' · bintik dibuang: ' + r.stats.specks + (res != null ? ' · <b style="color:' + (+res ? '#4ADE80' : '#8DA2BF') + '">sisa magenta: ' + res + ' piksel</b>' : '');
+}
+function trimBox(img, s){
+  let x0 = 0, y0 = 0, x1 = img.width - 1, y1 = img.height - 1;
+  if (s.trim){ const d = img.data, W = img.width, H = img.height; let f = false; x0 = W; y0 = H; x1 = -1; y1 = -1;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 8){ f = true; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (!f){ x0 = 0; y0 = 0; x1 = W - 1; y1 = H - 1; } }
+  const w = x1 - x0 + 1, h = y1 - y0 + 1, pad = s.trim ? Math.round(Math.max(w, h) * s.pad / 100) : 0;
+  const full = Math.max(w + pad * 2, h + pad * 2), k = s.max && full > s.max ? s.max / full : 1;
+  return { x: x0, y: y0, w, h, pad, k };
+}
+function layout(){
+  const st = $('#stage'), A = $('#cvA'); if (!A.width) return;
+  const sw = st.clientWidth, sh = st.clientHeight;
+  if (zoom === 'fit'){ scale = Math.min(sw / A.width, sh / A.height) * 0.92; panX = (sw - A.width * scale) / 2; panY = (sh - A.height * scale) / 2; }
+  else scale = +zoom;
+  $('#wrap').style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
+  $('#wrap').style.width = A.width + 'px'; $('#wrap').style.height = A.height + 'px';
+  const cmp = $('#cCompare').checked;
+  $('#cvA').style.display = cmp ? '' : 'none'; $('#split').style.display = cmp ? '' : 'none';
+  const sx = splitX * sw;
+  $('#split').style.left = sx + 'px';
+  const cut = Math.max(0, (sx - panX) / scale);
+  $('#cvB').style.clipPath = cmp ? 'inset(0 0 0 ' + cut + 'px)' : 'none';
+}
+window.addEventListener('resize', layout);
+
+/* ---------- muat turun ---------- */
+function download(res){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(res.blob); a.download = res.name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+async function downloadZip(results, zipName){
+  if (!window.JSZip){ toast('JSZip gagal dimuat — muat turun satu persatu'); results.forEach(download); return; }
+  const z = new JSZip(), used = {};
+  results.forEach(r => { let n = r.name; if (used[n]){ n = n.replace(/\.png$/, '_' + (++used[r.name]) + '.png'); } else used[n] = 1; z.file(n, r.blob); });
+  const blob = await z.generateAsync({ type: 'blob' });
+  download({ blob, name: zipName || 'buang-magenta.zip' });
+}
+
+/* ---------- API automasi (Tampermonkey / skrip lain) ---------- */
+window.BuangMagenta = {
+  version: VERSION,
+  async process(input, options){ const r = await processInput(input, options, input && input.name); return { name: r.name, blob: r.blob, dataURL: await dataURLOf(r.blob), width: r.width, height: r.height }; },
+  async processAll(inputs, options){ const out = []; for (const i of inputs) out.push(await this.process(i, options)); return out; },
+  getSettings: () => Object.assign({}, SET),
+  setSettings(p){ Object.assign(SET, p || {}); saveSet(); renderSettings(); return Object.assign({}, SET); },
+  download: r => download(r),
+  downloadZip: (rs, n) => downloadZip(rs, n),
+  enqueue: (blob, name, opts) => enqueue(blob, name, opts),
+  selfTest: () => runTests()
+};
+async function handleRequest(d, reply){
+  if (!d || typeof d !== 'object') return;
+  if (d.type === 'bm:ping') return reply({ type: 'bm:pong', version: VERSION });
+  if (d.type !== 'bm:process') return;
+  try {
+    const blob = await (await fetch(d.dataURL)).blob();
+    const it = await enqueue(blob, d.name || 'gambar', d.options);
+    if (!it.res) throw new Error(it.err || 'gagal');
+    reply({ type: 'bm:result', id: d.id, name: it.name, dataURL: await dataURLOf(it.res.blob), width: it.res.width, height: it.res.height });
+  } catch(e){ reply({ type: 'bm:error', id: d.id, message: String(e && e.message || e) }); }
+}
+window.addEventListener('message', e => {
+  if (!e.data || typeof e.data.type !== 'string' || e.data.type.indexOf('bm:') !== 0) return;
+  handleRequest(e.data, msg => { try { e.source && e.source.postMessage(msg, e.origin === 'null' ? '*' : e.origin); } catch(err){ e.source && e.source.postMessage(msg, '*'); } });
+});
+try { const BC = new BroadcastChannel('buang-magenta'); BC.onmessage = e => handleRequest(e.data, m => BC.postMessage(m)); } catch(e){}
+
+/* ---------- ujian kualiti ---------- */
+function synth(kind){
+  const W = 256, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+  g.fillStyle = '#FF00FF'; g.fillRect(0, 0, W, H);
+  if (kind === 'grad'){ const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#F205F7'); gr.addColorStop(1, '#FF00EE'); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+  g.lineWidth = 6; g.strokeStyle = '#1A1A1A';
+  if (kind === 'ring'){ g.beginPath(); g.arc(128, 128, 80, 0, 7); g.fillStyle = '#4CAF50'; g.fill(); g.stroke(); g.beginPath(); g.fillStyle = '#FF00FF'; g.arc(128, 128, 32, 0, 7); g.fill(); g.stroke(); }
+  else if (kind === 'thin'){ g.fillStyle = '#FFC107'; g.beginPath(); g.ellipse(128, 160, 60, 40, 0, 0, 7); g.fill(); g.stroke(); g.lineWidth = 1.2; for (let i = 0; i < 14; i++){ g.beginPath(); g.moveTo(80 + i * 7, 120); g.lineTo(70 + i * 9, 30); g.stroke(); } }
+  else if (kind === 'red'){ g.fillStyle = '#E53935'; g.fillRect(50, 50, 70, 150); g.fillStyle = '#FF8A80'; g.fillRect(130, 50, 70, 150); g.strokeRect(50, 50, 150, 150); }
+  else { g.fillStyle = '#29B6F6'; g.beginPath(); g.arc(128, 128, 90, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(100, 100, 20, 0, 7); g.fill(); }
+  return new Promise(r => c.toBlob(b => {
+    if (kind !== 'jpeg') return r(b);
+    c.toBlob(r, 'image/jpeg', 0.72);
+  }, 'image/png'));
+}
+async function runTests(){
+  const opts = { trim: false, max: 0 };
+  const cast = (img, minA) => { let mx = 0; const p = img.data; for (let i = 0; i < p.length; i += 4) if (p[i + 3] > minA * 255){ const c = Math.min(p[i], p[i + 2]) - p[i + 1]; if (c > mx) mx = c; } return mx; };
+  const alphaAt = (img, x, y) => img.data[(y * img.width + x) * 4 + 3];
+  const left = img => { let n = 0; const p = img.data; for (let i = 0; i < p.length; i += 4) if (p[i + 3] > 20 && p[i] > 200 && p[i + 2] > 200 && p[i + 1] < 60) n++; return n; };
+  const T = [];
+  const run = async (kind, label, check) => { const r = await processInput(await synth(kind), opts, kind + '.png'); const [ok, note] = check(r.result); T.push({ label, ok, note }); };
+  await run('flat', 'Latar rata + objek bergaris gelap: tiada sisa magenta', im => { const n = left(im), c = cast(im, .1); return [n === 0 && alphaAt(im, 2, 2) === 0 && alphaAt(im, 128, 128) === 255 && c < 25, 'sisa ' + n + ' px, cast maks ' + c]; });
+  await run('thin', 'Butiran halus (garis 1px) kekal', im => { let n = 0; for (let y = 40; y < 110; y++) for (let x = 60; x < 200; x++) if (alphaAt(im, x, y) > 100) n++; return [n > 300, n + ' piksel garis kekal']; });
+  await run('ring', 'Lubang tertutup jadi lutsinar', im => [alphaAt(im, 128, 128) === 0 && alphaAt(im, 128, 70) === 255, 'tengah α=' + alphaAt(im, 128, 128)]);
+  await run('red', 'Merah & salmon (bukan magenta) dikekalkan', im => [alphaAt(im, 85, 125) === 255 && alphaAt(im, 165, 125) === 255, 'merah α=' + alphaAt(im, 85, 125) + ', salmon α=' + alphaAt(im, 165, 125)]);
+  await run('jpeg', 'Hingar JPEG dibuang sepenuhnya', im => { let n = 0; for (let y = 0; y < 30; y++) for (let x = 0; x < 256; x++) if (alphaAt(im, x, y) > 10) n++; return [n === 0 && left(im) === 0, n + ' piksel latar tertinggal']; });
+  await run('grad', 'Latar gradien magenta dibuang', im => { let n = 0; for (let y = 0; y < 30; y++) for (let x = 0; x < 256; x++) if (alphaAt(im, x, y) > 10) n++; return [n === 0, n + ' piksel tertinggal']; });
+  await run('flat', 'Tiada pinggir merah jambu atas hitam/putih', im => { const c = cast(im, .1); return [c < 25, 'cast maks ' + c + ' (had 25)']; });
+  return T;
+}
+async function showTests(){
+  $('#dTest').showModal(); $('#testBody').textContent = 'Menjalankan…';
+  const T = await runTests();
+  $('#testBody').innerHTML = '<table><tr><th>Ujian</th><th>Keputusan</th><th>Butiran</th></tr>' + T.map(t => '<tr><td>' + t.label + '</td><td class="' + (t.ok ? 'pass' : 'fail') + '">' + (t.ok ? 'LULUS' : 'GAGAL') + '</td><td><small>' + t.note + '</small></td></tr>').join('') + '</table>' +
+    '<p><b>' + T.filter(t => t.ok).length + '/' + T.length + '</b> lulus.</p>';
+}
+
+/* ---------- bantuan ---------- */
+function helpHtml(){
+  const ex = s => '<pre>' + s.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>';
+  return '<h3 style="margin-top:0">Cara guna</h3><ol><li>Jana gambar dengan latar magenta <span class="swatch" style="background:#FF00FF"></span> #FF00FF.</li>' +
+    '<li>Seret masuk (boleh banyak sekaligus). Hasil PNG lutsinar muncul serta-merta.</li><li>Semak dengan latar <b>Hitam</b> dan <b>Putih</b>, dan hidupkan <b>Tunjuk sisa magenta</b> — piksel hijau bermakna ada sisa.</li>' +
+    '<li>Jika tepi masih merah jambu: naikkan <i>Buang sisa merah jambu</i> atau <i>Kecutkan tepi</i>. Jika objek terhakis: turunkan <i>Toleransi luar</i>.</li>' +
+    '<li>Muat turun satu persatu, ZIP, atau hidupkan <b>Auto muat turun</b>.</li></ol>' +
+    '<h3>Automasi (Tampermonkey)</h3><p>Versi API: ' + VERSION + '. Pasang <b>buang-magenta.user.js</b> (dalam folder tools) dalam Tampermonkey — ia menambah butang <b>✂ Buang Magenta</b> pada gambar di ChatGPT & Gemini.</p>' +
+    '<p><b>Objek global</b></p>' + ex("const r = await BuangMagenta.process(fileOrBlobOrDataURL, { max: 512 });\n// r = { name, blob, dataURL, width, height }\nawait BuangMagenta.processAll([...files]);\nBuangMagenta.setSettings({ lo: .15, hi: .75 });\nBuangMagenta.download(r); BuangMagenta.downloadZip([r1, r2], 'aset.zip');") +
+    '<p><b>Mesej antara tab</b> (postMessage atau BroadcastChannel "buang-magenta")</p>' + ex("win.postMessage({ type: 'bm:process', id: 1, name: 'bola_sepak', dataURL, options: {} }, '*');\n// balasan: { type: 'bm:result', id, name, dataURL, width, height }  atau  { type: 'bm:error', id, message }\nwin.postMessage({ type: 'bm:ping' }, '*');   // balasan { type: 'bm:pong', version }") +
+    '<p><b>Peristiwa</b>: <code>bm:done</code> (setiap gambar) dan <code>bm:all-done</code> pada <code>document</code>. <b>Kait DOM</b>: <code>#bm-input</code>, <code>#bm-download-all</code>, <code>#bm-auto-download</code>.</p>' +
+    '<p><b>Parameter URL</b>: <code>?auto=1</code> auto muat turun · <code>?zip=1</code> satu ZIP bila siap · <code>?trim=0</code> · <code>?max=512</code> · <code>?lo=0.15&hi=0.75</code></p>';
+}
+
+/* ---------- pendawaian ---------- */
+renderSettings();
+if (QS.get('auto') === '1') $('#bm-auto-download').checked = true;
+$('#bPick').onclick = () => $('#bm-input').click();
+$('#bFolder').onclick = () => $('#bm-folder').click();
+$('#bm-input').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+$('#bm-folder').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+const dz = $('#drop');
+['dragenter', 'dragover'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); dz.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) dz.classList.remove('over'); }));
+document.addEventListener('drop', e => { dz.classList.remove('over'); if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+document.addEventListener('paste', e => { const fs = [...(e.clipboardData || {}).items || []].filter(i => i.kind === 'file').map(i => i.getAsFile()).filter(Boolean); if (fs.length) addFiles(fs); });
+$('#list').onclick = e => { const r = e.target.closest('[data-id]'); if (!r) return; SEL = +r.dataset.id; renderList(); show(); };
+$('#bm-download-all').onclick = () => downloadZip(ITEMS.filter(i => i.res).map(i => i.res));
+$('#bOne').onclick = () => { const it = ITEMS.find(i => i.id === SEL); if (it && it.res) download(it.res); };
+$('#bClear').onclick = () => { ITEMS.length = 0; SEL = null; renderList(); show(); const A = $('#cvA'), B = $('#cvB'); A.width = B.width = 0; };
+$('#bReproc').onclick = async () => { const it = ITEMS.find(i => i.id === SEL); if (!it) return toast('Pilih gambar dahulu'); it.opts = null; pending++; await (queue = queue.then(() => doItem(it))); };
+$('#bReset').onclick = () => { SET = Object.assign({}, DEF); saveSet(); renderSettings(); toast('Tetapan asal dipulihkan'); };
+$('#bm-test').onclick = showTests;
+$('#bm-help').onclick = () => { $('#helpBody').innerHTML = helpHtml(); $('#dHelp').showModal(); };
+$('#cResidue').onchange = show; $('#cCompare').onchange = layout;
+document.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { zoom = b.dataset.z; document.querySelectorAll('[data-z]').forEach(x => x.classList.toggle('on', x === b)); if (zoom !== 'fit'){ const st = $('#stage'), A = $('#cvA'); panX = (st.clientWidth - A.width * +zoom) / 2; panY = (st.clientHeight - A.height * +zoom) / 2; } layout(); });
+document.querySelectorAll('[data-bg]').forEach(b => b.onclick = () => { $('#stage').className = 'bg-' + b.dataset.bg; document.querySelectorAll('[data-bg]').forEach(x => x.classList.toggle('on', x === b)); });
+// seret: pemisah banding atau anjak gambar
+let drag = null;
+$('#stage').addEventListener('pointerdown', e => { const st = $('#stage').getBoundingClientRect(); drag = { split: e.target.id === 'split', x: e.clientX, y: e.clientY, px: panX, py: panY, left: st.left, w: st.width }; $('#stage').setPointerCapture(e.pointerId); });
+$('#stage').addEventListener('pointermove', e => { if (!drag) return;
+  if (drag.split){ splitX = Math.min(1, Math.max(0, (e.clientX - drag.left) / drag.w)); }
+  else if (zoom !== 'fit'){ panX = drag.px + e.clientX - drag.x; panY = drag.py + e.clientY - drag.y; }
+  layout(); });
+$('#stage').addEventListener('pointerup', () => drag = null);
+// eyedropper: klik dwi pada gambar asal untuk ambil warna kunci
+$('#stage').addEventListener('dblclick', e => {
+  const it = ITEMS.find(i => i.id === SEL); if (!it || !it.res) return;
+  const A = $('#cvA'), r = A.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / scale), y = Math.floor((e.clientY - r.top) / scale);
+  const d = A.getContext('2d').getImageData(Math.max(0, x), Math.max(0, y), 1, 1).data;
+  SET.key = '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join(''); SET.autoKey = false; saveSet(); renderSettings();
+  toast('Warna kunci: ' + SET.key + ' (kesan automatik dimatikan)');
+});
+show();
+</script>
+</body>
+</html>
