@@ -983,6 +983,7 @@ function renderTab(){
   else if (t==='arena') m.innerHTML = viewGame();
   else if (t==='report') m.innerHTML = viewReport();
   else m.innerHTML = viewSettings();
+  if (typeof LOBBY !== 'undefined' && LOBBY && LOBBY.repaint) LOBBY.repaint();     // menu game terbuka: segarkan (cth. selepas buka pack)
 }
 function renderContext(){
   const c = $('#ctxClass'), s = $('#ctxSubject');
@@ -5543,7 +5544,7 @@ function liveOpen(v){
    Sementara menu dibuka, aset game dimuat dahulu (enjin 3D / gambar) supaya
    permainan bermula lancar. Semua tetapan guru berada di dalam menu ini.     */
 const LB_CSS = `
-.lb{position:fixed;inset:0;z-index:970;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
+.lb{position:fixed;inset:0;z-index:190;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
   background:radial-gradient(circle at 50% 20%,color-mix(in srgb,var(--c) 30%,transparent),transparent 60%),linear-gradient(180deg,#0B1220,#05080F)}
 .lb.img{background-size:cover;background-position:center}
 .lb-card{width:100%;max-width:440px;background:rgba(15,23,42,.92);border:1px solid color-mix(in srgb,var(--c) 55%,#22304D);border-radius:18px;padding:18px;
@@ -5606,12 +5607,45 @@ const lbSeg = (k, label, choices, note) => ({ k, label, choices, note });
 const GAME_LOBBY = {
   cards: {
     title: 'DUEL KAD', ico: '⚔️', c: '#FF8A3D',
-    desc: '3 kad terkuat kumpulan lawan Penjaga Kad atau kumpulan lain. Jawab betul untuk menyerang — pantas = kritikal!',
+    desc: 'Kumpul kad, bina pasukan dan bertarung.',
     cfg: () => S.config,
-    opts: () => [lbSeg('duelQ', 'MASA MENJAWAB', [[10,'10s'],[15,'15s'],[20,'20s'],[30,'30s'],[45,'45s']], 'Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.')],
-    starts: [['🤖 LAWAN KOMPUTER', () => duelStart()], ['👥 LAWAN KUMPULAN', () => pvpSetup()]],
-    how: () => 'Setiap pusingan satu soalan. <b>Betul</b> = kad kamu menyerang, <b>salah / masa tamat</b> = kad lawan menyerang. Elemen yang menang ×1.5: ' +
-      ELEMENTS.map((e, i) => e.ico + '›' + ELEMENTS[(i + 1) % ELEMENTS.length].ico).join(' ') + '.<br><br><b>Lawan Kumpulan</b>: 2 kumpulan, 1 peranti — <b>Rebut Jawapan</b> (duduk bertentang) atau <b>Bergilir</b>. Kumpulan tanpa kad diberi kad latihan.'
+    opts: () => [lbSeg('duelQ', 'MASA MENJAWAB (MOD KUIZ)', [[10,'10s'],[15,'15s'],[20,'20s'],[30,'30s'],[45,'45s']], 'Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.')],
+    starts: [],
+    menu: [['koleksi', '🎴 Koleksi & Pack', 'TPC ›'], ['juara', '🏆 Juara Duel', '›']],
+    views: {
+      koleksi: { t: 'KOLEKSI & PACK', h: () => '<div data-nohint="1">' + cardsHubHtml() + '</div>' },
+      juara:   { t: 'JUARA DUEL KELAS', h: () => pvpBoardHtml() || '<div class="lb-note">Belum ada perlawanan kumpulan lawan kumpulan.</div>' },
+      opp:     { t: 'PILIH KUMPULAN LAWAN', h: () => classTeams().filter(g => g.id !== arenaUi().team).map(g =>
+        '<button class="lb-team' + (g.id === duelLb().opp ? ' on' : '') + '" data-lb="opp:' + g.id + '">' + teamAvatar(g.id, 34) +
+        '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">' + esc(g.name) + '</div><div class="m">' + collectionStats(g.id).have + ' kad · ' + esc(teamMembersTxt(g.id)) + '</div></div></button>').join('') || '<div class="lb-note">Perlu sekurang-kurangnya 2 kumpulan.</div>' }
+    },
+    main: () => {
+      const d = duelLb(), opp = duelOpp();
+      const seg = (key, val, label) => '<button class="' + (d[key] === val ? 'on' : '') + '" data-lb="d' + key[0] + ':' + val + '">' + label + '</button>';
+      return '<div class="lb-sec">JENIS PERMAINAN</div><div class="lb-seg">' + seg('jenis', 'kuiz', '🧠 Kuiz') + seg('jenis', 'klasik', '🃏 Klasik') + '</div>' +
+        '<div class="lb-note">' + (d.jenis === 'kuiz' ? 'Jawab soalan untuk menyerang. Markah dikira sebagai <b>TP</b>.' : 'Permainan kad sebenar: tenaga ⚡, serang, jurus, bertahan & tukar kad. Tiada soalan — ganjaran RP sahaja.') + '</div>' +
+        '<div class="lb-sec">LAWAN</div><div class="lb-seg">' + seg('lawan', 'ai', '🤖 Komputer') + seg('lawan', 'kump', '👥 Kumpulan') + '</div>' +
+        (d.lawan === 'kump' ? '<button class="lb-btn" data-lb="opp">⚔️ Lawan<span class="r">' + (opp ? teamAvatar(opp, 22) + '<span>' + esc(teamName(opp)) + '</span>' : '<span>pilih</span>') + ' ›</span></button>' +
+          (d.jenis === 'kuiz' ? '<div class="lb-sec">GAYA</div><div class="lb-seg">' + seg('gaya', 'rebut', '⚡ Rebut Jawapan') + seg('gaya', 'gilir', '🔄 Bergilir') + '</div>' : '') : '') +
+        '<button class="lb-btn go" data-lb="duelgo" style="margin-top:12px">▶ MULA ' + (d.jenis === 'kuiz' ? 'DUEL KUIZ' : 'DUEL KLASIK') + '</button>';
+    },
+    act: (a, b, x) => {
+      const d = duelLb();
+      if (/^d[jlg]:/.test(a)){ d[{ j: 'jenis', l: 'lawan', g: 'gaya' }[a[1]]] = a.slice(3); save(); x.paint(); return true; }
+      if (a.indexOf('opp:') === 0){ d.opp = a.slice(4); save(); x.setView('main'); return true; }
+      if (a === 'duelgo'){
+        const t = arenaUi().team, opp = duelOpp();
+        if (d.lawan === 'kump' && !opp){ toast('Perlu sekurang-kurangnya 2 kumpulan dalam kelas.', null, true); return true; }
+        x.close();
+        battleRun(t, d.lawan === 'kump' ? opp : null, d.jenis === 'klasik' ? 'klasik' : d.lawan === 'kump' ? d.gaya : 'ai');
+        return true;
+      }
+      return false;
+    },
+    how: () => '<b>🧠 Kuiz</b> — setiap pusingan satu soalan. <b>Betul</b> = kad kamu menyerang (pantas = kritikal), <b>salah / masa tamat</b> = kad lawan menyerang. Lawan kumpulan: <b>Rebut Jawapan</b> (duduk bertentang) atau <b>Bergilir</b>.<br><br>' +
+      '<b>🃏 Klasik</b> — permainan kad tanpa soalan. Setiap giliran dapat <b>+1 tenaga ⚡</b> (maksimum 5). <b>Serang</b> 1⚡ · <b>Jurus</b> 3⚡ (×1.8) · <b>Bertahan</b> 1⚡ (separuh kerosakan seterusnya) · <b>Tukar Kad</b> 1⚡ (masukkan kad dari bangku). Serangan menamatkan giliran; simpan tenaga untuk jurus! Kalahkan semua kad lawan untuk menang.<br><br>' +
+      'Elemen yang menang ×1.5: ' + ELEMENTS.map((e, i) => e.ico + '›' + ELEMENTS[(i + 1) % ELEMENTS.length].ico).join(' ') + '. Kumpulan tanpa kad diberi kad latihan.' +
+      '<br><br><button class="lb-btn" data-act="card-guide">📖 Panduan penuh kad & set</button>'
   },
   run: {
     title: 'LARIAN ILMU', ico: '🏃‍♂️', c: '#FFB347',
@@ -5661,6 +5695,13 @@ const GAME_LOBBY = {
   }
 };
 
+/* pilihan menu Duel Kad (disimpan per peranti) */
+function duelLb(){ const o = arenaUi(); o.duelLb = Object.assign({ jenis: 'kuiz', lawan: 'ai', gaya: 'rebut', opp: '' }, o.duelLb || {}); return o.duelLb; }
+function duelOpp(){
+  const d = duelLb(), t = arenaUi().team, ok = classTeams().filter(g => g.id !== t);
+  if (!ok.some(g => g.id === d.opp)) d.opp = ok.length ? ok[0].id : '';
+  return d.opp;
+}
 /* ---------- lobi ---------- */
 let LOBBY = null;
 function gameLobby(k){
@@ -5686,9 +5727,10 @@ function gameLobby(k){
     const t = teamOf(o.team);
     let h = '';
     if (view === 'main'){
-      h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() +
+      h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() + (def.main ? def.main() : '') +
         def.starts.map(([label], i) => '<button class="lb-btn go" data-lb="go' + i + '"' + (ready ? '' : ' disabled') + '>' + label + '</button>').join('') +
         '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>' +
+        (def.menu || []).map(([v, label, r]) => '<button class="lb-btn" data-lb="' + v + '">' + label + '<span class="r">' + r + '</span></button>').join('') +
         '<button class="lb-btn" data-lb="set">⚙️ Tetapan<span class="r">tahap & masa ›</span></button>' +
         '<button class="lb-btn" data-lb="how">📖 Cara Main<span class="r">›</span></button>' +
         '<button class="lb-btn x" data-lb="exit">✕ Keluar</button>';
@@ -5708,6 +5750,8 @@ function gameLobby(k){
         '<div class="lb-sec">TAYANG LANGSUNG KE PROJEKTOR</div>' +
         '<div class="lb-seg"><button class="' + (lvCastOn() ? 'on' : '') + '" data-lc="cast">📡 Siarkan peranti ini</button><button class="' + (lvViewOn() ? 'on' : '') + '" data-lc="view">📺 Papar dari peranti lain</button></div>' +
         '<div class="lb-note">' + (FB.on ? 'Firebase aktif — berfungsi antara telefon & tablet.' : 'Perlu Firebase (Tetapan → Penyegerakan Firebase) untuk dua peranti.') + '</div></div>';
+    } else if (def.views && def.views[view]){
+      h = '<div class="lb-h"><button data-lb="back">‹</button>' + def.views[view].t + '</div><div class="lb-scroll">' + def.views[view].h() + '</div>';
     } else if (view === 'how'){
       h = '<div class="lb-h"><button data-lb="back">‹</button>CARA MAIN</div><div class="lb-how">' + def.how() + '</div>' +
         '<div class="lb-note" style="margin-top:12px"><i class="fa-solid fa-circle-question"></i> Soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b> (' + qBank(S.ui.activeSubjectId).length + ' soalan; jika kosong, soalan matematik dijana).</div>';
@@ -5719,8 +5763,10 @@ function gameLobby(k){
     if (view === 'main'){ const b = el.querySelector('#lbLoad .bar i'), s = el.querySelector('#lbLoad span'); if (b){ b.style.width = Math.round(prog * 100) + '%'; s.textContent = 'Memuatkan… ' + Math.round(prog * 100) + '%'; } }
   };
   const close = () => { if (!el.isConnected) return; el.remove(); unlockBody(); if (LOBBY && LOBBY.el === el) LOBBY = null; };
-  LOBBY = { el, close, k };
+  LOBBY = { el, close, k, repaint: () => { if (el.isConnected) paint(); } };
+  const ctx = { paint: () => paint(), close: () => close(), setView: v => { view = v; paint(); } };
   el.addEventListener('click', e => {
+    if (e.target.closest('[data-act]')) return;                    // butang app (pack, album, panduan) dikendali oleh app
     const b = e.target.closest('[data-lb],[data-lt],[data-ls],[data-lc]'); if (!b) return;
     sfx('flip');
     if (b.dataset.lt){ o.team = b.dataset.lt; save(); view = 'main'; paint(); if (S.ui.tab === 'arena') renderTab(); return; }
@@ -5728,6 +5774,8 @@ function gameLobby(k){
     if (b.dataset.lc){ const key = b.dataset.lc === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(key, localStorage.getItem(key) === '0' ? '1' : '0'); paint(); return; }
     const a = b.dataset.lb;
     if (a === 'back'){ view = 'main'; return paint(); }
+    if (def.views && def.views[a]){ view = a; return paint(); }
+    if (def.act && def.act(a, b, ctx)) return;
     if (a === 'team' || a === 'set' || a === 'how'){ view = a; return paint(); }
     if (a === 'assets'){ close(); storProbe().then(storAssetsModal); return; }
     if (a === 'exit') return close();
@@ -6051,8 +6099,16 @@ function mythTakeover(p){
 
 /* ---------- TAB GAME: KAD ---------- */
 function viewCards(){
-  const o = arenaUi();
   if (!ctxOk()) return emptyState('fa-box-open','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. TPC dikumpul dari skor positif kelas tersebut.');
+  return '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(255,138,61,.25),rgba(120,60,200,.12) 60%,transparent),var(--panel,#141C26)">' +
+    '<div style="font-size:40px;line-height:1">⚔️</div>' +
+    '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FF8A3D;text-shadow:0 0 12px rgba(255,138,61,.6)">DUEL KAD</div>' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kumpul kad, bina pasukan dan bertarung — mod <b>Kuiz</b> atau <b>Klasik</b>. Koleksi, pack dan tetapan ada di dalam menu.</div></div>' +
+    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN</button>';
+}
+/* Koleksi, TPC, pack & set kumpulan — dipaparkan dalam menu Duel Kad */
+function cardsHubHtml(){
+  const o = arenaUi();
   const bal = tpcBalance(), earn = tpcEarned(), spent = tpcSpent();
   const sid = o.team && teamOf(o.team) ? o.team : '';
   const st = sid ? collectionStats(sid) : null;
@@ -6064,7 +6120,6 @@ function viewCards(){
       '<div class="text-[10px] text-muted">TPC baki · minggu ' + fmtDate(weekKey()) + '</div></div>' +
     '<div class="text-right num text-[10px] text-muted">+' + earn + ' dikumpul' + (tpcBonus() ? '<br><span class="text-cyan">+' + tpcBonus() + ' topup</span>' : '') + '<br>−' + spent + ' dibelanja</div>' +
     '<button class="btn btn-c clip-s !px-2 !py-1 text-[11px] ml-1" data-act="tpc-topup"><i class="fa-solid fa-plus"></i></button></div>';
-  h += '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="card-guide"><i class="fa-solid fa-circle-question text-cyan"></i> CARA MAIN — apa fungsi kad &amp; bagaimana Duel berfungsi?</button>';
   h += '<div class="panel clip p-3 mt-3"><div class="lbl">KOLEKSI KAD KUMPULAN · ' + esc(teamName(sid)) + '</div>' +
     (sid ? '<div class="flex items-center gap-2 mt-2 text-[11px]">' +
         '<span class="text-muted">Koleksi</span><span class="num text-cyan">' + st.have + '/' + st.total + '</span>' +
@@ -6072,15 +6127,6 @@ function viewCards(){
         '<span class="text-muted ml-2">Duel</span><span class="num" style="color:#4ADE80">' + (((dr.wins || {})[sid]) || 0) + 'M</span><span class="num text-muted">' + (((dr.losses || {})[sid]) || 0) + 'K</span>' +
         '<button class="btn clip-s !px-2 !py-0.5 text-[11px] ml-auto" data-act="binder" data-id="' + sid + '"><i class="fa-solid fa-book-open"></i> Album</button></div>' : '') +
   '</div>';
-  if (sid){
-    h += '<div class="panel clip p-3 mt-3" style="background:linear-gradient(135deg,rgba(255,107,0,.16),rgba(0,240,255,.08)),var(--panel,#141C26)">' +
-      '<div class="flex items-center gap-3"><div style="font-size:34px">⚔️</div>' +
-      '<div class="flex-1"><div class="font-bold tracking-widest text-[15px] text-orange">DUEL KAD</div>' +
-      '<div class="text-[11px] text-muted leading-snug">3 kad terkuat lawan Penjaga Kad (komputer) atau lawan rakan sekelas. Jawab betul untuk menyerang — pantas = kritikal! Elemen: ' +
-        ELEMENTS.map((e, i) => e.ico + '›' + ELEMENTS[(i + 1) % ELEMENTS.length].ico).join(' ') + '</div></div></div>' +
-      '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN DUEL KAD</button></div>';
-  }
-  h += pvpBoardHtml();
   h += '<div class="space-y-2 mt-3">' + PACKS.map(p => {
     const canFree = sid && p.k === 'murah' && freeLeft(sid);
     const afford = bal >= p.cost;
@@ -6220,6 +6266,14 @@ function duelFoe(mine){
    BERGILIR: telefon diserah bergilir. Betul = kad sendiri menyerang,
             salah / masa tamat = kad lawan menyerang (seperti lawan komputer).
    Murid tanpa kad diberi 3 "kad latihan" (tier Sial) supaya semua boleh bermain. */
+/* dek mod Klasik: n kad terkuat kumpulan, dicukupkan dengan kad latihan */
+function klasikDeck(sid, n){
+  const own = (S.collect || {})[sid] || {};
+  const pow = c => { const x = cardStats(c, cardLevel(sid, c.id)); return x.atk * 2 + x.hp / 3 + x.def * 2; };
+  const mine = CARDS.filter(c => own[c.id]).sort((a, b) => pow(b) - pow(a)).slice(0, n).map(c => Object.assign({ c, lv: cardLevel(sid, c.id) }, cardStats(c, cardLevel(sid, c.id))));
+  const fill = cardsOfTier('sial').filter(c => !mine.some(m => m.c.id === c.id)).sort(() => Math.random() - .5).slice(0, n - mine.length).map(c => Object.assign({ c, lv: 1 }, cardStats(c, 1)));
+  return { deck: mine.concat(fill), starter: fill.length > 0 };
+}
 function pvpDeck(sid){
   const d = duelDeck(sid);
   if (d.length) return { deck: d, starter: false };
@@ -6364,6 +6418,17 @@ const BT_CSS = `
 .bt-q.idle .mv,.bt-q.idle .bar{display:none}
 .bt-q.idle .qt{font-size:13px;color:#94A3B8;font-weight:600;text-align:center}
 @media (min-width:900px){.bt-q .mv{grid-template-columns:repeat(4,1fr)}}
+.bt-shield .cardface{box-shadow:0 0 0 3px #38BDF8,0 0 26px #38BDF8!important}
+.bt-sh{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:clamp(22px,7cqh,44px);z-index:4;filter:drop-shadow(0 0 8px #38BDF8);pointer-events:none}
+.bt-mini.pick{outline:3px solid #FACC15;outline-offset:2px;cursor:pointer;animation:btPick .9s ease-in-out infinite}
+@keyframes btPick{50%{translate:0 -5px}}
+.bt-q.kl .en{margin-left:auto;display:flex;gap:1px;font-size:13px}
+.bt-q.kl .en i{font-style:normal;opacity:.18;filter:grayscale(1)}
+.bt-q.kl .en i.on{opacity:1;filter:none}
+.bt-q.kl .mv{margin-top:6px}
+.bt-q.kl .mv button span small{display:block;font-size:10.5px;opacity:.7;margin-top:1px}
+.bt-q.kl .mv.one{grid-template-columns:1fr}
+.bt-q.kl .qt{font-size:13px;text-align:center;margin-top:6px;color:#FDE68A}
 .bt-end{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.78)}
 `;
 function btStyle(){ if (!document.getElementById('btCss')){ const st = document.createElement('style'); st.id = 'btCss'; st.textContent = BT_CSS; document.head.appendChild(st); } }
@@ -6371,8 +6436,8 @@ function btStyle(){ if (!document.getElementById('btCss')){ const st = document.
 /* tA = id kumpulan bawah (biru). tB = id kumpulan atas (merah), atau null = Penjaga Kad (komputer). */
 function battleRun(tA, tB, mode){
   btStyle();
-  const ai = !tB;
-  const dA = pvpDeck(tA), dB = ai ? { deck: duelFoe(dA.deck), starter: false } : pvpDeck(tB);
+  const ai = !tB, klasik = mode === 'klasik';
+  const dA = klasik ? klasikDeck(tA, 4) : pvpDeck(tA), dB = ai ? { deck: duelFoe(dA.deck), starter: false } : klasik ? klasikDeck(tB, 4) : pvpDeck(tB);
   const P = [
     { id: tA, name: teamName(tA), deck: dA.deck, starter: dA.starter, i: 0, ko: [], right: 0, asked: 0, col: '#3B82F6' },
     { id: tB, name: ai ? 'Penjaga Kad' : teamName(tB), deck: dB.deck, starter: dB.starter, i: 0, ko: [], right: 0, asked: 0, col: '#EF4444' }
@@ -6380,6 +6445,8 @@ function battleRun(tA, tB, mode){
   P.forEach(p => p.deck.forEach(x => x.cur = x.hp));
   const rebut = mode === 'rebut';
   let turn = 0, over = false, round = 0, raf = 0, cur = null;
+  const energy = [0, 0], shield = [false, false];               // mod Klasik
+  let swMode = false, switched = false, busy = klasik;
   const root = document.createElement('div');
   root.className = 'bt'; root.id = 'btRoot';
   root.innerHTML = (rebut ? '<div class="bt-q top" id="btQ1"></div>' : '') +
@@ -6393,33 +6460,64 @@ function battleRun(tA, tB, mode){
     '</div>' +
     '<div class="bt-q" id="btQ0"></div>';
   document.body.appendChild(root); lockBody();
-  const live = liveHost('duel', root, { title: ai ? 'Duel Kad' : 'Duel Kumpulan' });
+  const live = liveHost('duel', root, { title: (klasik ? 'Duel Klasik' : 'Duel Kad') + (ai ? '' : ' · Kumpulan') });
   const $b = s => root.querySelector(s);
   const act = p => p.deck[Math.min(p.i, p.deck.length - 1)];
   const alive = p => p.deck.filter(x => x.cur > 0).length;
   const hpCol = x => x.cur / x.hp > .5 ? '#4ADE80' : x.cur / x.hp > .25 ? '#FACC15' : '#EF4444';
+  const advOf = (ax, dx) => elemBeats(cardSet(ax.c).el, cardSet(dx.c).el) ? 1.5 : elemBeats(cardSet(dx.c).el, cardSet(ax.c).el) ? 0.75 : 1;
   const teamIco = p => p.id ? teamAvatar(p.id, 26) : '<div class="circ flex items-center justify-center" style="width:26px;height:26px;background:#111;border:2px solid #EF4444">🤖</div>';
 
   /* ---------- lukis satu pihak ---------- */
   function side(k){
     const p = P[k], x = act(p);
-    const bench = p.deck.map((y, j) => j === p.i ? '' : '<div class="bt-mini' + (y.cur <= 0 ? ' ko' : '') + '">' + cardFaceHtml(y.c, y.c.tier) +
-      '<div class="mhp"><i style="width:' + Math.max(0, y.cur / y.hp * 100) + '%;background:' + hpCol(y) + '"></i></div></div>').join('');
+    const bench = p.deck.map((y, j) => { if (j === p.i || y.cur <= 0) return '';
+      const pick = klasik && swMode && k === turn && !busy;
+      return '<div class="bt-mini' + (pick ? ' pick' : '') + '" data-ck="' + k + '-' + j + '"' + (pick ? ' data-sw="' + k + ':' + j + '"' : '') + '>' + cardFaceHtml(y.c, y.c.tier) +
+      '<div class="mhp"><i style="width:' + Math.max(0, y.cur / y.hp * 100) + '%;background:' + hpCol(y) + '"></i></div></div>'; }).join('');
     const kos = p.ko.length ? cardFaceHtml(p.ko[p.ko.length - 1].c, p.ko[p.ko.length - 1].c.tier) : '';
     return '<div class="bt-row s' + k + '">' + bench + '</div>' +
       '<div class="bt-pile dk s' + k + '"><div class="lb">DEK</div><div class="bk" style="transform:translate(3px,-3px)"></div><div class="bk" style="transform:translate(1.5px,-1.5px)"></div><div class="bk"></div><div class="n">' + alive(p) + '</div></div>' +
-      '<div class="bt-pile ko s' + k + '"><div class="lb">KO</div>' + (kos ? '<div class="bt-mini ko" style="height:100%">' + kos + '</div>' : '<div style="position:absolute;inset:0;border:2px dashed rgba(255,255,255,.3);border-radius:4px"></div>') + '<div class="n">' + p.ko.length + '</div></div>' +
+      '<div class="bt-pile ko s' + k + '"><div class="lb">KO</div>' + (kos ? '<div class="bt-mini ko" style="height:100%" data-ck="' + k + '-' + p.deck.indexOf(p.ko[p.ko.length - 1]) + '">' + kos + '</div>' : '<div style="position:absolute;inset:0;border:2px dashed rgba(255,255,255,.3);border-radius:4px"></div>') + '<div class="n">' + p.ko.length + '</div></div>' +
       '<div class="bt-name s' + k + '">' + teamIco(p) + '<span>' + esc(p.name) + (p.starter ? ' · kad latihan' : '') + '</span></div>' +
-      '<div class="bt-card bt-act s' + k + '" id="btA' + k + '">' + cardFaceHtml(x.c, x.c.tier, { lv: x.lv }) +
+      '<div class="bt-card bt-act s' + k + (shield[k] ? ' bt-shield' : '') + '" id="btA' + k + '" data-ck="' + k + '-' + p.i + '">' + cardFaceHtml(x.c, x.c.tier, { lv: x.lv }) + (shield[k] ? '<div class="bt-sh">🛡</div>' : '') +
                 '<div class="bt-hp"><small>HP</small>' + Math.max(0, x.cur) + '</div>' +
         '<div class="bt-hpbar"><i style="width:' + Math.max(0, x.cur / x.hp * 100) + '%;background:' + hpCol(x) + '"></i></div></div>';
   }
+  /* kad "terbang": ukur kedudukan setiap kad (data-ck) sebelum dilukis semula, kemudian animasikan dari
+     kedudukan lama ke kedudukan baharu — tukar kad, kad KO ke longgokan, kad bangku masuk gelanggang */
+  const flipFrom = (el, o, delay) => {
+    const n = el.getBoundingClientRect(); if (!n.width || !o) return false;
+    const dx = o.left - n.left, dy = o.top - n.top, sx = o.width / n.width, sy = o.height / n.height;
+    if (Math.abs(dx) < 2 && Math.abs(dy) < 2 && Math.abs(sx - 1) < .03) return false;
+    el.style.transition = 'none'; el.style.transformOrigin = '0 0'; el.style.zIndex = 9;
+    el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')';
+    void el.offsetWidth;
+    el.style.transition = 'transform .6s cubic-bezier(.3,.9,.3,1) ' + (delay || 0) + 'ms';
+    el.style.transform = '';
+    setTimeout(() => { el.style.transition = el.style.zIndex = el.style.transformOrigin = ''; }, 650 + (delay || 0));
+    return true;
+  };
+  let dealt = false;
   function paintBoard(enter){
+    const before = {};
+    root.querySelectorAll('[data-ck]').forEach(el => before[el.dataset.ck] = el.getBoundingClientRect());
     $b('#btS0').innerHTML = side(0); $b('#btS1').innerHTML = side(1);
     $b('#btScore').innerHTML = '<div class="r">' + alive(P[1]) + '<small>KAD</small></div><div class="b">' + alive(P[0]) + '<small>KAD</small></div>';
-    $b('#btH0').classList.toggle('turn', !over && !rebut && turn === 0 && !!cur);
-    $b('#btH1').classList.toggle('turn', !over && !rebut && turn === 1 && !!cur);
-    if (enter !== undefined){ const a = $b('#btA' + enter); if (a){ a.style.setProperty('--from', enter ? '-14cqh' : '14cqh'); a.classList.add('bt-enter'); } }
+    $b('#btH0').classList.toggle('turn', !over && !rebut && turn === 0 && (klasik || !!cur));
+    $b('#btH1').classList.toggle('turn', !over && !rebut && turn === 1 && (klasik || !!cur));
+    if (!dealt){                                            // edaran awal: setiap kad terbang dari dek
+      dealt = true;
+      root.querySelectorAll('[data-ck]').forEach((el, i) => {
+        const pile = $b('.bt-pile.dk.s' + el.dataset.ck[0]);
+        if (pile) flipFrom(el, pile.getBoundingClientRect(), 120 + i * 110);
+      });
+      setTimeout(() => audPlay('kad_koyak'), 150);
+      return;
+    }
+    let moved = new Set();
+    root.querySelectorAll('[data-ck]').forEach(el => { if (flipFrom(el, before[el.dataset.ck])) moved.add(el.dataset.ck); });
+    if (enter !== undefined){ const a = $b('#btA' + enter); if (a && !moved.has(a.dataset.ck)){ a.style.setProperty('--from', enter ? '-14cqh' : '14cqh'); a.classList.add('bt-enter'); } }
   }
   const banner = (t, c, ms) => { const b = $b('#btBanner'); b.innerHTML = t; b.style.color = c || '#fff'; b.style.opacity = 1; clearTimeout(banner.t); banner.t = setTimeout(() => b.style.opacity = 0, ms || 1300); };
 
@@ -6442,13 +6540,17 @@ function battleRun(tA, tB, mode){
         '<span style="margin-left:auto;opacity:.6">' + el.ico + '</span></button>').join('') + '</div>' +
       (locked ? '<div class="msg">Salah — tunggu lawan…</div>' : '');
   }
-  const paintQ = () => { qPanel(0); qPanel(1); };
+  const paintQ = () => { if (klasik) return kPanel(); qPanel(0); qPanel(1); };
 
   /* ---------- serangan ---------- */
-  function strike(k, fast){
+  function strike(k, opt){
+    const o = typeof opt === 'object' && opt ? opt : { mult: opt ? 1.4 : 1, crit: !!opt }, fast = !!o.crit;
     const a = P[k], d = P[1 - k], ax = act(a), dx = act(d);
-    const adv = elemBeats(cardSet(ax.c).el, cardSet(dx.c).el) ? 1.5 : elemBeats(cardSet(dx.c).el, cardSet(ax.c).el) ? 0.75 : 1;
-    const dmg = Math.max(3, Math.round(ax.atk * (fast ? 1.4 : 1) * (0.9 + Math.random() * 0.2) * adv - dx.def * 0.6));
+    const adv = advOf(ax, dx);
+    let dmg = Math.max(3, Math.round(ax.atk * o.mult * (0.9 + Math.random() * 0.2) * adv - dx.def * 0.6));
+    const blocked = shield[1 - k];
+    if (blocked){ dmg = Math.max(1, Math.round(dmg * .5)); shield[1 - k] = false; }
+    const ko = dx.cur - dmg <= 0;
     const aEl = $b('#btA' + k), dEl = $b('#btA' + (1 - k));
     if (aEl) aEl.classList.add(k === 0 ? 'bt-lunge-up' : 'bt-lunge-dn');
     snd(fast ? 'duel_kritikal' : 'duel_serang', fast ? 'hi' : 'flip');
@@ -6467,16 +6569,25 @@ function battleRun(tA, tB, mode){
         n.textContent = '-' + dmg; n.style.left = ((r.left - br.left + r.width / 2) / br.width * 100) + '%'; n.style.top = ((r.top - br.top + r.height * .3) / br.height * 100) + '%';
         $b('#btBoard').appendChild(n); setTimeout(() => n.remove(), 1200);
       }
-      banner((fast ? '⚡ KRITIKAL! ' : '') + esc(ax.c.name) + (adv > 1 ? ' · ELEMEN KUAT!' : adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFE14D' : '#fff', 1200);
+      if (dEl && blocked){ dEl.classList.remove('bt-shield'); const sh = dEl.querySelector('.bt-sh'); if (sh) sh.remove(); }
+      banner((fast ? (o.label || '⚡ KRITIKAL!') + ' ' : '') + esc(ax.c.name) + (blocked ? ' · 🛡 DITAHAN' : '') + (adv > 1 ? ' · ELEMEN KUAT!' : adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFE14D' : '#fff', 1200);
       if (dx.cur <= 0){
         setTimeout(() => {
           if (!root.isConnected) return;
           if (dEl) dEl.classList.add('bt-ko');
           banner(esc(dx.c.name) + ' — KO!', '#FCA5A5', 1200); snd('duel_ko', 'low');
-          setTimeout(() => { if (!root.isConnected) return; d.ko.push(dx); d.i++; paintBoard(alive(d) ? 1 - k : undefined); }, 700);
+          setTimeout(() => {
+            if (!root.isConnected) return;
+            d.ko.push(dx);
+            const live2 = d.deck.map((y, j) => [y, j]).filter(([y]) => y.cur > 0);
+            if (live2.length) d.i = (klasik && !d.id ? live2.sort((a2, b2) => b2[0].cur - a2[0].cur)[0] : live2[0])[1];   // komputer pilih kad paling sihat
+            shield[1 - k] = false;
+            paintBoard(alive(d) ? 1 - k : undefined);
+          }, 700);
         }, 500);
       } else setTimeout(() => { if (dEl) dEl.classList.remove('bt-hit'); }, 460);
     }, 330);
+    return { dmg, ko };
   }
 
   /* ---------- pusingan ---------- */
@@ -6525,11 +6636,97 @@ function battleRun(tA, tB, mode){
     raf = requestAnimationFrame(tick);
   }
 
+  /* ---------- MOD KLASIK (tanpa kuiz): tenaga, serang, jurus, bertahan, tukar kad ---------- */
+  const COST = { serang: 1, jurus: 3, tahan: 1, tukar: 1 }, EMAX = 5;
+  const humanTurn = () => klasik && !over && !busy && !(ai && turn === 1);
+  function kPanel(){
+    const box = $b('#btQ0'); if (!box) return;
+    const p = P[turn]; box.style.setProperty('--qc', p.col);
+    if (over){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt"></div>'; return; }
+    if (ai && turn === 1){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt">🤖 Penjaga Kad sedang berfikir…</div>'; return; }
+    if (busy && round === 0){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt">Mengedarkan kad…</div>'; return; }
+    const ax = act(p), dx = act(P[1 - turn]), adv = advOf(ax, dx), e = energy[turn], el = elemOf(cardSet(ax.c).el);
+    const est = m => Math.max(3, Math.round(ax.atk * m * 1.3 * adv - dx.def * .6));
+    const btn = (k, ico, t, sub, dis) => '<button data-k="' + k + '"' + (dis ? ' disabled class="locked"' : '') + '><b>' + ico + '</b><span>' + t + '<small>' + sub + '</small></span></button>';
+    box.className = 'bt-q kl';
+    box.innerHTML = '<div class="who">' + teamIco(p) + '<span>' + esc(p.name).toUpperCase() + ' · GILIRAN</span><span class="en">' +
+        Array.from({ length: EMAX }, (_, i) => '<i class="' + (i < e ? 'on' : '') + '">⚡</i>').join('') + '</span></div>' +
+      (swMode ? '<div class="qt">🔄 Ketik kad di bangku untuk masuk ke gelanggang</div><div class="mv one"><button data-k="batal"><b>✕</b><span>Batal</span></button></div>' :
+      '<div class="mv">' +
+        btn('serang', '⚔️', 'Serang · 1⚡', '≈' + est(1) + ' kerosakan' + (adv > 1 ? ' · elemen kuat' : adv < 1 ? ' · elemen lemah' : ''), e < 1 || busy) +
+        btn('jurus', el.ico, 'Jurus ' + el.name + ' · 3⚡', '≈' + est(2.3 / 1.3) + ' kerosakan', e < 3 || busy) +
+        btn('tahan', '🛡', 'Bertahan · 1⚡', shield[turn] ? 'perisai aktif' : 'separuh kerosakan seterusnya', e < 1 || shield[turn] || busy) +
+        btn('tukar', '🔄', 'Tukar Kad · 1⚡', switched ? 'sudah ditukar giliran ini' : 'masukkan kad dari bangku', e < 1 || switched || alive(p) < 2 || busy) +
+      '</div><div class="mv one"><button data-k="tamat"' + (busy ? ' disabled class="locked"' : '') + '><b>⏭</b><span>Tamat giliran (simpan tenaga)</span></button></div>');
+  }
+  function beginTurn(k){
+    if (over) return;
+    turn = k; round++; energy[k] = Math.min(EMAX, energy[k] + 1);
+    switched = false; swMode = false; busy = false;
+    paintBoard(); kPanel();
+    banner(ai && k === 1 ? 'GILIRAN PENJAGA KAD' : 'GILIRAN ' + esc(P[k].name).toUpperCase(), '#fff', 1000);
+    if (ai && k === 1) setTimeout(aiTurn, 1300);
+  }
+  const endTurn = () => { if (over || !root.isConnected) return; if (!alive(P[0]) || !alive(P[1])) return finish(); beginTurn(1 - turn); };
+  function doAttack(k, kind){
+    if (energy[k] < COST[kind] || busy) return;
+    energy[k] -= COST[kind]; busy = true; swMode = false; kPanel();
+    const r = strike(k, kind === 'jurus' ? { mult: 2.3, crit: true, label: '💥 JURUS!' } : { mult: 1.3 });   // Klasik lebih pantas: sesuai masa kelas
+    setTimeout(() => { busy = false; endTurn(); }, r.ko ? 2700 : 1500);
+  }
+  function doShield(k){
+    if (energy[k] < COST.tahan || shield[k] || busy) return;
+    energy[k] -= COST.tahan; shield[k] = true; snd('ui_betul', 'hi');
+    banner('🛡 ' + esc(act(P[k]).c.name) + ' bersedia bertahan', '#7DD3FC', 1100); paintBoard(); kPanel();
+  }
+  function doSwitch(k, j){
+    const p = P[k];
+    if (busy || switched || energy[k] < COST.tukar || j === p.i || !p.deck[j] || p.deck[j].cur <= 0) return;
+    energy[k] -= COST.tukar; switched = true; swMode = false; p.i = j; shield[k] = false;
+    snd('kad_letup', 'flip'); banner('🔄 ' + esc(p.deck[j].c.name) + ' masuk gelanggang!', '#FDE68A', 1100);
+    paintBoard(); kPanel();
+  }
+  function aiTurn(){
+    if (over || turn !== 1 || !root.isConnected) return;
+    const me = P[1], ax = act(me), dx = act(P[0]), adv = advOf(ax, dx);
+    if (!switched && energy[1] >= 2 && adv < 1){                 // elemen lemah: tukar ke kad yang menang elemen
+      const j = me.deck.findIndex((y, i) => i !== me.i && y.cur > 0 && advOf(y, dx) > 1);
+      if (j >= 0){ doSwitch(1, j); return setTimeout(aiTurn, 1400); }
+    }
+    if (energy[1] >= 3 && (adv >= 1 || Math.random() < .6)) return doAttack(1, 'jurus');
+    if (!shield[1] && energy[1] >= 2 && ax.cur / ax.hp < .35 && Math.random() < .6){ doShield(1); return setTimeout(aiTurn, 1000); }
+    if (energy[1] === 2 && Math.random() < .35){ banner('Penjaga Kad menyimpan tenaga…', '#94A3B8', 1000); return setTimeout(endTurn, 1100); }
+    if (energy[1] >= 1) return doAttack(1, 'serang');
+    setTimeout(endTurn, 900);
+  }
+
   /* ---------- tamat: ganjaran, TP & rekod ---------- */
   function finish(){
     if (over) return; over = true; cancelAnimationFrame(raf); paintQ();
     const wk = alive(P[0]) ? 0 : 1, W = P[wk], L = P[1 - wk];
     S.duel = S.duel || {};
+    if (klasik){                                          // tiada soalan: RP sahaja, tidak ke PBD
+      S.duel.klasik = S.duel.klasik || {};
+      const rpOf = p => p === W ? (ai ? 4 + alive(W) * 2 : 6 + alive(W)) : 1;
+      const rowsK = ai ? [P[0]] : [W, L];
+      rowsK.forEach(p => { if (!p.id) return; teamRP(p.id, rpOf(p)); const r = S.duel.klasik[p.id] = S.duel.klasik[p.id] || { w:0, l:0 }; r[p === W ? 'w' : 'l']++; });
+      save(true);
+      const lostAi = ai && wk === 1;
+      snd(lostAi ? 'duel_kalah' : 'duel_menang', lostAi ? 'low' : 'myth');
+      const e = document.createElement('div'); e.className = 'bt-end';
+      e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:420px">' +
+        '<div style="display:flex;justify-content:center">' + teamIco(W).replace(/26px/g, '60px') + '</div>' +
+        '<div class="font-bold tracking-widest text-[22px] mt-2" style="color:' + (lostAi ? '#EF4444' : '#FFD76A') + '">' + (ai ? (lostAi ? 'KALAH…' : 'MENANG!') : esc(W.name).toUpperCase() + ' MENANG!') + '</div>' +
+        '<div class="text-[12px] text-muted mt-1">Duel Klasik · ' + (ai ? 'lawan Penjaga Kad' : 'kumpulan lawan kumpulan') + ' · ' + round + ' giliran</div>' +
+        '<div class="grid gap-2 mt-3 num" style="grid-template-columns:repeat(' + rowsK.length + ',1fr)">' + rowsK.map(p =>
+          '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(p.name) + '</div><div class="text-[16px]" style="color:#4ADE80">' + alive(p) + ' kad hidup</div>' +
+          '<div class="text-[11px] text-orange">+' + rpOf(p) + ' RP</div></div>').join('') + '</div>' +
+        '<div class="text-[10px] text-muted mt-2">Mod Klasik tiada soalan — ganjaran RP sahaja, tidak direkod sebagai TP.</div>' +
+        '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-x="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-x="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button></div></div>';
+      $b('#btBoard').appendChild(e);
+      if (!lostAi) confettiBurst(e, 80);
+      return;
+    }
     let rows;
     if (ai){
       const won = wk === 0, rp = won ? 6 + alive(P[0]) * 3 : 2;
@@ -6566,6 +6763,19 @@ function battleRun(tA, tB, mode){
   const quit = () => { over = true; cancelAnimationFrame(raf); liveEnd(live); root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab(); };
   root.addEventListener('click', e => {
     const a = e.target.closest('[data-a]'); if (a){ const [k, i] = a.dataset.a.split(':').map(Number); return answer(k, i); }
+    const kb = e.target.closest('[data-k]');
+    if (kb){
+      if (!humanTurn()) return;
+      const v = kb.dataset.k;
+      if (v === 'serang' || v === 'jurus') return doAttack(turn, v);
+      if (v === 'tahan') return doShield(turn);
+      if (v === 'tukar'){ if (energy[turn] >= COST.tukar && !switched){ swMode = true; paintBoard(); kPanel(); } return; }
+      if (v === 'batal'){ swMode = false; paintBoard(); kPanel(); return; }
+      if (v === 'tamat'){ snd('ui_klik', 'flip'); return endTurn(); }
+      return;
+    }
+    const sw = e.target.closest('[data-sw]');
+    if (sw){ if (!humanTurn()) return; const [k, j] = sw.dataset.sw.split(':').map(Number); if (k === turn) doSwitch(k, j); return; }
     const x = e.target.closest('[data-x]'); if (!x) return;
     if (x.dataset.x === 'quit'){ if (over) return quit(); gameConfirm().then(ok => ok && quit()); return; }
     if (x.dataset.x === 'again'){ quit(); setTimeout(() => battleRun(tA, tB, mode), 80); }
@@ -6573,7 +6783,7 @@ function battleRun(tA, tB, mode){
   paintBoard(); paintQ();
   audPlay('duel_mula');
   banner(ai ? esc(P[0].name) + ' lawan PENJAGA KAD' : esc(P[0].name) + ' lawan ' + esc(P[1].name), '#FFE14D', 1500);
-  setTimeout(ask, 1700);
+  setTimeout(klasik ? () => beginTurn(0) : ask, klasik ? 1900 : 1700);
 }
 function duelStart(){
   const t = arenaUi().team;
@@ -6693,7 +6903,7 @@ function viewGame(){
   const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
-  return tabs + (g === 'cards' ? teamPanelHtml() : '') +          // kumpulan & tetapan dipilih dalam menu game
+  return tabs +                                                     // kumpulan & tetapan dipilih dalam menu game
     (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
@@ -9447,15 +9657,15 @@ const ACTS = {
   'binder': d => binderModal(d.id),
   'pack-buy': d => {
     const o = arenaUi(), p = PACKS.find(x => x.k === d.id);
-    if (!o.cardStu || !stu(o.cardStu)) return toast('Pilih pelajar dahulu.', null, true);
+    if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
     if (tpcBalance() < p.cost) return toast('TPC tidak mencukupi (' + tpcBalance() + '/' + p.cost + ').', null, true);
-    packOpen(o.cardStu, p, false);
+    packOpen(o.team, p, false);
   },
   'pack-free': d => {
     const o = arenaUi(), p = PACKS.find(x => x.k === d.id);
-    if (!o.cardStu || !stu(o.cardStu)) return toast('Pilih pelajar dahulu.', null, true);
-    if (!freeLeft(o.cardStu)) return toast('Pack percuma hari ini sudah digunakan.', null, true);
-    packOpen(o.cardStu, p, true);
+    if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
+    if (!freeLeft(o.team)) return toast('Pack percuma hari ini sudah digunakan.', null, true);
+    packOpen(o.team, p, true);
   },
   'card-see': d => cardZoom(d.id, d.sid),
   'duel-start': () => duelStart(),
