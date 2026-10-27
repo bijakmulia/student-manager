@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jana Audio EduRank</title>
+<meta name="description" content="Jana semua bunyi efek dan muzik latar EduRank dengan ElevenLabs, terus disimpan ke folder assets/sfx.">
+<style>
+:root{--bg:#0B1220;--panel:#121B2E;--line:#22304D;--tx:#E6EEF7;--mut:#8DA2BF;--acc:#22D3EE;--ok:#4ADE80;--bad:#F87171;--warn:#FACC15}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:#1B2742;border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);color:#04202A;border-color:var(--acc);font-weight:800}
+button:disabled{opacity:.45;cursor:default}
+header{padding:14px 16px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:19px}
+header p{margin:4px 0 0;color:var(--mut);font-size:13px}
+main{max-width:980px;margin:0 auto;padding:14px 16px 60px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lbl{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--mut);margin-bottom:6px}
+input[type=password],input[type=text]{background:#0E172A;border:1px solid var(--line);border-radius:8px;padding:8px 10px;flex:1;min-width:220px}
+.st{font-size:12px;color:var(--mut)}
+.st.ok{color:var(--ok)}.st.bad{color:var(--bad)}.st.warn{color:var(--warn)}
+.grp{margin-top:14px;font-weight:800;letter-spacing:.08em;color:var(--acc);font-size:13px}
+.it{display:grid;grid-template-columns:22px 150px 1fr auto;gap:8px;align-items:start;padding:8px;border-radius:10px;background:#0E172A;margin-top:6px}
+@media (max-width:700px){.it{grid-template-columns:22px 1fr auto}.it .p{grid-column:2 / 4}}
+.it .id{font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:700;word-break:break-all}
+.it .id small{display:block;color:var(--mut);font-weight:500}
+.it textarea{width:100%;min-height:38px;resize:vertical;background:#0B1220;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:12px;color:#CBD5E1}
+.it .b{display:flex;gap:4px;align-items:center}
+.it .b button{padding:5px 8px;font-size:12px}
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;background:#22304D;white-space:nowrap}
+.badge.ok{background:rgba(74,222,128,.15);color:var(--ok)}.badge.run{background:rgba(250,204,21,.15);color:var(--warn)}.badge.bad{background:rgba(248,113,113,.15);color:var(--bad)}
+.bar{height:8px;background:#1E293B;border-radius:99px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
+ol{margin:6px 0 0;padding-left:20px;color:#CBD5E1}
+ol li{margin:3px 0}
+a{color:var(--acc)}
+#log{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--mut);max-height:160px;overflow:auto;white-space:pre-wrap;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔊 Jana Audio EduRank</h1>
+  <p>Semua prompt sudah tersedia. Tekan satu butang — bunyi efek &amp; muzik latar dijana oleh ElevenLabs dan disimpan terus ke folder <b>assets\sfx</b>. Auto-push menerbitkannya.</p>
+</header>
+<main>
+  <div class="panel">
+    <div class="lbl">LANGKAH SEKALI SAHAJA</div>
+    <ol>
+      <li>Daftar / log masuk di <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">elevenlabs.io → API Keys</a>, cipta kunci API (benarkan <i>Sound Effects</i> &amp; <i>Music</i>), salin.</li>
+      <li>Tampal kunci di bawah. Kunci disimpan dalam pelayar ini sahaja — tidak dihantar ke mana-mana selain ElevenLabs.</li>
+      <li>Tekan <b>Pilih folder</b> dan pilih <code>Desktop\student manager\assets\sfx</code> (Chrome / Edge di komputer).</li>
+    </ol>
+    <div class="row" style="margin-top:10px">
+      <input type="password" id="key" placeholder="Kunci API ElevenLabs (sk_…)" autocomplete="off">
+      <button id="bKey">Simpan kunci</button>
+      <button id="bFolder">📁 Pilih folder assets\sfx</button>
+    </div>
+    <div class="st" id="stKey"></div>
+    <div class="st" id="stFolder"></div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <button class="pri" id="bAll">▶ Jana semua yang belum ada</button>
+      <button id="bStop" disabled>■ Henti</button>
+      <span class="st" id="stRun"></span>
+    </div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="st" style="margin-top:8px">Bunyi efek pendek menggunakan sedikit kredit; muzik latar lebih banyak. Kredit dan had pelan anda dipaparkan di laman ElevenLabs. Jika pelan anda tidak membenarkan muzik, tekan <b>Salin prompt Suno</b> dan jana 5 lagu itu di Suno.</div>
+    <div class="row" style="margin-top:8px"><button id="bSuno">📋 Salin prompt Suno (muzik latar, format ### nama.mp3)</button></div>
+    <div id="log"></div>
+  </div>
+
+  <div class="panel"><div class="lbl">SENARAI AUDIO</div><div id="list">Memuatkan senarai…</div></div>
+</main>
+<script>
+const KEY_LS = 'edurank.elevenlabs.key';
+let LIST = [], GAYA = '', DIR = null, STOP = false, RUNNING = false;
+const have = new Set(), live = new Set(), state = {};          // state[id] = 'run' | 'ok' | 'bad:<msg>'
+const $ = s => document.querySelector(s);
+const log = t => { const l = $('#log'); l.textContent = new Date().toLocaleTimeString() + '  ' + t + '\n' + l.textContent; };
+
+/* ---------- kunci API ---------- */
+const getKey = () => { try { return localStorage.getItem(KEY_LS) || ''; } catch(e){ return ''; } };
+function showKey(){ const k = getKey(); $('#stKey').innerHTML = k ? '<span class="st ok">✓ Kunci disimpan (…' + k.slice(-4) + ')</span>' : '<span class="st warn">Belum ada kunci API.</span>'; }
+$('#bKey').onclick = () => { const v = $('#key').value.trim(); if (!v) return; try { localStorage.setItem(KEY_LS, v); } catch(e){} $('#key').value = ''; showKey(); };
+
+/* ---------- folder (File System Access API, diingat dalam IndexedDB) ---------- */
+const idb = () => new Promise((res, rej) => { const r = indexedDB.open('jana-audio', 1); r.onupgradeneeded = () => r.result.createObjectStore('h'); r.onsuccess = () => res(r.result); r.onerror = rej; });
+const idbGet = async k => { const d = await idb(); return new Promise(r => { const q = d.transaction('h').objectStore('h').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); };
+const idbPut = async (k, v) => { const d = await idb(); return new Promise(r => { const t = d.transaction('h', 'readwrite'); t.objectStore('h').put(v, k); t.oncomplete = r; t.onerror = r; }); };
+async function scanDir(){
+  have.clear();
+  if (!DIR) return;
+  for await (const [name, h] of DIR.entries()) if (h.kind === 'file' && /\.(mp3|ogg|wav|m4a)$/i.test(name)) have.add(name.replace(/\.[^.]+$/, '').toLowerCase());
+}
+async function useDir(h){
+  DIR = h; await idbPut('dir', h); await scanDir();
+  $('#stFolder').innerHTML = '<span class="st ok">✓ Folder: ' + h.name + ' (' + have.size + ' fail audio sedia ada)</span>' + (h.name !== 'sfx' ? ' <span class="st warn">— pastikan ini folder assets\\sfx</span>' : '');
+  render();
+}
+$('#bFolder').onclick = async () => {
+  if (!window.showDirectoryPicker) return alert('Pelayar ini tidak menyokong simpan terus ke folder. Guna Chrome atau Edge di komputer. (Fail akan dimuat turun ke folder Downloads sebagai ganti.)');
+  try { await useDir(await window.showDirectoryPicker({ id: 'edurank-sfx', mode: 'readwrite' })); } catch(e){}
+};
+async function restoreDir(){
+  if (!window.showDirectoryPicker) { $('#stFolder').innerHTML = '<span class="st warn">Pelayar ini tidak boleh simpan terus ke folder — fail akan dimuat turun ke Downloads.</span>'; return; }
+  const h = await idbGet('dir'); if (!h) { $('#stFolder').innerHTML = '<span class="st warn">Belum pilih folder.</span>'; return; }
+  const p = await h.queryPermission({ mode: 'readwrite' });
+  if (p === 'granted') return useDir(h);
+  $('#stFolder').innerHTML = '<button id="bRe">🔓 Benarkan semula folder ' + h.name + '</button>';
+  $('#bRe').onclick = async () => { if (await h.requestPermission({ mode: 'readwrite' }) === 'granted') useDir(h); };
+}
+async function saveFile(id, blob){
+  const name = id + '.mp3';
+  if (DIR){
+    const fh = await DIR.getFileHandle(name, { create: true }), w = await fh.createWritable();
+    await w.write(blob); await w.close(); have.add(id); return 'folder';
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000); have.add(id); return 'Downloads';
+}
+
+/* ---------- ElevenLabs ---------- */
+async function apiErr(r){
+  let m = 'HTTP ' + r.status;
+  try { const j = await r.json(); const d = j.detail; m = (typeof d === 'string' ? d : d && (d.message || d.status || (Array.isArray(d) ? d.map(x => x.msg).join('; ') : JSON.stringify(d)))) || m; } catch(e){}
+  if (r.status === 401) m = 'Kunci API salah atau tiada kebenaran (' + m + ')';
+  if (r.status === 402 || /quota|credit/i.test(m)) m = 'Kredit tidak cukup (' + m + ')';
+  return m;
+}
+async function generate(a){
+  const key = getKey(); if (!key) throw new Error('Simpan kunci API dahulu.');
+  const prompt = (document.querySelector('[data-p="' + a.id + '"]') || {}).value || a.p;
+  let r;
+  if (a.k === 'sfx'){
+    r = await fetch('https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128', {
+      method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: prompt + (GAYA ? ', ' + GAYA : ''), duration_seconds: Math.min(30, Math.max(0.5, a.s)), prompt_influence: 0.5 })
+    });
+  } else {
+    r = await fetch('https://api.elevenlabs.io/v1/music', {
+      method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, music_length_ms: Math.round(a.s * 1000), force_instrumental: true })
+    });
+  }
+  if (!r.ok) throw new Error(await apiErr(r));
+  const b = await r.blob();
+  if (b.size < 1000) throw new Error('Fail audio terlalu kecil (' + b.size + ' bait)');
+  return b;
+}
+async function runOne(a){
+  state[a.id] = 'run'; render();
+  try {
+    const blob = await generate(a);
+    const where = await saveFile(a.id, blob);
+    state[a.id] = 'ok'; log('✓ ' + a.id + '.mp3 (' + Math.round(blob.size / 1024) + ' KB) → ' + where);
+    return true;
+  } catch(e){
+    state[a.id] = 'bad:' + e.message; log('✗ ' + a.id + ': ' + e.message);
+    return /Kunci API salah|Kredit tidak cukup/.test(e.message) ? 'fatal' : false;
+  } finally { render(); }
+}
+$('#bAll').onclick = async () => {
+  if (RUNNING) return;
+  if (!getKey()) return alert('Simpan kunci API ElevenLabs dahulu.');
+  if (DIR) await scanDir();
+  const todo = LIST.filter(a => !have.has(a.id) && !live.has(a.id) && (document.querySelector('[data-c="' + a.id + '"]') || {}).checked !== false);
+  if (!todo.length) return alert('Semua audio sudah ada. Tekan 🔁 pada mana-mana item untuk jana semula.');
+  RUNNING = true; STOP = false; $('#bStop').disabled = false; $('#bAll').disabled = true;
+  let n = 0, ok = 0;
+  for (const a of todo){
+    if (STOP) break;
+    $('#stRun').textContent = 'Menjana ' + (n + 1) + '/' + todo.length + ': ' + a.id + '…';
+    const r = await runOne(a); n++; if (r === true) ok++;
+    $('#prog').style.width = (n / todo.length * 100) + '%';
+    if (r === 'fatal'){ log('Dihentikan: ' + state[a.id].slice(4)); break; }
+  }
+  $('#stRun').textContent = (STOP ? 'Dihentikan. ' : 'Selesai. ') + ok + '/' + todo.length + ' berjaya.' + (DIR ? ' Auto-push akan menerbitkannya dalam ~5 minit.' : '');
+  RUNNING = false; $('#bStop').disabled = true; $('#bAll').disabled = false;
+};
+$('#bStop').onclick = () => { STOP = true; $('#stRun').textContent = 'Menghentikan selepas item ini…'; };
+$('#bSuno').onclick = () => {
+  const t = LIST.filter(a => a.k === 'bgm').map(a => '### ' + a.id + '.mp3\n' + a.p).join('\n\n');
+  navigator.clipboard.writeText(t).then(() => log('Prompt Suno disalin (' + LIST.filter(a => a.k === 'bgm').length + ' lagu).'), () => prompt('Salin teks ini:', t));
+};
+
+/* ---------- senarai ---------- */
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+function badge(a){
+  const s = state[a.id];
+  if (s === 'run') return '<span class="badge run">menjana…</span>';
+  if (s && s.indexOf('bad:') === 0) return '<span class="badge bad" title="' + esc(s.slice(4)) + '">gagal</span>';
+  if (have.has(a.id)) return '<span class="badge ok">✓ dalam folder</span>';
+  if (live.has(a.id)) return '<span class="badge ok">✓ diterbitkan</span>';
+  return '<span class="badge">belum</span>';
+}
+function render(){
+  const keepP = {}; document.querySelectorAll('[data-p]').forEach(t => keepP[t.dataset.p] = t.value);
+  const keepC = {}; document.querySelectorAll('[data-c]').forEach(t => keepC[t.dataset.c] = t.checked);
+  let g = '', h = '';
+  LIST.forEach(a => {
+    if (a.g !== g){ g = a.g; h += '<div class="grp">' + esc(g).toUpperCase() + '</div>'; }
+    const done = have.has(a.id) || live.has(a.id);
+    h += '<div class="it"><input type="checkbox" data-c="' + a.id + '"' + ((a.id in keepC ? keepC[a.id] : !done) ? ' checked' : '') + '>' +
+      '<div class="id">' + a.id + '.mp3<small>' + (a.k === 'bgm' ? '🎵 muzik ' : '🔊 efek ') + a.s + ' s</small></div>' +
+      '<div class="p"><textarea data-p="' + a.id + '">' + esc(keepP[a.id] != null ? keepP[a.id] : a.p) + '</textarea>' +
+        (state[a.id] && state[a.id].indexOf('bad:') === 0 ? '<div class="st bad">' + esc(state[a.id].slice(4)) + '</div>' : '') + '</div>' +
+      '<div class="b">' + badge(a) + '<button data-play="' + a.id + '" title="Dengar">▶</button><button data-gen="' + a.id + '" title="Jana / jana semula">🔁</button></div></div>';
+  });
+  $('#list').innerHTML = h;
+}
+$('#list').addEventListener('click', async e => {
+  const p = e.target.closest('[data-play]'), gbtn = e.target.closest('[data-gen]');
+  if (p){
+    const id = p.dataset.play; let url = null;
+    if (DIR && have.has(id)) try { url = URL.createObjectURL(await (await DIR.getFileHandle(id + '.mp3')).getFile()); } catch(err){}
+    if (!url && live.has(id)) url = '../assets/sfx/' + id + '.mp3';
+    if (!url) return log(id + ': belum ada fail untuk didengar.');
+    const au = new Audio(url); au.play().catch(() => {});
+  }
+  if (gbtn && !RUNNING){
+    if (!getKey()) return alert('Simpan kunci API ElevenLabs dahulu.');
+    RUNNING = true; await runOne(LIST.find(a => a.id === gbtn.dataset.gen)); RUNNING = false;
+  }
+});
+
+(async () => {
+  showKey();
+  try { const j = await (await fetch('audio-aset.json', { cache: 'no-store' })).json(); LIST = j.aset; GAYA = j.gaya || ''; }
+  catch(e){ $('#list').textContent = 'Gagal memuat audio-aset.json: ' + e.message; return; }
+  try { const m = await (await fetch('../assets/sfx/senarai.json', { cache: 'no-store' })).json(); Object.keys(m).forEach(k => live.add(k)); } catch(e){}
+  render();
+  restoreDir();
+})();
+</script>
+</body>
+</html>

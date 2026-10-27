@@ -145,3 +145,26 @@ if (-not (Test-Path $mf) -or [System.IO.File]::ReadAllText($mf) -ne $json) {
     [System.IO.File]::WriteAllText($mf, $json, (New-Object System.Text.UTF8Encoding $false))
     Write-Host "  [aset] senarai.json dikemas kini ($($have.Count) gambar)"
 }
+
+# assets\sfx\senarai.json: audio files (sound effects & music) the game may play instead of its built-in beeps.
+$sfxDir = Join-Path $PSScriptRoot 'assets\sfx'
+if (Test-Path $sfxDir) {
+    $aknown = @{}
+    $alist = Join-Path $PSScriptRoot 'tools\audio-aset.json'
+    if (Test-Path $alist) { ([regex]::Matches((Get-Content $alist -Raw -Encoding UTF8), '"id":\s*"([a-z0-9_]+)"')) | ForEach-Object { $aknown[$_.Groups[1].Value] = $true } }
+    $apref = @{ '.mp3' = 4; '.m4a' = 3; '.ogg' = 2; '.wav' = 1 }
+    $ahave = [ordered]@{}
+    Get-ChildItem $sfxDir -File | Where-Object { $apref.ContainsKey($_.Extension.ToLower()) } | Sort-Object Name | ForEach-Object {
+        $id = $_.BaseName.Trim().ToLower() -replace '[\s\-]+', '_'
+        if ($id -cne $_.BaseName) { Rename-Item -LiteralPath $_.FullName -NewName ($id + $_.Extension.ToLower()); Write-Host "  [audio] nama dikemas: $($_.Name) -> $id$($_.Extension.ToLower())" }
+        if ($aknown.Count -and -not $aknown.ContainsKey($id)) { Write-Host "  [audio] $id : nama tidak dikenali (semak tools\audio-aset.json)"; return }
+        $p = $apref[$_.Extension.ToLower()]; $len = (Get-Item (Join-Path $sfxDir ($id + $_.Extension.ToLower()))).Length
+        if (-not $ahave.Contains($id) -or $p -gt $ahave[$id].p) { $ahave[$id] = @{ p = $p; f = $id + $_.Extension.ToLower() + '?v=' + $len } }
+    }
+    $ajson = '{' + (($ahave.Keys | ForEach-Object { '"' + $_ + '":"' + $ahave[$_].f + '"' }) -join ',') + '}'
+    $amf = Join-Path $sfxDir 'senarai.json'
+    if (-not (Test-Path $amf) -or [System.IO.File]::ReadAllText($amf) -ne $ajson) {
+        [System.IO.File]::WriteAllText($amf, $ajson, (New-Object System.Text.UTF8Encoding $false))
+        Write-Host "  [audio] senarai.json dikemas kini ($($ahave.Count) audio)"
+    }
+}

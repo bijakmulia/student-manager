@@ -1,0 +1,10 @@
+FOLDER AUDIO: EDURANK
+=====================
+
+Bunyi efek & muzik latar game. Jana semuanya dengan:
+  https://bijakmulia.github.io/student-manager/tools/jana-audio.html
+  (atau buka tools\jana-audio.html dari komputer melalui laman di atas)
+
+Alat itu menyimpan fail terus ke folder ini (<id>.mp3). Auto-push menyenaraikan
+fail dalam senarai.json dan menerbitkannya. Bunyi yang belum ada guna bunyi
+lalai app. Senarai nama & prompt: tools\audio-aset.json.
