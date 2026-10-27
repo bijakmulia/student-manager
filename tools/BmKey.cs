@@ -67,6 +67,8 @@ public static class BmKey
         byte[] bg = new byte[N];
         int[] stack = new int[N];
         int sp = 0;
+        // already-transparent pixels are background too, so an image keyed before can be cleaned again
+        for (int i = 0; i < N; i++) if (px[i * 4 + 3] < 5) { bg[i] = 1; stack[sp++] = i; }
         for (int x = 0; x < w; x++) { Seed(x, sim, bg, stack, ref sp, FILL); Seed((h - 1) * w + x, sim, bg, stack, ref sp, FILL); }
         for (int y = 0; y < h; y++) { Seed(y * w, sim, bg, stack, ref sp, FILL); Seed(y * w + w - 1, sim, bg, stack, ref sp, FILL); }
         Flood(w, h, sim, bg, stack, ref sp, FILL);
@@ -95,11 +97,12 @@ public static class BmKey
                 if (n >= minHole) { for (int k = 0; k < n; k++) Seed(comp[k], sim, bg, stack, ref sp, FILL); Flood(w, h, sim, bg, stack, ref sp, FILL); }
             }
         }
-        // 4. edge band: pixels within 3 px of the background
+        // 4. edge band: pixels within 3 px (more on big images) of the background
         byte[] band = new byte[N];
         {
             byte[] cur = (byte[])bg.Clone();
-            for (int pass = 0; pass < 3; pass++)
+            int passes = Math.Max(3, (int)Math.Round(Math.Min(w, h) / 200.0));   // halo AI lebih lebar pada gambar besar
+            for (int pass = 0; pass < passes; pass++)
             {
                 byte[] nx = (byte[])cur.Clone();
                 for (int i = 0; i < N; i++)
@@ -159,6 +162,25 @@ public static class BmKey
                 if (n < speck) for (int k = 0; k < n; k++) { A[comp[k]] = 0; bg[comp[k]] = 1; }
             }
         }
+        // 8a. spill zone: AI often paints a light "sticker" outline already tinted by the magenta.
+        //     Pixels a few px further in than the edge band keep their alpha but lose the magenta cast.
+        byte[] zone = new byte[N];
+        {
+            int reach = Math.Max(6, (int)Math.Round(Math.Min(w, h) / 60.0));
+            byte[] cur = (byte[])bg.Clone();
+            for (int pass = 0; pass < reach; pass++)
+            {
+                byte[] nx = (byte[])cur.Clone();
+                for (int i = 0; i < N; i++)
+                {
+                    if (cur[i] != 0) continue;
+                    int x = i % w, y = i / w;
+                    if ((x > 0 && cur[i - 1] != 0) || (x < w - 1 && cur[i + 1] != 0) || (y > 0 && cur[i - w] != 0) || (y < h - 1 && cur[i + w] != 0)) nx[i] = 1;
+                }
+                cur = nx;
+            }
+            for (int i = 0; i < N; i++) zone[i] = (byte)(cur[i] != 0 && bg[i] == 0 && band[i] == 0 ? 1 : 0);
+        }
         // 8. colour decontamination (un-mix the key), despill, and calm noisy faint edge pixels
         int cleared = 0;
         for (int i = 0, p = 0; i < N; i++, p += 4)
@@ -181,9 +203,35 @@ public static class BmKey
                 }
                 px[p + 2] = (byte)Clamp(r); px[p + 1] = (byte)Clamp(g); px[p] = (byte)Clamp(b);
             }
+            else if (zone[i] != 0 && despill > 0)
+            {
+                double r = px[p + 2], g = px[p + 1], b = px[p], m = Math.Min(r, b);
+                if (m - g > 8)
+                {
+                    double s = (m - g) / 255.0;                       // share of magenta mixed in
+                    r = (r - s * K[0]) / (1 - s); g = g / (1 - s); b = (b - s * K[2]) / (1 - s);
+                    m = Math.Min(r, b);
+                    if (m > g)                                        // still tinted: ease towards grey
+                    {
+                        double L = 0.299 * r + 0.587 * g + 0.114 * b, k = Math.Min(1, (m - g) / 40.0) * despill;
+                        r += (L - r) * k; g += (L - g) * k; b += (L - b) * k;
+                    }
+                    px[p + 2] = (byte)Clamp(r); px[p + 1] = (byte)Clamp(g); px[p] = (byte)Clamp(b);
+                }
+            }
             px[p + 3] = (byte)Math.Round(a * 255);
         }
         return cleared;
+    }
+
+    // Bounding box {x0, y0, x1, y1} of pixels with alpha above `thr`, or null when the image is empty.
+    public static int[] Bounds(byte[] px, int w, int h, int thr)
+    {
+        int x0 = w, y0 = h, x1 = -1, y1 = -1;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                if (px[(y * w + x) * 4 + 3] > thr) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        return x1 < 0 ? null : new int[] { x0, y0, x1, y1 };
     }
 
     static double Clamp(double v) { return v < 0 ? 0 : v > 255 ? 255 : v; }

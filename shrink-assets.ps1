@@ -75,13 +75,30 @@ Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' 
         [System.Runtime.InteropServices.Marshal]::Copy($bd.Scan0, $buf, 0, $buf.Length)
         $key = [BmKey]::DetectKey($buf, $bmp.Width, $bmp.Height)
         if ($key) {
-            # same defaults as the web app: lo .15, hi .75, strict .8, despill 1, choke .5, specks < 12 px, holes >= 30 px, denoise
-            $cleared = [BmKey]::Run($buf, $bmp.Width, $bmp.Height, $key, 0.15, 0.75, 0.8, 1.0, 0.5, 12, $true, 30, $true)
+            # lo .15, hi .75, strict .7, despill 1, choke .5, specks < 12 px, holes >= 4 px (racket strings, mesh), denoise
+            $cleared = [BmKey]::Run($buf, $bmp.Width, $bmp.Height, $key, 0.15, 0.75, 0.7, 1.0, 0.5, 12, $true, 4, $true)
             [System.Runtime.InteropServices.Marshal]::Copy($buf, 0, $bd.Scan0, $buf.Length)
             $keyed = $true
             Write-Host ("  [aset] {0}: latar magenta rgb({1},{2},{3}) dibuang ({4:N0} piksel lutsinar)" -f $base, $key[0], $key[1], $key[2], $cleared)
         }
+        # trim transparent margins: pieces that fill their box (shelves, door, counters tiled side
+        # by side) are cut tight; items and characters keep a 2% margin
+        $bb = [BmKey]::Bounds($buf, $bmp.Width, $bmp.Height, 8)
         $bmp.UnlockBits($bd)
+        $tight = ($base -like 'rak_*' -or $base -like 'kaunter_*' -or $base -eq 'pintu_stor')
+        $pad = if ($tight) { 0 } else { [int][Math]::Round([Math]::Max($bmp.Width, $bmp.Height) * 0.02) }
+        if ($bb) {
+            $x0 = [Math]::Max(0, $bb[0] - $pad); $y0 = [Math]::Max(0, $bb[1] - $pad)
+            $x1 = [Math]::Min($bmp.Width - 1, $bb[2] + $pad); $y1 = [Math]::Min($bmp.Height - 1, $bb[3] + $pad)
+            if ($x0 -gt 2 -or $y0 -gt 2 -or $x1 -lt $bmp.Width - 3 -or $y1 -lt $bmp.Height - 3) {
+                $cw = $x1 - $x0 + 1; $ch = $y1 - $y0 + 1
+                $crop = New-Object System.Drawing.Bitmap $cw, $ch, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+                $gc = [System.Drawing.Graphics]::FromImage($crop); $gc.Clear([System.Drawing.Color]::Transparent)
+                $gc.DrawImage($bmp, (New-Object System.Drawing.Rectangle 0, 0, $cw, $ch), $x0, $y0, $cw, $ch, [System.Drawing.GraphicsUnit]::Pixel); $gc.Dispose()
+                $bmp.Dispose(); $bmp = $crop; $src = $crop; $keyed = $true      # forces a rewrite as PNG
+                Write-Host ("  [aset] {0}: ruang kosong dipotong -> {1}x{2}" -f $base, $cw, $ch)
+            }
+        }
     }
     $max = Get-MaxSize $base
     $k = [Math]::Min(1.0, [Math]::Min($max[0] / $src.Width, $max[1] / $src.Height))

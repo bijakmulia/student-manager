@@ -173,7 +173,8 @@ function bmCore(px, w, h, o){
   // --- 4. jalur tepi: piksel dalam jarak 3 px daripada latar
   const band = new Uint8Array(N);
   { let cur = bg.slice();
-    for (let pass = 0; pass < 3; pass++){ const nx = cur.slice();
+    const passes = Math.max(3, Math.round(Math.min(w, h) / 200));      // halo AI lebih lebar pada gambar besar
+    for (let pass = 0; pass < passes; pass++){ const nx = cur.slice();
       for (let i = 0; i < N; i++){ if (cur[i]) continue; const x = i % w, y = (i - x) / w;
         if ((x > 0 && cur[i - 1]) || (x < w - 1 && cur[i + 1]) || (y > 0 && cur[i - w]) || (y < h - 1 && cur[i + w])) nx[i] = 1; }
       cur = nx; }
@@ -217,6 +218,15 @@ function bmCore(px, w, h, o){
       if (n < o.speck){ specks++; for (let k = 0; k < n; k++){ const j = comp[k]; cur[j] = 0; bg[j] = 1; } }
     }
   }
+  // --- 8a. zon limpahan: AI kerap melukis garis "sticker" cerah yang sudah tercemar magenta;
+  //         piksel beberapa px lebih ke dalam kekal legap tetapi warna magentanya dibuang
+  const zone = new Uint8Array(N);
+  { let z = bg.slice(); const reach = Math.max(6, Math.round(Math.min(w, h) / 60));
+    for (let pass = 0; pass < reach; pass++){ const nx = z.slice();
+      for (let i = 0; i < N; i++){ if (z[i]) continue; const x = i % w, y = (i - x) / w;
+        if ((x > 0 && z[i - 1]) || (x < w - 1 && z[i + 1]) || (y > 0 && z[i - w]) || (y < h - 1 && z[i + w])) nx[i] = 1; }
+      z = nx; }
+    for (let i = 0; i < N; i++) zone[i] = z[i] && !bg[i] && !band[i] ? 1 : 0; }
   // --- 8. nyahcemar warna (un-mix kunci) + tekan sisa magenta pada tepi
   for (let i = 0, p = 0; i < N; i++, p += 4){
     let a = cur[i];
@@ -229,6 +239,14 @@ function bmCore(px, w, h, o){
         const L = 0.299 * px[p] + 0.587 * px[p + 1] + 0.114 * px[p + 2], mix = (0.5 - a) * 1.6;
         for (let c = 0; c < 3; c++) px[p + c] += (L - px[p + c]) * mix;
       }
+    } else if (zone[i] && o.despill > 0){
+      let r = px[p], g = px[p + 1], b = px[p + 2], m = Math.min(r, b);
+      if (m - g > 8){
+        const s = (m - g) / 255;                          // bahagian magenta yang bercampur
+        r = (r - s * K[0]) / (1 - s); g = g / (1 - s); b = (b - s * K[2]) / (1 - s); m = Math.min(r, b);
+        if (m > g){ const L = 0.299 * r + 0.587 * g + 0.114 * b, k = Math.min(1, (m - g) / 40) * o.despill; r += (L - r) * k; g += (L - g) * k; b += (L - b) * k; }
+        px[p] = r; px[p + 1] = g; px[p + 2] = b;
+      }
     }
     px[p + 3] = Math.round(a * 255);
   }
@@ -237,9 +255,9 @@ function bmCore(px, w, h, o){
 
 /* ---------- tetapan ---------- */
 const VERSION = '1.0.0';
-const DEF = { lo: 0.15, hi: 0.75, strict: 0.8, despill: 1, choke: 0.5, feather: 0, speck: 12, holes: true, minHole: 30,
+const DEF = { lo: 0.15, hi: 0.75, strict: 0.7, despill: 1, choke: 0.5, feather: 0, speck: 12, holes: true, minHole: 5,
   denoise: true, trim: true, pad: 2, max: 0, prefix: '', suffix: '', autoKey: true, key: '#FF00FF' };
-const LS = 'buangMagenta.v2';
+const LS = 'buangMagenta.v3';
 let SET = Object.assign({}, DEF);
 try { Object.assign(SET, JSON.parse(localStorage.getItem(LS) || '{}')); } catch(e){}
 const saveSet = () => { try { localStorage.setItem(LS, JSON.stringify(SET)); } catch(e){} };
