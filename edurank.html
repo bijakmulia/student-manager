@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0C1118">
-<title>LagendaTP</title>
-<meta name="application-name" content="LagendaTP">
+<title>EduRank</title>
+<meta name="application-name" content="EduRank">
 <meta name="author" content="Arif Aziz">
-<meta name="apple-mobile-web-app-title" content="LagendaTP">
+<meta name="apple-mobile-web-app-title" content="EduRank">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/png" href="https://i.ibb.co/LXsmk9d5/20260922-130525-0000.png">
@@ -307,9 +307,9 @@ input[type=range].sl::-moz-range-thumb{height:24px;width:14px;border:0;backgroun
 <!-- ================= HEADER ================= -->
 <header class="fixed top-0 left-0 right-0 z-40 noprint" style="padding-top:var(--safe-t);background:linear-gradient(180deg,#0E1621,#0C1118);border-bottom:1px solid var(--line)">
   <div class="flex items-center gap-2 px-3 py-2">
-    <img src="https://i.ibb.co/LXsmk9d5/20260922-130525-0000.png" alt="LagendaTP" class="w-9 h-9 shrink-0" style="object-fit:contain;border-radius:8px" onerror="this.style.visibility='hidden'">
+    <img src="https://i.ibb.co/LXsmk9d5/20260922-130525-0000.png" alt="EduRank" class="w-9 h-9 shrink-0" style="object-fit:contain;border-radius:8px" onerror="this.style.visibility='hidden'">
     <div class="leading-none flex-1 min-w-0">
-      <div class="text-[17px] font-bold tracking-wide glow-o truncate">LAGENDATP</div>
+      <div class="text-[17px] font-bold tracking-wide glow-o truncate">EDURANK</div>
       <div class="text-[9px] text-muted tracking-widest">DICIPTA OLEH ARIF AZIZ</div>
     </div>
     <button class="btn clip-s px-2 py-1 text-[11px]" data-act="showcase-open"><i class="fa-solid fa-id-badge text-cyan"></i></button>
@@ -346,13 +346,13 @@ input[type=range].sl::-moz-range-thumb{height:24px;width:14px;border:0;backgroun
 
 <script>
 /* =========================================================
-   LAGENDATP — dicipta oleh Arif Aziz
+   EDURANK — dicipta oleh Arif Aziz
    Single file. Vanilla JS. localStorage = sumber utama.
    Firebase (RTDB + Storage + Anon Auth) = lapisan sync pilihan.
    ========================================================= */
 
 /* ---------- KONFIG ---------- */
-const APP_NAME = 'LagendaTP';
+const APP_NAME = 'EduRank';
 const APP_AUTHOR = 'Arif Aziz';
 const SYS_BADGES = [
   { id:'sys_tp4',  name:'Streak TP4',   color:'#00C2D4', system:true },
@@ -1203,6 +1203,7 @@ function commitForceTP(ids, tp, ms){
     rec.totalScore = v * ms.length;
     rec.rate = v;
     rec.tpAwarded = calcTP(v);
+    blendRec(rec);                               // gabung dengan markah game hari ini
     if (tp >= 2) rec.attended = true;          // TP2 ke atas bermakna hadir
     if (!todayIsClassDay()) rec.outside = true;
     stampTopic(rec, (stu(sid)||{}).classId || S.ui.activeClassId, sj, date);
@@ -1339,17 +1340,37 @@ const genderName = g => (GENDERS.find(x => x.k === g) || GENDERS[0]).name;
 function openHistory(sid){
   const s = stu(sid); if(!s) return;
   const ses = sessionsOf(sid, null);
+  /* min-w-0: topik yang panjang tidak lagi menolak butang padam keluar dari skrin */
   const body = ses.length
-    ? ses.map(x => '<div class="panel clip-s p-2 flex items-center gap-2 mb-2">' +
+    ? ses.map(x => '<div class="panel clip-s p-2 mb-2"><div class="flex items-center gap-2">' +
         hexTP(x.tpAwarded,28) +
-        '<div class="flex-1"><div class="text-[13px] font-bold">'+fmtDate(x.date)+'</div>' +
+        '<div class="flex-1 min-w-0"><div class="text-[13px] font-bold">'+fmtDate(x.date)+'</div>' +
         (()=>{ const t = recTopic(sid, x.subjectId, x.date); return t ? '<div class="text-[11px] text-cyan truncate"><i class="fa-solid fa-book-open"></i> '+(t.w?'M'+t.w+' · ':'')+esc(t.t)+' — '+esc(t.tj||'')+'</div>' : ''; })() +
-        '<div class="num text-[11px] text-muted">'+esc(subjName(x.subjectId))+' · KADAR '+fmtScore(rateOf(x))+' (jumlah '+x.totalScore+' ÷ '+(x.metricCount||Object.keys(x.metricScores||{}).length||1)+') · '+(x.touchCount||1)+'x</div></div>' +
-        '<button class="btn clip-s !px-2 !py-1" data-del-ses="'+x.subjectId+'|'+x.date+'"><i class="fa-solid fa-trash text-[#E23B3B] text-[12px]"></i></button></div>').join('')
+        '<div class="num text-[11px] text-muted truncate">'+esc(subjName(x.subjectId))+' · KADAR '+fmtScore(rateOf(x)) +
+          (x.metricCount ? ' · guru '+fmtScore(typeof x.mrate === 'number' ? x.mrate : rateOf(x)) : '') + ((x.games||[]).length ? ' · '+x.games.length+' game' : '') + '</div></div>' +
+        '<button class="btn clip-s !px-2 !py-1 shrink-0" data-del-ses="'+x.subjectId+'|'+x.date+'" title="Padam keseluruhan sesi"><i class="fa-solid fa-trash text-[#E23B3B] text-[12px]"></i></button></div>' +
+        (x.games||[]).map(g => '<div class="flex items-center gap-2 mt-1 pl-2" style="border-left:2px solid #FF6B00">' +
+          '<i class="fa-solid fa-gamepad text-orange text-[11px]"></i><div class="flex-1 min-w-0 text-[11px] truncate">'+esc(gameLine(g))+'</div>' +
+          '<button class="btn clip-s !px-2 !py-0.5 shrink-0" data-del-game="'+x.subjectId+'|'+x.date+'|'+g.id+'" title="Padam aktiviti game ini"><i class="fa-solid fa-xmark text-[#E23B3B] text-[11px]"></i></button></div>').join('') +
+      '</div>').join('')
     : '<div class="text-[13px] text-muted">Belum ada sesi penilaian.</div>';
-  const id = openModal({ icon:'fa-clock-rotate-left', title:'Sejarah — '+s.name, body });
+  const id = openModal({ icon:'fa-clock-rotate-left', title:'Sejarah — '+s.name, body:
+    '<div class="text-[10px] text-muted mb-2">Butang <i class="fa-solid fa-trash text-[#E23B3B]"></i> memadam sesi sepenuhnya · <i class="fa-solid fa-xmark text-[#E23B3B]"></i> memadam satu aktiviti game sahaja (TP sesi dikira semula).</div>' + body });
   const bd = $('[data-modal="'+id+'"]');
   bd.addEventListener('click', async e => {
+    const gb = e.target.closest('[data-del-game]');
+    if (gb){
+      const [sj, dt, gid] = gb.dataset.delGame.split('|');
+      const rec = ((S.records[sid]||{})[sj]||{})[dt], g = rec && (rec.games||[]).find(x => x.id === gid); if (!g) return;
+      const t = teamOf(g.team), others = t ? t.members.filter(m => m.id !== sid && (((S.records[m.id]||{})[sj]||{})[dt]||{}).games && S.records[m.id][sj][dt].games.some(x => x.id === gid)) : [];
+      const ok = await confirmBox({ danger:true, title:'Padam Aktiviti Game', okText:'Padam',
+        message:'Padam <b>'+esc(gameLine(g))+'</b> pada '+fmtDate(dt)+'?' + (others.length ? '<br><br>Aktiviti ini dikongsi oleh kumpulan. <b>Padam juga untuk '+others.length+' ahli lain</b> ('+esc(others.map(m=>m.name).join(', '))+').' : '') });
+      if (!ok) return;
+      const snap = snapshot();
+      [stu(sid)].concat(others).forEach(m => gameDel(m.id, sj, dt, gid));
+      save(true); closeModal(id); renderTab(); openHistory(sid);
+      return toast('Aktiviti game dipadam'+(others.length?' (seluruh kumpulan)':'')+'.', ()=>restore(snap));
+    }
     const b = e.target.closest('[data-del-ses]'); if(!b) return;
     const [sj, dt] = b.dataset.delSes.split('|');
     const ok = await confirmBox({ danger:true, title:'Padam Sesi', okText:'Padam', message:'Padam rekod penilaian <b>'+fmtDate(dt)+'</b> ('+esc(subjName(sj))+')? Skor sesi ini akan hilang kekal.' });
@@ -1666,6 +1687,7 @@ function markAttendance(ids){
     rec.totalScore = Object.keys(rec.metricScores).reduce((a,k)=>a+rec.metricScores[k],0);
     rec.rate = clamp(rec.totalScore / Math.max(1, ms.length), SC_MIN, SC_MAX);
     rec.tpAwarded = calcTP(rec.rate);
+    blendRec(rec);
     rec.touchCount = (rec.touchCount||0) + 1;
     rec.updatedAt = Date.now();
     S.records[sid][sj][date] = rec;
@@ -1811,6 +1833,7 @@ function commitEval(studentIds, vals, ms, add){
     rec.metricCount = ms.length;                                  // normalisasi: simpan bilangan matrik aktif
     rec.rate = clamp(rec.totalScore / Math.max(1, ms.length), SC_MIN, SC_MAX);
     rec.tpAwarded = calcTP(rec.rate);                             // TP dari KADAR PURATA, bukan jumlah
+    blendRec(rec);                                                // gabung dengan markah game hari ini
     rec.touchCount = (rec.touchCount||0) + 1;   // info sahaja — totalEvaluations kekal 1 sehari
     if (!todayIsClassDay()) rec.outside = true;
     stampTopic(rec, (stu(sid)||{}).classId || S.ui.activeClassId, sj, date);   // topik DSKP sesi ini
@@ -1834,7 +1857,8 @@ function viewGroups(){
   let h = '<div class="flex gap-2 mt-3">' +
     '<button class="btn btn-o clip-s flex-1 text-[12px]" data-act="grp-add"><i class="fa-solid fa-plus"></i> Kumpulan Baharu</button>' +
     '<button class="btn clip-s flex-1 text-[12px]" data-act="grp-auto"><i class="fa-solid fa-shuffle text-cyan"></i> Auto-Susun</button>' +
-  '</div>';
+  '</div>' +
+  '<button class="btn btn-c clip-s w-full mt-2 !py-2 text-[13px]" data-act="class-eval"><i class="fa-solid fa-users"></i> NILAI SELURUH KELAS (' + list.length + ' murid)</button>';
 
   h += '<div class="panel clip p-2 mt-3 dropzone" data-zone="pool">' +
     '<div class="lbl mb-2">RUANG MENUNGGU · '+pool.length+' PELAJAR</div>' +
@@ -2031,7 +2055,7 @@ function repPrint(){
     '<div style="margin-bottom:10px">Kelas: '+esc(clsName(S.ui.activeClassId))+' &nbsp;|&nbsp; Subjek: '+esc(subjName(S.ui.activeSubjectId))+' &nbsp;|&nbsp; Tarikh: '+fmtDate(todayKey())+'</div>' +
     '<table><thead><tr><th>Bil</th><th>Nama</th><th>Skor</th><th>Purata TP</th><th>Jumlah Penilaian</th><th>TP Akhir</th></tr></thead><tbody>' +
     rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.s.name)+'</td><td>'+fmtScore(r.score)+'</td><td>'+r.avgTP.toFixed(1)+'</td><td>'+r.sessions+'</td><td>'+(r.finalTP?('TP'+r.finalTP):'-')+'</td></tr>').join('') +
-    '</tbody></table><p style="margin-top:24px">Tandatangan Guru: ______________________</p><p style="margin-top:18px;font-size:8pt;color:#666">Dijana oleh LagendaTP · dicipta oleh Arif Aziz</p>';
+    '</tbody></table><p style="margin-top:24px">Tandatangan Guru: ______________________</p><p style="margin-top:18px;font-size:8pt;color:#666">Dijana oleh EduRank · dicipta oleh Arif Aziz</p>';
   window.print();
 }
 function download(name, text, mime){
@@ -2777,7 +2801,7 @@ function fbRules(){
 function expJson(){
   const payload = JSON.parse(JSON.stringify(S));
   payload.photos = PHOTOS;
-  download('lagendatp_backup_'+todayKey()+'.json', JSON.stringify(payload, null, 1));
+  download('edurank_backup_'+todayKey()+'.json', JSON.stringify(payload, null, 1));
   toast('Backup JSON dimuat turun.');
 }
 function impJson(){
@@ -3176,7 +3200,7 @@ function showcaseRun(o){
           '<div id="scLive" class="text-[9px]"><span style="color:#4ADE80">●</span> LIVE</div></div>' +
         '<button class="btn clip-s !px-3" data-x="next"><i class="fa-solid fa-chevron-right"></i></button>' +
         '<button class="btn btn-d clip-s !px-3" data-close="1"><i class="fa-solid fa-xmark"></i></button>' +
-      '</div><div class="text-center text-[9px] text-muted mt-2 tracking-widest">LAGENDATP · DICIPTA OLEH ARIF AZIZ</div></div>',
+      '</div><div class="text-center text-[9px] text-muted mt-2 tracking-widest">EDURANK · DICIPTA OLEH ARIF AZIZ</div></div>',
     onClose: () => { SHOWCASE_OPEN = false; clearInterval(timer); clearInterval(bgTimer); try{ wake && wake.release(); }catch(e){} }
   });
   const bd = $('[data-modal="'+id+'"]');
@@ -3494,7 +3518,7 @@ function viewerBoot(param){
   document.body.insertAdjacentHTML('beforeend',
     '<div id="viewer" style="padding:calc(12px + var(--safe-t)) 12px calc(18px + var(--safe-b));max-width:560px;margin:0 auto">' +
       '<div class="flex items-center gap-2">' +
-        '<img src="'+APP_ICON+'" alt="LagendaTP" class="w-10 h-10 shrink-0" style="object-fit:contain;border-radius:8px" onerror="this.style.visibility=\'hidden\'">' +
+        '<img src="'+APP_ICON+'" alt="EduRank" class="w-10 h-10 shrink-0" style="object-fit:contain;border-radius:8px" onerror="this.style.visibility=\'hidden\'">' +
         '<div class="flex-1 min-w-0"><div id="vTitle" class="font-bold text-[17px] glow-o truncate">Memuatkan...</div><div id="vScope" class="text-[11px] text-cyan truncate"></div></div>' +
         '<div id="vLive" class="text-[9px] num text-muted text-right"></div>' +
       '</div>' +
@@ -3509,7 +3533,7 @@ function viewerBoot(param){
         '<div id="vPos" class="flex-1 text-center text-[11px] text-muted num"></div>' +
         '<button class="btn clip-s !px-4" data-v="next"><i class="fa-solid fa-chevron-right"></i></button>' +
       '</div>' +
-      '<div class="text-center text-[10px] text-muted mt-4"><b class="text-orange tracking-widest">LAGENDATP</b> · Paparan sahaja<br>Dicipta oleh Arif Aziz</div>' +
+      '<div class="text-center text-[10px] text-muted mt-4"><b class="text-orange tracking-widest">EDURANK</b> · Paparan sahaja<br>Dicipta oleh Arif Aziz</div>' +
     '</div>');
   try { const p = JSON.parse(b64urlDec(param)); V.db = String(p.d||'').replace(/\/$/,''); V.token = String(p.t||''); }
   catch(e){ $('#vTitle').textContent = 'Pautan rosak'; return vDead(); }
@@ -4365,7 +4389,7 @@ function bgmSettingsHtml(){
       '</div>';
     }).join('') +
     '<button class="btn clip-s w-full mt-2 text-[11px]' + (bgmDefOn() ? '' : ' btn-o') + '" data-act="bgm-def">' +
-      (bgmDefOn() ? '<i class="fa-solid fa-compact-disc text-cyan"></i> Lagu lalai LagendaTP: HIDUP' : '<i class="fa-solid fa-ban"></i> Lagu lalai LagendaTP: MATI') + '</button>' +
+      (bgmDefOn() ? '<i class="fa-solid fa-compact-disc text-cyan"></i> Lagu lalai EduRank: HIDUP' : '<i class="fa-solid fa-ban"></i> Lagu lalai EduRank: MATI') + '</button>' +
     '<div class="text-[10px] text-muted leading-snug mt-2">Lagu berulang <b>tanpa sela</b> — app memainkannya terus daripada memori, ' +
       'bukan pemain audio biasa yang meninggalkan jeda kecil setiap pusingan. Senyap di awal dan hujung fail (biasa pada MP3) dibuang sendiri. ' +
       'Paling baik: lagu <b>OGG atau WAV</b> pendek yang memang direka untuk gelung. Had 8 MB setiap lagu.</div>' +
@@ -4387,7 +4411,7 @@ function confettiBurst(host, n){
   }
 }
 function packOpen(sid, pack, free){
-  const s = stu(sid); if (!s) return;
+  const s = teamOf(sid); if (!s) return;
   const pulls = openPackRoll(pack, sid);
   if (!pulls.length) return toast('Tiada kad untuk dibuka.', null, true);
   const best = pulls.reduce((a,p) => tierRank(p.tier) > tierRank(a) ? p.tier : a, pulls[0].tier);
@@ -4397,7 +4421,7 @@ function packOpen(sid, pack, free){
   const id = openModal({ center:true, bare:true,
     body:'<div id="pkWrap" class="pkwrap">' +
       '<div class="pkhead"><div class="flex items-center gap-2">' +
-        avatarHtml(s, 30) + '<div class="flex-1 min-w-0"><div class="text-[13px] font-bold truncate">'+esc(s.name)+'</div>' +
+        teamAvatar(sid, 30) + '<div class="flex-1 min-w-0"><div class="text-[13px] font-bold truncate">'+esc(s.name)+'</div>' +
         '<div class="text-[10px] text-muted">'+esc(pack.name)+(free?' · PERCUMA':' · '+pack.cost+' TPC')+'</div></div>' +
         '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-pk="sfx"><i class="fa-solid fa-volume-high text-cyan"></i></button>' +
         '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-close="1"><i class="fa-solid fa-xmark"></i></button></div></div>' +
@@ -4540,7 +4564,7 @@ function packSummary(sid, pulls, pack, free){
   S.packLog = S.packLog.slice(0, 40);
   if (free){ S.freePack = S.freePack || {}; S.freePack[sid] = todayKey(); }
   save(true);
-  const s = stu(sid);
+  const s = teamOf(sid);
   const rows = res.slice().sort((a,b) => tierRank(b.tier) - tierRank(a.tier)).map(r => {
     const t = tierOfCard(r.tier);
     return '<div class="flex items-center gap-2 py-1" style="border-top:1px solid var(--line)">' +
@@ -4566,7 +4590,7 @@ function packSummary(sid, pulls, pack, free){
    SK/SP DSKP merentas minggu persekolahan secara automatik; guru boleh
    menukar mana-mana minggu. Setiap rekod PBD dikaitkan dengan topik
    minggu itu, jadi RPM dan Rumusan PBD boleh dikira mengikut tajuk.     */
-const DSKP_BASES = ['./dskp/', 'https://tembakmatiterus-web.github.io/student-manager/dskp/'];
+const DSKP_BASES = ['./dskp/', 'https://bijakmulia.github.io/edurank/dskp/', 'https://bijakmulia.github.io/student-manager/dskp/', 'https://tembakmatiterus-web.github.io/student-manager/dskp/'];
 const LS_DSKP_IDX = 'lt_dskp_idx_v1';
 let DSKP_IDX = null;
 const DSKP = {};                                  // id → buku DSKP yang sudah dimuat
@@ -5046,7 +5070,7 @@ function pbdSummaryPrint(){
       R.log.map(x => '<tr><td>' + fmtDate(x.d) + '</td><td>' + (x.t && x.t.w ? x.t.w : '') + '</td><td>' + x.n + '</td><td>' + e(x.t ? x.t.t : '') + '</td><td>' + e(x.t ? x.t.tj : '') + '</td><td>' +
         e(reflectBrief(R.cid, R.sj, x.d)) + (((S.lessonNote || {})[reflKey(R.cid, R.sj, x.d)]) ? '<br><i>' + e(S.lessonNote[reflKey(R.cid, R.sj, x.d)]) + '</i>' : '') + '</td></tr>').join('') + '</tbody></table>' +
     '<p style="margin-top:24px">Tandatangan Guru: ______________________ &nbsp;&nbsp; Disahkan oleh: ______________________</p>' +
-    '<p style="margin-top:12px;font-size:8pt;color:#666">Dijana oleh LagendaTP · dicipta oleh Arif Aziz</p>';
+    '<p style="margin-top:12px;font-size:8pt;color:#666">Dijana oleh EduRank · dicipta oleh Arif Aziz</p>';
   window.print();
 }
 
@@ -5185,7 +5209,7 @@ function reflectModal(date){
       $('#printArea').innerHTML = '<h2 style="margin:0">Refleksi PdP</h2>' + secs.map(s => '<h3 style="margin:12px 0 4px">' + esc(s.h) + '</h3>' +
         s.lines.map(l => '<div style="margin:2px 0' + (/^ {3}SP/.test(l) ? ';padding-left:14px;color:#555' : '') + '">' + esc(l.trim()) + '</div>').join('')).join('') +
         (note ? '<h3 style="margin:12px 0 4px">5. CATATAN GURU</h3><div style="white-space:pre-wrap">' + esc(note) + '</div>' : '') +
-        '<p style="margin-top:24px">Tandatangan Guru: ______________________</p><p style="font-size:8pt;color:#666">Dijana oleh LagendaTP · ' + esc(new Date().toLocaleString('ms-MY')) + '</p>';
+        '<p style="margin-top:24px">Tandatangan Guru: ______________________</p><p style="font-size:8pt;color:#666">Dijana oleh EduRank · ' + esc(new Date().toLocaleString('ms-MY')) + '</p>';
       return window.print();
     }
     closeModal(id); toast('Catatan refleksi disimpan.');
@@ -5539,7 +5563,7 @@ function viewCards(){
   const o = arenaUi();
   if (!ctxOk()) return emptyState('fa-box-open','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. TPC dikumpul dari skor positif kelas tersebut.');
   const bal = tpcBalance(), earn = tpcEarned(), spent = tpcSpent();
-  const sid = o.cardStu && stu(o.cardStu) ? o.cardStu : '';
+  const sid = o.team && teamOf(o.team) ? o.team : '';
   const st = sid ? collectionStats(sid) : null;
   const pity = sid ? (((S.pity || {})[sid]) || 0) : 0;
   const dr = (S.duel || {});
@@ -5550,11 +5574,7 @@ function viewCards(){
     '<div class="text-right num text-[10px] text-muted">+' + earn + ' dikumpul' + (tpcBonus() ? '<br><span class="text-cyan">+' + tpcBonus() + ' topup</span>' : '') + '<br>−' + spent + ' dibelanja</div>' +
     '<button class="btn btn-c clip-s !px-2 !py-1 text-[11px] ml-1" data-act="tpc-topup"><i class="fa-solid fa-plus"></i></button></div>';
   h += '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="card-guide"><i class="fa-solid fa-circle-question text-cyan"></i> CARA MAIN — apa fungsi kad &amp; bagaimana Duel berfungsi?</button>';
-  h += '<div class="panel clip p-3 mt-3"><div class="lbl">PELAJAR</div>' +
-    '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="card-stu">' +
-      (sid ? avatarHtml(stu(sid), 28) : '<i class="fa-solid fa-user text-muted"></i>') +
-      '<span class="flex-1 text-left text-[13px]">' + (sid ? esc(stu(sid).name) : '— pilih pelajar —') + '</span>' +
-      '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>' +
+  h += '<div class="panel clip p-3 mt-3"><div class="lbl">KOLEKSI KAD KUMPULAN · ' + esc(teamName(sid)) + '</div>' +
     (sid ? '<div class="flex items-center gap-2 mt-2 text-[11px]">' +
         '<span class="text-muted">Koleksi</span><span class="num text-cyan">' + st.have + '/' + st.total + '</span>' +
         '<span class="text-muted ml-2">Pity</span><span class="num" style="color:' + (pity >= PITY_MAX - 5 ? '#FFD76A' : '#7E93A8') + '">' + pity + '/' + PITY_MAX + '</span>' +
@@ -5645,12 +5665,12 @@ function cardStuPick(){
     }).join('') });
   $('[data-modal="' + id + '"]').addEventListener('click', e => {
     const b = e.target.closest('[data-p]'); if (!b) return;
-    arenaUi().cardStu = b.dataset.p; save(); closeModal(id); renderTab();
+    arenaUi().team = b.dataset.p; save(); closeModal(id); renderTab();
   });
 }
 /* Album koleksi: tab mengikut set, kad belum dimiliki ditunjuk sebagai siluet */
 function binderModal(sid){
-  const s = stu(sid); if (!s) return;
+  const s = teamOf(sid); if (!s) return;
   let cur = S.ui.binderSet || CARD_SETS[0].k;
   const body = () => {
     const own = (S.collect || {})[sid] || {}, st = collectionStats(sid), p = setProgress(sid, cur);
@@ -5709,8 +5729,8 @@ function duelFoe(mine){
   });
 }
 function duelStart(){
-  const sid = arenaUi().cardStu;
-  if (!sid || !stu(sid)) return toast('Pilih pelajar dahulu.', null, true);
+  const sid = arenaUi().team;
+  if (!sid || !teamOf(sid)) return toast('Pilih kumpulan dahulu.', null, true);
   const me = duelDeck(sid);
   if (!me.length) return toast('Buka pack dahulu untuk mendapatkan kad.', null, true);
   const foe = duelFoe(me);
@@ -5718,8 +5738,8 @@ function duelStart(){
   let mi = 0, fi = 0, busy = false, over = false, right = 0, asked = 0;
   const id = openModal({ center:true, bare:true,
     body:'<div class="pkwrap" id="dlWrap">' +
-      '<div class="flex items-center gap-2 mb-2">' + avatarHtml(stu(sid), 28) +
-        '<div class="flex-1 font-bold text-[13px] truncate">' + esc(stu(sid).name) + ' <span class="text-muted">lawan</span> <span class="text-orange">Penjaga Kad</span></div>' +
+      '<div class="flex items-center gap-2 mb-2">' + teamAvatar(sid, 28) +
+        '<div class="flex-1 font-bold text-[13px] truncate">' + esc(teamName(sid)) + ' <span class="text-muted">lawan</span> <span class="text-orange">Penjaga Kad</span></div>' +
         '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-close="1"><i class="fa-solid fa-xmark"></i></button></div>' +
       '<div id="dlArena"></div><div id="dlLog" class="text-center text-[13px] font-bold mt-2" style="min-height:20px"></div>' +
       '<div id="dlQ" class="mt-2"></div></div>',
@@ -5751,12 +5771,13 @@ function duelStart(){
     S.duel = S.duel || { wins:{}, losses:{} }; S.duel.wins = S.duel.wins || {}; S.duel.losses = S.duel.losses || {};
     const alive = me.filter(x => x.cur > 0).length, rp = won ? 6 + alive * 3 : 2;
     if (won) S.duel.wins[sid] = (S.duel.wins[sid] || 0) + 1; else S.duel.losses[sid] = (S.duel.losses[sid] || 0) + 1;
-    S.arena.rp = S.arena.rp || {}; S.arena.rp[sid] = (S.arena.rp[sid] || 0) + rp;
+    teamRP(sid, rp);
+    const tp = gameToPBD(sid, 'duel', right, asked, { win: won ? 1 : 0 });
     save(true);
     if (won){ sfx('myth'); confettiBurst($('#dlWrap', bd), 70); } else sfx('low');
     $('#dlQ', bd).innerHTML = '<div class="panel clip p-3 text-center" style="border-color:' + (won ? '#4ADE80' : '#E23B3B') + '">' +
       '<div class="font-bold tracking-widest text-[18px]" style="color:' + (won ? '#4ADE80' : '#E23B3B') + '">' + (won ? 'MENANG!' : 'KALAH…') + '</div>' +
-      '<div class="text-[12px] text-muted mt-1">Jawapan betul ' + right + '/' + asked + ' · <span class="text-orange">+' + rp + ' RP</span></div>' +
+      '<div class="text-[12px] text-muted mt-1">Jawapan betul ' + right + '/' + asked + ' · <span class="text-orange">+' + rp + ' RP</span>' + (tp ? ' · <b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b> ke PBD ahli kumpulan' : '') + '</div>' +
       '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1" data-close="1">Tutup</button><button class="btn btn-o clip-s flex-1" data-dl="again"><i class="fa-solid fa-rotate"></i> Lagi</button></div></div>';
     renderTab();
   };
@@ -5783,7 +5804,7 @@ function duelStart(){
       if (done || over) return; done = true; cancelAnimationFrame(raf);
       const ok = pick === q.a, fast = ok && (performance.now() - t0) / 1000 < duelQ() * .4;
       asked++; if (ok) right++;
-      quizRecord(sid, ok);
+      teamQuiz(sid, ok);
       $('#dlQ', bd).innerHTML = '';
       if (ok){
         const r = hit(me[mi], foe[fi], fast); sfx(fast ? 'hi' : 'flip'); shake('Foe');
@@ -5820,19 +5841,19 @@ function pvpDeck(sid){
   return { deck: pool.map(c => Object.assign({ c, lv: 1 }, cardStats(c, 1))), starter: true };
 }
 function pvpSetup(){
-  const p1 = arenaUi().cardStu;
-  if (!p1 || !stu(p1)) return toast('Pilih pelajar (Pemain 1) dahulu.', null, true);
-  const list = studentsOf(S.ui.activeClassId).filter(s => s.id !== p1);
-  if (!list.length) return toast('Perlu sekurang-kurangnya 2 murid dalam kelas.', null, true);
+  const p1 = arenaUi().team;
+  if (!p1 || !teamOf(p1)) return toast('Pilih kumpulan dahulu.', null, true);
+  const list = classTeams().filter(g => g.id !== p1);
+  if (!list.length) return toast('Perlu sekurang-kurangnya 2 kumpulan dalam kelas.', null, true);
   let p2 = '', mode = S.ui.pvpMode || 'rebut';
   const body = () =>
-    '<div class="flex items-center gap-2">' + avatarHtml(stu(p1), 30) + '<div class="flex-1 font-bold text-[13px]">' + esc(stu(p1).name) + '</div><span class="tag">PEMAIN 1</span></div>' +
+    '<div class="flex items-center gap-2">' + teamAvatar(p1, 30) + '<div class="flex-1 font-bold text-[13px]">' + esc(teamName(p1)) + '</div><span class="tag">KUMPULAN 1</span></div>' +
     '<div class="lbl mt-3">MOD PERLAWANAN</div><div class="grid grid-cols-2 gap-2 mt-1">' +
       [['rebut','⚡ Rebut Jawapan','Duduk bertentang. Siapa betul dahulu, dia menyerang.'],['gilir','🔄 Bergilir','Serah telefon bergilir. Betul = serang, salah = diserang.']].map(([k, t, d]) =>
         '<button class="btn clip-s !py-2 text-left' + (mode === k ? ' btn-o' : '') + '" data-m="' + k + '"><div class="text-[12px] font-bold">' + t + '</div><div class="text-[10px] leading-snug mt-0.5" style="opacity:.8">' + d + '</div></button>').join('') + '</div>' +
-    '<div class="lbl mt-3">PILIH LAWAN (PEMAIN 2)</div><div class="mt-1" style="max-height:38vh;overflow-y:auto">' + list.map(s => {
+    '<div class="lbl mt-3">PILIH KUMPULAN LAWAN</div><div class="mt-1" style="max-height:38vh;overflow-y:auto">' + list.map(s => {
       const st = collectionStats(s.id), w = (((S.duel || {}).pvp || {})[s.id] || { w:0, l:0 });
-      return '<button class="btn clip-s w-full mb-1 flex items-center gap-2 !py-2 text-left' + (p2 === s.id ? ' btn-o' : '') + '" data-p2="' + s.id + '">' + avatarHtml(s, 26) +
+      return '<button class="btn clip-s w-full mb-1 flex items-center gap-2 !py-2 text-left' + (p2 === s.id ? ' btn-o' : '') + '" data-p2="' + s.id + '">' + teamAvatar(s.id, 26) +
         '<div class="flex-1 min-w-0"><div class="text-[13px] truncate">' + esc(s.name) + '</div><div class="num text-[10px]" style="opacity:.75">' + (st.have ? st.have + ' kad' : 'tiada kad — guna kad latihan') + ' · ' + w.w + 'M ' + w.l + 'K</div></div></button>';
     }).join('') + '</div>';
   const id = openModal({ icon:'fa-user-group', title:'Duel Kad — Lawan Rakan', body:'<div id="pvBody" data-nohint="1">' + body() + '</div>',
@@ -5865,9 +5886,9 @@ function pvpRun(p1, p2, mode){
   const act = p => p.deck[Math.min(p.i, p.deck.length - 1)];
   const alive = p => p.deck.filter(x => x.cur > 0).length;
   const sideHtml = (k, q, order, locked, mine) => {
-    const p = P[k], o = P[1 - k], x = act(p), s = stu(p.sid);
+    const p = P[k], o = P[1 - k], x = act(p), s = { name: teamName(p.sid) };
     const dots = p.deck.map((y, j) => '<span style="display:inline-block;width:8px;height:8px;margin:0 2px;border-radius:50%;background:' + (y.cur > 0 ? (j === p.i ? '#FFD76A' : '#4ADE80') : '#3A1A1A') + '"></span>').join('');
-    return '<div class="flex items-center gap-2">' + avatarHtml(s, 28) + '<div class="flex-1 min-w-0"><div class="font-bold text-[13px] truncate">' + esc(s.name) + (p.starter ? ' <span class="tag !text-[8px]">KAD LATIHAN</span>' : '') + '</div>' +
+    return '<div class="flex items-center gap-2">' + teamAvatar(p.sid, 28) + '<div class="flex-1 min-w-0"><div class="font-bold text-[13px] truncate">' + esc(s.name) + (p.starter ? ' <span class="tag !text-[8px]">KAD LATIHAN</span>' : '') + '</div>' +
         '<div class="num text-[10px] text-muted">' + p.right + '/' + p.asked + ' betul · ' + dots + '</div></div>' +
         '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-x="quit"><i class="fa-solid fa-xmark"></i></button></div>' +
       '<div class="flex items-center gap-3 mt-2"><div style="width:20%;max-width:84px;transition:transform .2s" class="pv-card" data-who="' + k + '">' + cardFaceHtml(x.c, x.c.tier, { lv: x.lv }) + '</div>' +
@@ -5889,7 +5910,7 @@ function pvpRun(p1, p2, mode){
     } else {
       const o = 1 - turn;
       $p('#pvTop').innerHTML = sideHtml(o, null, null, false, false);
-      $p('#pvH0').innerHTML = '<div class="text-center lbl mb-1" style="color:#FFD76A">GILIRAN: ' + esc(stu(P[turn].sid).name).toUpperCase() + '</div>' + sideHtml(turn, cur && cur.q, cur && cur.order, false, true);
+      $p('#pvH0').innerHTML = '<div class="text-center lbl mb-1" style="color:#FFD76A">GILIRAN: ' + esc(teamName(P[turn].sid)).toUpperCase() + '</div>' + sideHtml(turn, cur && cur.q, cur && cur.order, false, true);
       if (!$p('#pvBar')) $p('#pvMid').innerHTML = mid;
     }
   };
@@ -5904,8 +5925,8 @@ function pvpRun(p1, p2, mode){
   const strike = (k, fast, why) => {
     const a = P[k], d = P[1 - k], r = hit(act(a), act(d), fast);
     sfx(fast ? 'hi' : 'flip'); shake(1 - k);
-    log((why || '') + esc(stu(a.sid).name) + ': ' + esc(act(a).c.name) + ' −' + r.dmg + (fast ? ' KRITIKAL!' : '') + (r.adv > 1 ? ' · elemen kuat' : r.adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFD76A' : '#4ADE80');
-    if (act(d).cur <= 0){ d.i++; setTimeout(() => log('Kad ' + esc(stu(d.sid).name) + ' tumbang!', '#FF7A7A'), 650); }
+    log((why || '') + esc(teamName(a.sid)) + ': ' + esc(act(a).c.name) + ' −' + r.dmg + (fast ? ' KRITIKAL!' : '') + (r.adv > 1 ? ' · elemen kuat' : r.adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFD76A' : '#4ADE80');
+    if (act(d).cur <= 0){ d.i++; setTimeout(() => log('Kad ' + esc(teamName(d.sid)) + ' tumbang!', '#FF7A7A'), 650); }
   };
   const endRound = () => {
     cancelAnimationFrame(raf); cur = null; paint();
@@ -5917,12 +5938,12 @@ function pvpRun(p1, p2, mode){
     if (!cur || cur.done || over) return;
     const q = cur.q, ok = pick === q.a, used = (performance.now() - cur.t0) / 1000;
     P[k].asked++; if (ok) P[k].right++;
-    quizRecord(P[k].sid, ok);
+    teamQuiz(P[k].sid, ok);
     if (rebut){
       if (ok){ cur.done = true; strike(k, used < duelQ() * .4, 'Betul! '); return endRound(); }
       cur.locked[k] = true; sfx('low'); vibrate(30);
       if (cur.locked[0] && cur.locked[1]){ cur.done = true; log('Kedua-dua salah! Jawapan: ' + esc(q.c[q.a]), '#FF7A7A'); return endRound(); }
-      log(esc(stu(P[k].sid).name) + ' salah — ' + esc(stu(P[1 - k].sid).name) + ' boleh merebut!', '#FFC24D'); paint();
+      log(esc(teamName(P[k].sid)) + ' salah — ' + esc(teamName(P[1 - k].sid)) + ' boleh merebut!', '#FFC24D'); paint();
     } else {
       cur.done = true;
       if (ok) strike(k, used < duelQ() * .4, 'Betul! ');
@@ -5955,17 +5976,17 @@ function pvpRun(p1, p2, mode){
     const rpW = 8 + alive(W) * 2, rpL = 2;
     S.duel = S.duel || {}; S.duel.pvp = S.duel.pvp || {}; S.duel.log = S.duel.log || [];
     [[W, 'w'], [L, 'l']].forEach(([p, k]) => { const r = S.duel.pvp[p.sid] = S.duel.pvp[p.sid] || { w:0, l:0 }; r[k]++; });
-    S.arena.rp = S.arena.rp || {};
-    S.arena.rp[W.sid] = (S.arena.rp[W.sid] || 0) + rpW; S.arena.rp[L.sid] = (S.arena.rp[L.sid] || 0) + rpL;
+    teamRP(W.sid, rpW); teamRP(L.sid, rpL);
+    const tpW = gameToPBD(W.sid, 'pvp', W.right, W.asked, { win: 1, vs: teamName(L.sid) }), tpL = gameToPBD(L.sid, 'pvp', L.right, L.asked, { win: 0, vs: teamName(W.sid) });
     S.duel.log.unshift({ a: P[0].sid, b: P[1].sid, w: W.sid, d: todayKey(), m: mode, r: round }); S.duel.log = S.duel.log.slice(0, 100);
     save(true); sfx('myth');
     const ov = document.createElement('div');
     ov.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.82)';
-    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:380px">' + avatarHtml(stu(W.sid), 64).replace('class="circ shrink-0"', 'class="circ shrink-0 mx-auto"') +
-      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#FFD76A">' + esc(stu(W.sid).name).toUpperCase() + ' MENANG!</div>' +
+    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:380px">' + '<div style="display:flex;justify-content:center">' + teamAvatar(W.sid, 64) + '</div>' +
+      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#FFD76A">' + esc(teamName(W.sid)).toUpperCase() + ' MENANG!</div>' +
       '<div class="text-[12px] text-muted mt-1">' + (rebut ? 'Rebut Jawapan' : 'Bergilir') + ' · ' + round + ' pusingan</div>' +
-      '<div class="grid grid-cols-2 gap-2 mt-3 num">' + [W, L].map((p, j) => '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(stu(p.sid).name) + '</div>' +
-        '<div class="text-[16px]" style="color:' + (j ? '#7E93A8' : '#4ADE80') + '">' + p.right + '/' + p.asked + '</div><div class="text-[10px] text-orange">+' + (j ? rpL : rpW) + ' RP</div></div>').join('') + '</div>' +
+      '<div class="grid grid-cols-2 gap-2 mt-3 num">' + [W, L].map((p, j) => '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(teamName(p.sid)) + '</div>' +
+        '<div class="text-[16px]" style="color:' + (j ? '#7E93A8' : '#4ADE80') + '">' + p.right + '/' + p.asked + '</div><div class="text-[10px] text-orange">+' + (j ? rpL : rpW) + ' RP · TP' + ((j ? tpL : tpW) || '-') + '</div></div>').join('') + '</div>' +
       '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-x="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-x="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button></div></div>';
     root.appendChild(ov);
     confettiBurst(root, 80);
@@ -5978,25 +5999,112 @@ function pvpRun(p1, p2, mode){
     if (x.dataset.x === 'again'){ quit(); setTimeout(() => pvpRun(p1, p2, mode), 80); }
   });
   paint();
-  log(rebut ? 'Duduk bertentang — ' + esc(stu(p2).name) + ' di sebelah atas.' : esc(stu(p1).name) + ' mula dahulu.', '#FFD76A');
+  log(rebut ? 'Duduk bertentang — ' + esc(teamName(p2)) + ' di sebelah atas.' : esc(teamName(p1)) + ' mula dahulu.', '#FFD76A');
   setTimeout(ask, 1500);
 }
 /* Papan Juara Duel (lawan rakan) bagi kelas aktif */
 function pvpBoardHtml(){
   const d = (S.duel || {}).pvp || {};
-  const rows = studentsOf(S.ui.activeClassId).filter(s => d[s.id] && (d[s.id].w + d[s.id].l)).sort((a, b) => d[b.id].w - d[a.id].w || d[a.id].l - d[b.id].l).slice(0, 5);
+  const rows = classTeams().filter(s => d[s.id] && (d[s.id].w + d[s.id].l)).sort((a, b) => d[b.id].w - d[a.id].w || d[a.id].l - d[b.id].l).slice(0, 5);
   if (!rows.length) return '';
-  return '<div class="panel clip p-3 mt-3"><div class="lbl">🏆 JUARA DUEL KELAS (LAWAN RAKAN)</div>' + rows.map((s, i) =>
-    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + avatarHtml(s, 24) +
+  return '<div class="panel clip p-3 mt-3"><div class="lbl">🏆 JUARA DUEL KELAS (KUMPULAN LAWAN KUMPULAN)</div>' + rows.map((s, i) =>
+    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(s.id, 24) +
     '<span class="flex-1 text-[13px] truncate">' + esc(s.name) + '</span><span class="num text-[12px]" style="color:#4ADE80">' + d[s.id].w + 'M</span><span class="num text-[12px] text-muted">' + d[s.id].l + 'K</span></div>').join('') + '</div>';
 }
+/* ============ PASUKAN (KUMPULAN) & MARKAH GAME → PBD ============
+   Semua game dimainkan oleh KUMPULAN (meja kumpulan kelas aktif). Markah
+   game ialah pentaksiran sebenar: peratus jawapan betul ditukar kepada TP
+   dan disimpan dalam rekod PBD hari itu bagi SETIAP ahli kumpulan (markah
+   dikongsi). TP hari itu = purata penilaian guru (matrik) + setiap game.
+   Setiap aktiviti game boleh dipadam satu demi satu dalam Sejarah.      */
+const GAME_NAMES = { esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)' };
+const teamOf = id => { const g = (S.groups || []).find(x => x.id === id); return g ? { id, name: g.name, members: (g.members || []).map(stu).filter(Boolean), g } : null; };
+const teamName = id => (teamOf(id) || {}).name || '—';
+const classTeams = () => (S.groups || []).filter(g => g.classId === S.ui.activeClassId && (g.members || []).some(m => stu(m)));
+const TEAM_COLORS = ['#FF6B00','#00C2D4','#C084FC','#4ADE80','#FFD76A','#FF5A7A','#38BDF8','#F59E0B'];
+function teamAvatar(id, size){
+  const sz = size || 32, t = teamOf(id); if (!t) return '<i class="fa-solid fa-users text-muted"></i>';
+  const k = Math.max(0, classTeams().findIndex(g => g.id === id)), c = TEAM_COLORS[k % TEAM_COLORS.length];
+  const ini = t.name.replace(/kumpulan|meja/ig, '').trim().slice(0, 2).toUpperCase() || String(k + 1);
+  return '<div class="circ shrink-0 flex items-center justify-center num" style="width:' + sz + 'px;height:' + sz + 'px;background:radial-gradient(circle at 35% 30%,' + c + ',#14202B);border:2px solid ' + c + ';font-size:' + Math.round(sz * .38) + 'px;font-weight:700;color:#fff">' + esc(ini) + '</div>';
+}
+const teamMembersTxt = id => { const t = teamOf(id); return t ? t.members.map(s => s.name.split(' ')[0]).join(', ') : ''; };
+/* Panel pilih pasukan (dikongsi oleh semua game) */
+function teamPanelHtml(){
+  const o = arenaUi(), ts = classTeams();
+  if (!ts.length) return emptyState('fa-users','Cipta Kumpulan Dahulu','Semua game dimainkan secara <b>berkumpulan</b> dan markahnya dikongsi sebagai TP ahli kumpulan. Cipta kumpulan di tab <b>Kumpulan</b> (atau tekan Auto-Susun).','Ke Tab Kumpulan','go-groups');
+  if (!ts.some(g => g.id === o.team)) o.team = ts[0].id;
+  const t = teamOf(o.team);
+  return '<div class="panel clip p-3 mt-3"><div class="lbl">KUMPULAN YANG BERMAIN</div>' +
+    '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="team-pick">' + teamAvatar(t.id, 30) +
+      '<div class="flex-1 text-left min-w-0"><div class="text-[13px] font-bold truncate">' + esc(t.name) + '</div><div class="text-[10px] text-muted truncate">' + t.members.length + ' ahli: ' + esc(teamMembersTxt(t.id)) + '</div></div>' +
+      '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>' +
+    '<div class="text-[10px] text-muted mt-2"><i class="fa-solid fa-graduation-cap text-cyan"></i> Markah game = <b>TP</b>: peratus jawapan betul ditukar kepada TP dan direkod dalam PBD hari ini untuk <b>setiap ahli</b>.</div></div>';
+}
+function teamPick(cb, exclude, title){
+  const ts = classTeams().filter(g => g.id !== exclude);
+  if (!ts.length) return toast('Tiada kumpulan lain dalam kelas ini.', null, true);
+  const id = openModal({ icon:'fa-users', title: title || 'Pilih Kumpulan',
+    body: ts.map(g => '<button class="btn clip-s w-full mb-1 flex items-center gap-2 !py-2 text-left" data-t="' + g.id + '">' + teamAvatar(g.id, 30) +
+      '<div class="flex-1 min-w-0"><div class="text-[13px] font-bold truncate">' + esc(g.name) + '</div><div class="text-[10px] text-muted truncate">' + esc(teamMembersTxt(g.id)) + '</div></div>' +
+      '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>').join('') });
+  $('[data-modal="' + id + '"]').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; closeModal(id); cb(b.dataset.t); });
+}
+const teamQuiz = (id, ok) => { const t = teamOf(id); if (t) t.members.forEach(s => quizRecord(s.id, ok)); };
+const teamRP = (id, n) => { const t = teamOf(id); if (!t) return; S.arena.rp = S.arena.rp || {}; t.members.forEach(s => S.arena.rp[s.id] = (S.arena.rp[s.id] || 0) + n); };
+
+/* Peratus betul → kadar (julat skala −20…39) → TP */
+function accRate(acc){ return acc >= .9 ? 35 : acc >= .75 ? 25 : acc >= .6 ? 15 : acc >= .45 ? 5 : acc >= .25 ? -5 : -15; }
+/* Kadar sesi = purata matrik guru (jika ada) + setiap game */
+function blendRec(rec){
+  const parts = [];
+  const ks = Object.keys(rec.metricScores || {});
+  if (rec.metricCount && ks.length){ rec.mrate = clamp((rec.totalScore || 0) / Math.max(1, rec.metricCount), SC_MIN, SC_MAX); parts.push(rec.mrate); }
+  else delete rec.mrate;
+  (rec.games || []).forEach(g => parts.push(g.rate));
+  if (!parts.length) return false;
+  rec.rate = clamp(parts.reduce((a, x) => a + x, 0) / parts.length, SC_MIN, SC_MAX);
+  rec.tpAwarded = calcTP(rec.rate);
+  return true;
+}
+/* Simpan hasil game sebagai PBD untuk setiap ahli pasukan. Pulangkan TP. */
+function gameToPBD(teamId, game, right, asked, extra){
+  const t = teamOf(teamId), sj = S.ui.activeSubjectId;
+  if (!t || !sj || !asked) return 0;
+  const date = todayKey(), rate = accRate(right / asked), gid = uid('gm');
+  t.members.forEach(s => {
+    S.records[s.id] = S.records[s.id] || {};
+    S.records[s.id][sj] = S.records[s.id][sj] || {};
+    const rec = S.records[s.id][sj][date] || { metricScores:{}, metricCount:0, totalScore:0, touchCount:0 };
+    rec.games = rec.games || [];
+    rec.games.push(Object.assign({ id: gid, g: game, r: right, n: asked, rate, team: teamId, tn: t.name, t: Date.now() }, extra || {}));
+    blendRec(rec);
+    stampTopic(rec, s.classId, sj, date);
+    rec.updatedAt = Date.now();
+    S.records[s.id][sj][date] = rec;
+  });
+  save(true);
+  return calcTP(rate);
+}
+/* Padam satu aktiviti game daripada rekod; rekod kosong dibuang terus */
+function gameDel(sid, sj, date, gameId){
+  const rec = ((S.records[sid] || {})[sj] || {})[date]; if (!rec) return;
+  rec.games = (rec.games || []).filter(g => g.id !== gameId);
+  if (!rec.games.length) delete rec.games;
+  if (!blendRec(rec)){ delete S.records[sid][sj][date]; if (!Object.keys(S.records[sid][sj]).length) delete S.records[sid][sj]; }
+}
+const gameLine = g => (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' betul (' + Math.round(g.r / g.n * 100) + '%) → TP' + calcTP(g.rate) + (g.tn ? ' · ' + g.tn : '');
+
 /* ============ TAB GAME ============
    Tiga permainan, semuanya tanpa aset untuk dimuat naik: Kad Koleksi
    (dilukis oleh app), Larian Ilmu (3D) dan Sekolah Berhantu (3D).     */
 function viewGame(){
   const g = ['cards','run','escape'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[12px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
-  return '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + '</div>' +
+  const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + '</div>';
+  if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
+  if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
+  return tabs + teamPanelHtml() +
     (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
@@ -6025,19 +6133,16 @@ const runRP = score => clamp(Math.round(score / 120), 2, 25);
 function viewRun(){
   if (!ctxOk()) return emptyState('fa-person-running','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu.');
   const o = arenaUi(), d = runData();
-  const sid = o.runStu && stu(o.runStu) ? o.runStu : '';
   const bank = qBank(S.ui.activeSubjectId);
-  const board = studentsOf(S.ui.activeClassId).filter(s => d.best[s.id]).sort((a, b) => d.best[b.id] - d.best[a.id]).slice(0, 5);
+  d.gbest = d.gbest || {};
+  const board = classTeams().filter(g => d.gbest[g.id]).sort((a, b) => d.gbest[b.id] - d.gbest[a.id]).slice(0, 5);
   let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(255,140,60,.25),rgba(120,60,200,.12) 60%,transparent),var(--panel,#141C26)">' +
     '<div style="font-size:40px;line-height:1">🏃‍♂️</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FFB347;text-shadow:0 0 12px rgba(255,140,60,.6)">LARIAN ILMU</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Lari secepat mungkin di jalan sekolah! Elak halangan, kutip <b style="color:#FFD76A">bintang</b>, dan bila soalan muncul, lari melalui <b class="text-cyan">gerbang jawapan yang betul</b>. Makin jauh, makin laju!</div></div>';
-  h += '<div class="panel clip p-3 mt-3"><div class="lbl">PEMAIN</div>' +
-    '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="run-stu">' +
-      (sid ? avatarHtml(stu(sid), 28) : '<i class="fa-solid fa-user text-muted"></i>') +
-      '<span class="flex-1 text-left text-[13px]">' + (sid ? esc(stu(sid).name) : '— pilih pelajar —') + '</span>' +
-      '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>' +
-    '<div class="text-[11px] text-muted mt-2"><i class="fa-solid fa-circle-question"></i> ' +
+  h += '<div class="panel clip p-3 mt-3">' +
+    '<div class="text-[11px] text-muted"><i class="fa-solid fa-users text-cyan"></i> Dimainkan oleh <b>' + esc(teamName(o.team)) + '</b> — seorang mengawal, ahli lain membantu memilih gerbang jawapan.</div>' +
+    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-circle-question"></i> ' +
       (bank.length ? bank.length + ' soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b>' : 'Bank soalan kosong — soalan <b>matematik</b> dijana automatik') + '</div>' +
     '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Skor ÷ 120 = RP (2 hingga 25 RP setiap larian)</div>' +
     '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="run-start"><i class="fa-solid fa-person-running"></i> MULA LARI</button>' +
@@ -6050,9 +6155,9 @@ function viewRun(){
     '<div class="text-[10px] text-muted mt-1">Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.</div>' +
     '<div class="lbl mt-3">MASA MEMBACA SOALAN</div>' + rseg('qt', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']]) +
     '<div class="text-[10px] text-muted mt-1">Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.</div></details>';
-  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERTINGGI</div>' + board.map((s, i) =>
-    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + avatarHtml(s, 24) +
-    '<span class="flex-1 text-[13px] truncate">' + esc(s.name) + '</span><span class="num text-[12px]" style="color:#FFB347">' + d.best[s.id] + '</span></div>').join('') + '</div>';
+  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERTINGGI KUMPULAN</div>' + board.map((g, i) =>
+    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
+    '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#FFB347">' + d.gbest[g.id] + '</span></div>').join('') + '</div>';
   return h;
 }
 function runStuPick(){
@@ -6071,7 +6176,7 @@ function runStuPick(){
 }
 async function runStart(){
   const o = arenaUi();
-  if (!o.runStu || !stu(o.runStu)) return toast('Pilih pelari dahulu.', null, true);
+  if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
   if (RUN || ESC) return;
   let ac = null;
   try { ac = (typeof audCtx === 'function' && audCtx()) || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch(e){}
@@ -6080,12 +6185,12 @@ async function runStart(){
   let THREE;
   try { THREE = await import(ESC_THREE); }
   catch(e){ RUN = null; return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
-  try { runGame(THREE, o.runStu, ac); }
+  try { runGame(THREE, o.team, ac); }
   catch(e){ RUN = null; const r = $('#runRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
 function runGame(THREE, sid, ac){
-  const player = stu(sid);
+  const player = teamOf(sid);                     // sid = id kumpulan yang berlari
   const root = document.createElement('div');
   root.id = 'runRoot';
   root.style.cssText = 'position:fixed;inset:0;z-index:950;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit';
@@ -6397,7 +6502,7 @@ function runGame(THREE, sid, ac){
       if (!g.done && g.z > -0.2){
         g.done = true; asked++;
         const ok = g.opts[P.lane] === g.q.a;
-        quizRecord(sid, ok);
+        teamQuiz(sid, ok);
         if (ok){ right++; stars += 5; sfxR('right'); msg('BETUL! +60', '#4ADE80'); P.inv = Math.max(P.inv, .8); }
         else { sfxR('wrong'); msg('SALAH! Jawapan: ' + esc(String(g.q.c[g.q.a])), '#FF6B6B', 2200); hurt(); }
         $r('#rnQ').style.display = 'none'; hud();
@@ -6410,11 +6515,13 @@ function runGame(THREE, sid, ac){
     if (ended) return;
     ended = true; sfxR('over');
     const sc = score(), rp = runRP(sc), d = runData();
-    const prev = d.best[sid] || 0;
-    if (sc > prev) d.best[sid] = sc;
+    d.gbest = d.gbest || {};
+    const prev = d.gbest[sid] || 0;
+    if (sc > prev) d.gbest[sid] = sc;
     d.plays[sid] = (d.plays[sid] || 0) + 1;
     S.arena = S.arena || { points:{}, wins:{}, losses:{}, history:[] };
-    S.arena.rp = S.arena.rp || {}; S.arena.rp[sid] = (S.arena.rp[sid] || 0) + rp;
+    teamRP(sid, rp);
+    const tp = gameToPBD(sid, 'run', right, asked, { score: sc });
     save(true);
     const e = $r('#rnEnd');
     e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:400px">' +
@@ -6426,6 +6533,8 @@ function runGame(THREE, sid, ac){
         '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FFD76A">' + right + '/' + asked + '</div><div class="text-[10px] text-muted">BETUL</div></div>' +
         '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+' + rp + '</div><div class="text-[10px] text-muted">RP</div></div></div>' +
       '<div class="text-[11px] text-muted mt-2">' + Math.floor(dist) + ' m · ★ ' + stars + '</div>' +
+      (tp ? '<div class="text-[12px] mt-2" style="color:#00F0FF"><b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b> direkod dalam PBD untuk ' + player.members.length + ' ahli kumpulan</div>'
+          : '<div class="text-[11px] text-muted mt-2">Tiada soalan dijawab — tiada TP direkod.</div>') +
       '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Lari Lagi</button></div></div>';
     e.style.display = 'flex';
     e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const again = b.dataset.end === 'again'; quit(); if (again) setTimeout(runStart, 50); };
@@ -6700,10 +6809,9 @@ const escBadge = sid => (((S.escape || {}).wins || {})[sid]) ? (S.badges.find(b 
 function viewEscape(){
   if (!ctxOk()) return emptyState('fa-ghost','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan teka-teki diambil dari bank soalan subjek itu.');
   const o = arenaUi(), c = escCfg(), D = ESC_DIFF[c.diff] || ESC_DIFF.sederhana;
-  const sid = o.escStu && stu(o.escStu) ? o.escStu : '';
   const bank = qBank(S.ui.activeSubjectId);
-  const d = escData();
-  const board = studentsOf(S.ui.activeClassId).filter(s => d.best[s.id]).sort((a, b) => d.best[a.id] - d.best[b.id]).slice(0, 5);
+  const d = escData(); d.gbest = d.gbest || {};
+  const board = classTeams().filter(g => d.gbest[g.id]).sort((a, b) => d.gbest[a.id] - d.gbest[b.id]).slice(0, 5);
   const seg = (k, opts) => '<div class="flex gap-1 mt-1">' + opts.map(([v, l]) =>
     '<button class="btn clip-s flex-1 !py-1.5 !px-1 text-[11px] '+(String(c[k]) === String(v) ? 'btn-o' : '')+'" data-act="esc-opt" data-k="'+k+'" data-v="'+v+'">'+l+'</button>').join('') + '</div>';
   const gName = c.ghost === 'rawak' ? 'Hantu Rawak' : ESC_GHOSTS[c.ghost].name;
@@ -6711,12 +6819,9 @@ function viewEscape(){
     '<i class="fa-solid fa-ghost text-4xl" style="color:#E8ECF1;filter:drop-shadow(0 0 12px rgba(226,59,59,.8))"></i>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#E23B3B;text-shadow:0 0 12px rgba(226,59,59,.6)">SEKOLAH BERHANTU</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kamu terperangkap di sekolah dua tingkat pada waktu malam. Selesaikan teka-teki untuk mengumpul <b style="color:#FFD76A">'+D.keys+' kunci</b>, kemudian lari ke pintu <b style="color:#E23B3B">KELUAR</b>. Sembunyi dalam <b style="color:#E2803B">loker merah</b> jika dikejar!</div></div>';
-  h += '<div class="panel clip p-3 mt-3"><div class="lbl">PEMAIN</div>' +
-    '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="esc-stu">' +
-      (sid ? avatarHtml(stu(sid), 28) : '<i class="fa-solid fa-user text-muted"></i>') +
-      '<span class="flex-1 text-left text-[13px]">'+(sid ? esc(stu(sid).name) : '— pilih pelajar —')+'</span>' +
-      '<i class="fa-solid fa-chevron-right text-muted text-[11px]"></i></button>' +
-    '<div class="text-[11px] text-muted mt-2"><i class="fa-solid fa-circle-question"></i> ' +
+  h += '<div class="panel clip p-3 mt-3">' +
+    '<div class="text-[11px] text-muted"><i class="fa-solid fa-users text-cyan"></i> Dimainkan oleh <b>' + esc(teamName(o.team)) + '</b> — ahli kumpulan berbincang dan menjawab bersama.</div>' +
+    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-circle-question"></i> ' +
       (bank.length ? bank.length + ' soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b>'
                    : 'Bank soalan subjek ini kosong — soalan <b>matematik</b> dijana automatik') + '</div>' +
     '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Berjaya keluar = <span class="text-orange">sehingga +'+Math.round(c.rp * D.rpx)+' RP</span> + lencana <b>Pelarian Seram</b></div>' +
@@ -6736,9 +6841,9 @@ function viewEscape(){
     '<div class="lbl mt-3">RP MAKSIMUM</div>' + seg('rp', [[15,'15'],[30,'30'],[50,'50']]) +
     '<div class="text-[10px] text-muted mt-1">Mudah ×0.8 · Sukar ×1.3. Lencana <b>Pelarian Seram</b>: muat naik gambarnya di Tetapan → Lencana.</div>' +
   '</details>';
-  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">MASA TERPANTAS</div>' + board.map((s, i) =>
-    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">'+(i+1)+'</span>' + avatarHtml(s, 24) +
-    '<span class="flex-1 text-[13px] truncate">'+esc(s.name)+'</span><span class="num text-cyan text-[12px]">'+fmtSec(d.best[s.id])+'</span></div>').join('') + '</div>';
+  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">KUMPULAN TERPANTAS KELUAR</div>' + board.map((g, i) =>
+    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">'+(i+1)+'</span>' + teamAvatar(g.id, 24) +
+    '<span class="flex-1 text-[13px] truncate">'+esc(g.name)+'</span><span class="num text-cyan text-[12px]">'+fmtSec(d.gbest[g.id])+'</span></div>').join('') + '</div>';
   return h;
 }
 function escOpt(d){
@@ -6797,7 +6902,7 @@ function escPairs(){
 }
 async function escStart(){
   const o = arenaUi();
-  if (!o.escStu || !stu(o.escStu)) return toast('Pilih pemain dahulu.', null, true);
+  if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
   if (ESC || RUN) return;
   /* AudioContext mesti dicipta semasa sentuhan pengguna, sebelum await */
   let ac = null;
@@ -6807,7 +6912,7 @@ async function escStart(){
   let THREE;
   try { THREE = await import(ESC_THREE); }
   catch(e){ ESC = null; return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
-  try { escRun(THREE, o.escStu, ac); }
+  try { escRun(THREE, o.team, ac); }
   catch(e){ ESC = null; const r = $('#escRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
@@ -6818,7 +6923,7 @@ function escRun(THREE, sid, ac){
   const gKind = ESC_GHOSTS[cfg.ghost] ? cfg.ghost : ['putih','pontianak','toyol'][Math.floor(Math.random() * 3)];
   const GT = ESC_GHOSTS[gKind];
   const soft = cfg.scare === 'lembut';
-  const player = stu(sid);
+  const player = teamOf(sid);                     // sid = id kumpulan yang bermain
 
   /* ---------- lapisan paparan ---------- */
   const root = document.createElement('div');
@@ -7490,7 +7595,7 @@ function escRun(THREE, sid, ac){
       if (done) return; done = true; stop();
       const ok = pick === q.a;
       answered++; if (ok) correct++;
-      quizRecord(sid, ok);
+      teamQuiz(sid, ok);
       closeUi();
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Papan '+bd.label); }
       else {
@@ -7521,7 +7626,7 @@ function escRun(THREE, sid, ac){
     const finish = ok => {
       if (done) return; done = true; stop();
       answered++; if (ok) correct++;
-      quizRecord(sid, ok);
+      teamQuiz(sid, ok);
       closeUi();
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Teka-teki perpustakaan selesai'); }
       else { sfx('buzz'); msg('<span style="color:#FF5A5A">Masa tamat! Buku-buku berterbangan… hantu datang!</span>', 3200); summon(); }
@@ -7645,16 +7750,18 @@ function escRun(THREE, sid, ac){
   function win(){
     sfx('win');
     const sec = Math.round(elapsed), rp = escRP(sec, cfg), d = escData();
-    const prev = d.best[sid], first = !d.wins[sid];
-    if (!prev || sec < prev) d.best[sid] = sec;
-    d.wins[sid] = (d.wins[sid] || 0) + 1;
+    d.gbest = d.gbest || {};
+    const prev = d.gbest[sid], first = player && player.members.some(m => !d.wins[m.id]);
+    if (!prev || sec < prev) d.gbest[sid] = sec;
+    if (player) player.members.forEach(m => d.wins[m.id] = (d.wins[m.id] || 0) + 1);   // lencana Pelarian Seram untuk setiap ahli
     S.arena = S.arena || { points:{}, wins:{}, losses:{}, history:[] };
-    S.arena.rp = S.arena.rp || {};
-    S.arena.rp[sid] = (S.arena.rp[sid] || 0) + rp;
+    teamRP(sid, rp);
+    const tp = gameToPBD(sid, 'esc', correct, answered, { win: 1, sec });
     save(true);
     endScreen('<i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i>' +
       '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#4ADE80">BERJAYA KELUAR!</div>' +
       '<div class="text-[13px] text-muted mt-1">'+esc(player ? player.name : '')+' melarikan diri dari '+esc(GT.name)+' · '+D.name+'</div>' +
+      (tp ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#00F0FF"><b style="color:'+TP_COLOR[tp]+'">TP'+tp+'</b> direkod dalam PBD untuk '+player.members.length+' ahli kumpulan</div>' : '') +
       '<div class="grid grid-cols-3 gap-2 mt-4 num">' +
         '<div class="panel clip-s p-2"><div class="text-[18px] text-cyan">'+fmtSec(sec)+'</div><div class="text-[10px] text-muted">MASA'+(!prev || sec < prev ? ' · REKOD!' : '')+'</div></div>' +
         '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FFD76A">'+correct+'/'+answered+'</div><div class="text-[10px] text-muted">BETUL</div></div>' +
@@ -7662,9 +7769,11 @@ function escRun(THREE, sid, ac){
       (first ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#E23B3B"><i class="fa-solid fa-certificate" style="color:#E23B3B"></i> Lencana baharu: <b>Pelarian Seram</b></div>' : ''));
   }
   function lose(){
+    const tp = gameToPBD(sid, 'esc', correct, answered, { win: 0 });
     endScreen('<i class="fa-solid fa-ghost text-4xl" style="color:#E23B3B"></i>' +
       '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#E23B3B">'+esc(GT.name.toUpperCase())+' MENANGKAP KAMU</div>' +
       '<div class="text-[13px] text-muted mt-1">Kunci: '+keys()+'/'+D.keys+' · Jawapan betul: '+correct+'/'+answered+'</div>' +
+      (tp ? '<div class="text-[12px] mt-2" style="color:#00F0FF">TP'+tp+' direkod dalam PBD untuk setiap ahli '+esc(player ? player.name : '')+'.</div>' : '') +
       '<div class="text-[12px] text-muted mt-2">Tip: sembunyi dalam loker merah bila dikejar, dan jawab dengan teliti.</div>');
   }
   function quit(){
@@ -7814,7 +7923,8 @@ function escRun(THREE, sid, ac){
 
 /* ============ EVENT DELEGATION ============ */
 const ACTS = {
-  'esc-stu': escStuPick,
+  'team-pick': () => teamPick(id => { arenaUi().team = id; save(); renderTab(); }),
+  'go-groups': () => setTab('groups'),
   'esc-start': escStart,
   'esc-opt': escOpt,
   'go-settings': ()=>setTab('settings'),
@@ -7854,6 +7964,7 @@ const ACTS = {
   'hist-open': d => { closeTop(); setTimeout(()=>openHistory(d.id), 200); },
   'stu-move': d => moveStudent(d.id),
   'grp-add': groupAdd,
+  'class-eval': () => { const ids = studentsOf(S.ui.activeClassId).map(s => s.id); if (!ids.length) return toast('Tiada murid dalam kelas ini.', null, true); openEval(ids, 'Seluruh Kelas — ' + clsName(S.ui.activeClassId)); },
   'grp-auto': groupAuto,
   'grp-eval': d => { const g=S.groups.find(x=>x.id===d.id); if(!g) return; if(!(g.members||[]).length) return toast('Kumpulan ini tiada ahli.',null,true); openEval(g.members.slice(), g.name); },
   'grp-clear': d => groupClear(d.id),
@@ -7890,7 +8001,7 @@ const ACTS = {
     if (y !== new Date().getFullYear()) S.takwim.manualYear = 1;           // pratonton / guna tahun lain secara sengaja
     PLAN_MEMO = {}; save(true); renderTab(); toast('Takwim ' + y + ' digunakan.'); },
   'pbd-sum': () => pbdSummaryModal(),
-  'card-stu': cardStuPick,
+  'card-stu': () => teamPick(id => { arenaUi().team = id; save(); renderTab(); }),
   'tpc-topup': topupModal,
   'binder': d => binderModal(d.id),
   'pack-buy': d => {
@@ -8035,7 +8146,7 @@ document.addEventListener('pointerup', e => {
 function initPWA(){
   const base = location.origin + location.pathname;
   const manifest = {
-    name: APP_NAME, short_name: APP_NAME, description: 'LagendaTP — dicipta oleh ' + APP_AUTHOR,
+    name: APP_NAME, short_name: APP_NAME, description: 'EduRank — dicipta oleh ' + APP_AUTHOR,
     start_url: base + '?src=hs', scope: location.origin + location.pathname.replace(/[^/]*$/, ''),
     display:'standalone', orientation:'portrait', background_color:'#0C1118', theme_color:'#0C1118',
     icons:[
@@ -8070,18 +8181,18 @@ function installGate(){
   const android =
     step(1,'fa-ellipsis-vertical','Tekan menu <b>⋮</b> di penjuru kanan atas Chrome') +
     step(2,'fa-mobile-screen-button','Pilih <b>Tambah ke skrin utama</b> atau <b>Pasang aplikasi</b>') +
-    step(3,'fa-check','Tekan <b>Tambah / Pasang</b>, kemudian buka <b>LagendaTP</b> dari skrin utama');
+    step(3,'fa-check','Tekan <b>Tambah / Pasang</b>, kemudian buka <b>EduRank</b> dari skrin utama');
   const iphone =
     step(1,'fa-arrow-up-from-bracket','Buka dalam <b>Safari</b>, tekan butang <b>Kongsi</b> di bar bawah') +
     step(2,'fa-square-plus','Pilih <b>Tambah ke Skrin Utama</b> (Add to Home Screen)') +
-    step(3,'fa-check','Tekan <b>Tambah</b>, kemudian buka <b>LagendaTP</b> dari skrin utama');
+    step(3,'fa-check','Tekan <b>Tambah</b>, kemudian buka <b>EduRank</b> dari skrin utama');
   document.body.insertAdjacentHTML('beforeend',
     '<div id="gate" style="position:fixed;inset:0;z-index:1000;overflow-y:auto;display:flex;align-items:center;justify-content:center;' +
       'padding:calc(24px + var(--safe-t)) 20px calc(24px + var(--safe-b));background:radial-gradient(circle at 50% 25%,rgba(255,107,0,.14),transparent 60%),#0C1118">' +
       '<div class="w-full max-w-sm text-center">' +
-        '<img src="'+APP_ICON+'" alt="LagendaTP" class="mx-auto" style="width:100px;height:100px;object-fit:contain;border-radius:24px;box-shadow:0 0 36px rgba(255,107,0,.35)" onerror="this.style.visibility=\'hidden\'">' +
-        '<div class="font-bold tracking-[.25em] text-[28px] glow-o mt-4">LAGENDATP</div>' +
-        '<div class="text-[13px] text-muted mt-2 mb-5">Pasang LagendaTP ke skrin utama untuk mula menggunakan.</div>' +
+        '<img src="'+APP_ICON+'" alt="EduRank" class="mx-auto" style="width:100px;height:100px;object-fit:contain;border-radius:24px;box-shadow:0 0 36px rgba(255,107,0,.35)" onerror="this.style.visibility=\'hidden\'">' +
+        '<div class="font-bold tracking-[.25em] text-[28px] glow-o mt-4">EDURANK</div>' +
+        '<div class="text-[13px] text-muted mt-2 mb-5">Pasang EduRank ke skrin utama untuk mula menggunakan.</div>' +
         '<div class="lbl text-left mb-2">'+(ios ? 'IPHONE / IPAD' : 'ANDROID')+'</div>' +
         (ios ? iphone : android) +
         '<details class="mt-3 text-left"><summary class="text-[11px] text-muted">Arahan untuk '+(ios ? 'Android' : 'iPhone / iPad')+'</summary><div class="mt-2">'+(ios ? android : iphone)+'</div></details>' +
