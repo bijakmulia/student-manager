@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Auto Jana Gambar (Aset Stor Sukan)
 // @namespace    student-manager
-// @version      1.1
+// @version      1.2
 // @description  Tampal senarai prompt (### nama.png ... / PROMPT-ASET.txt). Skrip hantar satu-satu ke Gemini, tunggu gambar siap, muat turun dengan nama fail yang betul, lalu teruskan prompt seterusnya.
 // @match        https://gemini.google.com/*
 // @grant        GM_getValue
@@ -131,26 +131,31 @@
       onerror: () => rej(new Error('network')), ontimeout: () => rej(new Error('timeout')),
     }));
   }
-  async function getImageBlob(img) {
+  // Returns something drawImage() accepts. Gemini's CSP blocks fetch() of blob:/data: URLs ("Failed to fetch"),
+  // so a picture already shown on the page is drawn straight from its <img>; remote URLs go through
+  // GM_xmlhttpRequest + createImageBitmap, which the page CSP does not affect.
+  async function getDrawable(img) {
     const src = img.currentSrc || img.src;
-    if (src.startsWith('blob:') || src.startsWith('data:')) return (await fetch(src)).blob();
+    if (!/^https?:/.test(src)) {
+      try { await img.decode(); } catch (e) { /* already decoded */ }
+      return { src: img, w: img.naturalWidth, h: img.naturalHeight, how: src.slice(0, 5) };
+    }
     const urls = [];
     // googleusercontent URLs end with a size suffix like "=s1024-rj"; "=s0" asks for the original size.
     if (/googleusercontent\.com/.test(src)) urls.push(src.replace(/=[^/=]*$/, '') + '=s0');
     urls.push(src);
     let lastErr;
     for (const u of urls) {
-      try { const b = await gmBlob(u); if (b.size > 5000) return b; } catch (e) { lastErr = e; }
+      try {
+        const b = await gmBlob(u);
+        if (b.size < 5000) continue;
+        const bmp = await createImageBitmap(b);
+        return { src: bmp, w: bmp.width, h: bmp.height, how: 'url' };
+      } catch (e) { lastErr = e; }
     }
+    // last resort: the <img> itself (fails on toBlob if the image is cross-origin)
+    if (img.naturalWidth) return { src: img, w: img.naturalWidth, h: img.naturalHeight, how: 'img' };
     throw lastErr || new Error('gambar tak dapat dimuat');
-  }
-  function blobToImage(blob) {
-    return new Promise((res, rej) => {
-      const u = URL.createObjectURL(blob), im = new Image();
-      im.onload = () => { URL.revokeObjectURL(u); res(im); };
-      im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); };
-      im.src = u;
-    });
   }
   // Flood-fill from the edges: near-white / light-grey pixels connected to the border become transparent.
   // The bold dark outlines stop the fill, so white objects (soccer ball, socks) stay intact.
@@ -187,21 +192,20 @@
     ctx.putImageData(d, 0, 0);
   }
   async function saveImage(img, name) {
-    const blob = await getImageBlob(img);
-    const im = await blobToImage(blob);
+    const im = await getDrawable(img);
     const c = document.createElement('canvas');
-    c.width = im.naturalWidth; c.height = im.naturalHeight;
+    c.width = im.w; c.height = im.h;
     const ctx = c.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(im, 0, 0);
+    ctx.drawImage(im.src, 0, 0);
     if (S.opts.cutWhite && !name.startsWith('bg_')) cutBackground(ctx, c.width, c.height);
-    const png = await new Promise(r => c.toBlob(r, 'image/png'));
+    const png = await new Promise((r, j) => { try { c.toBlob(b => b ? r(b) : j(new Error('toBlob kosong')), 'image/png'); } catch (e) { j(e); } });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(png);
     a.download = name.replace(/\.(jpe?g|webp)$/i, '.png');
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
-    return `${c.width}×${c.height}`;
+    return `${c.width}×${c.height}, ${im.how}`;
   }
 
   // ---------- main loop ----------
@@ -251,7 +255,7 @@
       item.status = 'ok'; S.failStreak = 0; S.idx = i + 1; save();
       log(`💾 ${item.name} dimuat turun (${size})`);
     } catch (e) {
-      await fail(item, 'gagal muat turun: ' + e.message);
+      await fail(item, 'gagal muat turun: ' + e.message + ' [src: ' + String(img.currentSrc || img.src).slice(0, 50) + ']');
       return;
     }
     await goNext();
