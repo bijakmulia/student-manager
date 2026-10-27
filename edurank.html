@@ -6596,17 +6596,18 @@ const stA = (id, g, ar, p) => ({ id, g, ar, sz: ST_AR[ar][0], p: p + ' ' + ST_AR
 const ST_ASSETS = [].concat(
   [stA('bg_lantai', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile simulation game: an EMPTY room interior, camera facing the back wall straight-on and slightly from above, perfectly symmetric. The back wall fills the TOP 40% of the image and the tiled floor fills the BOTTOM 60%. Left half of the wall: light blue (school sports equipment store); right half: mint green and cream (healthy food cafe). One wide doorway exactly in the centre of the back wall. Small windows high on the wall, soft daylight, clean light floor tiles. NO furniture, NO shelves, NO counters, NO people, NO text.'),
    stA('bg_menu', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Keep the important details in the middle; leave empty space at the top centre for a logo. No text.')],
-  /* rak & pintu: kotak dalam game tinggi & sempit → objek sempit di tengah, penuh ketinggian; tepi dipotong */
-  [['rak_bola','a tall narrow wooden store shelf unit filled with sports balls of many kinds'],
-   ['rak_raket','a tall narrow store rack holding badminton rackets, tennis rackets, hockey sticks and table tennis paddles'],
-   ['rak_pakai','a tall narrow store shelf with folded sports jerseys, shorts, socks and running shoes'],
-   ['rak_fit','a tall narrow store shelf with dumbbells, exercise mats, skipping ropes, cones, helmets and first aid kits'],
-   ['rak_buah','a tall narrow cafe display stand with baskets of bananas, apples, oranges and green vegetables on several levels'],
-   ['rak_sejuk','a tall narrow glass-door drinks refrigerator filled with milk, water, coconuts and sports drinks'],
-   ['rak_bijirin','a tall narrow cafe shelf with bread, rice, oats, sweet potatoes, nuts and dates in jars'],
-   ['rak_snek','a tall narrow snack rack with chips, sweets, donuts and soda cans, a small red caution sign on top'],
-   ['pintu_stor','a tall double loading-bay door of a store room, closed, grey metal with a small window']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', front view. ' + d[0].toUpperCase() + d.slice(1) + '. The object stands upright, fills the FULL HEIGHT of the image and only the MIDDLE HALF of the width, bottom edge touching the bottom of the image. Transparent background, no text, no people.')),
+  /* rak = LAPISAN BAWAH yang KOSONG; barang dilukis oleh game di atas papan rak (paras tetap ST_BOARD)
+     supaya rak kosong/penuh mengikut stok. Rak memenuhi seluruh gambar (dipaparkan penuh kotak). */
+  [['rak_bola','an empty tall wooden sports store shelf unit with a blue header panel'],
+   ['rak_raket','an empty tall wooden store rack with a blue header panel and a pegboard back'],
+   ['rak_pakai','an empty tall white-and-blue clothing and shoe shelf unit'],
+   ['rak_fit','an empty tall grey metal shelving unit with a blue header panel'],
+   ['rak_buah','an empty tall wooden market display stand whose 4 shelves are shallow empty wicker trays'],
+   ['rak_sejuk','an empty tall drinks refrigerator with a clear glass door, 4 empty wire shelves visible inside, cool white interior light'],
+   ['rak_bijirin','an empty tall cream-coloured cafe pantry shelf'],
+   ['rak_snek','an empty tall red snack rack with a small yellow caution sign on the header']
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. ' + d[0].toUpperCase() + d.slice(1) + '. It has exactly 4 shelf boards; the TOP SURFACES of the boards are at about 27%, 49%, 71% and 93% of the image height, and the area above the first board is a plain header panel. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. Transparent background, no text, no people.')),
+  [stA('pintu_stor', 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. A tall closed double loading-bay door of a store room, grey metal with a small window. The door fills the ENTIRE image edge to edge. Transparent background, no text, no people.')],
   [['dapur','a small cafe stove with a pot and a grill pan'],
    ['blender','a kitchen blender on a small counter'],
    ['meja_telefon','a small office desk with an old-style telephone and a clipboard on it'],
@@ -6724,12 +6725,23 @@ const ST_CSS = `
 .st-bg{inset:0;width:100%;height:100%;object-fit:cover}
 .st-zl{top:8.6%;font-weight:800;letter-spacing:.15em;font-size:1.3cqw;color:#1E3A5F;opacity:.75}
 .st-shelf{top:10%;height:29%;border-radius:.6cqw;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
-.st-shelf .box{position:absolute;inset:0;border-radius:.6cqw;background:linear-gradient(180deg,#B07A45,#8A5A2E);border:.25cqw solid #5E3A1A;
-  box-shadow:0 .6cqw 1cqw rgba(0,0,0,.25);display:grid;grid-template-columns:1fr 1fr 1fr;align-content:space-evenly;justify-items:center;padding:.5cqw}
-.st-shelf .box.k{background:linear-gradient(180deg,#F5F1E6,#D8D0BC);border-color:#9C8F70}
-.st-shelf .box.cold{background:linear-gradient(180deg,#DDF3FF,#9FD1EE);border-color:#5A90B5}
-.st-shelf .box .st-emo{font-size:2.2cqw;line-height:1}
-.st-shelf>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom}
+.st-shelf .box{--bd:#5E3A1A;--bg1:#B07A45;--bg2:#8A5A2E;position:absolute;inset:0;border-radius:.6cqw;border:.25cqw solid var(--bd);box-shadow:0 .6cqw 1cqw rgba(0,0,0,.25);
+  background:linear-gradient(180deg,rgba(0,0,0,.28) 0 8%,transparent 8%),
+    linear-gradient(180deg,transparent 27%,var(--bd) 27% 30%,transparent 30% 49%,var(--bd) 49% 52%,transparent 52% 71%,var(--bd) 71% 74%,transparent 74% 93%,var(--bd) 93% 96%,transparent 96%),
+    linear-gradient(180deg,var(--bg1),var(--bg2))}
+.st-shelf .box.k{--bd:#9C8F70;--bg1:#F5F1E6;--bg2:#D8D0BC}
+.st-shelf .box.cold{--bd:#5A90B5;--bg1:#E6F6FF;--bg2:#A9D7F0}
+.st-shelf>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+.st-lv{position:absolute;inset:0;z-index:1;pointer-events:none}
+.st-si{position:absolute;height:17%;transform:translateX(-50%);display:flex;align-items:flex-end;justify-content:center;filter:drop-shadow(0 .25cqw .15cqw rgba(0,0,0,.35))}
+.st-si i{position:absolute;bottom:0;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;font-style:normal;font-size:2.1cqw;line-height:1}
+.st-si i img{width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.st-si.lo{opacity:.75}
+.st-si.pop{animation:stPop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes stPop{0%{transform:translateX(-50%) scale(0)}100%{transform:translateX(-50%) scale(1)}}
+.st-flyit{position:absolute;width:4.5cqw;height:4.5cqw;transform:translate(-50%,-50%);z-index:37;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:3.4cqw;
+  transition:left .45s cubic-bezier(.4,0,.6,1),top .45s cubic-bezier(.3,-.5,.6,1),opacity .2s .4s}
+.st-flyit img{width:100%;height:100%;object-fit:contain}
 .st-shelf .nm{position:relative;z-index:2;margin-bottom:-1.3cqw;background:#1E293B;color:#fff;font-size:1cqw;font-weight:800;letter-spacing:.06em;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35)}
 .st-shelf:active{transform:scale(.97)}
 .st-shelf.low .nm{background:#B91C1C}
@@ -6743,7 +6755,7 @@ const ST_CSS = `
 .st-slot.burn{background:#7F1D1D}
 @keyframes stPulse{50%{transform:scale(1.12)}}
 .st-door{left:45%;width:10%;top:9%;height:30%;cursor:pointer;border-radius:.6cqw .6cqw 0 0;background:linear-gradient(90deg,#64748B 0 49.5%,#334155 49.5% 50.5%,#64748B 50.5%);border:.3cqw solid #1E293B}
-.st-door>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom}
+.st-door>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
 .st-phone{left:44%;width:12%;top:42%;height:8%;cursor:pointer;border-radius:.5cqw;background:linear-gradient(180deg,#A16207,#713F12);display:flex;align-items:center;justify-content:center;font-size:2.4cqw;z-index:4}
 .st-phone>img{position:absolute;left:0;right:0;bottom:0;width:100%;height:220%;object-fit:contain}
 .st-phone.ring{animation:stRing .25s infinite}
@@ -6827,8 +6839,7 @@ const ST_CSS = `
 .st-emo{line-height:1}
 #stCust,#stSup,#stPop,#stCall,#stEnd{inset:0;pointer-events:none}
 .st-cu,.st-sup,.st-pop,.st-call,.st-end{pointer-events:auto;position:absolute}
-.st-shelf .box.k .st-emo,.st-shelf .box.cold .st-emo{font-size:1.75cqw}
-.st-shelf .box{overflow:hidden}
+.st-shelf[data-z="k"] .st-si i{font-size:1.75cqw}
 .bb img,.st-hud .pill img{width:1.6cqw;height:1.6cqw;object-fit:contain;vertical-align:middle}
 .st-tray.img{background:center/contain no-repeat var(--tray),rgba(15,23,42,.6)}
 `;
@@ -6842,11 +6853,19 @@ function storRun(team){
   const SLOTX = { s: [3.5, 17.5, 31.5], k: [57.5, 71.5, 85.5] };
   const root = document.createElement('div');
   root.className = 'st'; root.id = 'stRoot';
+  /* rak berlapis: rak kosong (gambar/lukisan) → lapisan barang (#stL_<rak>) → label */
+  const ST_BOARD = [27, 49, 71, 93];                    // paras atas papan rak (% tinggi rak) — sama dengan prompt aset
+  const shelfW = z => z === 's' ? 10 : 8;
+  const shelfSlots = id => {                           // barang rak ini disusun ke 4 paras
+    const its = ST_ITEMS.filter(i => i.sh === id), lvOf = j => Math.floor(j * 4 / its.length);
+    return its.map((it, j) => { const lv = lvOf(j), row = its.filter((_, q) => lvOf(q) === lv), k = row.indexOf(it);
+      return { it, lv, x: 8 + 84 * (k + .5) / row.length, w: Math.min(30, 84 / row.length * 1.1) }; });
+  };
   const shelfHtml = ([id, nm, z, x]) => {
-    const its = ST_ITEMS.filter(i => i.sh === id), img = 'rak_' + id;
-    return '<div class="st-shelf" data-sh="' + id + '" style="left:' + x + '%;width:' + (z === 's' ? 10 : 8) + '%">' +
-      (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : ' k') : '') + '">' + its.slice(0, 9).map(i => '<span class="st-emo">' + i.e + '</span>').join('') + '</div>') +
-      '<div class="nm">' + nm + '</div></div>';
+    const img = 'rak_' + id;
+    return '<div class="st-shelf" data-sh="' + id + '" data-z="' + z + '" style="left:' + x + '%;width:' + shelfW(z) + '%">' +
+      (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : ' k') : '') + '"></div>') +
+      '<div class="st-lv" id="stL_' + id + '"></div><div class="nm">' + nm + '</div></div>';
   };
   root.innerHTML = '<div class="st-stage" id="stStage">' +
     (ST_HAVE.has('bg_lantai') ? stImg('bg_lantai', '', 'st-bg') : '<div class="st-wallk"></div><div class="st-floor"></div>') +
@@ -6944,7 +6963,30 @@ function storRun(team){
   }
   const paintCust = () => { $s('#stCust').innerHTML = custHtml(); ['s', 'k'].forEach(z => cust[z].forEach(c => { if (c) c.fresh = false; })); };
   const paintTray = () => { $s('#stTray').innerHTML = [0, 1, 2, 3].map(i => tray[i] ? '<div class="f' + (ST_IT[tray[i].id].tg === 'x' ? ' x' : '') + '" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join(''); paintCust(); };
-  const paintShelves = () => ST_SHELVES.forEach(([id]) => { const el = $s('[data-sh="' + id + '"]'); if (el) el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && i.tg !== 'x' && stock[i.id] <= 1)); });
+  const shown = {};
+  const paintShelves = () => ST_SHELVES.forEach(([id]) => {
+    const el = $s('[data-sh="' + id + '"]'); if (!el) return;
+    el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && i.tg !== 'x' && stock[i.id] <= 1));
+    $s('#stL_' + id).innerHTML = shelfSlots(id).map(({ it, lv, x, w }) => {
+      const n = Math.min(3, stock[it.id]), pop = n > (shown[it.id] == null ? n : shown[it.id]);
+      shown[it.id] = n;
+      if (!n) return '';
+      return '<span class="st-si' + (n === 1 ? ' lo' : '') + (pop ? ' pop' : '') + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
+        Array.from({ length: n }, (_, q) => '<i style="transform:translateX(' + ((q - (n - 1) / 2) * 28) + '%) scale(' + (q === (n - 1) / 2 || n === 1 ? 1 : .88) + ');z-index:' + (q === 1 ? 2 : 1) + '">' + icon(it.id) + '</i>').join('') + '</span>';
+    }).join('');
+  });
+  /* barang terbang dari rak ke dulang / stesen (kedudukan dalam % pentas — sama di tablet projektor) */
+  const shelfPos = id => {
+    const it = ST_IT[id], sh = ST_SHELVES.find(x => x[0] === it.sh), sl = shelfSlots(it.sh).find(x => x.it.id === id);
+    return [sh[3] + shelfW(sh[2]) * sl.x / 100, 10 + 29 * ST_BOARD[sl.lv] / 100 - 3];
+  };
+  const flyTo = (id, from, to) => {
+    const n = document.createElement('div'); n.className = 'st-flyit'; n.innerHTML = icon(id);
+    n.style.left = from[0] + '%'; n.style.top = from[1] + '%'; $s('#stStage').appendChild(n);
+    void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
+    setTimeout(() => n.remove(), 700);
+  };
+  const TRAY_AT = [50, 84], STN_AT = { dapur: [94.25, 17], blender: [94.25, 33] };
   function paintStn(){
     Object.keys(stn).forEach(k => {
       $s('#stS_' + k).innerHTML = stn[k].map((x, i) => {
@@ -6973,12 +7015,12 @@ function storRun(team){
     if (it.prep){
       const slots = stn[it.prep[0]], k = slots.findIndex(x => !x);
       if (k < 0) return msg((it.prep[0] === 'dapur' ? 'Dapur' : 'Blender') + ' penuh!', '#FCA5A5');
-      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; sfx('flip');
+      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; sfx('flip'); flyTo(id, shelfPos(id), STN_AT[it.prep[0]]);
       msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
       $s('#stPop').innerHTML = ''; walk(91); paintStn(); paintShelves(); return;
     }
     if (tray.length >= 4) return msg('Dulang penuh! Ketik barang dalam dulang untuk pulangkan.', '#FCA5A5', 1600);
-    stock[id]--; tray.push({ id }); sfx('flip');
+    stock[id]--; tray.push({ id }); sfx('flip'); flyTo(id, shelfPos(id), TRAY_AT);
     openShelf(it.sh); paintTray(); paintShelves();
   }
   function takeStation(k, i){
@@ -6991,7 +7033,7 @@ function storRun(team){
   function trayBack(i){
     const x = tray[i]; if (!x) return;
     tray.splice(i, 1);
-    if (!x.cooked) stock[x.id]++; else msg('Makanan dimasak dibuang', '#FDE68A', 900);
+    if (!x.cooked){ stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); } else msg('Makanan dimasak dibuang', '#FDE68A', 900);
     sfx('low'); paintTray(); paintShelves();
   }
   function serve(z, i){
