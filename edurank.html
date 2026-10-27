@@ -1020,7 +1020,41 @@ const badgeSrc = b => b ? (b.url || PHOTOS['badge:'+b.id] || null) : null;
 function badgeSvg(b, size){
   const sz = size||26, src = badgeSrc(b);
   if (src) return '<img src="'+esc(src)+'" alt="" title="'+esc(b.name)+'" onerror="this.onerror=null;this.src=BROKEN_IMG;this.title=\'Imej lencana rosak — muat naik semula atau padam\'" style="width:'+sz+'px;height:'+sz+'px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))">';
-  return '<div class="circ flex items-center justify-center" style="width:'+sz+'px;height:'+sz+'px;background:#24333F;border:1px dashed '+(b.color||'#7E93A8')+'"><i class="fa-solid fa-image text-[9px] text-muted"></i></div>';
+  /* tiada gambar: bulatan berwarna dengan ikon sikap / huruf pertama */
+  const ic = b.luck === 'good' ? '👍' : b.luck === 'bad' ? '⚠️' : esc((b.name || '?').trim().charAt(0).toUpperCase());
+  return '<div class="circ flex items-center justify-center" title="'+esc(b.name||'')+'" style="width:'+sz+'px;height:'+sz+'px;background:radial-gradient(circle at 35% 30%,'+(b.color||'#7E93A8')+'cc,#14202B);border:1.5px solid '+(b.color||'#7E93A8')+';font-size:'+Math.round(sz*.45)+'px;font-weight:700;color:#fff">'+ic+'</div>';
+}
+/* ---------- LOG LENCANA (untuk refleksi sikap) ----------
+   Setiap kali lencana diberi, tarikh & subjek direkod. Jenis sikap lencana:
+   luck 'good' = positif, 'bad' = negatif (medan lama "Bertuah/Malang"). */
+const badgeKind = b => b && b.luck === 'good' ? 'pos' : b && b.luck === 'bad' ? 'neg' : '';
+function badgeLogAdd(sid, bid){
+  S.badgeLog = S.badgeLog || [];
+  S.badgeLog.push({ sid, b: bid, d: recDate(), sj: S.ui.activeSubjectId || '', t: Date.now() });
+  if (S.badgeLog.length > 3000) S.badgeLog = S.badgeLog.slice(-3000);
+}
+function badgeLogDel(sid, bid){
+  const L = S.badgeLog || [], d = recDate();
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].sid === sid && L[i].b === bid && L[i].d === d){ L.splice(i, 1); break; }
+}
+/* Pilih lencana untuk murid yang dipilih (pukal) */
+function selBadge(){
+  const ids = Array.from(SEL.ids).filter(id => stu(id));
+  const list = S.badges.filter(b => !isSysBadge(b.id));
+  if (!ids.length) return;
+  if (!list.length) return toast('Tiada lencana. Cipta di Tetapan → Lencana.', null, true);
+  const grp = (k, t) => { const l = list.filter(b => badgeKind(b) === k); return l.length ? '<div class="lbl mt-2">'+t+'</div><div class="grid grid-cols-4 gap-2 mt-1">' +
+    l.map(b => '<button class="panel clip-s p-2 flex flex-col items-center gap-1" data-bg="'+b.id+'">'+badgeSvg(b,28)+'<span class="text-[9px] leading-tight text-center">'+esc(b.name)+'</span></button>').join('') + '</div>' : ''; };
+  const id = openModal({ icon:'fa-certificate', title:'Beri Lencana — '+ids.length+' murid',
+    body: grp('pos','👍 SIKAP POSITIF') + grp('neg','⚠️ SIKAP NEGATIF / ISU') + grp('','LAIN-LAIN') +
+      '<div class="text-[10px] text-muted mt-2">Lencana direkod pada tarikh '+fmtDate(recDate())+' dan muncul dalam Refleksi PdP hari itu.</div>' });
+  $('[data-modal="'+id+'"]').addEventListener('click', e => {
+    const b = e.target.closest('[data-bg]'); if (!b) return;
+    const snap = snapshot(), bg = S.badges.find(x => x.id === b.dataset.bg);
+    ids.forEach(sid => { const s = stu(sid); s.badges = s.badges || []; if (s.badges.indexOf(bg.id) < 0) s.badges.push(bg.id); badgeLogAdd(sid, bg.id); });
+    save(true); closeModal(id); selReset(); rerenderKeepScroll();
+    toast(ids.length + ' murid menerima "' + bg.name + '"', () => restore(snap));
+  });
 }
 
 function avatarHtml(s, size){
@@ -1100,6 +1134,7 @@ function viewStudents(){
           '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="sel-all">Semua</button>' +
           '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="sel-clear"><i class="fa-solid fa-xmark"></i></button>' +
           '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="sel-char"'+(SEL.ids.size?'':' disabled')+'><i class="fa-solid fa-user-ninja text-[#C084FC]"></i></button>' +
+          '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="sel-badge"'+(SEL.ids.size?'':' disabled')+' title="Beri lencana"><i class="fa-solid fa-certificate text-[#FFD76A]"></i></button>' +
           '<button class="btn btn-c clip-s !px-3 !py-1 text-[12px]" data-act="sel-attend"'+(SEL.ids.size?'':' disabled')+'><i class="fa-solid fa-user-check"></i> Hadir</button>' +
           '<button class="btn btn-o clip-s !px-3 !py-1 text-[12px]" data-act="sel-eval"'+(SEL.ids.size?'':' disabled')+'><i class="fa-solid fa-bolt"></i> Set TP</button>' +
         '</div></div>';
@@ -1262,7 +1297,9 @@ function openProfile(sid){
   const bd = $('[data-modal="'+id+'"]');
   bd.addEventListener('click', async e => {
     const bt = e.target.closest('[data-badge]');
-    if (bt){ const b=bt.dataset.badge; s.badges=s.badges||[]; const i=s.badges.indexOf(b); if(i<0) s.badges.push(b); else s.badges.splice(i,1); bt.classList.toggle('edge-o'); save(); return; }
+    if (bt){ const b=bt.dataset.badge; s.badges=s.badges||[]; const i=s.badges.indexOf(b);
+      if(i<0){ s.badges.push(b); badgeLogAdd(sid, b); } else { s.badges.splice(i,1); badgeLogDel(sid, b); }
+      bt.classList.toggle('edge-o'); save(); return; }
     const a = e.target.closest('[data-act]'); if(!a) return;
     if (a.dataset.act==='pf-char'){
       charPicker(g => { s.gender = g; delete s.charId; save(true); $('#pfCharName',bd).textContent = genderName(g); toast('Jantina: '+genderName(g)); });
@@ -2099,14 +2136,15 @@ function viewSettings(){
       '<button class="btn clip-s !px-2 !py-0.5 text-[10px] w-full" data-act="bdg-edit" data-id="'+b.id+'"><i class="fa-solid fa-upload text-cyan"></i></button></div>').join('') + '</div>' +
     '<div class="text-[10px] text-muted mt-1">Diberi automatik: '+((S.config.streakDays)||5)+' sesi TP4/TP5 berturut-turut. Muncul di slot teratas banner; jika belum dicapai, tiada lencana streak dipaparkan. <b>Pelarian Seram</b>: berjaya keluar dari Sekolah Berhantu (Game → Seram).</div>' +
     '<div class="lbl mt-3 mb-1">LENCANA MANUAL</div>' +
-    (S.badges.filter(b=>!isSysBadge(b.id)).length ? '' : '<div class="text-[12px] text-muted mb-2">Tiada lencana manual. Muat naik ikon PNG 1:1 (latar telus).</div>') +
+    (S.badges.filter(b=>!isSysBadge(b.id)).length ? '' : '<div class="text-[12px] text-muted mb-2">Tiada lencana manual. Cipta lencana sikap seperti 👍 Rajin, 👍 Membantu Rakan, ⚠️ Mengganggu Kelas, ⚠️ Tidak Siap Kerja — gambar adalah pilihan.</div>') +
     '<div class="grid grid-cols-4 gap-2">' + S.badges.filter(b=>!isSysBadge(b.id)).map(b =>
       '<div class="panel clip-s p-2 flex flex-col items-center gap-1">' + badgeSvg(b,28) +
       '<span class="text-[9px] text-center leading-tight">'+esc(b.name)+'</span>' +
       '<span class="text-[9px]">'+(b.luck==='good'?'🍀':b.luck==='bad'?'💀':'<span class="text-muted">—</span>')+'</span>' +
       '<div class="flex gap-1"><button class="btn clip-s !px-1.5 !py-0.5 text-[10px]" data-act="bdg-edit" data-id="'+b.id+'"><i class="fa-solid fa-pen text-cyan"></i></button>' +
       '<button class="btn clip-s !px-1.5 !py-0.5 text-[10px]" data-act="bdg-del" data-id="'+b.id+'"><i class="fa-solid fa-trash text-[#E23B3B]"></i></button></div></div>').join('') + '</div>' +
-    '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="bdg-add"><i class="fa-solid fa-plus"></i> Tambah Lencana (muat naik PNG)</button>');
+    '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="bdg-add"><i class="fa-solid fa-plus"></i> Tambah Lencana</button>' +
+    '<div class="text-[11px] text-muted mt-2">Beri lencana melalui profil murid, atau tahan gambar murid di tab Pelajar untuk pilih ramai → butang <i class="fa-solid fa-certificate text-[#FFD76A]"></i>. Lencana <b>Positif/Negatif</b> dirumus dalam <b>Refleksi PdP</b> harian.</div>');
 
   h += sec('fa-brain','Bank Soalan',
     '<div class="text-[12px] text-muted">Soalan untuk <b>semua game</b> (Sekolah Berhantu, Larian Ilmu, Duel Kad) diambil daripada bank ini ikut subjek aktif. ' +
@@ -2406,11 +2444,11 @@ function bdgForm(b){
       (sys ? '<div class="text-[11px] text-cyan mt-3"><i class="fa-solid fa-lock"></i> Lencana sistem — hanya gambar boleh dikemas kini.</div><input type="hidden" id="bgName" value="'+esc(cur.name)+'">'
            : '<label class="lbl mt-3 block">NAMA LENCANA</label><input id="bgName" class="fld clip-s mt-1" value="'+esc(cur.name)+'">') +
       (sys ? '' :
-        '<label class="lbl mt-3 block">JENIS LENCANA (ARENA)</label>' +
+        '<label class="lbl mt-3 block">JENIS SIKAP</label>' +
         '<div class="flex gap-1 mt-1">' +
-          ['','good','bad'].map(k => '<button class="btn clip-s flex-1 !py-1 text-[11px] lk'+((cur.luck||'')===k?' btn-o':'')+'" data-luck="'+k+'">' +
-            (k==='good' ? '🍀 Bertuah' : k==='bad' ? '💀 Malang' : '— Neutral') + '</button>').join('') + '</div>' +
-        '<div class="text-[10px] text-muted mt-1">Bertuah +5 LUK · Malang −5 LUK setiap lencana. Neutral tiada kesan.</div>') +
+          ['good','bad',''].map(k => '<button class="btn clip-s flex-1 !py-1 text-[11px] lk'+((cur.luck||'')===k?' btn-o':'')+'" data-luck="'+k+'">' +
+            (k==='good' ? '👍 Positif' : k==='bad' ? '⚠️ Negatif' : '— Neutral') + '</button>').join('') + '</div>' +
+        '<div class="text-[10px] text-muted mt-1">Positif (cth. Rajin, Membantu Rakan) · Negatif (cth. Mengganggu Kelas, Tidak Siap Kerja, Bising). Digunakan dalam <b>Refleksi PdP</b> untuk merumus sikap &amp; isu disiplin murid hari itu.</div>') +
       '<label class="lbl mt-3 block">WARNA EFEK BINGKAI</label><input id="bgColor" type="color" class="fld clip-s mt-1 h-10" value="'+(cur.color||'#00F0FF')+'">' +
       '<div class="text-[10px] text-muted mt-1">Warna ini tidak diletak pada lencana. Ia menjadi warna aura bergerak pada bingkai Student Banner.</div>',
     footer:'<button class="btn clip-s flex-1" data-close="1">Batal</button><button class="btn btn-o clip-s flex-1" data-x="ok">Simpan</button>' });
@@ -2435,7 +2473,6 @@ function bdgForm(b){
     if (!e.target.closest('[data-x="ok"]')) return;
     const nm = ($('#bgName',bd).value||'').trim();
     if (!nm) return toast('Nama lencana diperlukan.', null, true);
-    if (!editing && !pending) return toast('Muat naik gambar ikon lencana dahulu.', null, true);
     if (sys && !pending && !b.url) return toast('Muat naik gambar untuk lencana ini.', null, true);
     const col = $('#bgColor',bd).value;
     const target = editing ? b : { id:uid('b'), name:nm, color:col, url:'' };
@@ -4736,6 +4773,7 @@ function weekBannerHtml(){
   return '<div class="panel clip p-3 mt-2" data-nohint="1" style="border-left:3px solid #00F0FF">' +
     '<div class="flex items-center gap-2"><div class="num text-[11px] text-cyan flex-1">' + wl + (t.own ? ' · <span class="text-orange">TOPIK DITUKAR</span>' : '') + '</div>' +
       '<button class="btn clip-s !px-2 !py-0.5 text-[10px]" data-act="lesson-pick"><i class="fa-solid fa-pen text-cyan"></i> Topik</button>' +
+      '<button class="btn clip-s !px-2 !py-0.5 text-[10px]" data-act="refl-open" data-id="' + date + '"><i class="fa-solid fa-pen-to-square text-orange"></i> Refleksi</button>' +
       '<button class="btn clip-s !px-2 !py-0.5 text-[10px]" data-act="rpt-open"><i class="fa-solid fa-calendar-days text-cyan"></i> RPT</button></div>' +
     (t.sks.length
       ? '<div class="text-[10px] text-muted mt-1 truncate">' + esc(t.sks[0].tema || '') + '</div>' +
@@ -4988,8 +5026,9 @@ function pbdSummaryCsv(){
     R.rows.forEach((r, i) => L.push([i + 1, q(r.s.name)].concat(r.units.map(tp => tp ? 'TP' + tp : '-')).join(',')));
   }
   L.push(''); L.push(q('C. LOG PdP'));
-  L.push(['Tarikh','Minggu','Murid Dinilai','SK Diajar','Tajuk'].map(q).join(','));
-  R.log.forEach(x => L.push([q(fmtDate(x.d)), x.t && x.t.w ? x.t.w : '', x.n, q(x.t ? x.t.t : ''), q(x.t ? x.t.tj : '')].join(',')));
+  L.push(['Tarikh','Minggu','Murid Dinilai','SK Diajar','Tajuk','Refleksi','Catatan Guru'].map(q).join(','));
+  R.log.forEach(x => L.push([q(fmtDate(x.d)), x.t && x.t.w ? x.t.w : '', x.n, q(x.t ? x.t.t : ''), q(x.t ? x.t.tj : ''),
+    q(reflectBrief(R.cid, R.sj, x.d)), q((S.lessonNote || {})[reflKey(R.cid, R.sj, x.d)] || '')].join(',')));
   download('Rumusan_PBD_' + clsName(R.cid).replace(/\s+/g, '_') + '_' + subjName(R.sj).replace(/[^\w]+/g, '_') + '_' + todayKey() + '.csv', '﻿' + L.join('\n'), 'text/csv');
   toast('Rumusan PBD dimuat turun.');
 }
@@ -5003,11 +5042,160 @@ function pbdSummaryPrint(){
       R.rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + e(r.s.name) + '</td><td>' + fmtScore(r.st.score) + '</td><td>' + r.st.avgTP.toFixed(1) + '</td><td>' + r.st.sessions + '</td><td><b>' + (r.st.finalTP ? 'TP' + r.st.finalTP : '-') + '</b></td><td>' + (r.last ? fmtDate(r.last) : '-') + '</td><td>' + (r.att.pct === null ? '-' : r.att.pct + '%') + '</td></tr>').join('') + '</tbody></table>' +
     (R.units.length ? '<h3>B. TP Mengikut Tajuk DSKP</h3><table><thead><tr ' + th + '><th>Bil</th><th>Nama</th>' + R.units.map(u => '<th>' + e(unitName(R.b, u)) + '</th>').join('') + '</tr></thead><tbody>' +
       R.rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + e(r.s.name) + '</td>' + r.units.map(tp => '<td style="text-align:center">' + (tp ? 'TP' + tp : '-') + '</td>').join('') + '</tr>').join('') + '</tbody></table>' : '') +
-    '<h3>C. Log PdP</h3><table><thead><tr ' + th + '><th>Tarikh</th><th>Minggu</th><th>Dinilai</th><th>SK Diajar</th><th>Tajuk</th></tr></thead><tbody>' +
-      R.log.map(x => '<tr><td>' + fmtDate(x.d) + '</td><td>' + (x.t && x.t.w ? x.t.w : '') + '</td><td>' + x.n + '</td><td>' + e(x.t ? x.t.t : '') + '</td><td>' + e(x.t ? x.t.tj : '') + '</td></tr>').join('') + '</tbody></table>' +
+    '<h3>C. Log PdP</h3><table><thead><tr ' + th + '><th>Tarikh</th><th>Minggu</th><th>Dinilai</th><th>SK Diajar</th><th>Tajuk</th><th>Refleksi</th></tr></thead><tbody>' +
+      R.log.map(x => '<tr><td>' + fmtDate(x.d) + '</td><td>' + (x.t && x.t.w ? x.t.w : '') + '</td><td>' + x.n + '</td><td>' + e(x.t ? x.t.t : '') + '</td><td>' + e(x.t ? x.t.tj : '') + '</td><td>' +
+        e(reflectBrief(R.cid, R.sj, x.d)) + (((S.lessonNote || {})[reflKey(R.cid, R.sj, x.d)]) ? '<br><i>' + e(S.lessonNote[reflKey(R.cid, R.sj, x.d)]) + '</i>' : '') + '</td></tr>').join('') + '</tbody></table>' +
     '<p style="margin-top:24px">Tandatangan Guru: ______________________ &nbsp;&nbsp; Disahkan oleh: ______________________</p>' +
     '<p style="margin-top:12px;font-size:8pt;color:#666">Dijana oleh LagendaTP · dicipta oleh Arif Aziz</p>';
   window.print();
+}
+
+/* ============ REFLEKSI PdP HARIAN (gaya RPH) ============
+   Dijana automatik untuk satu kelas + subjek + tarikh daripada data sebenar:
+   topik DSKP, kehadiran, TP setiap murid (penguasaan), lencana sikap yang
+   diterima hari itu, dan perbandingan dengan sesi sebelumnya. Guru boleh
+   menambah catatan sendiri; catatan disimpan bersama tarikh itu.         */
+const reflKey = (cid, sj, date) => cid + '|' + sj + '|' + date;
+const namesList = arr => arr.length <= 2 ? arr.join(' dan ') : arr.slice(0, -1).join(', ') + ' dan ' + arr[arr.length - 1];
+function reflectData(cid, sj, date){
+  const list = studentsOf(cid);
+  const tpOf = r => r ? (r.tpAwarded || calcTP(rateOf(r))) : 0;
+  const recs = list.map(s => { const r = ((S.records[s.id] || {})[sj] || {})[date]; return { s, r, tp: tpOf(r) }; });
+  const done = recs.filter(x => x.r);
+  const att = {};
+  list.forEach(s => { const r = ((S.records[s.id] || {})[sj] || {})[date]; att[s.id] = attGet(s.id, date) || (r && r.attended ? 'H' : ''); });
+  const ac = { H:[], L:[], T:[], C:[] };
+  list.forEach(s => { if (att[s.id]) ac[att[s.id]].push(s); });
+  const attKnown = list.filter(s => att[s.id]).length;
+  const logs = (S.badgeLog || []).filter(l => l.d === date && list.some(s => s.id === l.sid));
+  const bb = {};
+  logs.forEach(l => { const b = S.badges.find(x => x.id === l.b); if (!b) return; (bb[b.id] = bb[b.id] || { b, kind: badgeKind(b), sids: [] }); if (bb[b.id].sids.indexOf(l.sid) < 0) bb[b.id].sids.push(l.sid); });
+  const from = addDays(date, -30);
+  const negCount = sid => (S.badgeLog || []).filter(l => l.sid === sid && l.d > from && l.d <= date && badgeKind(S.badges.find(x => x.id === l.b)) === 'neg').length;
+  const allDates = Array.from(new Set([].concat.apply([], list.map(s => Object.keys(((S.records[s.id] || {})[sj]) || {}))))).sort();
+  const pd = allDates.filter(d => d < date).pop();
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  const prevTPs = pd ? list.map(s => tpOf(((S.records[s.id] || {})[sj] || {})[pd])).filter(Boolean) : [];
+  const t = subjDskp(sj) ? lessonTopic(cid, sj, date) : null;
+  const sks = t && t.sks.length ? t.sks : null;
+  let next = null;
+  if (sks && t.w && t.w.n){
+    const plan = planOf(sj) || [], b = subjBook(sj), now = new Set(sks.map(k => k.i));
+    for (let w = t.w.n + 1; w < plan.length && !next; w++){ const n = (plan[w] || []).filter(i => !now.has(i)); if (n.length) next = { w, sk: b.sk[n[0]] }; }
+  }
+  return { cid, sj, date, list, recs, done, ac, attKnown, bb: Object.values(bb), negCount, pd, prevAvg: avg(prevTPs), avg: avg(done.map(x => x.tp)), t, sks, next };
+}
+/* Teks refleksi: senarai bahagian { h, lines } — sama untuk paparan, salin & cetak */
+function reflectSections(D){
+  const N = D.list.length, nd = D.done.length, nm = x => x.s.name;
+  const secs = [];
+  const dt = new Date(D.date + 'T00:00:00'), w = weekOf(D.date);
+  const info = [DAY_NAMES[dt.getDay()] + ', ' + fmtDate(D.date) + (w && w.n ? ' · Minggu ' + w.n : w && w.cuti ? ' · ' + w.cuti : ''),
+    clsName(D.cid) + ' · ' + subjName(D.sj)];
+  if (D.sks){
+    info.push('Tema: ' + (D.sks[0].tema || '-'));
+    info.push('Tajuk: ' + (D.sks[0].tajuk || '-'));
+    D.sks.forEach(k => { info.push('SK ' + k.sk); k.sp.forEach(p => info.push('   SP ' + p)); });
+  }
+  secs.push({ h: 'MAKLUMAT PdP', lines: info });
+
+  // 1. Kehadiran
+  const A = D.ac, hadir = A.H.length + A.L.length, att = [];
+  if (D.attKnown){
+    att.push(hadir + '/' + N + ' murid hadir (' + Math.round(hadir / N * 100) + '%).');
+    if (A.L.length) att.push('Lewat: ' + namesList(A.L.map(s => s.name)) + '.');
+    if (A.T.length) att.push('Tidak hadir: ' + namesList(A.T.map(s => s.name + (attNoteOf(s.id, D.date) ? ' (' + attNoteOf(s.id, D.date) + ')' : ''))) + '.');
+    if (A.C.length) att.push('Cuti/MC: ' + namesList(A.C.map(s => s.name + (attNoteOf(s.id, D.date) ? ' (' + attNoteOf(s.id, D.date) + ')' : ''))) + '.');
+    if (!A.T.length && !A.C.length) att.push('Kehadiran penuh — semua murid mengikuti PdP.');
+  } else att.push('Kehadiran belum direkod untuk tarikh ini (tab HADIR).');
+  secs.push({ h: '1. KEHADIRAN', lines: att });
+
+  // 2. Pencapaian objektif & penguasaan
+  const ach = [];
+  if (nd){
+    const ok = D.done.filter(x => x.tp >= 3), pct = Math.round(ok.length / nd * 100);
+    const dist = [1,2,3,4,5,6].map(k => 'TP' + k + ': ' + D.done.filter(x => x.tp === k).length).join(' · ');
+    const status = pct >= 80 ? 'Objektif pembelajaran TERCAPAI' : pct >= 50 ? 'Objektif pembelajaran SEBAHAGIAN tercapai' : 'Objektif pembelajaran BELUM tercapai';
+    ach.push(status + ': ' + ok.length + '/' + nd + ' murid (' + pct + '%) mencapai sekurang-kurangnya TP3' + (nd < N ? ' (' + (N - nd) + ' murid tidak dinilai)' : '') + '.');
+    ach.push('Taburan penguasaan — ' + dist + '. Purata TP kelas ' + D.avg.toFixed(1) +
+      (D.prevAvg ? (D.avg > D.prevAvg + 0.2 ? ', meningkat berbanding sesi lepas (' + D.prevAvg.toFixed(1) + ' pada ' + fmtDate(D.pd) + ')' :
+                    D.avg < D.prevAvg - 0.2 ? ', menurun berbanding sesi lepas (' + D.prevAvg.toFixed(1) + ' pada ' + fmtDate(D.pd) + ')' :
+                    ', setara dengan sesi lepas (' + D.prevAvg.toFixed(1) + ')') : '') + '.');
+    const top = D.done.filter(x => x.tp >= 5), low = D.done.filter(x => x.tp <= 2);
+    if (top.length) ach.push('Menguasai dengan cemerlang (TP5–TP6): ' + namesList(top.map(nm)) + '.');
+    if (low.length) ach.push('Belum menguasai (TP1–TP2): ' + namesList(low.map(nm)) + '.');
+  } else ach.push('Tiada penilaian PBD direkod untuk tarikh ini.');
+  secs.push({ h: '2. PENCAPAIAN OBJEKTIF & PENGUASAAN', lines: ach });
+
+  // 3. Sikap & disiplin (berdasarkan lencana)
+  const sk = [], pos = D.bb.filter(x => x.kind === 'pos'), neg = D.bb.filter(x => x.kind === 'neg'), oth = D.bb.filter(x => !x.kind);
+  const who = x => namesList(x.sids.map(id => (stu(id) || {}).name).filter(Boolean));
+  pos.forEach(x => sk.push('👍 ' + x.b.name + ': ' + who(x) + '.'));
+  oth.forEach(x => sk.push('• ' + x.b.name + ': ' + who(x) + '.'));
+  neg.forEach(x => sk.push('⚠️ ' + x.b.name + ': ' + who(x) + '.'));
+  const rep = [];
+  neg.forEach(x => x.sids.forEach(id => { const n = D.negCount(id); if (n >= 3 && rep.indexOf(id) < 0) rep.push(id); }));
+  if (!D.bb.length) sk.push('Tiada lencana sikap diberi hari ini. Murid secara umumnya berkelakuan baik sepanjang PdP.');
+  else if (!neg.length) sk.push('Tiada isu disiplin direkodkan. Suasana PdP kondusif.');
+  if (rep.length) sk.push('Isu berulang (3 kali atau lebih dalam 30 hari): ' + namesList(rep.map(id => (stu(id) || {}).name + ' (' + D.negCount(id) + ' kali)')) + '.');
+  secs.push({ h: '3. SIKAP & DISIPLIN MURID', lines: sk });
+
+  // 4. Tindakan susulan
+  const act = [];
+  if (nd){
+    const pct = Math.round(D.done.filter(x => x.tp >= 3).length / nd * 100);
+    const low = D.done.filter(x => x.tp <= 2), top = D.done.filter(x => x.tp >= 5);
+    if (pct < 50) act.push('PdP topik ini akan DIULANG pada sesi berikutnya dengan pendekatan berbeza (contoh: demonstrasi, bahan konkrit, pembelajaran berpasangan) sebelum beralih ke SK seterusnya.');
+    else if (pct < 80) act.push('Pengukuhan ringkas topik ini pada awal sesi berikutnya sebelum meneruskan ke SK seterusnya.');
+    else act.push('PdP diteruskan ke SK seterusnya mengikut RPT.');
+    if (low.length) act.push('Aktiviti PEMULIHAN / bimbingan individu untuk ' + namesList(low.map(nm)) + ' — latihan berperingkat dan soal jawab lisan.');
+    if (top.length) act.push('Aktiviti PENGAYAAN untuk ' + namesList(top.map(nm)) + ' — tugasan KBAT / membimbing rakan sebaya.');
+  }
+  if (D.ac.T.length || D.ac.C.length) act.push('Murid yang tidak hadir perlu diberi salinan nota / latihan topik ini.');
+  if (D.bb.some(x => x.kind === 'neg')) act.push('Nasihat dan pemantauan sikap murid yang terlibat' + (rep.length ? '; isu berulang dimaklumkan kepada guru kelas / kaunselor / ibu bapa.' : '.'));
+  if (D.next) act.push('Topik seterusnya (Minggu ' + D.next.w + '): ' + D.next.sk.sk + '.');
+  if (!act.length) act.push('—');
+  secs.push({ h: '4. TINDAKAN SUSULAN', lines: act });
+  return secs;
+}
+const reflectText = (secs, note) => 'REFLEKSI PdP\n' + secs.map(s => s.h + '\n' + s.lines.map(l => (s.h === 'MAKLUMAT PdP' ? '' : '- ') + l).join('\n')).join('\n\n') +
+  (note ? '\n\n5. CATATAN GURU\n' + note : '');
+function reflectModal(date){
+  if (!ctxOk()) return toast('Pilih Kelas dan Subjek dahulu.', null, true);
+  const cid = S.ui.activeClassId, sj = S.ui.activeSubjectId, d = date || recDate();
+  const D = reflectData(cid, sj, d), secs = reflectSections(D), key = reflKey(cid, sj, d);
+  S.lessonNote = S.lessonNote || {};
+  const html = secs.map(s => '<div class="mt-3"><div class="lbl" style="color:#00F0FF">' + esc(s.h) + '</div>' +
+    s.lines.map(l => '<div class="text-[12px] leading-snug mt-1' + (/^ {3}SP/.test(l) ? ' text-muted pl-3' : '') + '">' + esc(l.trim()) + '</div>').join('') + '</div>').join('');
+  const id = openModal({ icon:'fa-pen-to-square', title:'Refleksi PdP — ' + fmtDate(d),
+    body:'<div data-nohint="1">' + html +
+      '<div class="mt-3"><div class="lbl" style="color:#00F0FF">5. CATATAN GURU</div>' +
+      '<textarea id="rfNote" rows="4" class="fld clip-s mt-1 !text-[12px]" placeholder="Contoh: Murid lebih faham selepas demonstrasi model. Masa tidak mencukupi untuk aktiviti penutup.">' + esc(S.lessonNote[key] || '') + '</textarea>' +
+      '<div class="text-[10px] text-muted mt-1">Bahagian 1–4 dijana automatik daripada kehadiran, TP dan lencana hari itu — sentiasa terkini. Catatan anda disimpan untuk tarikh ini.</div></div></div>',
+    footer:'<button class="btn clip-s text-[12px]" data-x="copy"><i class="fa-solid fa-copy text-cyan"></i> Salin</button>' +
+      '<button class="btn clip-s text-[12px]" data-x="print"><i class="fa-solid fa-print text-cyan"></i></button>' +
+      '<button class="btn btn-o clip-s flex-1" data-x="save">Simpan</button>' });
+  const bd = $('[data-modal="' + id + '"]');
+  const keep = () => { const v = ($('#rfNote', bd).value || '').trim(); if (v) S.lessonNote[key] = v; else delete S.lessonNote[key]; save(true); return v; };
+  bd.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    const note = keep();
+    if (x.dataset.x === 'copy') return copyText(reflectText(secs, note), 'Refleksi disalin — tampal ke RPH anda.');
+    if (x.dataset.x === 'print'){
+      $('#printArea').innerHTML = '<h2 style="margin:0">Refleksi PdP</h2>' + secs.map(s => '<h3 style="margin:12px 0 4px">' + esc(s.h) + '</h3>' +
+        s.lines.map(l => '<div style="margin:2px 0' + (/^ {3}SP/.test(l) ? ';padding-left:14px;color:#555' : '') + '">' + esc(l.trim()) + '</div>').join('')).join('') +
+        (note ? '<h3 style="margin:12px 0 4px">5. CATATAN GURU</h3><div style="white-space:pre-wrap">' + esc(note) + '</div>' : '') +
+        '<p style="margin-top:24px">Tandatangan Guru: ______________________</p><p style="font-size:8pt;color:#666">Dijana oleh LagendaTP · ' + esc(new Date().toLocaleString('ms-MY')) + '</p>';
+      return window.print();
+    }
+    closeModal(id); toast('Catatan refleksi disimpan.');
+  });
+}
+/* Ringkasan satu baris (Rumusan PBD): status objektif sesi */
+function reflectBrief(cid, sj, date){
+  const D = reflectData(cid, sj, date), nd = D.done.length; if (!nd) return '';
+  const pct = Math.round(D.done.filter(x => x.tp >= 3).length / nd * 100);
+  return pct + '% TP3+' + (D.bb.some(x => x.kind === 'neg') ? ' · isu sikap' : '');
 }
 
 /* ---------- Skop soalan AI: SK/SP DSKP ---------- */
@@ -5361,6 +5549,7 @@ function viewCards(){
       '<div class="text-[10px] text-muted">TPC baki · minggu ' + fmtDate(weekKey()) + '</div></div>' +
     '<div class="text-right num text-[10px] text-muted">+' + earn + ' dikumpul' + (tpcBonus() ? '<br><span class="text-cyan">+' + tpcBonus() + ' topup</span>' : '') + '<br>−' + spent + ' dibelanja</div>' +
     '<button class="btn btn-c clip-s !px-2 !py-1 text-[11px] ml-1" data-act="tpc-topup"><i class="fa-solid fa-plus"></i></button></div>';
+  h += '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="card-guide"><i class="fa-solid fa-circle-question text-cyan"></i> CARA MAIN — apa fungsi kad &amp; bagaimana Duel berfungsi?</button>';
   h += '<div class="panel clip p-3 mt-3"><div class="lbl">PELAJAR</div>' +
     '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2" data-act="card-stu">' +
       (sid ? avatarHtml(stu(sid), 28) : '<i class="fa-solid fa-user text-muted"></i>') +
@@ -5378,6 +5567,9 @@ function viewCards(){
       '<div class="flex-1"><div class="font-bold tracking-widest text-[15px] text-orange">DUEL KAD</div>' +
       '<div class="text-[11px] text-muted leading-snug">3 kad terkuat kamu lawan Penjaga Kad. Jawab betul untuk menyerang — pantas = kritikal! Elemen: ' +
         ELEMENTS.map((e, i) => e.ico + '›' + ELEMENTS[(i + 1) % ELEMENTS.length].ico).join(' ') + '</div></div></div>' +
+      '<div class="lbl mt-3">MASA MENJAWAB (KESUKARAN)</div><div class="flex gap-1 mt-1">' + [10,15,20,30,45].map(v =>
+        '<button class="btn clip-s flex-1 !py-1 text-[11px] num' + (duelQ() === v ? ' btn-o' : '') + '" data-act="duel-q" data-id="' + v + '">' + v + 's</button>').join('') + '</div>' +
+      '<div class="text-[10px] text-muted mt-1">Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.</div>' +
       '<button class="btn btn-o clip-s w-full mt-2 !py-2 text-[14px]" data-act="duel-start"' + (st.have ? '' : ' disabled') + '><i class="fa-solid fa-khanda"></i> ' + (st.have ? 'MULA DUEL' : 'BUKA PACK DAHULU') + '</button></div>';
   }
   h += '<div class="space-y-2 mt-3">' + PACKS.map(p => {
@@ -5403,6 +5595,34 @@ function viewCards(){
         '<span class="num text-[10px] ' + (p.have === p.total ? 'text-[#FFD76A]' : 'text-muted') + '" style="width:34px;text-align:right">' + p.have + '/' + p.total + '</span></div>';
     }).join('') + '<div class="text-[10px] text-muted mt-2">Lengkapkan satu set = <b class="text-orange">+20 RP</b>. Kad pendua menaikkan level kad (sehingga Lv5) — lebih kuat dalam Duel.</div></div>';
   return h;
+}
+/* Panduan lengkap: fungsi kad & sistem perlawanan Duel */
+function cardGuide(){
+  const ex = cardById('k19') || CARDS[18], foe = cardById('k11') || CARDS[10];      // Badang 🔥 lawan Harimau Malaya 🌿
+  const adv = elemBeats(cardSet(ex).el, cardSet(foe).el) ? 1.5 : 1, dmg = Math.max(3, Math.round(ex.atk * adv - foe.def * 0.6));
+  const sec = (ic, t, body) => '<div class="panel clip-s p-3 mt-2"><div class="font-bold text-[13px] text-orange">' + ic + ' ' + t + '</div><div class="text-[12px] leading-relaxed mt-1">' + body + '</div></div>';
+  openModal({ icon:'fa-circle-question', title:'Cara Main — Kad Koleksi',
+    body:'<div data-nohint="1">' +
+      '<div class="flex gap-3 items-start"><div style="width:42%;flex-shrink:0">' + cardFaceHtml(ex, ex.tier) + '</div>' +
+      '<div class="text-[12px] leading-relaxed"><b>Setiap kad</b> ialah "pahlawan" murid dengan 3 kuasa:<br>' +
+        '<span style="color:#FF8A65">⚔ Serang</span> — kuat mana kad itu memukul<br><span style="color:#38BDF8">🛡 Pertahanan</span> — mengurangkan pukulan lawan<br>' +
+        '<span style="color:#4ADE80">♥ Nyawa</span> — berapa banyak pukulan boleh ditahan<br>Bulatan kiri atas = <b>elemen</b> kad (🔥 🌿 ⚡ 💧).<br>Bintang = tier (Sial ★ … Mitos ★★★★★★) — tier tinggi, kuasa tinggi.</div></div>' +
+      sec('💰', 'Macam mana dapat kad?', 'Bila murid dinilai dengan skor positif, kelas mengumpul <b>TPC</b> (tabung kelas mingguan). Guru guna TPC untuk <b>buka pack</b> bagi murid: Murah 14, Sederhana 28, Mahal 50 TPC — 12 kad setiap pack. Setiap murid dapat <b>1 pack percuma sehari</b>. 25 pack tanpa Legenda = Legenda dijamin.') +
+      sec('⬆️', 'Kad pendua tidak sia-sia', 'Dapat kad yang sama lagi = kad itu <b>naik level</b> (sehingga Lv5). Setiap level menambah <b>+10%</b> semua kuasa. Lv5 = 40% lebih kuat daripada Lv1.') +
+      sec('📚', 'Kumpul set', '96 kad dalam 8 set (Haiwan Malaysia, Legenda Nusantara, Sains, Angkasa…). Lengkapkan satu set = <b>+20 RP</b> ke rank murid.') +
+      sec('⚔️', 'Sistem perlawanan — DUEL KAD',
+        '<b>1. Pasukan.</b> App memilih <b>3 kad terkuat</b> murid secara automatik. Lawannya <b>Penjaga Kad</b> (komputer) dengan 3 kad yang kekuatannya setara.<br>' +
+        '<b>2. Giliran.</b> Kad pertama setiap pasukan bertarung dahulu. Bila nyawanya habis, kad seterusnya masuk.<br>' +
+        '<b>3. Setiap pusingan = 1 soalan</b> (dari bank soalan subjek / topik minggu ini):<br>' +
+        '&nbsp;&nbsp;✅ Betul → kad kamu <b>menyerang</b> lawan.<br>&nbsp;&nbsp;⚡ Betul &amp; pantas (dalam 40% masa terawal) → <b>KRITIKAL ×1.4</b>.<br>&nbsp;&nbsp;❌ Salah / masa tamat → kad <b>lawan menyerang</b> kamu.<br>' +
+        '<b>4. Kerosakan</b> = Serang × elemen − (Pertahanan lawan × 0.6), minimum 3.<br>' +
+        '<b>5. Elemen</b> (rantai): 🔥 Api › 🌿 Alam › ⚡ Kilat › 💧 Air › 🔥 Api. Elemen yang menang = <b>×1.5</b>, yang kalah = ×0.75.<br>' +
+        '<b>6. Menang</b> bila ketiga-tiga kad lawan tumbang → <b>+6 RP + 3 RP</b> bagi setiap kad kamu yang masih hidup. Kalah tetap dapat +2 RP (usaha).') +
+      sec('🧮', 'Contoh', esc(ex.name) + ' (' + elemOf(cardSet(ex).el).ico + ' Serang ' + ex.atk + ') menyerang ' + esc(foe.name) + ' (' + elemOf(cardSet(foe).el).ico + ' Pertahanan ' + foe.def + '):<br>' +
+        ex.atk + ' × ' + adv + (adv > 1 ? ' (Api kalahkan Alam)' : '') + ' − ' + foe.def + ' × 0.6 = <b>' + dmg + ' kerosakan</b>. Jika dijawab pantas: ×1.4 lagi!') +
+      sec('🏆', 'Strategi murid', 'Jawab dengan <b>betul dan pantas</b> — itu senjata utama. Kumpul kad tier tinggi, naikkan level dengan pendua, dan kumpul pelbagai elemen. Guru boleh melaraskan <b>masa menjawab</b> pada panel Duel untuk menukar tahap kesukaran.') +
+      sec('ℹ️', 'Penting', 'Kad, TPC dan Duel <b>tidak mengubah TP atau rekod PBD</b> — hanya RP (rank) dan keseronokan.') +
+    '</div>' });
 }
 function cardStuPick(){
   const list = studentsOf(S.ui.activeClassId);
@@ -5464,7 +5684,7 @@ function cardZoom(cid, sid){
    3 kad terkuat pelajar lawan 3 kad Penjaga Kad (kekuatan setara).
    Setiap pusingan satu soalan: betul = kad kamu menyerang (pantas = kritikal),
    salah / tamat masa = kad lawan menyerang. Elemen yang menang ×1.5.     */
-const DUEL_Q = 15;
+const duelQ = () => clamp(+((S.config || {}).duelQ) || 15, 5, 90);      // masa menjawab (saat), dilaras guru
 function duelDeck(sid){
   const own = (S.collect || {})[sid] || {};
   const power = c => { const x = cardStats(c, cardLevel(sid, c.id)); return x.atk * 2 + x.hp / 3 + x.def * 2; };
@@ -5544,15 +5764,15 @@ function duelStart(){
       '<div class="grid grid-cols-2 gap-2 mt-2">' + order.map((i, k) =>
         '<button class="btn clip-s !py-2 text-left text-[13px]" data-ans="' + i + '"><span class="num text-orange mr-1">' + String.fromCharCode(65 + k) + '.</span>' + esc(q.c[i]) + '</button>').join('') + '</div></div>';
     const tick = () => {
-      const left = Math.max(0, DUEL_Q - (performance.now() - t0) / 1000), bar = $('#dlBar', bd);
+      const QS = duelQ(), left = Math.max(0, QS - (performance.now() - t0) / 1000), bar = $('#dlBar', bd);
       if (!bar || over) return;
-      bar.style.width = (left / DUEL_Q * 100) + '%'; bar.style.background = left > 9 ? '#4ADE80' : left > 4 ? '#FACC15' : '#E23B3B';
+      bar.style.width = (left / QS * 100) + '%'; bar.style.background = left > QS * .6 ? '#4ADE80' : left > QS * .27 ? '#FACC15' : '#E23B3B';
       if (left <= 0) return answer(-1);
       raf = requestAnimationFrame(tick);
     };
     const answer = pick => {
       if (done || over) return; done = true; cancelAnimationFrame(raf);
-      const ok = pick === q.a, fast = ok && (performance.now() - t0) / 1000 < DUEL_Q * .4;
+      const ok = pick === q.a, fast = ok && (performance.now() - t0) / 1000 < duelQ() * .4;
       asked++; if (ok) right++;
       quizRecord(sid, ok);
       $('#dlQ', bd).innerHTML = '';
@@ -5596,6 +5816,13 @@ function viewGame(){
    lorong — lari melalui yang betul. Skor = jarak + bintang + jawapan.
    Guna enjin Three.js yang sama dengan Sekolah Berhantu.              */
 let RUN = null;
+/* Tahap kesukaran larian: kelajuan mula, had laju, dan berapa cepat laju bertambah */
+const RUN_LVL = {
+  mudah:     { name:'Mudah',     v0:9,  vmax:16, ramp:240 },
+  sederhana: { name:'Sederhana', v0:11, vmax:24, ramp:160 },
+  sukar:     { name:'Sukar',     v0:13, vmax:28, ramp:110 }
+};
+function runCfg(){ S.config.run = Object.assign({ lvl:'sederhana', qt:8 }, S.config.run || {}); return S.config.run; }
 function runData(){
   S.run = S.run || {};
   S.run.best = S.run.best || {}; S.run.plays = S.run.plays || {};
@@ -5622,6 +5849,14 @@ function viewRun(){
     '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Skor ÷ 120 = RP (2 hingga 25 RP setiap larian)</div>' +
     '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="run-start"><i class="fa-solid fa-person-running"></i> MULA LARI</button>' +
     '<div class="text-[10px] text-muted mt-2 text-center leading-relaxed">Telefon: leret kiri/kanan tukar lorong, leret atas untuk lompat<br>Komputer: ← → atau A D, lompat ↑ / W / Space</div></div>';
+  const rc = runCfg(), rseg = (k, opts) => '<div class="flex gap-1 mt-1">' + opts.map(([v, l]) =>
+    '<button class="btn clip-s flex-1 !py-1.5 !px-1 text-[11px] ' + (String(rc[k]) === String(v) ? 'btn-o' : '') + '" data-act="run-opt" data-k="' + k + '" data-v="' + v + '">' + l + '</button>').join('') + '</div>';
+  h += '<details class="panel clip p-3 mt-3"' + (o.runSet ? ' open' : '') + ' ontoggle="arenaUi().runSet=this.open">' +
+    '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">' + (RUN_LVL[rc.lvl] || RUN_LVL.sederhana).name + '</span> · ' + rc.qt + 's soalan</summary>' +
+    '<div class="lbl mt-3">KELAJUAN</div>' + rseg('lvl', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']]) +
+    '<div class="text-[10px] text-muted mt-1">Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.</div>' +
+    '<div class="lbl mt-3">MASA MEMBACA SOALAN</div>' + rseg('qt', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']]) +
+    '<div class="text-[10px] text-muted mt-1">Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.</div></details>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERTINGGI</div>' + board.map((s, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + avatarHtml(s, 24) +
     '<span class="flex-1 text-[13px] truncate">' + esc(s.name) + '</span><span class="num text-[12px]" style="color:#FFB347">' + d.best[s.id] + '</span></div>').join('') + '</div>';
@@ -5860,7 +6095,8 @@ function runGame(THREE, sid, ac){
 
   /* ---------- keadaan ---------- */
   const P = { lane: 1, x: 0, y: 0, vy: 0, inv: 0, phase: 0 };
-  let speed = 11, dist = 0, stars = 0, right = 0, asked = 0, lives = 3, alive = true, ended = false, paused = false;
+  const RL = RUN_LVL[runCfg().lvl] || RUN_LVL.sederhana, RQ = runCfg().qt;
+  let speed = RL.v0, dist = 0, stars = 0, right = 0, asked = 0, lives = 3, alive = true, ended = false, paused = false;
   let nextObs = -40, nextStar = -30, nextQ = 160, lastSpawnZ = -40;
   RUN = { close: () => quit() };
   const hud = () => {
@@ -5919,7 +6155,7 @@ function runGame(THREE, sid, ac){
     if (lives <= 0) gameOver();
   }
   function update(dt){
-    speed = Math.min(24, 11 + dist / 160);
+    speed = Math.min(RL.vmax, RL.v0 + dist / RL.ramp);
     const dz = speed * dt;
     dist += dz;
     roadTex.offset.y -= dz / (160 / 6);
@@ -5944,7 +6180,7 @@ function runGame(THREE, sid, ac){
     if (nextStar >= 0){ spawnStars(-90, Math.floor(Math.random() * 3)); nextStar = -(30 + Math.random() * 20); }
     if (nextQ <= 0 && !GATES.some(g => !g.done)){
       const q = escQuestion();
-      spawnGates(-95, q); nextQ = 260 + Math.random() * 60;
+      spawnGates(-Math.max(60, speed * RQ), q); nextQ = 260 + Math.random() * 60 + speed * RQ;
       OBS.slice().forEach((o, i) => { if (o.m.position.z < -60) { scene.remove(o.m); o.dead = true; } });
       for (let i = OBS.length - 1; i >= 0; i--) if (OBS[i].dead) OBS.splice(i, 1);
     }
@@ -6224,6 +6460,7 @@ function tpdHtml(){
         (a ? '<span class="tag !text-[8px]" style="color:' + a.color + ';border-color:' + a.color + '77">' + a.short + '</span>' : '') +
         (x.r ? '<span class="num text-[10px] text-muted" style="width:62px;text-align:right">kadar ' + fmtScore(rateOf(x.r)) + '</span>' : '<span class="text-[10px] text-muted" style="width:62px;text-align:right">tiada</span>') + '</button>';
     }).join('') + '</div>' +
+    '<button class="btn btn-o clip-s w-full mt-3 !py-2 text-[13px]" data-act="refl-open" data-id="' + d + '"><i class="fa-solid fa-pen-to-square"></i> REFLEKSI PdP ' + fmtDate(d) + '</button>' +
     '<div class="text-[10px] text-muted mt-2">Ketik nama untuk melihat semua sejarah penilaian pelajar itu.</div></div>';
 }
 
@@ -6295,7 +6532,9 @@ function viewEscape(){
   h += '<details class="panel clip p-3 mt-3"'+(o.escSet ? ' open' : '')+' ontoggle="arenaUi().escSet=this.open">' +
     '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">'+D.name+'</span> · '+esc(gName)+'</summary>' +
     '<div class="lbl mt-3">TAHAP KESUKARAN</div>' + seg('diff', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']]) +
-    '<div class="text-[10px] text-muted mt-1">'+D.keys+' kunci · '+D.lives+' nyawa · '+D.qtime+' saat setiap soalan</div>' +
+    '<div class="text-[10px] text-muted mt-1">'+D.keys+' kunci · '+D.lives+' nyawa · '+(+c.qt || D.qtime)+' saat setiap soalan</div>' +
+    '<div class="lbl mt-3">MASA MENJAWAB SOALAN</div>' + seg('qt', [[0,'Ikut tahap'],[15,'15s'],[25,'25s'],[40,'40s'],[60,'60s']]) +
+    '<div class="text-[10px] text-muted mt-1">Masa untuk setiap soalan papan hitam. Teka-teki padanan diberi masa setimpal.</div>' +
     '<div class="lbl mt-3">TAHAP SERAM</div>' + seg('scare', [['penuh','Penuh'],['lembut','Lembut']]) +
     '<div class="text-[10px] text-muted mt-1">'+(c.scare === 'lembut' ? 'Tiada wajah mengejut dan jeritan — sesuai untuk murid kecil.' : 'Wajah mengejut + jeritan bila ditangkap.')+'</div>' +
     '<div class="lbl mt-3">HANTU</div>' + seg('ghost', [['rawak','Rawak'],['putih','Putih'],['pontianak','Pontianak'],['toyol','Toyol']]) +
@@ -6311,7 +6550,7 @@ function viewEscape(){
 }
 function escOpt(d){
   const c = escCfg();
-  c[d.k] = d.k === 'rp' ? +d.v : d.v;
+  c[d.k] = (d.k === 'rp' || d.k === 'qt') ? +d.v : d.v;
   arenaUi().escSet = true;
   save(); renderTab();
 }
@@ -6382,6 +6621,7 @@ async function escStart(){
 function escRun(THREE, sid, ac){
   const cfg = escCfg();
   const D = ESC_DIFF[cfg.diff] || ESC_DIFF.sederhana, LT = ESC_LIGHT[cfg.light] || ESC_LIGHT.biasa;
+  const QT = +cfg.qt || D.qtime, MT = Math.round(D.match * QT / D.qtime);   // masa menjawab dilaras guru
   const gKind = ESC_GHOSTS[cfg.ghost] ? cfg.ghost : ['putih','pontianak','toyol'][Math.floor(Math.random() * 3)];
   const GT = ESC_GHOSTS[gKind];
   const soft = cfg.scare === 'lembut';
@@ -7066,7 +7306,7 @@ function escRun(THREE, sid, ac){
         summon();
       }
     };
-    const stop = runTimer('escQBar', D.qtime, () => finish(-1));
+    const stop = runTimer('escQBar', QT, () => finish(-1));
     ui.onclick = e => { const b = e.target.closest('[data-ans]'); if (b) finish(+b.dataset.ans); };
   }
   function askMatch(bd){
@@ -7093,7 +7333,7 @@ function escRun(THREE, sid, ac){
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Teka-teki perpustakaan selesai'); }
       else { sfx('buzz'); msg('<span style="color:#FF5A5A">Masa tamat! Buku-buku berterbangan… hantu datang!</span>', 3200); summon(); }
     };
-    const stop = runTimer('escMBar', D.match, () => finish(false));
+    const stop = runTimer('escMBar', MT, () => finish(false));
     ui.onclick = e => {
       const b = e.target.closest('[data-card]'); if (!b || lock) return;
       const i = +b.dataset.card;
@@ -7394,6 +7634,8 @@ const ACTS = {
   'sel-clear': () => { selReset(); rerenderKeepScroll(); },
   'sel-eval':  () => selEval(),
   'rec-today': () => { REC_DATE = null; renderTab(); toast('Kembali ke rekod hari ini.'); },
+  'sel-badge': () => selBadge(),
+  'refl-open': d => reflectModal(d.id),
   'sel-char': () => {
     const ids = Array.from(SEL.ids).filter(id => stu(id));
     if (!ids.length) return;
@@ -7472,6 +7714,9 @@ const ACTS = {
   },
   'card-see': d => cardZoom(d.id, d.sid),
   'duel-start': () => duelStart(),
+  'duel-q': d => { S.config.duelQ = +d.id; save(); renderTab(); },
+  'run-opt': d => { const c = runCfg(); c[d.k] = d.k === 'qt' ? +d.v : d.v; arenaUi().runSet = true; save(); renderTab(); },
+  'card-guide': () => cardGuide(),
   'run-stu': runStuPick,
   'run-start': runStart,
   'qbank': () => quizManager(),
