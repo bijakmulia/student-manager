@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1E3A8A">
 <title>Jana OPR</title>
-<meta name="description" content="Jana One Page Report (OPR) daripada pautan Google Form, pratonton dan muat turun.">
+<meta name="description" content="Jana One Page Report (OPR) daripada respons Google Form, pratonton dan muat turun.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -66,11 +66,27 @@ textarea.input{min-height:92px;resize:vertical}
 .alt summary{cursor:pointer;font-weight:600;color:var(--brand)}
 .alt ol{margin:8px 0;padding-left:20px;color:var(--muted)}
 .alt kbd{background:#F1F5F9;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:12px;font-family:inherit}
+.tabs{display:flex;gap:4px;background:#EEF2F7;border-radius:11px;padding:4px;margin-bottom:14px}
+.tab{flex:1;border:0;background:none;border-radius:8px;padding:8px 6px;font-weight:600;font-size:13px;cursor:pointer;color:var(--muted)}
+.tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.rlist{margin-top:10px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.ri{display:flex;align-items:center;gap:10px;padding:0 0 0 12px;border-bottom:1px solid var(--line)}
+.ri:last-child{border-bottom:0}
+.ri.on{background:#EFF6FF;box-shadow:inset 3px 0 0 var(--brand)}
+.ri .rb{flex:1;min-width:0;text-align:left;border:0;background:none;padding:10px 12px 10px 0;cursor:pointer}
+.ri .rb b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri .rb span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri .no{font-size:11px;font-weight:700;color:var(--muted);min-width:22px}
+.rempty{padding:14px;color:var(--muted);font-size:13px;text-align:center}
+.batch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px;flex-wrap:wrap}
+.batch label{display:flex;align-items:center;gap:6px;cursor:pointer}
+#driveNote{margin:0 0 4px}
+#driveNote a{color:inherit;font-weight:600}
 .formmeta{background:var(--tint);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px}
 .formmeta b{display:block;font-size:14px}
 
 /* photos */
-.drop{border:2px dashed #CBD5E1;border-radius:12px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .15s, background .15s;font-size:13.5px}
+.drop{display:block;border:2px dashed #CBD5E1;border-radius:12px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .15s, background .15s;font-size:13.5px}
 .drop:hover,.drop.over{border-color:var(--brand-2);background:#F8FAFF}
 .drop b{color:var(--ink)}
 .thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
@@ -180,7 +196,7 @@ textarea.input{min-height:92px;resize:vertical}
     <div class="logo-mark">OPR</div>
     <div>
       <h1>Jana OPR</h1>
-      <p>One Page Report daripada pautan Google Form</p>
+      <p>One Page Report daripada respons Google Form</p>
     </div>
   </div>
 </header>
@@ -189,47 +205,81 @@ textarea.input{min-height:92px;resize:vertical}
   <section class="left">
 
     <div class="card">
-      <h2><span class="n">1</span> Pautan Google Form</h2>
-      <p class="hint">Tampal pautan borang (contoh: https://docs.google.com/forms/d/e/…/viewform atau forms.gle/…). Pautan pra-isi (pre-filled) juga diterima.</p>
-      <div class="row">
-        <input id="url" class="input" type="url" inputmode="url" placeholder="https://docs.google.com/forms/d/e/…/viewform" autocomplete="off">
-        <button id="btnRead" class="btn btn-primary">Baca</button>
+      <h2><span class="n">1</span> Data Respons Google Form</h2>
+      <p class="hint">Untuk admin borang. Data diproses dalam pelayar anda sahaja dan tidak dihantar ke mana-mana.</p>
+      <div class="tabs" id="tabs">
+        <button type="button" class="tab on" data-tab="csv">Fail CSV</button>
+        <button type="button" class="tab" data-tab="sheet">Pautan Google Sheet</button>
+        <button type="button" class="tab" data-tab="manual">Isi manual</button>
+      </div>
+      <div class="pane" data-pane="csv">
+        <label class="drop" id="csvDrop">
+          <input id="csvIn" type="file" accept=".csv,.zip,text/csv,application/zip" hidden>
+          <b>Pilih fail respons (.csv atau .zip)</b><br>atau seret &amp; lepas di sini
+        </label>
+        <details class="alt">
+          <summary>Cara dapatkan fail respons</summary>
+          <ol>
+            <li>Buka Google Form anda → tab <b>Respons</b>.</li>
+            <li>Klik <b>⋮</b> → <b>Muat turun respons (.csv)</b>. Fail .zip yang dimuat turun boleh terus dipilih di sini.</li>
+            <li>Atau dari Google Sheet respons: <b>Fail → Muat turun → Nilai dipisahkan koma (.csv)</b>.</li>
+          </ol>
+        </details>
+      </div>
+      <div class="pane hidden" data-pane="sheet">
+        <div class="row">
+          <input id="sheetUrl" class="input" type="url" inputmode="url" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off">
+          <button id="btnSheet" class="btn btn-primary" type="button">Muat</button>
+        </div>
+        <details class="alt">
+          <summary>Cara sediakan pautan</summary>
+          <ol>
+            <li>Google Form → tab <b>Respons</b> → <b>Paut ke Helaian</b> (Link to Sheets).</li>
+            <li>Dalam Google Sheet: <b>Kongsi</b> → Akses umum: <b>Sesiapa yang mempunyai pautan</b> (Pemapar).</li>
+            <li>Salin pautan dan tampal di atas. Tekan <b>Muat</b> sekali lagi bila ada respons baharu.</li>
+          </ol>
+          <p style="margin:0;color:var(--muted)">Sesiapa yang ada pautan Sheet boleh melihat semua respons. Jika data sulit, guna Fail CSV.</p>
+        </details>
+      </div>
+      <div class="pane hidden" data-pane="manual">
+        <p class="hint" style="margin:0 0 10px">Isi maklumat sendiri menggunakan templat OPR standard.</p>
+        <button class="btn btn-ghost" id="btnTpl" type="button">Guna templat OPR standard</button>
       </div>
       <div id="msg" class="msg"></div>
-      <p class="hint" style="margin:10px 0 0">Tiada borang? <button class="btn-link" id="btnTpl" type="button">Guna templat OPR standard</button></p>
-      <details class="alt" id="altBox">
-        <summary>Pautan gagal dibaca? Guna cara alternatif</summary>
-        <ol>
-          <li>Buka borang Google Form itu dalam Chrome/Edge di komputer.</li>
-          <li>Tekan <kbd>Ctrl</kbd>+<kbd>U</kbd> (lihat sumber halaman).</li>
-          <li>Tekan <kbd>Ctrl</kbd>+<kbd>A</kbd>, kemudian <kbd>Ctrl</kbd>+<kbd>C</kbd>.</li>
-          <li>Tampal di bawah dan tekan <b>Guna</b>.</li>
-        </ol>
-        <textarea id="src" class="input" rows="3" placeholder="Tampal kod sumber borang di sini…"></textarea>
-        <button id="btnSrc" class="btn btn-ghost" type="button" style="margin-top:8px">Guna</button>
-      </details>
+    </div>
+
+    <div class="card hidden" id="cardList">
+      <h2><span class="n">2</span> Pilih Respons</h2>
+      <p class="hint" id="listHint"></p>
+      <input id="q" class="input" type="search" placeholder="Cari respons…" autocomplete="off">
+      <div class="rlist" id="rlist"></div>
+      <div class="batch">
+        <label><input type="checkbox" id="selAll"> Pilih semua</label>
+        <button class="btn btn-ghost" id="btnBatch" type="button" disabled>Muat turun terpilih (PDF)</button>
+      </div>
     </div>
 
     <div class="card hidden" id="cardFields">
-      <h2><span class="n">2</span> Maklumat Laporan</h2>
-      <p class="hint">Medan dijana daripada soalan borang. Medan kosong tidak dipaparkan dalam laporan.</p>
+      <h2><span class="n">3</span> Semak &amp; Sunting</h2>
+      <p class="hint">Suntingan hanya untuk laporan ini; data asal tidak berubah. Medan kosong tidak dipaparkan.</p>
       <div id="formMeta" class="formmeta"></div>
       <div id="fields"></div>
     </div>
 
     <div class="card">
-      <h2><span class="n">3</span> Gambar <span style="font-weight:500;color:var(--muted);font-size:13px">(pilihan, maksimum 6)</span></h2>
+      <h2><span class="n">4</span> Gambar <span style="font-weight:500;color:var(--muted);font-size:13px">(pilihan, maksimum 6)</span></h2>
       <p class="hint">Susun atur laporan menyesuaikan diri untuk 0 hingga 6 gambar.</p>
       <label class="drop" id="drop">
         <input id="photoIn" type="file" accept="image/*" multiple hidden>
         <b>Klik untuk pilih gambar</b><br>atau seret &amp; lepas di sini
       </label>
+      <div id="driveNote" class="msg info"></div>
       <div class="thumbs" id="thumbs"></div>
       <div class="count" id="photoCount">Tiada gambar — laporan akan dipaparkan tanpa ruang gambar.</div>
     </div>
 
     <div class="card">
-      <h2><span class="n">4</span> Tema &amp; Tetapan</h2>
+      <h2><span class="n">5</span> Tema &amp; Tetapan</h2>
       <p class="hint">Jika tidak dipilih, tema lalai <b>Biru Korporat</b> digunakan.</p>
       <div class="swatches" id="swatches"></div>
       <div class="field" style="margin-top:16px">
@@ -287,11 +337,10 @@ const THEMES = {
 const DEFAULT_THEME = 'biru';
 const MAX_PHOTOS = 6;
 const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
-// Google Form item types we can turn into inputs
+// Input types for the report fields
 const T = {SHORT:0, PARA:1, RADIO:2, DROP:3, CHECK:4, SCALE:5, DATE:9, TIME:10};
-const SUPPORTED = new Set(Object.values(T));
-// Browsers cannot read docs.google.com directly (CORS), so the page is fetched through
-// public proxies. They come and go, so all are tried at once and the first good answer wins.
+// Google Sheets links are read directly where Google allows it, otherwise through public
+// CORS proxies. They come and go, so all are tried at once and the first good answer wins.
 const enc = encodeURIComponent;
 const PROXIES = [
   {url: u => 'https://api.allorigins.win/raw?url=' + enc(u)},
@@ -299,9 +348,14 @@ const PROXIES = [
   {url: u => 'https://api.codetabs.com/v1/proxy?quest=' + enc(u)},
   {url: u => 'https://corsproxy.io/?url=' + enc(u)},
   {url: u => 'https://cors.eu.org/' + u},
-  {url: u => 'https://whateverorigin.org/get?url=' + enc(u), json:'contents'},
-  {url: u => 'https://r.jina.ai/' + u, headers:{'X-Return-Format':'html'}}
+  {url: u => 'https://whateverorigin.org/get?url=' + enc(u), json:'contents'}
 ];
+const SKIP_COL = /^(timestamp|cap ?masa|tanda ?waktu|score|skor|markah|jumlah markah)$/i;
+const TS_COL = /^(timestamp|cap ?masa|tanda ?waktu)$/i;
+const EMAIL_COL = /e-?mel|email/i;
+const DRIVE_URL = /https?:\/\/drive\.google\.com\/\S+/i;
+// CSV carries no question types, so long-answer questions are recognised by their wording too.
+const PARA_COL = /objektif|matlamat|aktiviti|ringkasan|rumusan|impak|refleksi|kekuatan|kelemahan|penambahbaikan|cadangan|catatan|ulasan|keberhasilan|pengisian|atur ?cara|tentatif|isu|masalah|huraian|penerangan|summary|objective|outcome/i;
 const TEMPLATE = {
   title:'One Page Report', desc:'', fromTemplate:true,
   fields:[
@@ -320,7 +374,7 @@ const TEMPLATE = {
 };
 
 // ---------- state ----------
-const S = {form:null, values:{}, photos:[], theme:DEFAULT_THEME, org:'', logo:null};
+const S = {form:null, values:{}, photos:[], ds:null, cur:-1, sel:new Set(), theme:DEFAULT_THEME, org:'', logo:null};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -329,66 +383,159 @@ const store = {
   set(k,v){ try{ localStorage.setItem('opr.'+k, JSON.stringify(v)); }catch(e){} }
 };
 
-// ---------- Google Form reading ----------
-function normaliseUrl(raw){
-  const s = raw.trim();
-  if(!s) throw new Error('Sila tampal pautan Google Form.');
-  let u;
-  try{ u = new URL(/^https?:\/\//i.test(s) ? s : 'https://' + s); }catch(e){ throw new Error('Pautan tidak sah.'); }
-  const prefill = {};
-  u.searchParams.forEach((v,k) => {
-    const m = k.match(/^entry\.(\d+)/);
-    if(m){ (prefill[m[1]] = prefill[m[1]] || []).push(v); }
-  });
-  if(/(^|\.)forms\.gle$/i.test(u.hostname)) return {fetchUrl:u.origin + u.pathname, prefill};
-  if(!/docs\.google\.com$/i.test(u.hostname)) throw new Error('Ini bukan pautan Google Form.');
-  let m = u.pathname.match(/\/forms\/(?:u\/\d+\/)?d\/e\/([\w-]+)/);
-  if(m) return {fetchUrl:'https://docs.google.com/forms/d/e/' + m[1] + '/viewform', prefill};
-  m = u.pathname.match(/\/forms\/(?:u\/\d+\/)?d\/([\w-]+)/);
-  if(m) return {fetchUrl:'https://docs.google.com/forms/d/' + m[1] + '/viewform', prefill};
-  throw new Error('Pautan Google Form tidak dikenali.');
+// ---------- reading responses ----------
+function parseCSV(text){
+  text = text.replace(/^﻿/, '');
+  const rows = [];
+  let row = [], f = '', q = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(q){
+      if(c === '"'){ if(text[i + 1] === '"'){ f += '"'; i++; } else q = false; }
+      else f += c;
+    }else if(c === '"') q = true;
+    else if(c === ','){ row.push(f); f = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && text[i + 1] === '\n') i++;
+      row.push(f); rows.push(row); row = []; f = '';
+    }else f += c;
+  }
+  if(f !== '' || row.length){ row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim()));
 }
 
-async function fetchVia(url){
+// Google Forms downloads responses as a .zip holding one CSV; read it without a library.
+async function unzipCsv(buf){
+  const dv = new DataView(buf);
+  let e = buf.byteLength - 22;
+  while(e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if(e < 0) throw new Error('zip');
+  let p = dv.getUint32(e + 16, true);
+  for(let k = dv.getUint16(e + 10, true); k > 0; k--){
+    const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const off = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(new Uint8Array(buf, p + 46, nlen));
+    p += 46 + nlen + xlen + clen;
+    if(!/\.csv$/i.test(name)) continue;
+    const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true);
+    let bytes = new Uint8Array(buf, start, size);
+    if(method === 8){
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    }else if(method !== 0) throw new Error('zip');
+    return {name, text:new TextDecoder().decode(bytes)};
+  }
+  throw new Error('nocsv');
+}
+
+const isDate = v => /^\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}$/.test(v) || /^\d{1,2}[-\/.]\d{1,2}[-\/.]\d{4}$/.test(v);
+const isTime = v => /^\d{1,2}[:.]\d{2}([:.]\d{2})?(\s*[ap]\.?m\.?)?$/i.test(v);
+
+// Forms/Sheets write dates in the sheet's locale; ambiguous a/b/yyyy is read as day/month (Malaysia).
+function fmtAnyDate(v){
+  let m = v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/), d, mo, y;
+  if(m){ y = m[1]; mo = +m[2]; d = +m[3]; }
+  else{
+    m = v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/);
+    if(!m) return v;
+    y = m[3]; d = +m[1]; mo = +m[2];
+    if(mo > 12 && d <= 12){ [d, mo] = [mo, d]; }
+  }
+  return mo >= 1 && mo <= 12 ? d + ' ' + MONTHS[mo - 1] + ' ' + y : v;
+}
+function fmtAnyTime(v){
+  const m = v.match(/^(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\s*([ap])?/i);
+  if(!m) return v;
+  let h = +m[1];
+  if(m[3]){ const pm = /p/i.test(m[3]); if(h === 12) h = pm ? 12 : 0; else if(pm) h += 12; }
+  return fmtTime(String(h).padStart(2, '0') + ':' + m[2]);
+}
+function driveIds(text){
+  const ids = [];
+  String(text).replace(/(?:[?&]id=|\/d\/)([\w-]{20,})/g, (_, id) => { ids.push(id); return _; });
+  return ids;
+}
+
+function buildDataset(rows, name){
+  if(rows.length < 2) throw new Error('Fail ini tiada respons.');
+  const head = rows[0].map(h => h.trim());
+  const data = rows.slice(1);
+  const tsCol = head.findIndex(h => TS_COL.test(h));
+  const fields = [], photoCols = [];
+  head.forEach((h, c) => {
+    if(!h || SKIP_COL.test(h) || EMAIL_COL.test(h)) return;
+    const vals = data.map(r => (r[c] || '').trim()).filter(Boolean);
+    if(vals.length && vals.every(v => DRIVE_URL.test(v))){ photoCols.push(c); return; }
+    let kind = 'short';
+    if(vals.length && vals.every(isDate)) kind = 'date';
+    else if(vals.length && vals.every(isTime)) kind = 'time';
+    else if(vals.some(v => v.includes('\n') || v.length > 90) ||
+            (PARA_COL.test(h) && !RX.title.test(h) && !RX.prep.test(h))) kind = 'para';
+    fields.push({entry:'c' + c, col:c, label:h, kind, type: kind === 'para' ? T.PARA : T.SHORT, isDate: kind === 'date'});
+  });
+  if(!fields.length) throw new Error('Tiada lajur yang boleh digunakan dalam fail ini.');
+  const out = data.map((r, i) => {
+    const values = {};
+    fields.forEach(f => {
+      const v = (r[f.col] || '').trim();
+      values[f.entry] = f.kind === 'date' ? fmtAnyDate(v) : f.kind === 'time' ? fmtAnyTime(v) : v;
+    });
+    return {no:i + 1, values, photos:[], ts: tsCol >= 0 ? (r[tsCol] || '').trim() : '',
+      drive: photoCols.flatMap(c => driveIds(r[c] || '')), driveTried:false, driveFail:[]};
+  });
+  const title = (name || '').replace(/\.(csv|zip)$/i, '').replace(/\s*\((responses|respons|jawapan)\)\s*$/i, '').trim();
+  return {title, name, fields, rows:out};
+}
+
+async function fetchVia(url, accept){
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 20000);
   const tries = PROXIES.map(async p => {
-    const res = await fetch(p.url(url), {signal:ctrl.signal, headers:p.headers});
+    const res = await fetch(p.url(url), {signal:ctrl.signal});
     if(!res.ok) throw new Error('HTTP ' + res.status);
     let text = await res.text();
     if(p.json){ try{ text = String(JSON.parse(text)[p.json] || ''); }catch(e){ throw new Error('JSON'); } }
-    if(text.includes('FB_PUBLIC_LOAD_DATA_')) return text;
-    if(/accounts\.google\.com\/(v3\/)?signin|ServiceLogin/i.test(text)) throw Object.assign(new Error('login'), {login:true});
-    throw new Error('Tiada data borang');
+    if(accept(text)) return text;
+    if(/accounts\.google\.com|ServiceLogin/i.test(text)) throw Object.assign(new Error('login'), {login:true});
+    throw new Error('bad');
   });
   try{
     return await Promise.any(tries);
   }catch(agg){
-    const errs = agg.errors || [];
-    throw errs.find(e => e && e.login) || new Error('Gagal');
+    throw (agg.errors || []).find(e => e && e.login) || new Error('Gagal');
   }finally{
     clearTimeout(timer);
     ctrl.abort();
   }
 }
 
-function parseForm(html){
-  const m = html.match(/FB_PUBLIC_LOAD_DATA_\s*=\s*([\s\S]*?);\s*<\/script>/);
-  if(!m) throw new Error('Data borang tidak ditemui.');
-  const d = JSON.parse(m[1]);
-  const info = d[1] || [];
-  const fields = (info[1] || []).map(it => {
-    const q = Array.isArray(it[4]) ? it[4][0] : null;
-    return {
-      entry: q ? String(q[0]) : null,
-      label: (it[1] || '').trim(),
-      help: (it[2] || '').trim(),
-      type: it[3],
-      options: q && Array.isArray(q[1]) ? q[1].map(o => o && o[0]).filter(Boolean) : [],
-      required: !!(q && q[2])
-    };
-  }).filter(f => f.entry && f.label && SUPPORTED.has(f.type));
-  return {title:(info[8] || d[3] || 'One Page Report').trim(), desc:(info[0] || '').trim(), fields};
+function sheetUrls(raw){
+  let u;
+  try{ u = new URL(raw.trim()); }catch(e){ throw new Error('Sila tampal pautan Google Sheet yang sah.'); }
+  if(!/docs\.google\.com$/i.test(u.hostname) || !u.pathname.includes('/spreadsheets/')) throw new Error('Ini bukan pautan Google Sheet.');
+  const gid = (u.hash.match(/gid=(\d+)/) || u.search.match(/gid=(\d+)/) || [])[1];
+  const g = gid ? '&gid=' + gid : '';
+  let m = u.pathname.match(/\/spreadsheets\/d\/e\/([\w-]+)/);
+  if(m) return ['https://docs.google.com/spreadsheets/d/e/' + m[1] + '/pub?output=csv' + g];
+  m = u.pathname.match(/\/spreadsheets\/d\/([\w-]+)/);
+  if(!m) throw new Error('Pautan Google Sheet tidak dikenali.');
+  const base = 'https://docs.google.com/spreadsheets/d/' + m[1];
+  return [base + '/export?format=csv' + g, base + '/gviz/tq?tqx=out:csv' + g];
+}
+
+const looksCsv = t => !!t && !/^\s*</.test(t) && parseCSV(t).length >= 2;
+
+async function fetchSheetCsv(urls){
+  for(const u of urls){
+    try{
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10000);
+      const res = await fetch(u, {signal:ctrl.signal}).finally(() => clearTimeout(timer));
+      if(res.ok){ const t = await res.text(); if(looksCsv(t)) return t; }
+    }catch(e){}
+  }
+  return fetchVia(urls[0], looksCsv);
 }
 
 // ---------- field roles ----------
@@ -429,19 +576,78 @@ function fmtTime(v){
 }
 
 // ---------- form UI ----------
-function loadForm(form, prefill){
+function loadForm(form){
   S.form = form;
   S.values = {};
-  form.fields.forEach(f => {
-    const pre = prefill && prefill[f.entry];
-    if(pre) S.values[f.entry] = f.type === T.CHECK ? pre : pre[0];
-  });
-  $('formMeta').innerHTML = '<b>' + esc(form.title) + '</b>' +
-    (form.fromTemplate ? 'Templat OPR standard' : form.fields.length + ' soalan dibaca daripada borang');
+  S.photos = [];
+  $('formMeta').innerHTML = '<b>' + esc(form.title) + '</b>Templat OPR standard';
   renderFields();
   $('cardFields').classList.remove('hidden');
+  renderThumbs();
   render();
 }
+
+// ---------- response list ----------
+function rowTitle(r){
+  const f = S.ds.fields.find(f => f.type === T.SHORT && RX.title.test(f.label) && r.values[f.entry]) ||
+            S.ds.fields.find(f => r.values[f.entry]);
+  return f ? r.values[f.entry] : 'Respons ' + r.no;
+}
+function rowSub(r){
+  const f = S.ds.fields.find(f => RX.prep.test(f.label) && r.values[f.entry]);
+  return [r.ts, f && r.values[f.entry]].filter(Boolean).join(' · ');
+}
+function visibleRows(){
+  const q = $('q').value.trim().toLowerCase();
+  return S.ds.rows.map((r, i) => i).filter(i => !q ||
+    Object.values(S.ds.rows[i].values).some(v => String(v).toLowerCase().includes(q)));
+}
+function renderList(){
+  const vis = visibleRows();
+  $('rlist').innerHTML = vis.length ? vis.map(i => {
+    const r = S.ds.rows[i];
+    return '<div class="ri' + (i === S.cur ? ' on' : '') + '"><input type="checkbox" data-i="' + i + '"' + (S.sel.has(i) ? ' checked' : '') +
+      ' aria-label="Pilih respons ' + r.no + '"><span class="no">#' + r.no + '</span><button type="button" class="rb" data-i="' + i + '"><b>' +
+      esc(rowTitle(r)) + '</b><span>' + esc(rowSub(r) || '—') + '</span></button></div>';
+  }).join('') : '<div class="rempty">Tiada respons sepadan.</div>';
+  $('selAll').checked = vis.length > 0 && vis.every(i => S.sel.has(i));
+  $('btnBatch').disabled = !S.sel.size;
+  $('btnBatch').textContent = S.sel.size ? 'Muat turun ' + S.sel.size + ' terpilih (PDF)' : 'Muat turun terpilih (PDF)';
+}
+function selectRow(i){
+  const r = S.ds.rows[i];
+  S.cur = i;
+  S.form = {title:S.ds.title, fields:S.ds.fields};
+  S.values = r.values;
+  S.photos = r.photos;
+  $('formMeta').innerHTML = '<b>Respons #' + r.no + (r.ts ? ' · ' + esc(r.ts) : '') + '</b>' + esc(S.ds.name || 'Google Sheet');
+  renderFields();
+  $('cardFields').classList.remove('hidden');
+  renderList();
+  renderThumbs();
+  render();
+  loadDrivePhotos(r);
+}
+function showDataset(ds){
+  S.ds = ds;
+  S.sel = new Set();
+  $('q').value = '';
+  $('listHint').textContent = ds.rows.length + ' respons ditemui. Klik untuk pratonton, atau tanda beberapa respons untuk muat turun sekali gus.';
+  $('cardList').classList.remove('hidden');
+  selectRow(ds.rows.length - 1);
+  toast('<b>' + ds.rows.length + ' respons</b> dimuatkan' + (ds.name ? ' daripada ' + esc(ds.name) : '') + '. Respons terbaharu dipaparkan.', 'ok');
+}
+$('rlist').addEventListener('click', e => {
+  const cb = e.target.closest('input[data-i]');
+  if(cb){ const i = +cb.dataset.i; cb.checked ? S.sel.add(i) : S.sel.delete(i); renderList(); return; }
+  const b = e.target.closest('.rb');
+  if(b) selectRow(+b.dataset.i);
+});
+$('selAll').addEventListener('change', e => {
+  visibleRows().forEach(i => e.target.checked ? S.sel.add(i) : S.sel.delete(i));
+  renderList();
+});
+$('q').addEventListener('input', renderList);
 
 function renderFields(){
   const box = $('fields');
@@ -504,14 +710,14 @@ function buildReport(){
     const v = displayValue(f, S.values[f.entry]);
     if(!v) return;
     if(!title && f.type === T.SHORT && RX.title.test(f.label)){ title = v; return; }
-    if(!year && f.type === T.DATE){ const y = String(S.values[f.entry]).match(/^\d{4}/); if(y) year = y[0]; }
+    if(!year && (f.type === T.DATE || f.isDate)){ const y = String(v).match(/\b(19|20)\d{2}\b/); if(y) year = y[0]; }
     const role = roleOf(f, S.values[f.entry]);
     if(role === 'prep' && !prep){ prep = v; return; }
     if(role === 'post' && !post){ post = v; return; }
     (role === 'sec' ? secs : info).push({k:f.label, v});
   });
   const usedFormTitle = !title;
-  title = title || form.title;
+  title = title || form.title || 'One Page Report';
   year = year || String(new Date().getFullYear());
 
   const n = Math.min(S.photos.length, MAX_PHOTOS);
@@ -528,7 +734,11 @@ function buildReport(){
   if(info.length){
     const c = info.length <= 4 ? info.length : (info.length % 3 === 0 || info.length === 5 ? 3 : 4);
     h += '<div class="r-info" style="grid-template-columns:repeat(' + c + ',minmax(0,1fr))">' +
-      info.map(i => '<div class="it"><div class="k">' + esc(i.k) + '</div><div class="v">' + esc(i.v) + '</div></div>').join('') + '</div>';
+      info.map((i, x) => {
+        // the last cell stretches over any empty columns in the final row
+        const gap = x === info.length - 1 ? (c - info.length % c) % c : 0;
+        return '<div class="it"' + (gap ? ' style="grid-column:span ' + (gap + 1) + '"' : '') + '><div class="k">' + esc(i.k) + '</div><div class="v">' + esc(i.v) + '</div></div>';
+      }).join('') + '</div>';
   }
 
   // single column when there is only one section or many photos leave a narrow body
@@ -578,11 +788,14 @@ function fitText(page){
   return {fs, overflow: body.scrollHeight > body.clientHeight + 1};
 }
 
-function render(){
-  const page = $('page');
+function renderInto(page){
   applyTheme(page);
   page.innerHTML = buildReport();
-  const fit = fitText(page);
+  return fitText(page);
+}
+
+function render(){
+  const fit = renderInto($('page'));
   const note = $('fitnote');
   if(fit.overflow){
     note.className = 'fitnote warn';
@@ -604,6 +817,17 @@ function scalePreview(){
 }
 
 // ---------- photos ----------
+function downscale(img, maxSide, png){
+  const r = Math.min(1, maxSide / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * r);
+  c.height = Math.round(img.height * r);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.86);
+}
 function readImage(file, maxSide){
   return new Promise((resolve, reject) => {
     const fr = new FileReader();
@@ -611,21 +835,46 @@ function readImage(file, maxSide){
     fr.onload = () => {
       const img = new Image();
       img.onerror = reject;
-      img.onload = () => {
-        const r = Math.min(1, maxSide / Math.max(img.width, img.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * r);
-        c.height = Math.round(img.height * r);
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(img, 0, 0, c.width, c.height);
-        resolve(c.toDataURL(file.type === 'image/png' && maxSide <= 400 ? 'image/png' : 'image/jpeg', 0.86));
-      };
+      img.onload = () => resolve(downscale(img, maxSide, file.type === 'image/png' && maxSide <= 400));
       img.src = fr.result;
     };
     fr.readAsDataURL(file);
   });
+}
+function loadRemoteImage(url){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const timer = setTimeout(() => reject(new Error('timeout')), 10000);
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { clearTimeout(timer); try{ resolve(downscale(img, 1600)); }catch(e){ reject(e); } };
+    img.onerror = () => { clearTimeout(timer); reject(new Error('img')); };
+    img.src = url;
+  });
+}
+
+// Photos uploaded through the form live in the admin's Drive. They load automatically only
+// when shared publicly; otherwise the admin gets links to download and attach them.
+async function loadDrivePhotos(r){
+  if(r.driveTried || !r.drive.length) return;
+  r.driveTried = 'loading';
+  if(S.ds && S.ds.rows[S.cur] === r) driveNote();
+  for(const id of r.drive){
+    if(r.photos.length >= MAX_PHOTOS) break;
+    try{ r.photos.push(await loadRemoteImage('https://lh3.googleusercontent.com/d/' + id + '=w1600')); }
+    catch(e){ r.driveFail.push(id); }
+  }
+  r.driveTried = true;
+  if(S.ds && S.ds.rows[S.cur] === r){ renderThumbs(); render(); }
+}
+function driveNote(){
+  const box = $('driveNote');
+  const r = S.ds && S.ds.rows[S.cur];
+  if(!r || !r.drive.length || (r.driveTried === true && !r.driveFail.length)){ box.classList.remove('show'); return; }
+  box.classList.add('show');
+  box.innerHTML = r.driveTried === 'loading'
+    ? 'Memuatkan ' + r.drive.length + ' gambar daripada Google Drive…'
+    : 'Respons ini ada ' + r.driveFail.length + ' gambar di Google Drive yang tidak dapat dimuat secara automatik. Buka, simpan, kemudian pilih di bawah: ' +
+      r.driveFail.map(id => '<a href="https://drive.google.com/file/d/' + id + '/view" target="_blank" rel="noopener">Gambar ' + (r.drive.indexOf(id) + 1) + '</a>').join(' · ');
 }
 
 async function addPhotos(files){
@@ -650,6 +899,7 @@ function renderThumbs(){
     ? S.photos.length + ' / ' + MAX_PHOTOS + ' gambar · gambar pertama menjadi gambar utama'
     : 'Tiada gambar — laporan akan dipaparkan tanpa ruang gambar.';
   $('drop').classList.toggle('hidden', S.photos.length >= MAX_PHOTOS);
+  driveNote();
 }
 
 $('thumbs').addEventListener('click', e => {
@@ -701,70 +951,76 @@ function showLogo(){
   $('logoDel').classList.toggle('hidden', !S.logo);
 }
 
-// ---------- reading the link ----------
+// ---------- loading data ----------
 function toast(text, kind){
   const m = $('msg');
   m.className = 'msg show ' + (kind || 'info');
   m.innerHTML = text;
 }
 
-async function readLink(){
-  const btn = $('btnRead');
-  let target;
-  try{ target = normaliseUrl($('url').value); }
+async function readCsvFile(file){
+  if(!file) return;
+  toast('Membaca fail…', 'info');
+  try{
+    let name = file.name, text;
+    if(/\.zip$/i.test(name) || file.type.includes('zip')){
+      const z = await unzipCsv(await file.arrayBuffer());
+      name = z.name.split('/').pop();
+      text = z.text;
+    }else text = await file.text();
+    showDataset(buildDataset(parseCSV(text), name));
+  }catch(e){
+    toast(e.message && !/^(zip|nocsv)$/.test(e.message) && e.message.length > 12
+      ? esc(e.message) : 'Fail tidak dapat dibaca. Pastikan ia fail respons .csv (atau .zip) daripada Google Forms.', 'err');
+  }
+}
+$('csvIn').addEventListener('change', e => { readCsvFile(e.target.files[0]); e.target.value = ''; });
+const csvDrop = $('csvDrop');
+['dragenter','dragover'].forEach(ev => csvDrop.addEventListener(ev, e => { e.preventDefault(); csvDrop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => csvDrop.addEventListener(ev, e => { e.preventDefault(); csvDrop.classList.remove('over'); }));
+csvDrop.addEventListener('drop', e => readCsvFile(e.dataTransfer.files[0]));
+
+async function readSheet(){
+  const btn = $('btnSheet');
+  let urls;
+  try{ urls = sheetUrls($('sheetUrl').value); }
   catch(e){ toast(esc(e.message), 'err'); return; }
+  store.set('sheet', $('sheetUrl').value.trim());
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
-  toast('Membaca borang…', 'info');
-  const cacheKey = 'form:' + target.fetchUrl;
-  store.set('url', $('url').value.trim());
+  toast('Membaca Google Sheet…', 'info');
   try{
-    const form = parseForm(await fetchVia(target.fetchUrl));
-    store.set(cacheKey, form);
-    showLoaded(form, target.prefill, '');
+    const prev = S.ds && S.ds.name === 'Google Sheet' ? S.cur : -1;
+    const ds = buildDataset(parseCSV(await fetchSheetCsv(urls)), '');
+    ds.name = 'Google Sheet';
+    showDataset(ds);
+    if(prev >= 0 && prev < ds.rows.length - 1) selectRow(prev);
   }catch(e){
-    const cached = store.get(cacheKey);
-    if(cached && cached.fields){
-      showLoaded(cached, target.prefill, ' (salinan tersimpan daripada bacaan lepas)');
-    }else{
-      toast((e.login
-        ? 'Borang ini memerlukan log masuk Google. Dalam tetapan borang, matikan pilihan yang mewajibkan log masuk (contoh: “Hadkan kepada pengguna organisasi” atau kumpul e-mel “Disahkan”).'
-        : 'Pautan tidak dapat dibaca sekarang (pelayan perantara sibuk). Cuba tekan <b>Baca</b> sekali lagi.') +
-        ' Atau guna <button class="btn-link" type="button" data-alt>cara alternatif</button> / <button class="btn-link" type="button" data-tpl>templat OPR standard</button>.', 'err');
-    }
+    toast(e.login
+      ? 'Sheet ini belum dikongsi. Dalam Google Sheet, klik <b>Kongsi</b> → Akses umum: <b>Sesiapa yang mempunyai pautan</b>.'
+      : e.message && e.message.length > 12 ? esc(e.message)
+      : 'Sheet tidak dapat dibaca. Pastikan ia dikongsi kepada <b>Sesiapa yang mempunyai pautan</b>, kemudian cuba lagi — atau guna tab <b>Fail CSV</b>.', 'err');
   }finally{
     btn.disabled = false;
-    btn.textContent = 'Baca';
+    btn.textContent = 'Muat';
   }
 }
-function showLoaded(form, prefill, note){
-  loadForm(form, prefill);
-  const pre = Object.keys(prefill || {}).length;
-  toast('<b>' + esc(form.title) + '</b> berjaya dibaca: ' + form.fields.length + ' soalan' +
-    (pre ? ', ' + pre + ' jawapan pra-isi dimuatkan' : '') + esc(note) + '.', 'ok');
+$('btnSheet').addEventListener('click', readSheet);
+$('sheetUrl').addEventListener('keydown', e => { if(e.key === 'Enter') readSheet(); });
+
+function useTemplate(){
+  S.ds = null;
+  S.cur = -1;
+  $('cardList').classList.add('hidden');
+  loadForm(JSON.parse(JSON.stringify(TEMPLATE)));
+  toast('Templat OPR standard dimuatkan.', 'ok');
 }
-function readSource(){
-  const html = $('src').value;
-  let prefill = {};
-  try{ prefill = normaliseUrl($('url').value).prefill; }catch(e){}
-  try{
-    const form = parseForm(html);
-    try{ store.set('form:' + normaliseUrl($('url').value).fetchUrl, form); }catch(e){}
-    showLoaded(form, prefill, '');
-    $('src').value = '';
-    $('altBox').open = false;
-  }catch(e){
-    toast('Kod sumber tidak sah. Pastikan anda menyalin <b>semua</b> teks daripada halaman Ctrl+U borang tersebut.', 'err');
-  }
-}
-$('btnSrc').addEventListener('click', readSource);
-$('btnRead').addEventListener('click', readLink);
-$('url').addEventListener('keydown', e => { if(e.key === 'Enter') readLink(); });
-function useTemplate(){ loadForm(JSON.parse(JSON.stringify(TEMPLATE)), null); toast('Templat OPR standard dimuatkan.', 'ok'); }
 $('btnTpl').addEventListener('click', useTemplate);
-$('msg').addEventListener('click', e => {
-  if(e.target.closest('[data-tpl]')) useTemplate();
-  if(e.target.closest('[data-alt]')){ $('altBox').open = true; $('src').focus(); }
+$('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab');
+  if(!t) return;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== t.dataset.tab));
 });
 
 // ---------- export ----------
@@ -830,12 +1086,51 @@ $('btnPng').addEventListener('click', savePng);
 $('mPng').addEventListener('click', savePng);
 $('btnPrint').addEventListener('click', () => window.print());
 
+// One PDF, one page per selected response.
+async function saveBatch(){
+  const list = [...S.sel].sort((a, b) => a - b);
+  if(!list.length || !window.html2canvas) return;
+  const btn = $('btnBatch');
+  btn.disabled = true;
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;height:1123px;';
+  const el = document.createElement('div');
+  el.className = 'opr';
+  holder.appendChild(el);
+  document.body.appendChild(holder);
+  try{
+    if(document.fonts && document.fonts.ready) await document.fonts.ready;
+    const pdf = new window.jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4', compress:true});
+    for(let k = 0; k < list.length; k++){
+      btn.textContent = 'Menjana ' + (k + 1) + ' / ' + list.length + '…';
+      const r = S.ds.rows[list[k]];
+      await loadDrivePhotos(r);
+      S.values = r.values;
+      S.photos = r.photos;
+      renderInto(el);
+      const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false, width:794, height:1123, windowWidth:1200});
+      if(k) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 210, 297);
+    }
+    pdf.save(('OPR ' + (S.ds.title || 'respons') + ' (' + list.length + ')').replace(/[\\/:*?"<>|]+/g, '').trim() + '.pdf');
+  }catch(e){
+    toast('PDF gagal dijana.', 'err');
+  }finally{
+    holder.remove();
+    const r = S.ds.rows[S.cur];
+    S.values = r.values;
+    S.photos = r.photos;
+    renderList();
+  }
+}
+$('btnBatch').addEventListener('click', saveBatch);
+
 // ---------- init ----------
 S.theme = THEMES[store.get('theme')] ? store.get('theme') : DEFAULT_THEME;
 S.org = store.get('org') || '';
 S.logo = store.get('logo') || null;
 $('org').value = S.org;
-$('url').value = store.get('url') || '';
+$('sheetUrl').value = store.get('sheet') || '';
 showLogo();
 renderSwatches();
 renderThumbs();
