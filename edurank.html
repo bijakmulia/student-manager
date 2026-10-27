@@ -4600,15 +4600,25 @@ const TAKWIM_PRESET = {
          cuti:[['Cuti Penggal 1','2026-03-21','2026-03-29'],['Cuti Pertengahan Tahun','2026-05-23','2026-06-07'],['Cuti Penggal 2','2026-08-29','2026-09-06'],['Cuti Akhir Tahun','2026-12-05','2026-12-31']] },
     A: { terms:[['2026-01-11','2026-05-21'],['2026-06-07','2026-12-03']],
          cuti:[['Cuti Penggal 1','2026-03-20','2026-03-28'],['Cuti Pertengahan Tahun','2026-05-22','2026-06-06'],['Cuti Penggal 2','2026-08-28','2026-09-05'],['Cuti Akhir Tahun','2026-12-04','2026-12-31']] }
+  },
+  /* Kalendar Akademik 2027 (Surat Siaran KPM Bil. 1/2026, 2 Okt 2026). Kedua-dua kumpulan dibuka 4 Jan. */
+  2027: {
+    B: { terms:[['2027-01-04','2027-05-21'],['2027-06-07','2027-12-03']],
+         cuti:[['Cuti Penggal 1','2027-03-06','2027-03-14'],['Cuti Pertengahan Tahun','2027-05-22','2027-06-06'],['Cuti Penggal 2','2027-08-28','2027-09-05'],['Cuti Akhir Tahun','2027-12-04','2027-12-31']] },
+    A: { terms:[['2027-01-04','2027-05-20'],['2027-06-06','2027-12-02']],
+         cuti:[['Cuti Penggal 1','2027-03-05','2027-03-13'],['Cuti Pertengahan Tahun','2027-05-21','2027-06-05'],['Cuti Penggal 2','2027-08-27','2027-09-04'],['Cuti Akhir Tahun','2027-12-03','2027-12-31']] }
   }
 };
 const TK_GRP = { A:'Kumpulan A — Kedah, Kelantan, Terengganu (Ahad–Khamis)', B:'Kumpulan B — negeri lain (Isnin–Jumaat)' };
 function takwim(){
   const yr = new Date().getFullYear();
+  const latest = Math.max.apply(null, Object.keys(TAKWIM_PRESET).map(Number));
   if (!S.takwim || !S.takwim.terms){
-    const p = (TAKWIM_PRESET[yr] || TAKWIM_PRESET[2026]).B;
-    S.takwim = { year: TAKWIM_PRESET[yr] ? yr : 2026, grp:'B', terms: p.terms.map(x => x.slice()), cuti: p.cuti.map(x => x.slice()) };
+    const y = TAKWIM_PRESET[yr] ? yr : latest, p = TAKWIM_PRESET[y].B;
+    S.takwim = { year: y, grp:'B', terms: p.terms.map(x => x.slice()), cuti: p.cuti.map(x => x.slice()) };
   }
+  // tahun baharu bermula: tukar sendiri ke takwim tahun semasa (kumpulan A/B dikekalkan)
+  if (S.takwim.year < yr && TAKWIM_PRESET[yr] && !S.takwim.manualYear) takwimPreset(yr, S.takwim.grp || 'B');
   return S.takwim;
 }
 function takwimPreset(year, grp){
@@ -4653,7 +4663,16 @@ const fmtShort = k => { const [y, m, d] = k.split('-'); return +d + ' ' + ['Jan'
    Auto: SK diagih mengikut urutan DSKP, berat = bilangan SP, merentas semua
    minggu persekolahan. Satu SK boleh merentas beberapa minggu dan satu
    minggu boleh mengandungi beberapa SK. Guru boleh menukar mana-mana minggu. */
-const rptOf = sj => { S.rpt = S.rpt || {}; S.rpt[sj] = S.rpt[sj] || { over:{} }; S.rpt[sj].over = S.rpt[sj].over || {}; return S.rpt[sj]; };
+/* Tukaran minggu disimpan berasingan bagi setiap tahun takwim (minggu 5 tahun 2026 ≠ minggu 5 tahun 2027) */
+const rptOf = sj => {
+  S.rpt = S.rpt || {};
+  const r = S.rpt[sj] = S.rpt[sj] || {}, y = takwim().year;
+  r.oy = r.oy || {};
+  if (r.over && !r.oy[2026]) r.oy[2026] = r.over;             // data lama (sebelum tukaran ikut tahun)
+  delete r.over;
+  r.oy[y] = r.oy[y] || {};
+  return { over: r.oy[y] };
+};
 let PLAN_MEMO = {};
 function autoPlan(b, W){
   const plan = Array.from({ length: W + 1 }, () => []);
@@ -4832,7 +4851,7 @@ function rptModal(){
     if (e.target.closest('[data-x="reset"]')){
       const ok = await confirmBox({ title:'Susun Automatik Semula', okText:'Ya', message:'Buang semua tukaran minggu dan kembali ke susunan automatik DSKP?' });
       if (!ok) return;
-      rptOf(sj).over = {}; save(true); closeModal(id); rptModal(); return;
+      const ov = rptOf(sj).over; Object.keys(ov).forEach(k => delete ov[k]); save(true); closeModal(id); rptModal(); return;
     }
     const w = e.target.closest('[data-w]'); if (!w) return;
     skPicker('Minggu ' + w.dataset.w + ' — pilih SK', sj, plan[+w.dataset.w] || [], sel => {
@@ -4884,6 +4903,10 @@ function takwimSettingsHtml(){
     '<input type="date" class="fld clip-s num !py-1 !px-1 !text-[11px]" value="' + b + '" onchange="takwimSet(\'' + key + '\',1,this.value)"></div>';
   return '<div class="text-[12px]">Tahun <b class="num">' + tk.year + '</b> · ' + ws.length + ' minggu persekolahan · hari ini: <b class="text-cyan">' +
       (now && now.n ? 'Minggu ' + now.n : now && now.cuti ? esc(now.cuti) : 'luar takwim') + '</b></div>' +
+    '<div class="lbl mt-2">TAHUN TAKWIM</div><div class="flex gap-1 mt-1">' + Object.keys(TAKWIM_PRESET).map(y =>
+      '<button class="btn clip-s flex-1 !py-1.5 text-[11px] num' + (tk.year === +y ? ' btn-o' : '') + '" data-act="tk-year" data-id="' + y + '">' + y + '</button>').join('') + '</div>' +
+    (tk.manualYear ? '<div class="text-[10px] mt-1" style="color:#FFC24D">Tahun dipilih sendiri — app tidak akan menukar tahun secara automatik.</div>'
+                   : '<div class="text-[10px] text-muted mt-1">Bertukar sendiri ke takwim tahun baharu pada 1 Januari.</div>') +
     '<div class="grid grid-cols-2 gap-1 mt-2">' + ['A','B'].map(g => '<button class="btn clip-s !py-1.5 text-[11px]' + (tk.grp === g ? ' btn-o' : '') + '" data-act="tk-grp" data-id="' + g + '">Kumpulan ' + g + '</button>').join('') + '</div>' +
     '<div class="text-[10px] text-muted mt-1">' + esc(TK_GRP[tk.grp]) + '</div>' +
     '<div class="lbl mt-3">PENGGAL</div>' + tk.terms.map((t, i) => row('Penggal ' + (i + 1), t[0], t[1], 't' + i)).join('') +
@@ -7427,7 +7450,10 @@ const ACTS = {
   'lesson-pick': () => lessonPick(),
   'rpt-open': () => rptModal(),
   'wb-toggle': () => { S.ui.wbOpen = !S.ui.wbOpen; save(); rerenderKeepScroll(); },
-  'tk-grp': d => { const tk = takwim(); if (!takwimPreset(tk.year, d.id)) tk.grp = d.id; PLAN_MEMO = {}; save(true); renderTab(); toast('Takwim ' + TK_GRP[d.id].split(' — ')[0]); },
+  'tk-grp': d => { const tk = takwim(), man = tk.manualYear; if (!takwimPreset(tk.year, d.id)) tk.grp = d.id; if (man) S.takwim.manualYear = 1; PLAN_MEMO = {}; save(true); renderTab(); toast('Takwim ' + TK_GRP[d.id].split(' — ')[0]); },
+  'tk-year': d => { const y = +d.id; takwimPreset(y, takwim().grp || 'B');
+    if (y !== new Date().getFullYear()) S.takwim.manualYear = 1;           // pratonton / guna tahun lain secara sengaja
+    PLAN_MEMO = {}; save(true); renderTab(); toast('Takwim ' + y + ' digunakan.'); },
   'pbd-sum': () => pbdSummaryModal(),
   'card-stu': cardStuPick,
   'tpc-topup': topupModal,
