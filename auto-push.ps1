@@ -11,7 +11,14 @@ while ($true) {
     if (& $git status --porcelain) {
         & $git add -A
         & $git commit -m "Auto-save $time"
-        & $git push
+        # Bring in changes made elsewhere (e.g. merged pull requests) before pushing.
+        & $git pull --no-rebase --no-edit
+        if ($LASTEXITCODE -ne 0) {
+            & $git merge --abort
+            Write-Host "$time could not merge GitHub changes automatically - nothing pushed"
+        } else {
+            & $git push
+        }
     } else {
         Write-Host "$time no changes"
     }
