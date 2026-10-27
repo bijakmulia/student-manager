@@ -5256,6 +5256,243 @@ function topicalBank(sj){
   return top.length >= 3 ? top : bank;
 }
 
+/* ============ TAYANG LANGSUNG (game telefon → tablet/projektor) ============
+   Peranti yang bermain (hos) menyiarkan skrin game; peranti lain (penonton,
+   cth. tablet di projektor) memaparkannya serta-merta.
+   - Paparan HTML game (papan Duel, HUD, soalan, keputusan) dicerminkan
+     dengan tampalan kecil (hanya bahagian yang berubah).
+   - Game 3D: gambar kanvas dihantar sebagai video WebRTC; jika rangkaian
+     sekolah menyekat sambungan terus, gambar JPEG kecil dihantar melalui awan.
+   Saluran: Firebase (ipbd_share/__live, tiada perubahan rules) bila aktif;
+   jika tidak, hanya antara tab pada peranti sama (BroadcastChannel).        */
+const LV_ON_CAST = 'ipbd_live_cast', LV_ON_VIEW = 'ipbd_live_view';
+const lvCastOn = () => localStorage.getItem(LV_ON_CAST) !== '0';
+const lvViewOn = () => localStorage.getItem(LV_ON_VIEW) !== '0';
+const LV_ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] };
+const LIVE = { frame: null, host: null };
+let LV_BC = null;
+function lvT(){
+  if (FB.on && FB.mod.d){
+    const d = FB.mod.d, ref = k => d.ref(FB.db, 'ipbd_share/__live/' + k);
+    return { kind: 'fb', set: (k, v) => { try { d.set(ref(k), v).catch(() => {}); } catch(e){} }, on: (k, cb) => d.onValue(ref(k), s => cb(s.val())) };
+  }
+  if (!('BroadcastChannel' in window)) return null;
+  if (!LV_BC){
+    LV_BC = { ch: new BroadcastChannel('edurank-live'), subs: {} };
+    LV_BC.ch.onmessage = e => (LV_BC.subs[e.data.k] || []).slice().forEach(cb => cb(e.data.v));
+  }
+  return { kind: 'bc', set: (k, v) => LV_BC.ch.postMessage({ k, v }),
+    on: (k, cb) => { (LV_BC.subs[k] = LV_BC.subs[k] || []).push(cb); return () => { LV_BC.subs[k] = (LV_BC.subs[k] || []).filter(f => f !== cb); }; } };
+}
+const lvId = () => Math.random().toString(36).slice(2, 10);
+const lvEsc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const lvHtml = n => n.nodeType === 1 ? n.outerHTML : n.nodeType === 3 ? lvEsc(n.data) : '<!---->';
+const lvAttrs = n => Array.from(n.attributes, a => [a.name, a.value]);
+function lvSameAttrs(a, b){
+  if (a.attributes.length !== b.attributes.length) return false;
+  for (const x of b.attributes) if (a.getAttribute(x.name) !== x.value) return false;
+  return true;
+}
+/* Banding salinan terakhir (a) dengan DOM semasa (b) → senarai tampalan */
+function lvDiff(a, b, path, out){
+  if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName){ out.push(['o', path, lvHtml(b)]); return; }
+  if (b.nodeType !== 1){ if (a.data !== b.data) out.push(['t', path, b.data]); return; }
+  if (!lvSameAttrs(a, b)) out.push(['a', path, lvAttrs(b)]);
+  const ac = a.childNodes, bc = b.childNodes, n = Math.min(ac.length, bc.length);
+  for (let i = 0; i < n; i++) lvDiff(ac[i], bc[i], path.concat(i), out);
+  if (bc.length > ac.length){ let h = ''; for (let i = n; i < bc.length; i++) h += lvHtml(bc[i]); out.push(['+', path, h]); }
+  else if (ac.length > bc.length) out.push(['-', path, bc.length]);
+}
+const lvFrag = html => { const t = document.createElement('template'); t.innerHTML = html; return t.content; };
+function lvApply(box, d){
+  (d || []).forEach(x => {
+    const [op, path, v] = x;
+    let n = box.firstChild;
+    for (const i of (path || [])){ if (!n) break; n = n.childNodes[i]; }
+    if (!n) throw new Error('path');
+    if (op === 'o'){ if (!(path || []).length) box.innerHTML = v; else n.replaceWith(lvFrag(v)); }
+    else if (op === 't') n.data = v == null ? '' : v;
+    else if (op === 'a'){ Array.from(n.attributes).forEach(a => n.removeAttribute(a.name)); (v || []).forEach(([k, val]) => { try { n.setAttribute(k, val == null ? '' : val); } catch(e){} }); }
+    else if (op === '+') n.appendChild(lvFrag(v || ''));
+    else if (op === '-'){ while (n.childNodes.length > (v || 0)) n.lastChild.remove(); }
+  });
+}
+/* RTCPeerConnection: tunggu semua calon ICE (tanpa trickle — satu mesej sahaja) */
+const lvGather = pc => new Promise(r => {
+  if (pc.iceGatheringState === 'complete') return r();
+  const t = setTimeout(r, 2500);
+  pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete'){ clearTimeout(t); r(); } });
+});
+
+/* ---------- HOS: peranti yang sedang bermain ---------- */
+function liveHost(g, root, opts){
+  opts = opts || {};
+  if (!lvCastOn()) return null;
+  const T = lvT(); if (!T) return null;
+  const sid = lvId(), canvas = opts.canvas || null, pcs = {}, offs = [];
+  let seq = 0, shadow = root.cloneNode(true), jpg = false, lastJ = 0, ended = false;
+  const meta = x => Object.assign({ sid, by: CLIENT_ID, g, title: opts.title || '', fit: canvas ? 1 : 0,
+    w: root.clientWidth || innerWidth, h: root.clientHeight || innerHeight, t: Date.now() }, x || {});
+  const flush = () => {
+    if (!root.isConnected) return;
+    const out = []; lvDiff(shadow, root, [], out);
+    if (!out.length) return;
+    seq++; T.set('p', { sid, s: seq, d: out }); shadow = root.cloneNode(true);
+  };
+  const key = () => { flush(); T.set('k', { sid, s: seq, html: shadow.outerHTML }); };
+  async function offer(vid){
+    if (!canvas || pcs[vid] || !window.RTCPeerConnection || !canvas.captureStream) return;
+    try {
+      const pc = pcs[vid] = new RTCPeerConnection(LV_ICE), st = canvas.captureStream(20);
+      st.getTracks().forEach(tr => pc.addTrack(tr, st));
+      await pc.setLocalDescription(await pc.createOffer());
+      await lvGather(pc);
+      if (ended) return pc.close();
+      T.set('o_' + vid, { sid, sdp: pc.localDescription.sdp });
+      const off = T.on('a_' + vid, v => { if (v && v.sid === sid && v.sdp && pc.signalingState === 'have-local-offer') pc.setRemoteDescription({ type: 'answer', sdp: v.sdp }).catch(() => {}); });
+      offs.push(off);
+    } catch(e){ console.warn('live rtc', e); }
+  }
+  T.set('cur', meta()); key();
+  const tick = setInterval(flush, 180), hb = setInterval(() => T.set('cur', meta()), 4000), kf = setInterval(key, 15000);
+  offs.push(T.on('want', v => {
+    if (!v || v.sid !== sid || ended) return;
+    key();
+    if (v.vid && v.rtc) offer(v.vid);
+    if (v.jpg) jpg = true;
+  }));
+  /* JPEG gantian: dipanggil oleh game selepas setiap R.render (penimbal WebGL masih sah) */
+  const jc = document.createElement('canvas');
+  LIVE.frame = cv => {
+    if (!jpg || ended) return;
+    const now = performance.now(); if (now - lastJ < 420) return; lastJ = now;
+    try {
+      const w = 480, h = Math.round(w * cv.height / cv.width); jc.width = w; jc.height = h;
+      jc.getContext('2d').drawImage(cv, 0, 0, w, h);
+      T.set('f', { sid, d: jc.toDataURL('image/jpeg', .5) });
+    } catch(e){}
+  };
+  const H = LIVE.host = {
+    sid,
+    end(){
+      if (ended) return; ended = true;
+      flush();
+      if (root.isConnected) T.set('k', { sid, s: seq, html: shadow.outerHTML });
+      T.set('cur', meta({ end: 1 }));
+      clearInterval(tick); clearInterval(hb); clearInterval(kf);
+      offs.forEach(f => { try { f(); } catch(e){} });
+      Object.values(pcs).forEach(pc => { try { pc.close(); } catch(e){} });
+      if (LIVE.host === H){ LIVE.host = null; LIVE.frame = null; }
+    }
+  };
+  return H;
+}
+/* Tamatkan siaran sejurus sebelum skrin game dibuang (keputusan akhir kekal di tablet) */
+const liveEnd = h => { try { h && h.end(); } catch(e){} };
+
+/* ---------- PENONTON: tablet / projektor ---------- */
+const LVW = { T: null, kind: '', off: null, seen: {}, closed: {}, view: null };
+function liveWatch(){
+  const T = lvT(), kind = T ? T.kind : '';
+  if (kind === LVW.kind) return;
+  if (LVW.off){ try { LVW.off(); } catch(e){} LVW.off = null; }
+  LVW.kind = kind; LVW.T = T; LVW.seen = {};
+  if (!T) return;
+  let first = true;
+  LVW.off = T.on('cur', v => {
+    const init = first; first = false;
+    if (!v || v.by === CLIENT_ID) return;
+    const V = LVW.view;
+    if (V && V.sid === v.sid){ V.meta(v); return; }
+    const prev = LVW.seen[v.sid]; LVW.seen[v.sid] = v.t;
+    if (v.end || LVW.closed[v.sid] || !lvViewOn()) return;
+    // dibuka hanya bila siaran terbukti hidup (mesej baharu, bukan sisa lama)
+    if (init && prev === undefined) return;
+    if (prev !== undefined && prev === v.t) return;
+    if (RUN || ESC || document.getElementById('btRoot')) return;   // peranti ini sendiri sedang bermain
+    liveOpen(v);
+  });
+}
+function liveOpen(v){
+  if (LVW.view) LVW.view.close();
+  const T = LVW.T, sid = v.sid, vid = lvId(), offs = [];
+  let last = -1, askT = 0, pc = null, fb = null, dead = null, fin = null, closed = false;
+  const el = document.createElement('div');
+  el.id = 'lvView';
+  el.innerHTML =
+    '<style>#lvView{position:fixed;inset:0;z-index:990;background:#000;overflow:hidden;user-select:none}' +
+    '#lvStage{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}' +
+    '#lvMirror{position:absolute;inset:0;transform:translateZ(0);pointer-events:none;overflow:hidden}' +
+    '#lvView.fit #lvMirror > *{background:transparent!important}#lvView.fit #lvMirror canvas{visibility:hidden}' +
+    '#lvVid,#lvImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}' +
+    '.lv-bar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;border-radius:999px;' +
+      'background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.35;transition:opacity .3s}' +
+    '.lv-bar:hover{opacity:1}.lv-bar .dot{width:9px;height:9px;border-radius:50%;background:#EF4444;animation:lvDot 1.2s infinite}' +
+    '.lv-bar button{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff}' +
+    '@keyframes lvDot{50%{opacity:.25}}</style>' +
+    '<div id="lvStage"><video id="lvVid" playsinline muted autoplay></video><img id="lvImg" alt=""><div id="lvMirror"></div></div>' +
+    '<div class="lv-bar"><span class="dot"></span><span id="lvTxt">LANGSUNG</span><button id="lvX" title="Tutup tayangan"><i class="fa-solid fa-xmark"></i></button></div>';
+  document.body.appendChild(el); lockBody();
+  const $v = s => el.querySelector(s), mirror = $v('#lvMirror'), stage = $v('#lvStage'), vidEl = $v('#lvVid'), img = $v('#lvImg');
+  let M = v;
+  const layout = () => {
+    const W = el.clientWidth, Hh = el.clientHeight;
+    if (M.fit && M.w && M.h){
+      const k = Math.min(W / M.w, Hh / M.h);
+      Object.assign(stage.style, { width: M.w + 'px', height: M.h + 'px', transform: 'translate(' + (W - M.w * k) / 2 + 'px,' + (Hh - M.h * k) / 2 + 'px) scale(' + k + ')' });
+    } else Object.assign(stage.style, { width: W + 'px', height: Hh + 'px', transform: 'none' });
+  };
+  const txt = t => { $v('#lvTxt').textContent = t; };
+  const label = () => txt('LANGSUNG' + (M.title ? ' · ' + M.title.toUpperCase() : ''));
+  const want = x => { const now = Date.now(); if (!x && now - askT < 1500) return; askT = now; T.set('want', Object.assign({ sid, vid, t: now }, x || {})); };
+  const V = LVW.view = {
+    sid,
+    meta(n){
+      M = n; el.classList.toggle('fit', !!n.fit); layout(); label();
+      clearTimeout(dead);
+      if (n.end){ txt('TAMAT'); clearTimeout(fin); fin = setTimeout(V.close, 30000); return; }
+      dead = setTimeout(() => { txt('SAMBUNGAN TERPUTUS…'); fin = setTimeout(V.close, 30000); }, 15000);
+    },
+    close(){
+      if (closed) return; closed = true;
+      LVW.closed[sid] = 1; if (LVW.view === V) LVW.view = null;
+      offs.forEach(f => { try { f(); } catch(e){} });
+      clearTimeout(dead); clearTimeout(fin); clearTimeout(fb);
+      if (pc) try { pc.close(); } catch(e){}
+      el.remove(); unlockBody();
+    }
+  };
+  if (v.g === 'duel' && typeof btStyle === 'function') btStyle();
+  window.addEventListener('resize', layout);
+  offs.push(() => window.removeEventListener('resize', layout));
+  $v('#lvX').onclick = () => V.close();
+  offs.push(T.on('k', k => { if (!k || k.sid !== sid) return; try { mirror.innerHTML = k.html || ''; last = k.s || 0; } catch(e){} }));
+  offs.push(T.on('p', p => {
+    if (!p || p.sid !== sid || p.s <= last) return;
+    if (last < 0 || p.s !== last + 1) return want();
+    try { lvApply(mirror, p.d); last = p.s; } catch(e){ want(); }
+  }));
+  if (v.fit){
+    offs.push(T.on('f', f => { if (!f || f.sid !== sid || !f.d) return; img.src = f.d; img.style.display = 'block'; }));
+    offs.push(T.on('o_' + vid, async o => {
+      if (!o || o.sid !== sid || pc || !window.RTCPeerConnection) return;
+      try {
+        pc = new RTCPeerConnection(LV_ICE);
+        pc.ontrack = e => { vidEl.srcObject = e.streams[0]; vidEl.style.display = 'block'; vidEl.play().catch(() => {}); };
+        await pc.setRemoteDescription({ type: 'offer', sdp: o.sdp });
+        await pc.setLocalDescription(await pc.createAnswer());
+        await lvGather(pc);
+        T.set('a_' + vid, { sid, sdp: pc.localDescription.sdp });
+      } catch(e){ console.warn('live rtc', e); }
+    }));
+    // tiada video dalam 8 saat (rangkaian menyekat sambungan terus) → gambar melalui awan
+    fb = setTimeout(() => { if (!closed && vidEl.readyState < 2){ vidEl.style.display = 'none'; want({ jpg: 1 }); } }, 8000);
+  }
+  V.meta(v);
+  want({ rtc: v.fit ? 1 : 0 });
+  toast('📺 Tayangan langsung dari peranti lain');
+}
+
 /* ============ GAME 2: KAD KOLEKSI (DILUKIS OLEH APP) ============
    Tiada gambar untuk dimuat naik: setiap kad dilukis sebagai SVG daripada
    data di bawah (set, elemen, tier, emoji). 8 set × 12 kad = 96 kad.
@@ -5850,7 +6087,7 @@ const BT_CSS = `
 .bt-score .r{background:#C8102E}.bt-score .b{background:#1D4ED8}
 .bt-x{position:absolute;left:1.5cqw;top:50%;transform:translateY(-50%);z-index:6;width:clamp(28px,7cqh,40px);height:clamp(28px,7cqh,40px);border-radius:50%;
   background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:clamp(12px,3cqh,18px)}
-.bt-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;white-space:nowrap;padding:4px 16px;border-radius:6px;
+.bt-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;max-width:92%;text-align:center;padding:4px 16px;border-radius:6px;
   font-weight:800;letter-spacing:.08em;color:#fff;font-size:clamp(13px,4.4cqh,26px);text-shadow:0 2px 6px #000;background:rgba(0,0,0,.55);opacity:0;transition:opacity .25s}
 .bt-dmg{position:absolute;z-index:8;font-weight:900;color:#fff;-webkit-text-stroke:2px #B91C1C;paint-order:stroke fill;font-size:clamp(22px,8cqh,54px);pointer-events:none;animation:btDmg 1.1s ease-out forwards}
 .bt-dmg.crit{color:#FFE14D;-webkit-text-stroke:2px #9A3412;font-size:clamp(28px,11cqh,70px)}
@@ -5908,6 +6145,7 @@ function battleRun(tA, tB, mode){
     '</div>' +
     '<div class="bt-q" id="btQ0"></div>';
   document.body.appendChild(root); lockBody();
+  const live = liveHost('duel', root, { title: ai ? 'Duel Kad' : 'Duel Kumpulan' });
   const $b = s => root.querySelector(s);
   const act = p => p.deck[Math.min(p.i, p.deck.length - 1)];
   const alive = p => p.deck.filter(x => x.cur > 0).length;
@@ -5978,7 +6216,7 @@ function battleRun(tA, tB, mode){
         const bar = dEl.querySelector('.bt-hpbar i'); if (bar){ bar.style.width = Math.max(0, dx.cur / dx.hp * 100) + '%'; bar.style.background = hpCol(dx); }
         const r = dEl.getBoundingClientRect(), br = $b('#btBoard').getBoundingClientRect();
         const n = document.createElement('div'); n.className = 'bt-dmg' + (fast ? ' crit' : '');
-        n.textContent = '-' + dmg; n.style.left = (r.left - br.left + r.width / 2) + 'px'; n.style.top = (r.top - br.top + r.height * .3) + 'px';
+        n.textContent = '-' + dmg; n.style.left = ((r.left - br.left + r.width / 2) / br.width * 100) + '%'; n.style.top = ((r.top - br.top + r.height * .3) / br.height * 100) + '%';
         $b('#btBoard').appendChild(n); setTimeout(() => n.remove(), 1200);
       }
       banner((fast ? '⚡ KRITIKAL! ' : '') + esc(ax.c.name) + (adv > 1 ? ' · ELEMEN KUAT!' : adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFE14D' : '#fff', 1200);
@@ -6077,7 +6315,7 @@ function battleRun(tA, tB, mode){
     $b('#btBoard').appendChild(e);
     if (!ai || won0) confettiBurst(e, 80);
   }
-  const quit = () => { over = true; cancelAnimationFrame(raf); root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab(); };
+  const quit = () => { over = true; cancelAnimationFrame(raf); liveEnd(live); root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab(); };
   root.addEventListener('click', e => {
     const a = e.target.closest('[data-a]'); if (a){ const [k, i] = a.dataset.a.split(':').map(Number); return answer(k, i); }
     const x = e.target.closest('[data-x]'); if (!x) return;
@@ -6189,6 +6427,17 @@ const gameLine = g => (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' be
 /* ============ TAB GAME ============
    Tiga permainan, semuanya tanpa aset untuk dimuat naik: Kad Koleksi
    (dilukis oleh app), Larian Ilmu (3D) dan Sekolah Berhantu (3D).     */
+function liveSetHtml(){
+  const sw = (k, on, t, d) => '<button class="btn clip-s w-full flex items-center gap-3 !py-2 text-left mt-2' + (on ? ' btn-c' : '') + '" data-act="live-tog" data-k="' + k + '">' +
+    '<i class="fa-solid ' + (on ? 'fa-toggle-on' : 'fa-toggle-off') + ' text-[20px]"></i><div class="flex-1 min-w-0"><div class="text-[12px] font-bold">' + t + '</div><div class="text-[10px] leading-snug" style="opacity:.8">' + d + '</div></div></button>';
+  return '<details class="panel clip p-3 mt-3"><summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-tv text-cyan"></i> TAYANG LANGSUNG KE PROJEKTOR · ' +
+      (FB.on ? '<span class="text-cyan">semua peranti</span>' : '<span class="text-muted">Firebase belum aktif</span>') + '</summary>' +
+    '<div class="text-[11px] text-muted mt-2 leading-relaxed">Murid main di telefon, tablet di projektor memaparkan game yang sama serta-merta (papan Duel, soalan, skor dan gambar game 3D). ' +
+      'Buka EduRank di tablet dan biarkan — tayangan muncul sendiri bila game bermula.' +
+      (FB.on ? '' : ' <b style="color:#FFB347">Perlu Firebase (Tetapan → Penyegerakan Firebase) supaya berfungsi antara dua peranti.</b>') + '</div>' +
+    sw('cast', lvCastOn(), 'Siarkan game dari peranti ini', 'Hidupkan pada telefon yang dipegang murid.') +
+    sw('view', lvViewOn(), 'Papar game dari peranti lain', 'Hidupkan pada tablet yang disambung ke projektor.') + '</details>';
+}
 function viewGame(){
   const g = ['cards','run','escape'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[12px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
@@ -6196,7 +6445,7 @@ function viewGame(){
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
   return tabs + teamPanelHtml() +
-    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : viewCards()) +
+    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : viewCards()) + liveSetHtml() +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
 }
@@ -6307,6 +6556,7 @@ function runGame(THREE, sid, ac){
   const R = new THREE.WebGLRenderer({ canvas: $r('#rnCv'), antialias: true, powerPreference: 'high-performance' });
   R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   R.outputColorSpace = THREE.SRGBColorSpace;
+  const live = liveHost('run', root, { canvas: $r('#rnCv'), title: 'Larian Ilmu' });
   const scene = new THREE.Scene();
   const skyTex = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d');
     const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#2A1B5C'); gr.addColorStop(.45, '#C2508A'); gr.addColorStop(.7, '#FF9A4D'); gr.addColorStop(1, '#FFD27A');
@@ -6638,7 +6888,7 @@ function runGame(THREE, sid, ac){
     window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
     if (A) A.stop();
     scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
-    R.dispose(); root.remove(); unlockBody();
+    liveEnd(live); R.dispose(); root.remove(); unlockBody();
     if (S.ui.tab === 'arena') renderTab();
   }
   let last = performance.now();
@@ -6646,7 +6896,7 @@ function runGame(THREE, sid, ac){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!ended && !paused) update(dt);
-    R.render(scene, cam);
+    R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -7047,6 +7297,7 @@ function escRun(THREE, sid, ac){
 
   /* ---------- pemapar & pentas ---------- */
   const R = new THREE.WebGLRenderer({ canvas: $e('#escCv'), antialias: false, powerPreference: 'high-performance' });
+  const live = liveHost('esc', root, { canvas: $e('#escCv'), title: 'Sekolah Berhantu' });
   R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   R.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
@@ -7878,7 +8129,7 @@ function escRun(THREE, sid, ac){
       if (o.geometry) o.geometry.dispose();
       if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); if (m.emissiveMap) m.emissiveMap.dispose(); m.dispose(); });
     });
-    R.dispose();
+    R.dispose(); liveEnd(live);
     root.remove(); unlockBody();
     if (answered) save();                            // statistik kuiz pelajar
     if (S.ui.tab === 'arena') renderTab();
@@ -8006,7 +8257,7 @@ function escRun(THREE, sid, ac){
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!paused && !ended){ elapsed += dt; $e('#escTime').textContent = fmtSec(elapsed); update(dt, now); }
     ambient(dt, now);
-    R.render(scene, cam);
+    R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -8083,6 +8334,7 @@ const ACTS = {
   'chap-del': d => chapDel(d.id),
   'rpm': rpmModal,
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
+  'live-tog': d => { const k = d.k === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(k, localStorage.getItem(k) === '0' ? '1' : '0'); renderTab(); },
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
   'rpt-open': () => rptModal(),
@@ -8314,6 +8566,7 @@ function installGate(){
   renderAll();
   setTimeout(autoSubject, 400);
   fbInit();
+  liveWatch(); setInterval(liveWatch, 3000);         // tayangan langsung dari peranti lain
   window.addEventListener('beforeunload', () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} });
   window.addEventListener('storage', e => {
     if (e.key !== LS_KEY || !e.newValue) return;
