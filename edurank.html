@@ -6550,7 +6550,7 @@ const ST_IT = Object.fromEntries(ST_ITEMS.map(x => [x.id, x]));
 /* atlet: id, nama, emoji, peralatan yang biasa diminta, situasi pemakanan, huraian pakaian (prompt) */
 const ST_ATH = [
   ['bolasepak','Pemain Bola Sepak','🧒','bola_sepak but_bola pelindung_kaki stokin jersi sarung_gol','pre post hid','a football player boy in a red jersey and shorts, long socks'],
-  ['pecut','Pelari Pecut','🏃','kasut_larian jam_randik seluar_sukan botol_air','pre post','a sprinter girl in a yellow running singlet with a race bib, hijab sports cap'],
+  ['pecut','Pelari Pecut','🏃','kasut_larian jam_randik seluar_sukan botol_air','pre post','a sprinter girl in a yellow running singlet with a race bib, wearing a sports hijab'],
   ['maraton','Pelari Maraton','🏃‍♂️','kasut_larian botol_air jam_randik tuala','pre hid lemak','a marathon runner man with a headband and race number'],
   ['renang','Perenang','🏊','cermin_renang topi_renang tuala botol_air','post vit hid','a swimmer boy in a swimming jacket with goggles on his head'],
   ['badminton','Pemain Badminton','🙋‍♀️','raket_badminton bulu_tangkis kasut_larian tuala','pre hid vit','a badminton player girl in a blue sports shirt and skort, sports hijab'],
@@ -6582,37 +6582,51 @@ function storCfg(){ S.config.stor = Object.assign({ lvl:'mudah', sabar:0, syif:5
 function storData(){ S.stor = S.stor || {}; S.stor.best = S.stor.best || {}; S.stor.plays = S.stor.plays || {}; return S.stor; }
 
 /* ---------- ASET (pilihan): senarai, prompt & semakan fail ---------- */
-const ST_STYLE = 'Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view';
+const ST_STYLE = 'Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours';
+/* Nisbah gambar mengikut kotak dalam game. Alat AI memberi saiz piksel sendiri; yang penting NISBAH —
+   game menskala sendiri. sz = nisbah + saiz cadangan selepas dikecilkan. */
+const ST_AR = {
+  sq:   ['1:1 (cth. 1024×1024 → simpan 256×256)', 'Square 1:1 image.'],
+  sqL:  ['1:1 (cth. 1024×1024 → simpan 512×512)', 'Square 1:1 image.'],
+  tall: ['2:3 menegak (cth. 1024×1536 → simpan 512×768)', 'Tall portrait 2:3 image (1024x1536).'],
+  wide: ['3:2 melintang (cth. 1536×1024 → simpan 768×512)', 'Wide landscape 3:2 image (1536x1024).'],
+  bg:   ['3:2 atau 16:9 melintang (cth. 1536×1024 → simpan 1600×1000)', 'Wide landscape 3:2 image (1536x1024).']
+};
+const stA = (id, g, ar, p) => ({ id, g, ar, sz: ST_AR[ar][0], p: p + ' ' + ST_AR[ar][1] });
 const ST_ASSETS = [].concat(
-  [{ id:'bg_lantai', g:'Latar', sz:'1600×1000 (16:10)', p: ST_STYLE.replace('mobile game asset, ', '') + '. Empty room interior seen from a 3/4 top-down camera, wide 16:10 landscape. Left half: a school sports equipment store with light blue walls; right half: a healthy food cafe with mint green and cream walls; a wide doorway in the middle of the back wall. Clean light tiled floor, windows on the back wall, soft daylight. NO furniture, NO shelves, NO counters, NO people, NO text.' },
-   { id:'bg_menu', g:'Latar', sz:'1600×1000 (16:10)', p: ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Leave empty space at the top centre for a logo. No text.' }],
-  [['rak_bola','a tall wooden store shelf unit filled with sports balls of many kinds'],
-   ['rak_raket','a tall store rack holding badminton rackets, tennis rackets, hockey sticks and table tennis paddles'],
-   ['rak_pakai','a tall store shelf with folded sports jerseys, shorts, socks and running shoes'],
-   ['rak_fit','a tall store shelf with dumbbells, exercise mats, skipping ropes, cones, helmets and first aid kits'],
-   ['rak_buah','a cafe fruit and vegetable display stand with baskets of bananas, apples, oranges and greens'],
-   ['rak_sejuk','a glass-door drinks refrigerator filled with milk, water, coconut and sports drinks'],
-   ['rak_bijirin','a cafe shelf with bread, rice, oats, sweet potatoes, nuts and dates in jars'],
-   ['rak_snek','a small snack rack with chips, sweets, donuts and soda cans, marked with a red caution sign'],
-   ['dapur','a small cafe stove with a pot and a grill pan'],
+  [stA('bg_lantai', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile simulation game: an EMPTY room interior, camera facing the back wall straight-on and slightly from above, perfectly symmetric. The back wall fills the TOP 40% of the image and the tiled floor fills the BOTTOM 60%. Left half of the wall: light blue (school sports equipment store); right half: mint green and cream (healthy food cafe). One wide doorway exactly in the centre of the back wall. Small windows high on the wall, soft daylight, clean light floor tiles. NO furniture, NO shelves, NO counters, NO people, NO text.'),
+   stA('bg_menu', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Keep the important details in the middle; leave empty space at the top centre for a logo. No text.')],
+  /* rak & pintu: kotak dalam game tinggi & sempit → objek sempit di tengah, penuh ketinggian; tepi dipotong */
+  [['rak_bola','a tall narrow wooden store shelf unit filled with sports balls of many kinds'],
+   ['rak_raket','a tall narrow store rack holding badminton rackets, tennis rackets, hockey sticks and table tennis paddles'],
+   ['rak_pakai','a tall narrow store shelf with folded sports jerseys, shorts, socks and running shoes'],
+   ['rak_fit','a tall narrow store shelf with dumbbells, exercise mats, skipping ropes, cones, helmets and first aid kits'],
+   ['rak_buah','a tall narrow cafe display stand with baskets of bananas, apples, oranges and green vegetables on several levels'],
+   ['rak_sejuk','a tall narrow glass-door drinks refrigerator filled with milk, water, coconuts and sports drinks'],
+   ['rak_bijirin','a tall narrow cafe shelf with bread, rice, oats, sweet potatoes, nuts and dates in jars'],
+   ['rak_snek','a tall narrow snack rack with chips, sweets, donuts and soda cans, a small red caution sign on top'],
+   ['pintu_stor','a tall double loading-bay door of a store room, closed, grey metal with a small window']
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', front view. ' + d[0].toUpperCase() + d.slice(1) + '. The object stands upright, fills the FULL HEIGHT of the image and only the MIDDLE HALF of the width, bottom edge touching the bottom of the image. Transparent background, no text, no people.')),
+  [['dapur','a small cafe stove with a pot and a grill pan'],
    ['blender','a kitchen blender on a small counter'],
-   ['kaunter_stor','a long wooden service counter for a sports store, front view, blue panel, with a small bell'],
-   ['kaunter_kafe','a long cafe service counter, front view, green panel, with a small menu stand'],
-   ['meja_telefon','a small desk with an old-style office telephone and a clipboard'],
-   ['pintu_stor','a double loading-bay door of a store room with cardboard boxes stacked beside it'],
-   ['dulang','an empty plastic service tray, top view']
-  ].map(([id, d]) => ({ id, g:'Perabot & Stesen', sz:'512×512', p: ST_STYLE + '. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred, whole object visible, transparent background, no text, no people.' })),
+   ['meja_telefon','a small office desk with an old-style telephone and a clipboard on it'],
+   ['dulang','an empty plastic service tray seen from above']
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'sqL', ST_STYLE + ', slight 3/4 top-down view. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred and filling most of the image, transparent background, no text, no people.')),
+  /* kaunter: satu bahagian modular, diulang mendatar oleh game */
+  [['kaunter_stor','a sports store service counter, blue front panel with a light wooden top'],
+   ['kaunter_kafe','a cafe service counter, green front panel with a cream top']
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'wide', ST_STYLE + '. ONE modular section of ' + d + ', straight front view (not angled). The counter fills the whole image from the left edge to the right edge, with flat cut-off sides so several copies can be placed side by side seamlessly. Nothing on the counter top. Transparent background, no text, no people.')),
   [['pekerja_p','a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron'],
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
    ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
-  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).map(([id, d]) => ({ id, g:'Watak', sz:'512×768 (2:3)', p: ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. Single character centred, transparent background, no text.' })),
-  ST_ITEMS.map(x => ({ id: x.id, g: x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', sz:'256×256', p: ST_STYLE + '. Game item icon of ' + x.d + '. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.' })),
-  [['ui_syiling','a shiny gold coin with the letters RM embossed'],
+  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Transparent background, no text.')),
+  ST_ITEMS.map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, transparent background, no text, no ground shadow.')),
+  [['ui_syiling','a shiny gold coin with a simple embossed star'],
    ['ui_hati','a glossy red heart'],
    ['ui_telefon','a red ringing telephone with motion lines'],
    ['ui_kotak','a closed cardboard delivery box with tape'],
-   ['logo_stor','a game logo badge shape (no letters) combining a soccer ball, a dumbbell and an apple, blue and green']
-  ].map(([id, d]) => ({ id, g:'Ikon UI', sz:'256×256', p: ST_STYLE + '. Game UI icon: ' + d + '. Centred, transparent background.' + (id === 'logo_stor' ? ' Leave room for text to be added later.' : ' No text.') }))
+   ['logo_stor','a round game logo badge (no letters) combining a soccer ball, a dumbbell and an apple, blue and green']
+  ].map(([id, d]) => stA(id, 'Ikon UI', id === 'logo_stor' ? 'sqL' : 'sq', ST_STYLE + '. Game UI icon: ' + d + '. Centred, filling most of the image, transparent background, no text.'))
 );
 const ST_HAVE = new Map();                         // id → url fail yang wujud
 let ST_PROBED = null;
@@ -6632,7 +6646,8 @@ function storAssetsModal(){
   const body = '<div data-nohint="1">' +
     '<div class="panel clip-s p-3 text-[12px] leading-relaxed">' +
       '<div class="font-bold text-cyan mb-1">CARA JANA ASET (' + done + '/' + ST_ASSETS.length + ' siap)</div>' +
-      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). ChatGPT paling mudah untuk latar lutsinar.<br>' +
+      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). ChatGPT paling mudah untuk latar lutsinar (Gemini biasanya beri latar putih — buang latar selepas itu).<br>' +
+      '<b>Saiz:</b> alat AI memberi saiz piksel sendiri — yang penting <b>NISBAH</b> (1:1 segi empat, 2:3 menegak, 3:2 melintang). Prompt sudah menyebut nisbahnya; game menskala gambar sendiri. Saiz "simpan" ialah cadangan supaya fail kecil dan game laju.<br>' +
       '2. Tekan <b>Salin</b> pada satu prompt, tampal, jana. Untuk gaya seragam: selepas gambar pertama cantik, lampirkan gambar itu bersama prompt seterusnya dan tambah "same art style as the attached image".<br>' +
       '3. Jika latar tidak lutsinar, buang latar di <b>remove.bg</b> atau <b>Adobe Express</b> (percuma).<br>' +
       '4. Simpan dengan nama fail <b>tepat</b> seperti di bawah (cth. <span class="num">bola_sepak.png</span>), format .png atau .webp.<br>' +
@@ -6710,7 +6725,7 @@ const ST_CSS = `
 .st-shelf .box.k{background:linear-gradient(180deg,#F5F1E6,#D8D0BC);border-color:#9C8F70}
 .st-shelf .box.cold{background:linear-gradient(180deg,#DDF3FF,#9FD1EE);border-color:#5A90B5}
 .st-shelf .box .st-emo{font-size:2.2cqw;line-height:1}
-.st-shelf>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st-shelf>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom}
 .st-shelf .nm{position:relative;z-index:2;margin-bottom:-1.3cqw;background:#1E293B;color:#fff;font-size:1cqw;font-weight:800;letter-spacing:.06em;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35)}
 .st-shelf:active{transform:scale(.97)}
 .st-shelf.low .nm{background:#B91C1C}
@@ -6724,7 +6739,7 @@ const ST_CSS = `
 .st-slot.burn{background:#7F1D1D}
 @keyframes stPulse{50%{transform:scale(1.12)}}
 .st-door{left:45%;width:10%;top:9%;height:30%;cursor:pointer;border-radius:.6cqw .6cqw 0 0;background:linear-gradient(90deg,#64748B 0 49.5%,#334155 49.5% 50.5%,#64748B 50.5%);border:.3cqw solid #1E293B}
-.st-door>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st-door>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom}
 .st-phone{left:44%;width:12%;top:42%;height:8%;cursor:pointer;border-radius:.5cqw;background:linear-gradient(180deg,#A16207,#713F12);display:flex;align-items:center;justify-content:center;font-size:2.4cqw;z-index:4}
 .st-phone>img{position:absolute;left:0;right:0;bottom:0;width:100%;height:220%;object-fit:contain}
 .st-phone.ring{animation:stRing .25s infinite}
@@ -6733,7 +6748,7 @@ const ST_CSS = `
 .st-counter{top:50%;height:9%;border-radius:.6cqw;box-shadow:0 .6cqw 1cqw rgba(0,0,0,.25);z-index:3}
 .st-counter.s{left:2%;width:41.5%;background:linear-gradient(180deg,#60A5FA 0 22%,#1D4ED8 22%)}
 .st-counter.k{left:55.5%;width:42.5%;background:linear-gradient(180deg,#86EFAC 0 22%,#15803D 22%)}
-.st-counter>img{position:absolute;inset:-25% 0 0 0;width:100%;height:125%;object-fit:fill}
+.st-counter.tile{background-repeat:repeat-x;background-position:left bottom;background-size:auto 100%;box-shadow:none}
 .st-counter .nm{position:absolute;left:50%;bottom:.6cqw;transform:translateX(-50%);font-size:1.1cqw;font-weight:800;letter-spacing:.15em;color:#fff;opacity:.9;white-space:nowrap}
 .st-me{width:7%;height:15%;top:36%;z-index:2;transition:left .35s ease;display:flex;align-items:flex-end;justify-content:center;font-size:5cqw;pointer-events:none}
 .st-me img{width:100%;height:100%;object-fit:contain;object-position:bottom}
@@ -6840,8 +6855,8 @@ function storRun(team){
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
     '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('meja_telefon') ? stImg('meja_telefon', '') : '☎️') + '</div>' +
-    '<div class="st-counter s">' + (ST_HAVE.has('kaunter_stor') ? stImg('kaunter_stor', '') : '') + '<div class="nm">KAUNTER STOR</div></div>' +
-    '<div class="st-counter k">' + (ST_HAVE.has('kaunter_kafe') ? stImg('kaunter_kafe', '') : '') + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
+    '<div class="st-counter s' + (ST_HAVE.has('kaunter_stor') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_stor') + ')' : '') + '">' + '<div class="nm">KAUNTER STOR</div></div>' +
+    '<div class="st-counter k' + (ST_HAVE.has('kaunter_kafe') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_kafe') + ')' : '') + '">' + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
     '<div id="stCust"></div>' +
     '<div class="st-tray' + (ST_HAVE.has('dulang') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang') + ')' : '') + '"><div class="t">DULANG</div><div class="g" id="stTray"></div></div>' +
     '<div class="st-hud" id="stHud"></div>' +
