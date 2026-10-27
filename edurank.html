@@ -5494,6 +5494,214 @@ function liveOpen(v){
   toast('📺 Tayangan langsung dari peranti lain');
 }
 
+/* ============ LOBI GAME (menu sebelum bermain) ============
+   Setiap game dibuka melalui menu: MULA · PEMAIN (kumpulan) · TETAPAN · CARA MAIN · KELUAR.
+   Sementara menu dibuka, aset game dimuat dahulu (enjin 3D / gambar) supaya
+   permainan bermula lancar. Semua tetapan guru berada di dalam menu ini.     */
+const LB_CSS = `
+.lb{position:fixed;inset:0;z-index:970;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
+  background:radial-gradient(circle at 50% 20%,color-mix(in srgb,var(--c) 30%,transparent),transparent 60%),linear-gradient(180deg,#0B1220,#05080F)}
+.lb.img{background-size:cover;background-position:center}
+.lb-card{width:100%;max-width:440px;background:rgba(15,23,42,.92);border:1px solid color-mix(in srgb,var(--c) 55%,#22304D);border-radius:18px;padding:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px color-mix(in srgb,var(--c) 25%,transparent);animation:lbIn .35s ease-out}
+@keyframes lbIn{from{transform:translateY(16px) scale(.97);opacity:0}}
+.lb-ico{font-size:46px;line-height:1;text-align:center;filter:drop-shadow(0 0 14px var(--c))}
+.lb-ico img{height:80px}
+.lb-t{text-align:center;font-weight:800;letter-spacing:.2em;font-size:21px;margin-top:8px;color:var(--c);text-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
+.lb-d{text-align:center;font-size:12px;color:#94A3B8;margin-top:6px;line-height:1.5}
+.lb-load{margin:14px 0 4px;font-size:11px;color:#94A3B8;display:flex;align-items:center;gap:8px}
+.lb-load .bar{flex:1;height:6px;background:#1E293B;border-radius:9px;overflow:hidden}
+.lb-load .bar i{display:block;height:100%;width:0;background:var(--c);transition:width .25s}
+.lb-load.ok{color:#4ADE80}
+.lb-btn{width:100%;display:flex;align-items:center;gap:10px;margin-top:8px;padding:12px 14px;border-radius:12px;background:#1B2742;border:1px solid #2A3A5C;color:#fff;font-size:14px;font-weight:700;text-align:left}
+.lb-btn:active{transform:scale(.98)}
+.lb-btn .r{margin-left:auto;font-weight:500;font-size:12px;color:#94A3B8;display:flex;align-items:center;gap:6px;min-width:0}
+.lb-btn .r span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.lb-btn.go{background:var(--c);border-color:var(--c);color:#0B1220;justify-content:center;font-size:16px;letter-spacing:.06em;padding:14px}
+.lb-btn.go:disabled{opacity:.45}
+.lb-btn.x{background:transparent;color:#FCA5A5;justify-content:center}
+.lb-h{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.12em;font-size:13px;color:var(--c);margin-bottom:6px}
+.lb-h button{margin-right:4px;width:32px;height:32px;border-radius:50%;background:#1B2742;color:#fff}
+.lb-sec{font-size:10px;font-weight:700;letter-spacing:.14em;color:#94A3B8;margin:12px 0 4px}
+.lb-seg{display:flex;gap:4px;flex-wrap:wrap}
+.lb-seg button{flex:1;min-width:52px;padding:8px 4px;border-radius:8px;background:#1B2742;border:1px solid #2A3A5C;color:#CBD5E1;font-size:12px;font-weight:600}
+.lb-seg button.on{background:var(--c);border-color:var(--c);color:#0B1220}
+.lb-note{font-size:10px;color:#94A3B8;margin-top:4px;line-height:1.45}
+.lb-team{width:100%;display:flex;align-items:center;gap:10px;margin-top:6px;padding:9px 10px;border-radius:12px;background:#1B2742;border:2px solid transparent;color:#fff;text-align:left}
+.lb-team.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 15%,#1B2742)}
+.lb-team .m{font-size:10px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-scroll{max-height:52vh;overflow:auto;margin:0 -4px;padding:0 4px}
+.lb-how{font-size:12.5px;line-height:1.6;color:#CBD5E1}
+.lb-how b{color:#fff}
+.gc{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+.gc-p{width:100%;max-width:340px;background:#0F172A;border:1px solid #334155;border-radius:16px;padding:18px;text-align:center;color:#fff;animation:lbIn .2s ease-out}
+.gc-p .q{font-size:16px;font-weight:800;margin-top:6px}
+.gc-p .s{font-size:12px;color:#94A3B8;margin-top:6px;line-height:1.5}
+.gc-p .b{display:flex;gap:8px;margin-top:16px}
+.gc-p .b button{flex:1;padding:12px;border-radius:10px;font-weight:800;font-size:14px;background:#1E293B;color:#fff}
+.gc-p .b button.y{background:#DC2626}
+`;
+function lbStyle(){ if (!document.getElementById('lbCss')){ const s = document.createElement('style'); s.id = 'lbCss'; s.textContent = LB_CSS; document.head.appendChild(s); } }
+
+/* "Adakah anda pasti?" — di atas semua lapisan game */
+function gameConfirm(q, sub){
+  lbStyle();
+  return new Promise(res => {
+    const el = document.createElement('div'); el.className = 'gc';
+    el.innerHTML = '<div class="gc-p"><div style="font-size:34px">🚪</div><div class="q">' + esc(q || 'Adakah anda pasti mahu keluar?') + '</div>' +
+      '<div class="s">' + (sub || 'Permainan akan ditamatkan dan kemajuan pusingan ini tidak disimpan.') + '</div>' +
+      '<div class="b"><button data-g="0">Tidak, sambung</button><button class="y" data-g="1">Ya, keluar</button></div></div>';
+    const done = v => { el.remove(); res(v); };
+    el.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (b) done(b.dataset.g === '1'); else if (e.target === el) done(false); });
+    document.body.appendChild(el);
+  });
+}
+
+/* ---------- takrif setiap game ---------- */
+const lbSeg = (k, label, choices, note) => ({ k, label, choices, note });
+const GAME_LOBBY = {
+  cards: {
+    title: 'DUEL KAD', ico: '⚔️', c: '#FF8A3D',
+    desc: '3 kad terkuat kumpulan lawan Penjaga Kad atau kumpulan lain. Jawab betul untuk menyerang — pantas = kritikal!',
+    cfg: () => S.config,
+    opts: () => [lbSeg('duelQ', 'MASA MENJAWAB', [[10,'10s'],[15,'15s'],[20,'20s'],[30,'30s'],[45,'45s']], 'Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.')],
+    starts: [['🤖 LAWAN KOMPUTER', () => duelStart()], ['👥 LAWAN KUMPULAN', () => pvpSetup()]],
+    how: () => 'Setiap pusingan satu soalan. <b>Betul</b> = kad kamu menyerang, <b>salah / masa tamat</b> = kad lawan menyerang. Elemen yang menang ×1.5: ' +
+      ELEMENTS.map((e, i) => e.ico + '›' + ELEMENTS[(i + 1) % ELEMENTS.length].ico).join(' ') + '.<br><br><b>Lawan Kumpulan</b>: 2 kumpulan, 1 peranti — <b>Rebut Jawapan</b> (duduk bertentang) atau <b>Bergilir</b>. Kumpulan tanpa kad diberi kad latihan.'
+  },
+  run: {
+    title: 'LARIAN ILMU', ico: '🏃‍♂️', c: '#FFB347',
+    desc: 'Lari di jalan sekolah, elak halangan, kutip bintang, dan lari melalui gerbang jawapan yang betul.',
+    cfg: () => runCfg(),
+    opts: () => [
+      lbSeg('lvl', 'KELAJUAN', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']], 'Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.'),
+      lbSeg('qt', 'MASA MEMBACA SOALAN', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']], 'Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.')],
+    preload: async p => { p(.3); await import(ESC_THREE); p(1); },
+    starts: [['▶ MULA LARI', () => runStart()]],
+    how: () => 'Seorang mengawal, ahli lain membantu memilih gerbang jawapan.<br><b>Telefon:</b> leret kiri/kanan tukar lorong, leret atas untuk lompat.<br><b>Komputer:</b> ← → atau A D, lompat ↑ / W / Space.<br>Skor ÷ 120 = RP (2 hingga 25 RP).'
+  },
+  escape: {
+    title: 'SEKOLAH BERHANTU', ico: '👻', c: '#F87171',
+    desc: 'Terperangkap di sekolah pada waktu malam. Selesaikan teka-teki untuk mengumpul kunci, kemudian lari ke pintu KELUAR.',
+    cfg: () => escCfg(),
+    opts: () => { const c = escCfg(), D = ESC_DIFF[c.diff] || ESC_DIFF.sederhana; return [
+      lbSeg('diff', 'TAHAP KESUKARAN', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']], D.keys + ' kunci · ' + D.lives + ' nyawa · ' + (+c.qt || D.qtime) + ' saat setiap soalan'),
+      lbSeg('qt', 'MASA MENJAWAB SOALAN', [[0,'Ikut tahap'],[15,'15s'],[25,'25s'],[40,'40s'],[60,'60s']], 'Masa untuk setiap soalan papan hitam.'),
+      lbSeg('scare', 'TAHAP SERAM', [['penuh','Penuh'],['lembut','Lembut']], c.scare === 'lembut' ? 'Tiada wajah mengejut dan jeritan — sesuai untuk murid kecil.' : 'Wajah mengejut + jeritan bila ditangkap.'),
+      lbSeg('ghost', 'HANTU', [['rawak','Rawak'],['putih','Putih'],['pontianak','Pontianak'],['toyol','Toyol']], c.ghost === 'rawak' ? 'Hantu dipilih secara rawak setiap permainan.' : ESC_GHOSTS[c.ghost].note),
+      lbSeg('light', 'KECERAHAN', [['gelap','Gelap'],['biasa','Biasa'],['terang','Terang']]),
+      lbSeg('rp', 'RP MAKSIMUM', [[15,'15'],[30,'30'],[50,'50']], 'Mudah ×0.8 · Sukar ×1.3.')]; },
+    preload: async p => { p(.3); await import(ESC_THREE); p(1); },
+    starts: [['🚪 MASUK SEKOLAH', () => escStart()]],
+    how: () => 'Ahli kumpulan berbincang dan menjawab bersama. Sembunyi dalam <b>loker merah</b> jika dikejar!<br><b>Telefon:</b> sentuh kiri untuk berjalan, seret kanan untuk melihat.<br><b>Komputer:</b> WASD / anak panah + seret tetikus · E untuk berinteraksi.'
+  },
+  stor: {
+    title: 'SIMULASI STOR SUKAN', ico: '🏪', c: '#38BDF8',
+    logo: () => ST_HAVE.has('logo_stor') ? ST_HAVE.get('logo_stor') : '', bg: () => ST_HAVE.has('bg_menu') ? ST_HAVE.get('bg_menu') : '',
+    desc: 'Uruskan Stor Sukan dan Kedai Sihat. Sediakan peralatan dan makanan bernutrisi untuk atlet sebelum kesabaran mereka habis!',
+    cfg: () => storCfg(),
+    opts: () => [
+      lbSeg('lvl', 'TAHAP', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']], 'Mudah: 1–2 barang, gambar ditunjuk. Sederhana: lebih ramai pelanggan. Pakar: makanan diminta ikut <b>kumpulan nutrisi</b> sahaja.'),
+      lbSeg('sabar', 'MASA SABAR PELANGGAN', [[0,'Auto'],[40,'40s'],[60,'60s'],[90,'90s'],[120,'120s']]),
+      lbSeg('syif', 'TEMPOH SYIF', [[3,'3 min'],[5,'5 min'],[8,'8 min']]),
+      lbSeg('watak', 'WATAK PEKERJA', [['p','Perempuan'],['l','Lelaki']])],
+    extra: () => '<button class="lb-btn" data-lb="assets">🖼️ Aset & Prompt Gambar<span class="r">' + ST_ASSETS.filter(a => ST_HAVE.has(a.id)).length + '/' + ST_ASSETS.length + ' siap ›</span></button>',
+    preload: async p => {
+      await storProbe(); p(.1);
+      const urls = [...ST_HAVE.values()]; let n = 0;
+      await Promise.all(urls.map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = () => { n++; p(.1 + .9 * n / urls.length); r(); }; im.src = u; })));
+      p(1);
+    },
+    starts: [['🏪 BUKA KEDAI', () => storStart()]],
+    how: () => '<b>Ketik atau seret</b> barang dari rak ke <b>dulang</b>, kemudian seret dulang/barang ke atlet (atau ketik atlet). Sesetengah makanan perlu dimasak di <b>dapur</b> atau dikisar di <b>blender</b>.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
+  }
+};
+
+/* ---------- lobi ---------- */
+let LOBBY = null;
+function gameLobby(k){
+  const def = GAME_LOBBY[k]; if (!def) return;
+  if (!classTeams().length) return toast('Cipta kumpulan dahulu di tab Kumpulan.', null, true);
+  lbStyle();
+  if (LOBBY) LOBBY.close();
+  const o = arenaUi();
+  if (!classTeams().some(g => g.id === o.team)) o.team = classTeams()[0].id;
+  let view = 'main', ready = !def.preload, prog = 0;
+  const el = document.createElement('div');
+  el.className = 'lb'; el.style.setProperty('--c', def.c);
+  const bg = def.bg && def.bg();
+  if (bg){ el.classList.add('img'); el.style.backgroundImage = 'linear-gradient(rgba(5,8,15,.55),rgba(5,8,15,.85)),url(' + bg + ')'; }
+  document.body.appendChild(el); lockBody();
+  const loadHtml = () => def.preload ? '<div class="lb-load' + (ready ? ' ok' : '') + '" id="lbLoad"><div class="bar"><i style="width:' + Math.round(prog * 100) + '%"></i></div><span>' +
+    (ready ? '✓ Sedia' : 'Memuatkan… ' + Math.round(prog * 100) + '%') + '</span></div>' : '';
+  const head = () => {
+    const logo = def.logo && def.logo();
+    return '<div class="lb-ico">' + (logo ? '<img src="' + logo + '" alt="">' : def.ico) + '</div><div class="lb-t">' + def.title + '</div>';
+  };
+  function paint(){
+    const t = teamOf(o.team);
+    let h = '';
+    if (view === 'main'){
+      h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() +
+        def.starts.map(([label], i) => '<button class="lb-btn go" data-lb="go' + i + '"' + (ready ? '' : ' disabled') + '>' + label + '</button>').join('') +
+        '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>' +
+        '<button class="lb-btn" data-lb="set">⚙️ Tetapan<span class="r">tahap & masa ›</span></button>' +
+        '<button class="lb-btn" data-lb="how">📖 Cara Main<span class="r">›</span></button>' +
+        '<button class="lb-btn x" data-lb="exit">✕ Keluar</button>';
+    } else if (view === 'team'){
+      h = '<div class="lb-h"><button data-lb="back">‹</button>PILIH KUMPULAN</div><div class="lb-scroll">' + classTeams().map(g =>
+        '<button class="lb-team' + (g.id === o.team ? ' on' : '') + '" data-lt="' + g.id + '">' + teamAvatar(g.id, 34) +
+        '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">' + esc(g.name) + '</div><div class="m">' + esc(teamMembersTxt(g.id)) + '</div></div>' +
+        (g.id === o.team ? '<span style="color:var(--c);font-weight:800">✓</span>' : '') + '</button>').join('') + '</div>' +
+        '<div class="lb-note" style="margin-top:10px">Markah game = <b>TP</b> untuk setiap ahli kumpulan yang dipilih.</div>';
+    } else if (view === 'set'){
+      const cfg = def.cfg();
+      h = '<div class="lb-h"><button data-lb="back">‹</button>TETAPAN GURU</div><div class="lb-scroll">' + def.opts().map(op =>
+        '<div class="lb-sec">' + op.label + '</div><div class="lb-seg">' + op.choices.map(([v, l]) =>
+          '<button class="' + (String(cfg[op.k] == null && op.k === 'duelQ' ? duelQ() : cfg[op.k]) === String(v) ? 'on' : '') + '" data-ls="' + op.k + '" data-lv="' + v + '" data-ln="' + (typeof v === 'number' ? 1 : 0) + '">' + l + '</button>').join('') + '</div>' +
+        (op.note ? '<div class="lb-note">' + op.note + '</div>' : '')).join('') +
+        (def.extra ? def.extra() : '') +
+        '<div class="lb-sec">TAYANG LANGSUNG KE PROJEKTOR</div>' +
+        '<div class="lb-seg"><button class="' + (lvCastOn() ? 'on' : '') + '" data-lc="cast">📡 Siarkan peranti ini</button><button class="' + (lvViewOn() ? 'on' : '') + '" data-lc="view">📺 Papar dari peranti lain</button></div>' +
+        '<div class="lb-note">' + (FB.on ? 'Firebase aktif — berfungsi antara telefon & tablet.' : 'Perlu Firebase (Tetapan → Penyegerakan Firebase) untuk dua peranti.') + '</div></div>';
+    } else if (view === 'how'){
+      h = '<div class="lb-h"><button data-lb="back">‹</button>CARA MAIN</div><div class="lb-how">' + def.how() + '</div>' +
+        '<div class="lb-note" style="margin-top:12px"><i class="fa-solid fa-circle-question"></i> Soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b> (' + qBank(S.ui.activeSubjectId).length + ' soalan; jika kosong, soalan matematik dijana).</div>';
+    }
+    el.innerHTML = '<div class="lb-card">' + h + '</div>';
+  }
+  const setProg = v => {
+    prog = Math.max(prog, v);
+    if (view === 'main'){ const b = el.querySelector('#lbLoad .bar i'), s = el.querySelector('#lbLoad span'); if (b){ b.style.width = Math.round(prog * 100) + '%'; s.textContent = 'Memuatkan… ' + Math.round(prog * 100) + '%'; } }
+  };
+  const close = () => { if (!el.isConnected) return; el.remove(); unlockBody(); if (LOBBY && LOBBY.el === el) LOBBY = null; };
+  LOBBY = { el, close, k };
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-lb],[data-lt],[data-ls],[data-lc]'); if (!b) return;
+    sfx('flip');
+    if (b.dataset.lt){ o.team = b.dataset.lt; save(); view = 'main'; paint(); if (S.ui.tab === 'arena') renderTab(); return; }
+    if (b.dataset.ls){ const cfg = def.cfg(); cfg[b.dataset.ls] = b.dataset.ln === '1' ? +b.dataset.lv : b.dataset.lv; save(); paint(); return; }
+    if (b.dataset.lc){ const key = b.dataset.lc === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(key, localStorage.getItem(key) === '0' ? '1' : '0'); paint(); return; }
+    const a = b.dataset.lb;
+    if (a === 'back'){ view = 'main'; return paint(); }
+    if (a === 'team' || a === 'set' || a === 'how'){ view = a; return paint(); }
+    if (a === 'assets'){ close(); storProbe().then(storAssetsModal); return; }
+    if (a === 'exit') return close();
+    if (a.indexOf('go') === 0 && ready){
+      if (!teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
+      const fn = def.starts[+a.slice(2)][1];
+      close(); fn();                                   // dipanggil terus dalam sentuhan: AudioContext dibenarkan
+    }
+  });
+  paint();
+  if (def.preload){
+    const t0 = Date.now();
+    def.preload(setProg).catch(err => { console.warn('pramuat', err); })
+      .then(() => new Promise(r => setTimeout(r, Math.max(0, 600 - (Date.now() - t0)))))   // paparan "Memuatkan" sekurang-kurangnya sekejap
+      .then(() => { if (!el.isConnected) return; ready = true; prog = 1; if (view === 'main') paint(); });
+  }
+}
+
 /* ============ GAME 2: KAD KOLEKSI (DILUKIS OLEH APP) ============
    Tiada gambar untuk dimuat naik: setiap kad dilukis sebagai SVG daripada
    data di bawah (set, elemen, tier, emoji). 8 set × 12 kad = 96 kad.
@@ -5825,13 +6033,7 @@ function viewCards(){
       '<div class="flex-1"><div class="font-bold tracking-widest text-[15px] text-orange">DUEL KAD</div>' +
       '<div class="text-[11px] text-muted leading-snug">3 kad terkuat lawan Penjaga Kad (komputer) atau lawan rakan sekelas. Jawab betul untuk menyerang — pantas = kritikal! Elemen: ' +
         ELEMENTS.map((e, i) => e.ico + '›' + ELEMENTS[(i + 1) % ELEMENTS.length].ico).join(' ') + '</div></div></div>' +
-      '<div class="lbl mt-3">MASA MENJAWAB (KESUKARAN)</div><div class="flex gap-1 mt-1">' + [10,15,20,30,45].map(v =>
-        '<button class="btn clip-s flex-1 !py-1 text-[11px] num' + (duelQ() === v ? ' btn-o' : '') + '" data-act="duel-q" data-id="' + v + '">' + v + 's</button>').join('') + '</div>' +
-      '<div class="text-[10px] text-muted mt-1">Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.</div>' +
-      '<div class="grid grid-cols-2 gap-2 mt-2">' +
-        '<button class="btn btn-o clip-s !py-2 text-[13px]" data-act="duel-start"' + (st.have ? '' : ' disabled') + '><i class="fa-solid fa-robot"></i> ' + (st.have ? 'LAWAN KOMPUTER' : 'BUKA PACK DAHULU') + '</button>' +
-        '<button class="btn btn-c clip-s !py-2 text-[13px]" data-act="duel-pvp"><i class="fa-solid fa-user-group"></i> LAWAN RAKAN</button></div>' +
-      '<div class="text-[10px] text-muted mt-1">Lawan Rakan: 2 murid, 1 telefon — mod <b>Rebut Jawapan</b> (duduk bertentang) atau <b>Bergilir</b>. Murid tanpa kad diberi kad latihan.</div></div>';
+      '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN DUEL KAD</button></div>';
   }
   h += pvpBoardHtml();
   h += '<div class="space-y-2 mt-3">' + PACKS.map(p => {
@@ -6088,7 +6290,7 @@ const BT_CSS = `
 .bt-score .r{background:#C8102E}.bt-score .b{background:#1D4ED8}
 .bt-x{position:absolute;left:1.5cqw;top:50%;transform:translateY(-50%);z-index:6;width:clamp(28px,7cqh,40px);height:clamp(28px,7cqh,40px);border-radius:50%;
   background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:clamp(12px,3cqh,18px)}
-.bt-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;max-width:92%;text-align:center;padding:4px 16px;border-radius:6px;
+.bt-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;width:max-content;max-width:92%;text-align:center;padding:4px 16px;border-radius:6px;
   font-weight:800;letter-spacing:.08em;color:#fff;font-size:clamp(13px,4.4cqh,26px);text-shadow:0 2px 6px #000;background:rgba(0,0,0,.55);opacity:0;transition:opacity .25s}
 .bt-dmg{position:absolute;z-index:8;font-weight:900;color:#fff;-webkit-text-stroke:2px #B91C1C;paint-order:stroke fill;font-size:clamp(22px,8cqh,54px);pointer-events:none;animation:btDmg 1.1s ease-out forwards}
 .bt-dmg.crit{color:#FFE14D;-webkit-text-stroke:2px #9A3412;font-size:clamp(28px,11cqh,70px)}
@@ -6320,7 +6522,7 @@ function battleRun(tA, tB, mode){
   root.addEventListener('click', e => {
     const a = e.target.closest('[data-a]'); if (a){ const [k, i] = a.dataset.a.split(':').map(Number); return answer(k, i); }
     const x = e.target.closest('[data-x]'); if (!x) return;
-    if (x.dataset.x === 'quit') return quit();
+    if (x.dataset.x === 'quit'){ if (over) return quit(); gameConfirm().then(ok => ok && quit()); return; }
     if (x.dataset.x === 'again'){ quit(); setTimeout(() => battleRun(tA, tB, mode), 80); }
   });
   paintBoard(); paintQ();
@@ -6445,8 +6647,8 @@ function viewGame(){
   const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
-  return tabs + teamPanelHtml() +
-    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : viewCards()) + liveSetHtml() +
+  return tabs + (g === 'cards' ? teamPanelHtml() : '') +          // kumpulan & tetapan dipilih dalam menu game
+    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
 }
@@ -6685,20 +6887,7 @@ function viewStor(){
     '<div style="font-size:40px;line-height:1;display:flex;justify-content:center">' + (ST_HAVE.has('logo_stor') ? '<img src="' + ST_HAVE.get('logo_stor') + '" style="height:72px" alt="">' : '🏪') + '</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#7DD3FC;text-shadow:0 0 12px rgba(60,160,255,.6)">SIMULASI STOR SUKAN</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Uruskan <b class="text-cyan">Stor Sukan</b> dan <b style="color:#4ADE80">Kedai Sihat</b>. Atlet datang meminta peralatan dan makanan bernutrisi — ambil dari rak, masak jika perlu, dan serahkan sebelum <b style="color:#FF7A7A">kesabaran</b> mereka habis. Jawab telefon pembekal untuk menambah stok!</div></div>';
-  h += '<div class="panel clip p-3 mt-3">' +
-    '<div class="text-[11px] text-muted"><i class="fa-solid fa-users text-cyan"></i> Dimainkan oleh <b>' + esc(teamName(o.team)) + '</b>. Pelanggan yang dilayan + soalan pembekal dikira sebagai TP.</div>' +
-    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="stor-start"><i class="fa-solid fa-store"></i> BUKA KEDAI</button>' +
-    '<div class="text-[10px] text-muted mt-2 text-center">Telefon: pegang melintang untuk paparan penuh</div></div>';
-  const seg = (k, opts) => '<div class="flex gap-1 mt-1">' + opts.map(([v, l]) =>
-    '<button class="btn clip-s flex-1 !py-1.5 !px-1 text-[11px] ' + (String(c[k]) === String(v) ? 'btn-o' : '') + '" data-act="stor-opt" data-k="' + k + '" data-v="' + v + '">' + l + '</button>').join('') + '</div>';
-  h += '<details class="panel clip p-3 mt-3"' + (o.storSet ? ' open' : '') + ' ontoggle="arenaUi().storSet=this.open">' +
-    '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">' + ST_LVL[c.lvl].name + '</span> · ' + c.syif + ' min</summary>' +
-    '<div class="lbl mt-3">TAHAP</div>' + seg('lvl', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']]) +
-    '<div class="text-[10px] text-muted mt-1">Mudah: 1–2 barang, gambar ditunjuk. Sederhana: lebih ramai pelanggan. Pakar: makanan diminta ikut <b>kumpulan nutrisi</b> sahaja (cth. "Protein ×2") — murid perlu tahu makanan mana.</div>' +
-    '<div class="lbl mt-3">MASA SABAR PELANGGAN</div>' + seg('sabar', [[0,'Auto'],[40,'40s'],[60,'60s'],[90,'90s'],[120,'120s']]) +
-    '<div class="lbl mt-3">TEMPOH SYIF</div>' + seg('syif', [[3,'3 min'],[5,'5 min'],[8,'8 min']]) +
-    '<div class="lbl mt-3">WATAK PEKERJA</div>' + seg('watak', [['p','Perempuan'],['l','Lelaki']]) +
-    '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="stor-assets"><i class="fa-solid fa-images text-cyan"></i> Aset & Prompt Gambar (' + have + '/' + ST_ASSETS.length + ' siap)</button></details>';
+  h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="stor"><i class="fa-solid fa-play"></i> MAIN</button>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">KEDAI TERBAIK (RM)</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
     '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#4ADE80">RM' + d.best[g.id] + '</span></div>').join('') + '</div>';
@@ -6804,7 +6993,8 @@ const ST_CSS = `
 .st-tray .g>div.x::after{content:'⚠️';position:absolute;right:-.3cqw;top:-.5cqw;font-size:1.2cqw}
 .st-sup{left:45.5%;width:9%;top:13%;height:26%;z-index:4;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;font-size:5cqw}
 .st-sup .bb{position:absolute;top:-2.6cqw;left:50%;transform:translateX(-50%);background:#F59E0B;color:#111;font-size:1.05cqw;font-weight:800;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;animation:stPulse 1s infinite}
-.st-pop{inset:8% 0 0 0;z-index:30;background:rgba(2,6,23,.55);display:flex;align-items:flex-start;justify-content:center;padding-top:2cqw}
+.st-pop{left:0;right:0;top:8%;z-index:30;display:flex;align-items:flex-start;justify-content:center;padding-top:1.2cqw;pointer-events:none!important}
+.st-pop .pn{pointer-events:auto}
 .st-pop .pn{background:#0F172A;border:.25cqw solid #38BDF8;border-radius:1.2cqw;padding:1.2cqw;width:62%;box-shadow:0 1cqw 3cqw rgba(0,0,0,.6)}
 .st-pop .hd{display:flex;align-items:center;font-weight:800;font-size:1.6cqw;letter-spacing:.06em}
 .st-pop .hd span{margin-left:auto;font-size:1cqw;color:#94A3B8;font-weight:600}
@@ -6842,6 +7032,12 @@ const ST_CSS = `
 #stCust,#stSup,#stPop,#stCall,#stEnd{inset:0;pointer-events:none}
 .st-cu,.st-sup,.st-pop,.st-call,.st-end{pointer-events:auto;position:absolute}
 .st-shelf[data-z="k"] .st-si i{font-size:1.75cqw}
+.st [data-it],.st [data-tr],.st .st-slot{touch-action:none}
+.st-ghost{position:fixed;z-index:2001;width:64px;height:64px;transform:translate(-50%,-65%) scale(1.1);pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:44px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.st-ghost img{width:100%;height:100%;object-fit:contain}
+.st-ghost,.st-ghost *{pointer-events:none!important}
+.st-hot{outline:3px dashed #FACC15;outline-offset:3px;border-radius:1cqw}
+.st-cu.st-hot{outline:none}.st-cu.st-hot .who{filter:drop-shadow(0 0 1cqw #FACC15)}
 .bb img,.st-hud .pill img{width:1.6cqw;height:1.6cqw;object-fit:contain;vertical-align:middle}
 .st-tray.img{background:center/contain no-repeat var(--tray),rgba(15,23,42,.6)}
 `;
@@ -7180,17 +7376,24 @@ function storRun(team){
     if (STOR && STOR.closed) return;
     if (!over && (served || left)){ over = true; clearInterval(loop); save(); }
     over = true; clearInterval(loop); STOR = null;
-    liveEnd(live); root.remove(); unlockBody();
+    liveEnd(live); unDrag(); root.remove(); unlockBody();
     if (S.ui.tab === 'arena') renderTab();
   }
   root.addEventListener('click', e => {
     const t = e.target;
-    const x = t.closest('[data-x]'); if (x){ if (x.dataset.x === 'again'){ quit(); setTimeout(storStart, 80); } else quit(); return; }
+    if (performance.now() - dragEnd < 350) return;      // klik selepas seret diabaikan
+    const x = t.closest('[data-x]'); if (x){
+      if (x.dataset.x === 'again'){ quit(); setTimeout(storStart, 80); return; }
+      if (over) return quit();
+      const was = paused; paused = true;
+      gameConfirm().then(ok => { if (ok) quit(); else { paused = was; lastTick = performance.now(); } });
+      return;
+    }
     if (over) return;
     const an = t.closest('[data-ans]'); if (an){ callAnsText = call ? call.q.c[call.q.a] : ''; return callAnswer(+an.dataset.ans); }
     if (call) return;
     const it = t.closest('[data-it]'); if (it) return takeItem(it.dataset.it);
-    if (t.closest('[data-pc]') && !t.closest('.pn')){ $s('#stPop').innerHTML = ''; return; }
+    if (!t.closest('.st-pop') && $s('#stPop').innerHTML) $s('#stPop').innerHTML = '';   // ketik di luar panel rak = tutup panel, tindakan diteruskan
     if (t.closest('.st-pop')) return;
     const sh = t.closest('[data-sh]'); if (sh) return openShelf(sh.dataset.sh);
     const ss = t.closest('[data-ss]'); if (ss) return takeStation(ss.dataset.ss.slice(0, -1), +ss.dataset.ss.slice(-1));
@@ -7200,6 +7403,58 @@ function storRun(team){
     if (t.closest('[data-sup]')) return receive();
     if (t.closest('[data-door]')) return msg(sup && sup.here ? 'Ketik pembekal untuk terima stok' : 'Tiada penghantaran sekarang.', '#94A3B8', 900);
   });
+  /* ---------- seret & lepas: rak → dulang/atlet, dulang → atlet, dapur/blender → dulang/atlet ---------- */
+  let drag = null, dragEnd = 0;
+  const dropAt = (x, y) => {
+    const el = document.elementFromPoint(x, y); if (!el || !root.contains(el)) return null;
+    return el.closest('[data-cu]') || el.closest('.st-tray') || el.closest('[data-sh]') || null;
+  };
+  root.addEventListener('pointerdown', e => {
+    if (over || call) return;
+    const src = e.target.closest('[data-it],[data-tr],.st-slot.ready'); if (!src) return;
+    drag = { src, x: e.clientX, y: e.clientY, on: false, hot: null,
+      kind: src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : 'ss',
+      id: src.dataset.it || src.dataset.tr || src.dataset.ss };
+  });
+  window.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (!drag.on){
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 10) return;
+      drag.on = true;
+      const itemId = drag.kind === 'it' ? drag.id : drag.kind === 'tr' ? (tray[+drag.id] || {}).id : ((stn[drag.id.slice(0, -1)] || [])[+drag.id.slice(-1)] || {}).id;
+      if (!itemId){ drag = null; return; }
+      drag.g = document.createElement('div'); drag.g.className = 'st-ghost'; drag.g.innerHTML = icon(itemId);
+      document.body.appendChild(drag.g);
+      if (drag.kind === 'it'){ const p = $s('#stPop'); p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }   // nampak atlet di bawah
+      sfx('flip');
+    }
+    drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
+    const hot = dropAt(e.clientX, e.clientY);
+    if (hot !== drag.hot){ if (drag.hot) drag.hot.classList.remove('st-hot'); drag.hot = hot; if (hot) hot.classList.add('st-hot'); }
+  });
+  const endDrag = e => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.on) return;                                  // hanya ketik: biar pengendali klik biasa
+    dragEnd = performance.now();
+    d.g.remove(); if (d.hot) d.hot.classList.remove('st-hot');
+    const p = $s('#stPop'); p.style.visibility = ''; p.style.pointerEvents = '';
+    const tgt = e.type === 'pointerup' ? d.hot : null;     // sasaran terakhir yang menyala (panel rak sudah dipapar semula)
+    const cu = tgt && tgt.dataset.cu, toTray = tgt && tgt.classList.contains('st-tray'), toShelf = tgt && tgt.dataset.sh;
+    if (d.kind === 'it'){
+      if (cu){ const n = tray.length; takeItem(d.id); $s('#stPop').innerHTML = ''; if (tray.length > n) serve(cu[0], +cu[1]); }
+      else if (toTray) takeItem(d.id);
+    } else if (d.kind === 'tr'){
+      if (cu) serve(cu[0], +cu[1]); else if (toShelf) trayBack(+d.id);
+    } else {
+      const k = d.id.slice(0, -1), i = +d.id.slice(-1);
+      if (cu){ const n = tray.length; takeStation(k, i); if (tray.length > n) serve(cu[0], +cu[1]); }
+      else if (toTray) takeStation(k, i);
+    }
+  };
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  const unDrag = () => { window.removeEventListener('pointerup', endDrag); window.removeEventListener('pointercancel', endDrag); };
   hud(); paintTray(); paintStn(); paintShelves();
   msg('KEDAI DIBUKA! 🏪', '#FACC15', 1600);
 }
@@ -7234,21 +7489,7 @@ function viewRun(){
     '<div style="font-size:40px;line-height:1">🏃‍♂️</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FFB347;text-shadow:0 0 12px rgba(255,140,60,.6)">LARIAN ILMU</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Lari secepat mungkin di jalan sekolah! Elak halangan, kutip <b style="color:#FFD76A">bintang</b>, dan bila soalan muncul, lari melalui <b class="text-cyan">gerbang jawapan yang betul</b>. Makin jauh, makin laju!</div></div>';
-  h += '<div class="panel clip p-3 mt-3">' +
-    '<div class="text-[11px] text-muted"><i class="fa-solid fa-users text-cyan"></i> Dimainkan oleh <b>' + esc(teamName(o.team)) + '</b> — seorang mengawal, ahli lain membantu memilih gerbang jawapan.</div>' +
-    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-circle-question"></i> ' +
-      (bank.length ? bank.length + ' soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b>' : 'Bank soalan kosong — soalan <b>matematik</b> dijana automatik') + '</div>' +
-    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Skor ÷ 120 = RP (2 hingga 25 RP setiap larian)</div>' +
-    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="run-start"><i class="fa-solid fa-person-running"></i> MULA LARI</button>' +
-    '<div class="text-[10px] text-muted mt-2 text-center leading-relaxed">Telefon: leret kiri/kanan tukar lorong, leret atas untuk lompat<br>Komputer: ← → atau A D, lompat ↑ / W / Space</div></div>';
-  const rc = runCfg(), rseg = (k, opts) => '<div class="flex gap-1 mt-1">' + opts.map(([v, l]) =>
-    '<button class="btn clip-s flex-1 !py-1.5 !px-1 text-[11px] ' + (String(rc[k]) === String(v) ? 'btn-o' : '') + '" data-act="run-opt" data-k="' + k + '" data-v="' + v + '">' + l + '</button>').join('') + '</div>';
-  h += '<details class="panel clip p-3 mt-3"' + (o.runSet ? ' open' : '') + ' ontoggle="arenaUi().runSet=this.open">' +
-    '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">' + (RUN_LVL[rc.lvl] || RUN_LVL.sederhana).name + '</span> · ' + rc.qt + 's soalan</summary>' +
-    '<div class="lbl mt-3">KELAJUAN</div>' + rseg('lvl', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']]) +
-    '<div class="text-[10px] text-muted mt-1">Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.</div>' +
-    '<div class="lbl mt-3">MASA MEMBACA SOALAN</div>' + rseg('qt', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']]) +
-    '<div class="text-[10px] text-muted mt-1">Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.</div></details>';
+  h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="run"><i class="fa-solid fa-play"></i> MAIN</button>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERTINGGI KUMPULAN</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
     '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#FFB347">' + d.gbest[g.id] + '</span></div>').join('') + '</div>';
@@ -7537,7 +7778,11 @@ function runGame(THREE, sid, ac){
   root.addEventListener('pointerdown', onDown);
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
-  $r('#rnQuit').onclick = () => quit();
+  $r('#rnQuit').onclick = () => {
+    if (ended) return quit();
+    const was = paused; paused = true;                // larian berhenti sementara soalan pengesahan dipapar
+    gameConfirm().then(ok => { if (ok) quit(); else { paused = was; last = performance.now(); } });
+  };
 
   /* ---------- logik ---------- */
   const removeObj = (arr, i) => { const o = arr[i]; scene.remove(o.m); arr.splice(i, 1); };
@@ -7914,28 +8159,7 @@ function viewEscape(){
     '<i class="fa-solid fa-ghost text-4xl" style="color:#E8ECF1;filter:drop-shadow(0 0 12px rgba(226,59,59,.8))"></i>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#E23B3B;text-shadow:0 0 12px rgba(226,59,59,.6)">SEKOLAH BERHANTU</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kamu terperangkap di sekolah dua tingkat pada waktu malam. Selesaikan teka-teki untuk mengumpul <b style="color:#FFD76A">'+D.keys+' kunci</b>, kemudian lari ke pintu <b style="color:#E23B3B">KELUAR</b>. Sembunyi dalam <b style="color:#E2803B">loker merah</b> jika dikejar!</div></div>';
-  h += '<div class="panel clip p-3 mt-3">' +
-    '<div class="text-[11px] text-muted"><i class="fa-solid fa-users text-cyan"></i> Dimainkan oleh <b>' + esc(teamName(o.team)) + '</b> — ahli kumpulan berbincang dan menjawab bersama.</div>' +
-    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-circle-question"></i> ' +
-      (bank.length ? bank.length + ' soalan dari bank <b>' + esc(subjName(S.ui.activeSubjectId)) + '</b>'
-                   : 'Bank soalan subjek ini kosong — soalan <b>matematik</b> dijana automatik') + '</div>' +
-    '<div class="text-[11px] text-muted mt-1"><i class="fa-solid fa-trophy"></i> Berjaya keluar = <span class="text-orange">sehingga +'+Math.round(c.rp * D.rpx)+' RP</span> + lencana <b>Pelarian Seram</b></div>' +
-    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="esc-start"><i class="fa-solid fa-door-open"></i> MASUK SEKOLAH</button>' +
-    '<div class="text-[10px] text-muted mt-2 text-center leading-relaxed">Telefon: sentuh kiri untuk berjalan, seret kanan untuk melihat<br>Komputer: WASD / anak panah + seret tetikus · E untuk berinteraksi</div></div>';
-  h += '<details class="panel clip p-3 mt-3"'+(o.escSet ? ' open' : '')+' ontoggle="arenaUi().escSet=this.open">' +
-    '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">'+D.name+'</span> · '+esc(gName)+'</summary>' +
-    '<div class="lbl mt-3">TAHAP KESUKARAN</div>' + seg('diff', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']]) +
-    '<div class="text-[10px] text-muted mt-1">'+D.keys+' kunci · '+D.lives+' nyawa · '+(+c.qt || D.qtime)+' saat setiap soalan</div>' +
-    '<div class="lbl mt-3">MASA MENJAWAB SOALAN</div>' + seg('qt', [[0,'Ikut tahap'],[15,'15s'],[25,'25s'],[40,'40s'],[60,'60s']]) +
-    '<div class="text-[10px] text-muted mt-1">Masa untuk setiap soalan papan hitam. Teka-teki padanan diberi masa setimpal.</div>' +
-    '<div class="lbl mt-3">TAHAP SERAM</div>' + seg('scare', [['penuh','Penuh'],['lembut','Lembut']]) +
-    '<div class="text-[10px] text-muted mt-1">'+(c.scare === 'lembut' ? 'Tiada wajah mengejut dan jeritan — sesuai untuk murid kecil.' : 'Wajah mengejut + jeritan bila ditangkap.')+'</div>' +
-    '<div class="lbl mt-3">HANTU</div>' + seg('ghost', [['rawak','Rawak'],['putih','Putih'],['pontianak','Pontianak'],['toyol','Toyol']]) +
-    '<div class="text-[10px] text-muted mt-1">'+(c.ghost === 'rawak' ? 'Hantu dipilih secara rawak setiap permainan.' : ESC_GHOSTS[c.ghost].note)+'</div>' +
-    '<div class="lbl mt-3">KECERAHAN</div>' + seg('light', [['gelap','Gelap'],['biasa','Biasa'],['terang','Terang']]) +
-    '<div class="lbl mt-3">RP MAKSIMUM</div>' + seg('rp', [[15,'15'],[30,'30'],[50,'50']]) +
-    '<div class="text-[10px] text-muted mt-1">Mudah ×0.8 · Sukar ×1.3. Lencana <b>Pelarian Seram</b>: muat naik gambarnya di Tetapan → Lencana.</div>' +
-  '</details>';
+  h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="escape"><i class="fa-solid fa-play"></i> MAIN</button>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">KUMPULAN TERPANTAS KELUAR</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">'+(i+1)+'</span>' + teamAvatar(g.id, 24) +
     '<span class="flex-1 text-[13px] truncate">'+esc(g.name)+'</span><span class="num text-cyan text-[12px]">'+fmtSec(d.gbest[g.id])+'</span></div>').join('') + '</div>';
@@ -8615,7 +8839,11 @@ function escRun(THREE, sid, ac){
   window.addEventListener('pointercancel', onUp);
   window.addEventListener('keydown', onKey);
   window.addEventListener('keyup', onKey);
-  $e('#escQuit').onclick = () => quit();
+  $e('#escQuit').onclick = () => {
+    if (ended) return quit();
+    const was = paused; paused = true;
+    gameConfirm().then(ok => { if (ok) quit(); else paused = was; });
+  };
   $e('#escAct').onclick = () => { if (!paused && near) interact(); };
   const stopInput = () => { joy.id = look.id = null; joy.x = joy.y = 0; $e('#escJoy').style.display = 'none'; Object.keys(kb).forEach(k => kb[k] = false); };
 
@@ -9088,6 +9316,7 @@ const ACTS = {
   'chap-del': d => chapDel(d.id),
   'rpm': rpmModal,
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
+  'lobby': d => gameLobby(d.id),
   'live-tog': d => { const k = d.k === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(k, localStorage.getItem(k) === '0' ? '1' : '0'); renderTab(); },
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
