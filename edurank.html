@@ -737,7 +737,8 @@ function migrate(d){
   if (!Array.isArray(out.packLog)) out.packLog = [];
   if (!Array.isArray(out.quiz)) out.quiz = [];
   if (!out.quizStat || typeof out.quizStat !== 'object') out.quizStat = {};
-  if (!out.attendance || typeof out.attendance !== 'object') out.attendance = {};   // classId → tarikh → { sid: 'H'|'L'|'T'|'C' }
+  if (!out.attendance || typeof out.attendance !== 'object') out.attendance = {};
+  ['rpt','lesson'].forEach(k => { if (!out[k] || typeof out[k] !== 'object') out[k] = {}; });   // classId → tarikh → { sid: 'H'|'L'|'T'|'C' }
   if (out.config.tpcRate === undefined) out.config.tpcRate = 1;
   if (out.config.maxUploadKB === undefined) out.config.maxUploadKB = 200;
   if (out.config.rpPerScore === undefined) out.config.rpPerScore = 1;
@@ -1050,6 +1051,7 @@ function viewStudents(){
   if (!list.length) return h + emptyState('fa-user-group','Kelas Kosong','Belum ada pelajar dalam '+esc(clsName(cid))+'. Tekan Daftar untuk tambah secara pukal.','Daftar Pelajar','reg-open');
   const sc = S.ui.activeSubjectId;
   h += '<div class="text-[11px] text-muted mt-3 mb-1 flex justify-between"><span id="stuCount">'+list.length+' PELAJAR · '+esc(clsName(cid))+'</span><span>'+(sc?esc(subjName(sc)):'Subjek belum dipilih')+'</span></div>';
+  h += weekBannerHtml();
   const dayStat = classDayStatus(cid, sc, recDate());
   const isDay = dayStat.ok;
   if (isBackdated()) h += '<div class="panel clip-s p-2 mb-2 flex items-center gap-2 edge-o text-[11px]" style="color:#FFC24D">' +
@@ -1168,6 +1170,7 @@ function commitForceTP(ids, tp, ms){
     rec.tpAwarded = calcTP(v);
     if (tp >= 2) rec.attended = true;          // TP2 ke atas bermakna hadir
     if (!todayIsClassDay()) rec.outside = true;
+    stampTopic(rec, (stu(sid)||{}).classId || S.ui.activeClassId, sj, date);
     rec.touchCount = (rec.touchCount||0) + 1;
     rec.updatedAt = Date.now();
     S.records[sid][sj][date] = rec;
@@ -1303,6 +1306,7 @@ function openHistory(sid){
     ? ses.map(x => '<div class="panel clip-s p-2 flex items-center gap-2 mb-2">' +
         hexTP(x.tpAwarded,28) +
         '<div class="flex-1"><div class="text-[13px] font-bold">'+fmtDate(x.date)+'</div>' +
+        (()=>{ const t = recTopic(sid, x.subjectId, x.date); return t ? '<div class="text-[11px] text-cyan truncate"><i class="fa-solid fa-book-open"></i> '+(t.w?'M'+t.w+' · ':'')+esc(t.t)+' — '+esc(t.tj||'')+'</div>' : ''; })() +
         '<div class="num text-[11px] text-muted">'+esc(subjName(x.subjectId))+' · KADAR '+fmtScore(rateOf(x))+' (jumlah '+x.totalScore+' ÷ '+(x.metricCount||Object.keys(x.metricScores||{}).length||1)+') · '+(x.touchCount||1)+'x</div></div>' +
         '<button class="btn clip-s !px-2 !py-1" data-del-ses="'+x.subjectId+'|'+x.date+'"><i class="fa-solid fa-trash text-[#E23B3B] text-[12px]"></i></button></div>').join('')
     : '<div class="text-[13px] text-muted">Belum ada sesi penilaian.</div>';
@@ -1561,7 +1565,7 @@ async function openEval(studentIds, titleText, opts){
         '<div class="text-right"><div class="lbl">'+(ADD?'KADAR TAMBAHAN':'KADAR PURATA')+'</div><div class="num text-[20px] text-cyan" id="evTotal">0.0</div>' +
         '<div class="text-[9px] text-muted num" id="evSum">0 ÷ '+ms.length+' matrik</div></div>' +
       '</div>' +
-      (ADD ? '<div class="panel clip-s p-2 mb-2 text-[11px] edge-o" style="color:#FFB27A"><i class="fa-solid fa-layer-group"></i> <b>MOD TOP-UP PUKAL</b> — tombol di sini ialah <b>nilai tambahan</b>, bukan skor akhir. Ia akan <b>DITAMBAH</b> pada rekod hari ini setiap pelajar ('+hasRec+' sudah ada rekod, '+(studentIds.length-hasRec)+' belum). Butang <b>Reset</b> mengosongkan tambahan. Nilai sedia ada tidak diganti; setiap matrik dihadkan −20…+39.</div>' :
+      evalTopicHtml() + (ADD ? '<div class="panel clip-s p-2 mb-2 text-[11px] edge-o" style="color:#FFB27A"><i class="fa-solid fa-layer-group"></i> <b>MOD TOP-UP PUKAL</b> — tombol di sini ialah <b>nilai tambahan</b>, bukan skor akhir. Ia akan <b>DITAMBAH</b> pada rekod hari ini setiap pelajar ('+hasRec+' sudah ada rekod, '+(studentIds.length-hasRec)+' belum). Butang <b>Reset</b> mengosongkan tambahan. Nilai sedia ada tidak diganti; setiap matrik dihadkan −20…+39.</div>' :
       '<div class="panel clip-s p-2 mb-2 text-[11px] '+(hasRec?'text-cyan':'text-muted')+'">' +
         (hasRec ? '<i class="fa-solid fa-clock-rotate-left"></i> Menyambung rekod hari ini ('+hasRec+'/'+studentIds.length+' pelajar · '+touches+'x simpan). Tombol kekal di kedudukan terakhir — laras terus dan simpan.'
                 : '<i class="fa-solid fa-circle-info"></i> Sesi baharu '+fmtDate(today)+' — semua matrik bermula pada <b class="num">'+BASE()+'</b> (baseline harian). Tanda <b>Hadir</b> (+'+(S.config.attendBonus||20)+') atau laras sendiri.') +
@@ -1620,6 +1624,7 @@ function markAttendance(ids){
     if (!rec){ rec = { totalScore:0, metricScores:{}, tpAwarded:calcTP(base), touchCount:0 }; ms.forEach(m => rec.metricScores[m.id] = base); }
     ms.forEach(m => { const cur = (m.id in rec.metricScores) ? rec.metricScores[m.id] : base; rec.metricScores[m.id] = clamp(cur + bonus, SC_MIN, SC_MAX); });
     rec.attended = true;
+    stampTopic(rec, (stu(sid)||{}).classId || S.ui.activeClassId, sj, date);
     rec.metricCount = ms.length;
     rec.totalScore = Object.keys(rec.metricScores).reduce((a,k)=>a+rec.metricScores[k],0);
     rec.rate = clamp(rec.totalScore / Math.max(1, ms.length), SC_MIN, SC_MAX);
@@ -1771,6 +1776,7 @@ function commitEval(studentIds, vals, ms, add){
     rec.tpAwarded = calcTP(rec.rate);                             // TP dari KADAR PURATA, bukan jumlah
     rec.touchCount = (rec.touchCount||0) + 1;   // info sahaja — totalEvaluations kekal 1 sehari
     if (!todayIsClassDay()) rec.outside = true;
+    stampTopic(rec, (stu(sid)||{}).classId || S.ui.activeClassId, sj, date);   // topik DSKP sesi ini
     rec.updatedAt = Date.now();
     S.records[sid][sj][date] = rec;
   });
@@ -1945,6 +1951,7 @@ function viewReport(){
     '<div class="flex justify-between items-center"><div><div class="font-bold tracking-wide">LAPORAN PBD</div>' +
     '<div class="text-[12px] text-muted">'+esc(clsName(S.ui.activeClassId))+' · '+esc(subjName(S.ui.activeSubjectId))+'</div></div>' +
     '<div class="flex gap-1">' +
+      '<button class="btn btn-o clip-s !py-1 !px-2 text-[12px]" data-act="pbd-sum"><i class="fa-solid fa-file-arrow-down"></i> Rumusan</button>' +
       '<button class="btn clip-s !py-1 !px-2 text-[12px]" data-act="rpm"><i class="fa-solid fa-table-list text-orange"></i> RPM</button>' +
       '<button class="btn btn-c clip-s !py-1 !px-2 text-[12px]" data-act="rep-csv"><i class="fa-solid fa-file-csv"></i></button>' +
       '<button class="btn clip-s !py-1 !px-2 text-[12px]" data-act="rep-print"><i class="fa-solid fa-print text-cyan"></i></button>' +
@@ -2001,7 +2008,7 @@ function download(name, text, mime){
 /* Kumpulan tetapan supaya tidak perlu skrol panjang */
 const SET_GROUPS = [
   { k:'asas', name:'ASAS',    icon:'fa-school',    titles:['Pengurusan Kelas','Pengurusan Subjek','Medan Profil Dinamik','Arahan &amp; Maklumat'] },
-  { k:'nilai', name:'NILAI',  icon:'fa-sliders',   titles:['Pengurusan Matrik','Kehadiran &amp; Baseline','Jadual Hari Kelas','Bab &amp; RPM','Bank Soalan'] },
+  { k:'nilai', name:'NILAI',  icon:'fa-sliders',   titles:['Pengurusan Matrik','Kehadiran &amp; Baseline','Takwim &amp; Minggu Persekolahan','Jadual Hari Kelas','Bab &amp; RPM','Bank Soalan'] },
   { k:'main', name:'GAME',    icon:'fa-gamepad',   titles:['Lencana','Rank &amp; Julat Skor','Muzik &amp; Bunyi','Kad Koleksi &amp; Pack'] },
   { k:'data', name:'DATA',    icon:'fa-database',  titles:['Penyegerakan Firebase','Data & Tahun Akademik','Data &amp; Tahun Akademik'] }
 ];
@@ -2059,8 +2066,9 @@ function viewSettings(){
     '<div class="text-[11px] text-muted mt-2">Kelas gabungan menghimpunkan pelajar dari beberapa kelas untuk sesi bergabung. Pelajar kekal milik kelas asal.</div>');
 
   h += sec('fa-book','Pengurusan Subjek',
-    (S.subjects.length ? S.subjects.map(x=>listRow(x.name,'sub',x.id)).join('') : '<div class="text-[12px] text-muted">Tiada subjek. Contoh: PJK, Sains, Bahasa Melayu.</div>') +
-    '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="sub-add"><i class="fa-solid fa-plus"></i> Tambah Subjek</button>');
+    (S.subjects.length ? S.subjects.map(x=>listRow(x.name,'sub',x.id, x.dskp ? '<i class="fa-solid fa-book text-cyan"></i> DSKP' : '<span style="color:#FFC24D">tiada DSKP</span>')).join('') : '<div class="text-[12px] text-muted">Tiada subjek. Pilih daripada senarai DSKP KSSM.</div>') +
+    '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="sub-add"><i class="fa-solid fa-plus"></i> Tambah Subjek (DSKP)</button>' +
+    '<div class="text-[11px] text-muted mt-2">Subjek dipilih daripada DSKP KSSM (semua subjek &amp; tingkatan). Susunan topik mengikut minggu persekolahan dijana automatik — lihat butang <b>RPT</b> di tab Pelajar. Subjek lama: tekan <i class="fa-solid fa-pen"></i> untuk memautkan ke DSKP.</div>');
 
   // Matrik — scoped
   const mc = S.ui.mtxClass||'', msj = S.ui.mtxSubject||'';
@@ -2113,7 +2121,10 @@ function viewSettings(){
       '<button class="btn clip-s text-[12px]" data-act="quiz"><i class="fa-solid fa-list"></i> Lihat Senarai</button>' +
     '</div>');
 
+  h += sec('fa-calendar-week','Takwim &amp; Minggu Persekolahan', takwimSettingsHtml());
+
   h += sec('fa-book-open','Bab &amp; RPM',
+    '<div class="panel clip-s p-2 mb-2 text-[11px]" style="border-left:3px solid #00F0FF">Subjek yang dipautkan ke <b>DSKP</b> tidak perlukan bab manual — RPM dikira terus mengikut <b>tajuk DSKP</b> yang telah diajar (topik setiap penilaian diambil daripada RPT minggu itu). Bab manual di bawah hanya untuk subjek tanpa DSKP.</div>' +
     (S.chapters.length ? S.chapters.map(c =>
       '<div class="flex items-center gap-2 py-1" style="border-top:1px solid var(--line)">' +
         '<div class="flex-1 min-w-0"><div class="text-[13px] truncate">'+esc(c.name)+'</div>' +
@@ -2278,8 +2289,7 @@ function clsMergeForm(){
     save(true); closeModal(id); renderAll(); toast('Kelas gabungan dicipta: '+nm);
   });
 }
-async function subAdd(){ const n=await promptBox({title:'Tambah Subjek',label:'NAMA SUBJEK',placeholder:'Contoh: PJK'}); if(!n) return; S.subjects.push({id:uid('j'),name:n}); save(true); renderAll(); }
-async function subEdit(id){ const x=subj(id); if(!x) return; const n=await promptBox({title:'Sunting Subjek',label:'NAMA SUBJEK',value:x.name}); if(!n) return; x.name=n; save(true); renderAll(); }
+/* subAdd / subEdit: lihat modul DSKP (subjek dipilih daripada DSKP) */
 async function subDel(id){
   const x=subj(id); if(!x) return;
   const ok = await confirmBox({danger:true,title:'Padam Subjek',okText:'Padam',
@@ -2505,6 +2515,7 @@ async function chapDel(cid){
 }
 function rpmModal(){
   if (!ctxOk()) return toast('Sila pilih Kelas dan Subjek terlebih dahulu.', null, true);
+  if (subjDskp(S.ui.activeSubjectId)) return rpmDskpModal();
   const cid = S.ui.activeClassId, sj = S.ui.activeSubjectId;
   const chs = S.chapters.filter(c => c.subjectId === sj);
   if (!chs.length) return toast('Tiada bab untuk subjek ini. Tambah di Tetapan → Bab & RPM.', null, true);
@@ -2523,8 +2534,35 @@ function rpmModal(){
   const bd = $('[data-modal="'+MODALS[MODALS.length-1].id+'"]');
   bd.addEventListener('click', e => { if (e.target.closest('[data-x="csv"]')) rpmCsv(); });
 }
+/* RPM bagi subjek DSKP: lajur = tajuk DSKP yang sudah dinilai, TP = purata TP sesi bertopik tajuk itu */
+function rpmDskpModal(){
+  const cid = S.ui.activeClassId, sj = S.ui.activeSubjectId, b = subjBook(sj);
+  if (!b) return toast('DSKP sedang dimuat… cuba sebentar lagi.');
+  const units = taughtUnits(cid, sj), list = studentsOf(cid);
+  if (!units.length) return toast('Belum ada penilaian bertopik DSKP untuk kelas ini.', null, true);
+  const head = '<tr style="background:rgba(0,240,255,.06)"><th class="p-1 text-left">#</th><th class="p-1 text-left">NAMA</th>' +
+    units.map(u => '<th class="p-1" title="' + esc(unitName(b, u)) + '">' + esc(shortTxt(unitName(b, u), 22)) + '</th>').join('') + '<th class="p-1">TP AKHIR</th></tr>';
+  const rows = list.map((s, i) => { const st = stats(s.id, sj);
+    return '<tr style="border-top:1px solid var(--line)"><td class="p-1 num text-muted">' + (i + 1) + '</td><td class="p-1 truncate max-w-[110px]">' + esc(s.name) + '</td>' +
+      units.map(u => { const tp = unitTP(s.id, sj, u); return '<td class="p-1 text-center num" style="color:' + (tp ? TP_COLOR[tp] : '#5B6C7D') + '">' + (tp ? 'TP' + tp : '—') + '</td>'; }).join('') +
+      '<td class="p-1 text-center num font-bold" style="color:' + (TP_COLOR[st.finalTP] || '#5B6C7D') + '">' + (st.finalTP ? 'TP' + st.finalTP : '—') + '</td></tr>'; }).join('');
+  const id = openModal({ icon:'fa-table-list', title:'Laporan RPM (DSKP)',
+    body:'<div class="text-[12px] text-muted mb-2">' + esc(clsName(cid)) + ' · ' + esc(subjName(sj)) + ' · ' + units.length + ' tajuk DSKP telah dinilai (daripada ' + b.u.length + ')</div>' +
+      '<div class="panel clip overflow-x-auto"><table class="w-full text-[11px]"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="text-[10px] text-muted mt-2">Topik setiap penilaian diambil daripada RPT minggu itu (atau topik yang ditukar guru). Tukar topik sesuatu hari melalui butang <b>Topik</b> di tab Pelajar.</div>',
+    footer:'<button class="btn clip-s flex-1" data-close="1">Tutup</button><button class="btn btn-o clip-s flex-1" data-x="csv"><i class="fa-solid fa-file-csv"></i> Muat Turun</button>' });
+  $('[data-modal="' + id + '"]').addEventListener('click', e => { if (e.target.closest('[data-x="csv"]')) rpmCsv(); });
+}
 function rpmCsv(){
   const cid = S.ui.activeClassId, sj = S.ui.activeSubjectId;
+  if (subjDskp(sj) && subjBook(sj)){
+    const b = subjBook(sj), units = taughtUnits(cid, sj), q = v => '"' + String(v).replace(/"/g,'""') + '"';
+    const L = [q('LAPORAN RPM — PENCAPAIAN TP MENGIKUT TAJUK DSKP'), [q('Kelas'), q(clsName(cid))].join(','), [q('Subjek'), q(subjName(sj))].join(','),
+      [q('Dijana pada'), q(new Date().toLocaleString('ms-MY'))].join(','), '', ['Bil','Nama'].concat(units.map(u => q(unitName(b, u)))).concat([q('TP Akhir')]).join(',')];
+    studentsOf(cid).forEach((s, i) => { const st = stats(s.id, sj); L.push([i + 1, q(s.name)].concat(units.map(u => { const tp = unitTP(s.id, sj, u); return tp ? 'TP' + tp : ''; })).concat([st.finalTP ? 'TP' + st.finalTP : '']).join(',')); });
+    download('RPM_' + clsName(cid).replace(/\s+/g,'_') + '_' + subjName(sj).replace(/[^\w]+/g,'_') + '_' + todayKey() + '.csv', '﻿' + L.join('\n'), 'text/csv');
+    return toast('RPM dimuat turun.');
+  }
   const chs = S.chapters.filter(c => c.subjectId === sj);
   const list = studentsOf(cid);
   const q = v => '"' + String(v).replace(/"/g,'""') + '"';
@@ -3518,7 +3556,7 @@ function loadScreen(total, local, msg){
 }
 /* Buang SEKALI semua aset lama sistem sprite / peta / kad muat naik daripada
    storan peranti. Gambar pelajar, lencana, bingkai dan lagu dikekalkan.  */
-const ASSET_KEEP = k => /:(banner|icon)$/.test(k) || /^(badge|frame|bgm|bgmdef|cache):/.test(k);
+const ASSET_KEEP = k => /:(banner|icon)$/.test(k) || /^(badge|frame|bgm|bgmdef|cache|dskp):/.test(k);
 async function purgeSpriteAssets(){
   const gone = Object.keys(PHOTOS).filter(k => !ASSET_KEEP(k));
   if (!gone.length) return 0;
@@ -3629,10 +3667,11 @@ function quizRecord(sid, ok){
    Guru menyalin prompt, menampalnya ke model AI, dan menampal balik JSON.
    Setiap pilihan yang SALAH membawa huraiannya sendiri, jadi permainan
    menerangkan kesilapan yang ITU, bukan kesilapan umum.                */
-function tqPrompt(sj, info, nq){
+function tqPrompt(sj, info, nq, scope){
   const sjn = (S.subjects.find(x => x.id === sj) || {}).name || 'Subjek';
   const n = clamp(+nq || 20, 6, 60);
   const extra = String(info || '').trim();
+  const dk = scope ? dskpPromptBlock(sj, scope) : '';
   return [
     'Anda guru pakar yang menulis soalan untuk permainan pendidikan sekolah di Malaysia. Semuanya dalam Bahasa Melayu.',
     'Dalam permainan ini, pelajar menjawab soalan untuk membuka pintu, menyerang dengan kad atau memilih gerbang semasa berlari. ' +
@@ -3640,8 +3679,11 @@ function tqPrompt(sj, info, nq){
       'tetapi juga membawa pengajaran bagi setiap kesilapan yang mungkin.',
     '',
     'SUBJEK: ' + sjn,
+    dk ? 'Soalan WAJIB berdasarkan Dokumen Standard Kurikulum dan Pentaksiran (DSKP) KSSM berikut:\n' + dk +
+         '\nSetiap soalan mesti menguji tepat SATU Standard Pembelajaran (SP) di atas. Agihkan soalan sama rata merentas semua SP, ' +
+         'dan tulis kod SP itu (cth. "9.2.1") dalam medan "sp". Jangan keluar daripada skop SP yang disenaraikan.' : '',
     extra ? 'MAKLUMAT TAMBAHAN DARIPADA GURU (ikut ini dengan tepat — tingkatan, bab, tajuk atau topik): ' + extra
-          : 'MAKLUMAT TAMBAHAN: tiada diberi — pilih tajuk teras subjek ini yang sesuai untuk sekolah menengah.',
+          : (dk ? '' : 'MAKLUMAT TAMBAHAN: tiada diberi — pilih tajuk teras subjek ini yang sesuai untuk sekolah menengah.'),
     'BILANGAN SOALAN: tepat ' + n + ' soalan. Tiada soalan berulang.',
     '',
     'PERATURAN SOALAN:',
@@ -3671,6 +3713,7 @@ function tqPrompt(sj, info, nq){
     '  "soalan": [',
     '    {',
     '      "soalan": "teks soalan penuh",',
+    dk ? '      "sp": "kod Standard Pembelajaran yang diuji, cth 9.2.1",' : '',
     '      "pilihan": ["teks A", "teks B", "teks C", "teks D"],',
     '      "betul": 2,',
     '      "huraian": "kenapa jawapan betul itu betul, 1-2 ayat, mengandungi {a}",',
@@ -3707,8 +3750,8 @@ function tqParse(raw, sj, bab){
   const ch = String(bab || '').trim() || sTxt(o.tajuk, 60);
   const qs = sQuestions(arr, 't' + Date.now().toString(36), 60);
   if (!qs.length) throw new Error('Tiada soalan sah. Setiap soalan perlu "soalan", "pilihan" dan "betul".');
-  return qs.map((q, i) => ({ id:uid('q'), subjectId:sj, chapterId:ch,
-    q:q.q, c:q.c, a:q.a, ejek:q.ejek, huraian:q.huraian }));
+  return qs.map((q, i) => { const sp = skCode(q.sp); return { id:uid('q'), subjectId:sj, chapterId:ch,
+    q:q.q, c:q.c, a:q.a, ejek:q.ejek, huraian:q.huraian, sp, sk: sp ? sp.split('.').slice(0, 2).join('.') : '' }; });
 }
 
 const tqHasExp = q => !!(q && ((q.ejek || []).some(Boolean) || q.huraian));
@@ -3726,7 +3769,13 @@ function tqBuild(){
         '<div class="text-[12px] font-bold text-orange"><span class="num">LANGKAH 1</span> · JANA PROMPT</div>' +
         '<div class="text-[10px] text-muted leading-snug mt-1">Subjek diambil daripada konteks semasa: ' +
           '<b class="text-cyan">' + esc(sjn) + '</b></div>' +
-        '<label class="lbl mt-2 block">MAKLUMAT TAMBAHAN</label>' +
+        (subjDskp(sj) ? (() => { const so = dskpScopeOpts(sj); if (!so.length) return '<div class="text-[11px] text-muted mt-2"><i class="fa-solid fa-spinner fa-spin"></i> Memuat DSKP…</div>';
+            if (!so.some(o => o.v === S.ui.tqScope)) S.ui.tqScope = so[0].v;
+            return '<label class="lbl mt-2 block">SKOP DSKP (SK &amp; SP)</label><select id="tqScope" class="fld clip-s mt-1 !text-[12px]">' +
+              so.map(o => '<option value="' + o.v + '"' + (o.v === S.ui.tqScope ? ' selected' : '') + '>' + esc(o.label) + '</option>').join('') + '</select>' +
+              '<div class="text-[10px] text-muted mt-1">Prompt akan mengandungi semua Standard Kandungan &amp; Standard Pembelajaran bagi skop ini — AI menulis soalan tepat ikut SP.</div>'; })()
+          : '<div class="text-[10px] mt-1" style="color:#FFC24D">Subjek ini belum dipautkan ke DSKP — pautkan di Tetapan → Pengurusan Subjek untuk soalan ikut SP.</div>') +
+        '<label class="lbl mt-2 block">' + (subjDskp(sj) ? 'NOTA TAMBAHAN (PILIHAN)' : 'MAKLUMAT TAMBAHAN') + '</label>' +
         '<input id="tqInfo" class="fld clip-s mt-1 text-[13px]" placeholder="cth: tingkatan 1 bab 4 / tajuk / topik" value="' +
           esc(S.ui.tqInfo) + '">' +
         '<label class="lbl mt-2 block">BERAPA SOALAN</label>' +
@@ -3749,8 +3798,9 @@ function tqBuild(){
            '<button class="btn btn-o clip-s flex-1" data-tq="go"><i class="fa-solid fa-check"></i> BINA SOALAN</button>' });
   const bd = $('[data-modal="' + id + '"]');
   const keep = () => {
-    const i = $('#tqInfo', bd), n = $('#tqN', bd);
+    const i = $('#tqInfo', bd), n = $('#tqN', bd), sc = $('#tqScope', bd);
     if (i) S.ui.tqInfo = i.value.trim();
+    if (sc) S.ui.tqScope = sc.value;
     if (n) S.ui.tqN = +n.value || 20;
   };
   bd.addEventListener('input', () => {
@@ -3773,7 +3823,7 @@ function tqBuild(){
     const b = e.target.closest('[data-tq]'); if (!b) return;
     keep();
     if (b.dataset.tq === 'copy')
-      return copyText(tqPrompt(sj, S.ui.tqInfo, S.ui.tqN),
+      return copyText(tqPrompt(sj, S.ui.tqInfo, S.ui.tqN, subjDskp(sj) ? S.ui.tqScope : ''),
         'Prompt ' + S.ui.tqN + ' soalan (' + sjn + ') disalin.');
     if (b.dataset.tq === 'go'){
       let qs;
@@ -3882,7 +3932,7 @@ function sQuestions(arr, bi, cap){
       if (!ej[j]) ej[j] = hur || ('Jawapan betul ialah {a}.');
       if (ej[j].indexOf('{a}') < 0) ej[j] = 'Jawapannya {a}. ' + ej[j];
     }
-    out.push({ id:'sq' + bi + '_' + k, q:qt, c, a, ejek:ej,
+    out.push({ id:'sq' + bi + '_' + k, q:qt, c, a, ejek:ej, sp: sTxt(v.sp, 24),
       huraian: hur ? (hur.indexOf('{a}') < 0 ? 'Jawapannya {a}. ' + hur : hur) : 'Jawapan betul ialah {a}.' });
   });
   return out;
@@ -4469,6 +4519,506 @@ function packSummary(sid, pulls, pack, free){
     footer:'<button class="btn clip-s flex-1" data-close="1">Tutup</button>' +
            '<button class="btn btn-o clip-s flex-1" data-act="binder" data-id="'+sid+'">Lihat Koleksi</button>' });
   renderTab();
+}
+
+/* ============ DSKP, TAKWIM & RANCANGAN TAHUNAN ============
+   DSKP KSSM disimpan sebagai fail berasingan (dskp/index.json + satu fail
+   bagi setiap subjek-tingkatan) supaya app kekal ringan. Fail dimuat turun
+   hanya untuk subjek yang guru pilih, kemudian disimpan dalam peranti.
+   Takwim persekolahan → nombor minggu. Rancangan tahunan (RPT) menyusun
+   SK/SP DSKP merentas minggu persekolahan secara automatik; guru boleh
+   menukar mana-mana minggu. Setiap rekod PBD dikaitkan dengan topik
+   minggu itu, jadi RPM dan Rumusan PBD boleh dikira mengikut tajuk.     */
+const DSKP_BASES = ['./dskp/', 'https://tembakmatiterus-web.github.io/student-manager/dskp/'];
+const LS_DSKP_IDX = 'lt_dskp_idx_v1';
+let DSKP_IDX = null;
+const DSKP = {};                                  // id → buku DSKP yang sudah dimuat
+const DSKP_WAIT = {};
+async function dskpFetch(file){
+  let err = null;
+  for (const b of DSKP_BASES){
+    try { const r = await fetch(b + file, { cache:'no-cache' }); if (r.ok) return await r.json(); err = new Error('HTTP ' + r.status); }
+    catch(e){ err = e; }
+  }
+  throw err || new Error('Tiada sambungan');
+}
+async function dskpIndex(){
+  if (DSKP_IDX) return DSKP_IDX;
+  try { const c = localStorage.getItem(LS_DSKP_IDX); if (c) DSKP_IDX = JSON.parse(c); } catch(e){}
+  const fresh = dskpFetch('index.json').then(x => { DSKP_IDX = x; try { localStorage.setItem(LS_DSKP_IDX, JSON.stringify(x)); } catch(e){} return x; });
+  if (DSKP_IDX){ fresh.catch(() => {}); return DSKP_IDX; }
+  return await fresh;
+}
+/* Muat satu buku DSKP (dari peranti dahulu, kemudian internet) */
+function dskpLoad(id){
+  if (!id) return Promise.resolve(null);
+  if (DSKP[id]) return Promise.resolve(DSKP[id]);
+  if (DSKP_WAIT[id]) return DSKP_WAIT[id];
+  return DSKP_WAIT[id] = (async () => {
+    let b = null, ver = '';
+    try { ver = (await dskpIndex()).made || ''; } catch(e){}
+    try { if (PHOTOS['dskp:' + id]) b = JSON.parse(PHOTOS['dskp:' + id]); } catch(e){}
+    if (b && ver && b._v !== ver){                    // DSKP di laman lebih baharu: muat turun semula
+      try { const nb = await dskpFetch(id + '.json'); b = null; PHOTOS['dskp:' + id] = ''; b = nb; b._fresh = true; } catch(e){}
+    }
+    if (!b || b._fresh){
+      if (!b) b = await dskpFetch(id + '.json');
+      delete b._fresh; b._v = ver;
+      const s = JSON.stringify(b);
+      PHOTOS['dskp:' + id] = s; try { await idbPut('dskp:' + id, s); } catch(e){}
+    }
+    dskpPrep(b);
+    DSKP[id] = b; delete DSKP_WAIT[id];
+    return b;
+  })().catch(e => { delete DSKP_WAIT[id]; throw e; });
+}
+/* Senarai SK rata (mengikut urutan DSKP) dengan maklumat tajuk */
+function dskpPrep(b){
+  b.sk = [];
+  b.u.forEach((u, ui) => u[2].forEach(k => b.sk.push({ i: b.sk.length, ui, tema: u[0], tajuk: u[1], sk: k[0], sp: k[1] })));
+  return b;
+}
+const formName = f => /^\d+$/.test(f) ? 'Tingkatan ' + f : (f === '-' || f === 'T' ? 'Umum' : f);
+const dskpLabel = (s, f) => s + ' · ' + formName(f);
+const subjDskp = sj => { const x = subj(sj); return x && x.dskp ? x.dskp : ''; };
+/* Buku DSKP subjek (segerak). Jika belum dimuat, mula memuat dan lukis semula bila siap. */
+function subjBook(sj){
+  const id = subjDskp(sj); if (!id) return null;
+  if (DSKP[id]) return DSKP[id];
+  dskpLoad(id).then(() => { if (S) renderTab(); }).catch(() => {});
+  return null;
+}
+const skCode = t => { const m = String(t || '').match(/^\(?[A-Z]*\)?\s*([\d]+(?:\.\d+)*)/); return m ? m[1] : ''; };
+const shortTxt = (t, n) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+
+/* ---------- TAKWIM PERSEKOLAHAN ----------
+   Kalendar Akademik 2026 (Surat Siaran KPM Bil. 3/2025). Kumpulan A
+   (Kedah, Kelantan, Terengganu) minggu Ahad–Khamis; Kumpulan B Isnin–Jumaat. */
+const TAKWIM_PRESET = {
+  2026: {
+    B: { terms:[['2026-01-12','2026-05-22'],['2026-06-08','2026-12-04']],
+         cuti:[['Cuti Penggal 1','2026-03-21','2026-03-29'],['Cuti Pertengahan Tahun','2026-05-23','2026-06-07'],['Cuti Penggal 2','2026-08-29','2026-09-06'],['Cuti Akhir Tahun','2026-12-05','2026-12-31']] },
+    A: { terms:[['2026-01-11','2026-05-21'],['2026-06-07','2026-12-03']],
+         cuti:[['Cuti Penggal 1','2026-03-20','2026-03-28'],['Cuti Pertengahan Tahun','2026-05-22','2026-06-06'],['Cuti Penggal 2','2026-08-28','2026-09-05'],['Cuti Akhir Tahun','2026-12-04','2026-12-31']] }
+  }
+};
+const TK_GRP = { A:'Kumpulan A — Kedah, Kelantan, Terengganu (Ahad–Khamis)', B:'Kumpulan B — negeri lain (Isnin–Jumaat)' };
+function takwim(){
+  const yr = new Date().getFullYear();
+  if (!S.takwim || !S.takwim.terms){
+    const p = (TAKWIM_PRESET[yr] || TAKWIM_PRESET[2026]).B;
+    S.takwim = { year: TAKWIM_PRESET[yr] ? yr : 2026, grp:'B', terms: p.terms.map(x => x.slice()), cuti: p.cuti.map(x => x.slice()) };
+  }
+  return S.takwim;
+}
+function takwimPreset(year, grp){
+  const p = (TAKWIM_PRESET[year] || {})[grp]; if (!p) return false;
+  S.takwim = { year, grp, terms: p.terms.map(x => x.slice()), cuti: p.cuti.map(x => x.slice()) };
+  return true;
+}
+const kd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const addDays = (k, n) => { const d = new Date(k + 'T00:00:00'); d.setDate(d.getDate() + n); return kd(d); };
+let WEEKS_MEMO = { key:'', weeks:[] };
+/* Minggu persekolahan: setiap minggu bermula pada hari pertama sekolah
+   (Isnin / Ahad), minggu yang kelima-lima hari sekolahnya cuti dilangkau. */
+function schoolWeeks(){
+  const tk = takwim(), key = JSON.stringify(tk);
+  if (WEEKS_MEMO.key === key) return WEEKS_MEMO.weeks;
+  const first = tk.grp === 'A' ? 0 : 1;              // Ahad / Isnin
+  const inCuti = k => tk.cuti.some(c => k >= c[1] && k <= c[2]);
+  const out = [];
+  tk.terms.forEach((t, ti) => {
+    let d = new Date(t[0] + 'T00:00:00');
+    d.setDate(d.getDate() - ((d.getDay() - first + 7) % 7));   // undur ke awal minggu
+    for (let k = kd(d); k <= t[1]; k = addDays(k, 7)){
+      const days = [0,1,2,3,4].map(i => addDays(k, i)).filter(x => x >= t[0] && x <= t[1] && !inCuti(x));
+      if (days.length) out.push({ n: out.length + 1, start: days[0], end: days[days.length - 1], wk: k, term: ti + 1 });
+    }
+  });
+  WEEKS_MEMO = { key, weeks: out };
+  return out;
+}
+/* Minggu bagi satu tarikh: { n, start, end } · atau { cuti: nama } · atau null */
+function weekOf(k){
+  const ws = schoolWeeks(), tk = takwim();
+  const c = tk.cuti.find(x => k >= x[1] && k <= x[2]);
+  if (c) return { cuti: c[0], start: c[1], end: c[2] };
+  for (const w of ws) if (k >= w.wk && k <= addDays(w.wk, 6)) return w;
+  if (ws.length && k < ws[0].start) return { before: true };
+  return null;
+}
+const fmtShort = k => { const [y, m, d] = k.split('-'); return +d + ' ' + ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'][+m - 1]; };
+
+/* ---------- RANCANGAN TAHUNAN (RPT) ----------
+   Auto: SK diagih mengikut urutan DSKP, berat = bilangan SP, merentas semua
+   minggu persekolahan. Satu SK boleh merentas beberapa minggu dan satu
+   minggu boleh mengandungi beberapa SK. Guru boleh menukar mana-mana minggu. */
+const rptOf = sj => { S.rpt = S.rpt || {}; S.rpt[sj] = S.rpt[sj] || { over:{} }; S.rpt[sj].over = S.rpt[sj].over || {}; return S.rpt[sj]; };
+let PLAN_MEMO = {};
+function autoPlan(b, W){
+  const plan = Array.from({ length: W + 1 }, () => []);
+  const wts = b.sk.map(k => Math.max(1, k.sp.length)), tot = wts.reduce((a, x) => a + x, 0);
+  let cum = 0;
+  b.sk.forEach((k, i) => {
+    const a = Math.floor(cum / tot * W) + 1, z = Math.max(a, Math.ceil((cum + wts[i]) / tot * W));
+    for (let w = a; w <= Math.min(z, W); w++) plan[w].push(i);
+    cum += wts[i];
+  });
+  return plan;
+}
+function planOf(sj){
+  const b = subjBook(sj); if (!b) return null;
+  const ws = schoolWeeks(), over = rptOf(sj).over;
+  const key = sj + '|' + ws.length + '|' + JSON.stringify(over) + '|' + b.sk.length;
+  if (PLAN_MEMO[sj] && PLAN_MEMO[sj].key === key) return PLAN_MEMO[sj].plan;
+  const plan = autoPlan(b, ws.length);
+  Object.keys(over).forEach(w => { if (plan[+w]) plan[+w] = over[w].filter(i => b.sk[i]); });
+  PLAN_MEMO[sj] = { key, plan };
+  return plan;
+}
+/* Topik pelajaran kelas pada satu tarikh: tukaran guru untuk hari itu, atau ikut RPT */
+const lessonKey = (cid, sj, date) => cid + '|' + sj + '|' + date;
+function lessonTopic(cid, sj, date){
+  const b = subjBook(sj); if (!b) return null;
+  const w = weekOf(date), own = (S.lesson || {})[lessonKey(cid, sj, date)];
+  const idx = own ? own : (w && w.n ? (planOf(sj) || [])[w.n] || [] : []);
+  const sks = idx.map(i => b.sk[i]).filter(Boolean);
+  if (!sks.length) return { w, sks:[], own: !!own };
+  return { w, sks, own: !!own, units: Array.from(new Set(sks.map(k => k.ui))) };
+}
+/* Topik sesuatu rekod: snapshot semasa disimpan, jika tiada kira semula dari RPT */
+function recTopic(sid, sj, date){
+  const r = ((S.records[sid] || {})[sj] || {})[date];
+  if (r && r.topic) return r.topic;
+  const s = stu(sid); if (!s) return null;
+  const t = lessonTopic(s.classId, sj, date);
+  return t && t.sks.length ? topicSnap(t) : null;
+}
+const topicSnap = t => ({ w: t.w && t.w.n || 0, s: t.sks.map(k => k.i), u: t.units, t: t.sks.map(k => skCode(k.sk) || shortTxt(k.sk, 30)).join(', '), tj: t.sks[0].tajuk });
+/* dipanggil oleh commitEval / commitForceTP / markAttendance */
+function stampTopic(rec, cid, sj, date){
+  const t = lessonTopic(cid, sj, date);
+  if (t && t.sks.length) rec.topic = topicSnap(t); else if (rec.topic && !subjDskp(sj)) delete rec.topic;
+}
+
+/* ---------- PAPARAN: kad minggu semasa (tab Pelajar) ---------- */
+function weekBannerHtml(){
+  const sj = S.ui.activeSubjectId, cid = S.ui.activeClassId;
+  if (!sj || !cid) return '';
+  const date = recDate(), w = weekOf(date);
+  const wl = w && w.n ? 'MINGGU ' + w.n + ' · ' + fmtShort(w.start) + '–' + fmtShort(w.end) : w && w.cuti ? w.cuti.toUpperCase() : 'LUAR TAKWIM';
+  if (!subjDskp(sj)) return '<div class="panel clip-s p-2 mt-2 flex items-center gap-2 text-[11px]">' +
+    '<i class="fa-solid fa-calendar-week text-cyan"></i><span class="num">' + wl + '</span>' +
+    '<span class="flex-1 text-muted truncate">Subjek belum dipautkan ke DSKP</span>' +
+    '<button class="btn btn-o clip-s !px-2 !py-1 text-[11px]" data-act="sub-link" data-id="' + sj + '">Pautkan DSKP</button></div>';
+  const t = lessonTopic(cid, sj, date);
+  if (!t) return '<div class="panel clip-s p-2 mt-2 text-[11px] text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Memuat DSKP ' + esc(subjName(sj)) + '…</div>';
+  const open = !!S.ui.wbOpen;
+  return '<div class="panel clip p-3 mt-2" data-nohint="1" style="border-left:3px solid #00F0FF">' +
+    '<div class="flex items-center gap-2"><div class="num text-[11px] text-cyan flex-1">' + wl + (t.own ? ' · <span class="text-orange">TOPIK DITUKAR</span>' : '') + '</div>' +
+      '<button class="btn clip-s !px-2 !py-0.5 text-[10px]" data-act="lesson-pick"><i class="fa-solid fa-pen text-cyan"></i> Topik</button>' +
+      '<button class="btn clip-s !px-2 !py-0.5 text-[10px]" data-act="rpt-open"><i class="fa-solid fa-calendar-days text-cyan"></i> RPT</button></div>' +
+    (t.sks.length
+      ? '<div class="text-[10px] text-muted mt-1 truncate">' + esc(t.sks[0].tema || '') + '</div>' +
+        '<div class="font-bold text-[13px] leading-snug">' + esc(t.sks[0].tajuk || '') + '</div>' +
+        t.sks.map(k => '<div class="text-[12px] mt-1 leading-snug" style="color:#BFE8F0">' + esc(k.sk) + '</div>' +
+          (open ? '<div class="mt-1">' + k.sp.map(p => '<div class="text-[11px] text-muted leading-snug pl-2" style="border-left:2px solid #24333F">' + esc(p) + '</div>').join('') + '</div>' : '')).join('') +
+        '<button class="text-[10px] text-cyan mt-1" style="background:none;border:0;padding:0" data-act="wb-toggle">' + (open ? '▲ sorok SP' : '▼ lihat ' + t.sks.reduce((a, k) => a + k.sp.length, 0) + ' Standard Pembelajaran') + '</button>'
+      : '<div class="text-[12px] text-muted mt-1">' + (w && w.cuti ? 'Tiada PdP — ' + esc(w.cuti) + '.' : 'Tiada topik dirancang untuk tarikh ini.') + '</div>') +
+  '</div>';
+}
+
+/* ---------- PEMILIH SUBJEK DSKP ---------- */
+async function dskpPicker(title, cb){
+  let idx;
+  try { idx = await dskpIndex(); }
+  catch(e){ return toast('Senarai DSKP perlu internet kali pertama. Semak sambungan.', null, true); }
+  const names = Array.from(new Set(idx.d.map(x => x[1])));
+  let pick = '';
+  const body = q => {
+    if (pick){
+      const forms = idx.d.filter(x => x[1] === pick);
+      return '<button class="text-[12px] text-cyan mb-2" style="background:none;border:0;padding:0" data-back="1"><i class="fa-solid fa-chevron-left"></i> Semua subjek</button>' +
+        '<div class="font-bold text-[15px]">' + esc(pick) + '</div><div class="lbl mt-2">PILIH TINGKATAN</div>' +
+        forms.map(x => '<button class="btn clip-s w-full mt-1 flex items-center gap-2 !py-2 text-left" data-d="' + x[0] + '">' +
+          '<span class="flex-1 text-[13px]">' + esc(formName(x[2])) + '</span><span class="num text-[10px] text-muted">' + x[3] + ' tajuk · ' + x[5] + ' SP</span></button>').join('');
+    }
+    const ql = (q || '').toLowerCase();
+    const list = names.filter(n => !ql || n.toLowerCase().indexOf(ql) >= 0);
+    return '<div class="mt-2" style="max-height:52vh;overflow-y:auto">' + list.slice(0, 150).map(n =>
+      '<button class="btn clip-s w-full mb-1 !py-2 text-left text-[12px] flex items-center gap-2" data-n="' + esc(n) + '"><span class="flex-1">' + esc(n) + '</span>' +
+      '<span class="num text-[10px] text-muted">' + idx.d.filter(x => x[1] === n).length + ' ting.</span></button>').join('') +
+      (list.length ? '' : '<div class="text-[12px] text-muted">Tiada subjek sepadan.</div>') + '</div>';
+  };
+  const id = openModal({ icon:'fa-book', title,
+    body:'<div data-nohint="1"><input id="dkQ" class="fld clip-s" placeholder="Cari subjek… (cth: sains, matematik)" autocomplete="off"><div id="dkBody">' + body('') + '</div>' +
+      '<div class="text-[10px] text-muted mt-2">' + names.length + ' subjek KSSM · sumber: ' + esc(idx.src || 'DSKP') + '</div></div>' });
+  const bd = $('[data-modal="' + id + '"]');
+  const q = $('#dkQ', bd);
+  q.addEventListener('input', () => { pick = ''; $('#dkBody', bd).innerHTML = body(q.value); });
+  bd.addEventListener('click', async e => {
+    const n = e.target.closest('[data-n]'); if (n){ pick = n.dataset.n; q.style.display = 'none'; $('#dkBody', bd).innerHTML = body(); return; }
+    if (e.target.closest('[data-back]')){ pick = ''; q.style.display = ''; $('#dkBody', bd).innerHTML = body(q.value); return; }
+    const d = e.target.closest('[data-d]'); if (!d) return;
+    const row = idx.d.find(x => x[0] === d.dataset.d);
+    d.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat turun DSKP…';
+    try { await dskpLoad(row[0]); } catch(err){ return toast('Gagal memuat DSKP. Semak internet.', null, true); }
+    closeModal(id); cb(row);
+  });
+  setTimeout(() => q.focus(), 80);
+}
+async function subAdd(){
+  dskpPicker('Tambah Subjek (DSKP)', row => {
+    const name = dskpLabel(row[1], row[2]);
+    if (S.subjects.some(x => x.dskp === row[0])) return toast('Subjek ' + name + ' sudah ada.', null, true);
+    S.subjects.push({ id: uid('j'), name, dskp: row[0], dskpS: row[1], dskpF: row[2] });
+    save(true); renderAll(); toast('Subjek ditambah: ' + name);
+  });
+}
+function subLink(id){
+  const x = subj(id); if (!x) return;
+  dskpPicker('Pautkan "' + x.name + '" ke DSKP', row => {
+    x.dskp = row[0]; x.dskpS = row[1]; x.dskpF = row[2];
+    if (S.rpt) delete S.rpt[id];
+    PLAN_MEMO = {};
+    save(true); renderAll(); toast(x.name + ' dipautkan ke ' + dskpLabel(row[1], row[2]));
+  });
+}
+async function subEdit(id){
+  const x = subj(id); if (!x) return;
+  const mid = openModal({ icon:'fa-book', title:'Sunting Subjek',
+    body:'<label class="lbl">NAMA PAPARAN</label><input id="sjName" class="fld clip-s mt-1" value="' + esc(x.name) + '">' +
+      '<div class="panel clip-s p-2 mt-3 text-[12px]"><div class="lbl">DSKP</div>' +
+        (x.dskp ? '<div class="mt-1">' + esc(dskpLabel(x.dskpS || '', x.dskpF || '')) + '</div>' : '<div class="mt-1 text-[#FFC24D]">Belum dipautkan</div>') +
+        '<button class="btn clip-s w-full mt-2 text-[12px]" data-x="link"><i class="fa-solid fa-link text-cyan"></i> ' + (x.dskp ? 'Tukar DSKP' : 'Pautkan ke DSKP') + '</button></div>',
+    footer:'<button class="btn clip-s flex-1" data-close="1">Batal</button><button class="btn btn-o clip-s flex-1" data-x="ok">Simpan</button>' });
+  const bd = $('[data-modal="' + mid + '"]');
+  bd.addEventListener('click', e => {
+    const b = e.target.closest('[data-x]'); if (!b) return;
+    if (b.dataset.x === 'link'){ closeModal(mid); return subLink(id); }
+    const n = ($('#sjName', bd).value || '').trim(); if (!n) return toast('Nama diperlukan.', null, true);
+    x.name = n; save(true); closeModal(mid); renderAll();
+  });
+}
+
+/* ---------- RPT: rancangan sepanjang tahun ---------- */
+function rptModal(){
+  const sj = S.ui.activeSubjectId;
+  if (!sj) return toast('Pilih subjek dahulu.', null, true);
+  if (!subjDskp(sj)) return subLink(sj);
+  const b = subjBook(sj); if (!b) return toast('DSKP sedang dimuat… cuba sebentar lagi.');
+  const ws = schoolWeeks(), plan = planOf(sj), over = rptOf(sj).over, tk = takwim();
+  const now = weekOf(todayKey()), nowN = now && now.n || 0;
+  const rows = [];
+  ws.forEach((w, i) => {
+    const prev = ws[i - 1];
+    if (prev){ const gap = tk.cuti.find(c => c[1] > prev.end && c[1] < w.start); if (gap) rows.push('<div class="text-center text-[10px] py-1" style="color:#FFC24D;border-top:1px solid var(--line)">— ' + esc(gap[0]) + ' (' + fmtShort(gap[1]) + '–' + fmtShort(gap[2]) + ') —</div>'); }
+    const sks = (plan[w.n] || []).map(i2 => b.sk[i2]);
+    rows.push('<button class="w-full text-left flex gap-2 py-2" style="border-top:1px solid var(--line);background:' + (w.n === nowN ? 'rgba(0,240,255,.08)' : 'none') + '" data-w="' + w.n + '">' +
+      '<div style="width:46px" class="shrink-0"><div class="num text-[13px] ' + (w.n === nowN ? 'text-cyan' : '') + '">M' + w.n + '</div><div class="text-[9px] text-muted">' + fmtShort(w.start) + '</div></div>' +
+      '<div class="flex-1 min-w-0">' + (sks.length ? sks.map(k => '<div class="text-[11px] leading-snug truncate">' + esc(k.sk) + '</div>').join('') +
+        '<div class="text-[9px] text-muted truncate">' + esc(sks[0].tajuk) + '</div>' : '<div class="text-[11px] text-muted">— ulang kaji / kosong —</div>') + '</div>' +
+      (over[w.n] ? '<i class="fa-solid fa-pen text-orange text-[10px] mt-1" title="diubah guru"></i>' : '') + '</button>');
+  });
+  const id = openModal({ icon:'fa-calendar-days', title:'RPT — ' + subjName(sj),
+    body:'<div class="text-[11px] text-muted">' + ws.length + ' minggu persekolahan ' + tk.year + ' · ' + b.sk.length + ' SK · ' + b.u.length + ' tajuk. Susunan automatik ikut DSKP; ketik mana-mana minggu untuk menukar topiknya.' +
+      (Object.keys(over).length ? ' <span class="text-orange">' + Object.keys(over).length + ' minggu diubah.</span>' : '') + '</div>' +
+      '<div class="mt-2" data-nohint="1" style="max-height:60vh;overflow-y:auto" id="rptList">' + rows.join('') + '</div>',
+    footer:(Object.keys(over).length ? '<button class="btn clip-s text-[12px]" data-x="reset"><i class="fa-solid fa-rotate-left text-orange"></i> Auto semula</button>' : '') +
+      '<button class="btn clip-s flex-1" data-close="1">Tutup</button>' });
+  const bd = $('[data-modal="' + id + '"]');
+  setTimeout(() => { const el = $('[data-w="' + nowN + '"]', bd); if (el) el.scrollIntoView({ block:'center' }); }, 60);
+  bd.addEventListener('click', async e => {
+    if (e.target.closest('[data-x="reset"]')){
+      const ok = await confirmBox({ title:'Susun Automatik Semula', okText:'Ya', message:'Buang semua tukaran minggu dan kembali ke susunan automatik DSKP?' });
+      if (!ok) return;
+      rptOf(sj).over = {}; save(true); closeModal(id); rptModal(); return;
+    }
+    const w = e.target.closest('[data-w]'); if (!w) return;
+    skPicker('Minggu ' + w.dataset.w + ' — pilih SK', sj, plan[+w.dataset.w] || [], sel => {
+      const o = rptOf(sj).over, auto = autoPlan(b, ws.length)[+w.dataset.w] || [];
+      if (sel === null || JSON.stringify(sel) === JSON.stringify(auto)) delete o[w.dataset.w]; else o[w.dataset.w] = sel;
+      save(true); closeModal(id); rptModal(); renderTab();
+    }, true);
+  });
+}
+/* Pemilih SK: dikumpul ikut tajuk. cb(senarai indeks) · cb(null) = kembali auto */
+function skPicker(title, sj, cur, cb, allowAuto){
+  const b = subjBook(sj); if (!b) return;
+  const sel = new Set(cur || []);
+  const id = openModal({ icon:'fa-list-check', title,
+    body:'<div data-nohint="1" style="max-height:58vh;overflow-y:auto">' + b.u.map((u, ui) =>
+      '<div class="mt-2"><div class="text-[10px] text-muted">' + esc(u[0] || '') + '</div><div class="font-bold text-[12px]">' + esc(u[1] || '') + '</div>' +
+      b.sk.filter(k => k.ui === ui).map(k => '<label class="flex items-start gap-2 py-1 text-[12px]"><input type="checkbox" class="mt-0.5" value="' + k.i + '"' + (sel.has(k.i) ? ' checked' : '') + '>' +
+        '<span>' + esc(k.sk) + ' <span class="num text-[10px] text-muted">' + k.sp.length + ' SP</span></span></label>').join('') + '</div>').join('') + '</div>',
+    footer:(allowAuto ? '<button class="btn clip-s text-[12px]" data-x="auto">Auto</button>' : '') +
+      '<button class="btn clip-s flex-1" data-close="1">Batal</button><button class="btn btn-o clip-s flex-1" data-x="ok">Simpan</button>' });
+  const bd = $('[data-modal="' + id + '"]');
+  setTimeout(() => { const c = $('input:checked', bd); if (c) c.scrollIntoView({ block:'center' }); }, 60);
+  bd.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    if (x.dataset.x === 'auto'){ closeModal(id); return cb(null); }
+    const v = $$('input:checked', bd).map(i => +i.value).sort((a, c) => a - c);
+    closeModal(id); cb(v);
+  });
+}
+/* Tukar topik bagi kelas & tarikh semasa sahaja */
+function lessonPick(){
+  const cid = S.ui.activeClassId, sj = S.ui.activeSubjectId, date = recDate();
+  const t = lessonTopic(cid, sj, date); if (!t) return;
+  skPicker('Topik ' + clsName(cid) + ' · ' + fmtDate(date), sj, t.sks.map(k => k.i), sel => {
+    S.lesson = S.lesson || {};
+    const k = lessonKey(cid, sj, date);
+    if (sel === null) delete S.lesson[k]; else S.lesson[k] = sel;
+    // rekod hari ini dikemas kini supaya mengikut topik baharu
+    studentsOf(cid).forEach(s => { const r = ((S.records[s.id] || {})[sj] || {})[date]; if (r) stampTopic(r, cid, sj, date); });
+    save(true); renderTab(); toast(sel === null ? 'Topik kembali ikut RPT.' : 'Topik hari ini ditukar.');
+  }, true);
+}
+
+/* ---------- Tetapan: takwim ---------- */
+function takwimSettingsHtml(){
+  const tk = takwim(), ws = schoolWeeks(), now = weekOf(todayKey());
+  const row = (lbl, a, b, key) => '<div class="grid grid-cols-[1fr_auto_auto] gap-1 items-center mt-1"><span class="text-[11px] truncate">' + esc(lbl) + '</span>' +
+    '<input type="date" class="fld clip-s num !py-1 !px-1 !text-[11px]" value="' + a + '" onchange="takwimSet(\'' + key + '\',0,this.value)">' +
+    '<input type="date" class="fld clip-s num !py-1 !px-1 !text-[11px]" value="' + b + '" onchange="takwimSet(\'' + key + '\',1,this.value)"></div>';
+  return '<div class="text-[12px]">Tahun <b class="num">' + tk.year + '</b> · ' + ws.length + ' minggu persekolahan · hari ini: <b class="text-cyan">' +
+      (now && now.n ? 'Minggu ' + now.n : now && now.cuti ? esc(now.cuti) : 'luar takwim') + '</b></div>' +
+    '<div class="grid grid-cols-2 gap-1 mt-2">' + ['A','B'].map(g => '<button class="btn clip-s !py-1.5 text-[11px]' + (tk.grp === g ? ' btn-o' : '') + '" data-act="tk-grp" data-id="' + g + '">Kumpulan ' + g + '</button>').join('') + '</div>' +
+    '<div class="text-[10px] text-muted mt-1">' + esc(TK_GRP[tk.grp]) + '</div>' +
+    '<div class="lbl mt-3">PENGGAL</div>' + tk.terms.map((t, i) => row('Penggal ' + (i + 1), t[0], t[1], 't' + i)).join('') +
+    '<div class="lbl mt-3">CUTI</div>' + tk.cuti.map((c, i) => row(c[0], c[1], c[2], 'c' + i)).join('') +
+    '<div class="text-[10px] text-muted mt-2">Tarikh lalai: Kalendar Akademik KPM ' + tk.year + '. Ubah jika sekolah anda berbeza (cth. cuti peristiwa). Minggu dikira semula serta-merta.</div>';
+}
+function takwimSet(key, pos, v){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+  const tk = takwim();
+  if (key[0] === 't') tk.terms[+key.slice(1)][pos] = v; else tk.cuti[+key.slice(1)][pos + 1] = v;
+  PLAN_MEMO = {}; save(true); renderTab();
+}
+
+/* ---------- TP mengikut tajuk DSKP (RPM automatik) ---------- */
+function unitTP(sid, sj, ui){
+  const days = ((S.records[sid] || {})[sj]) || {}, tps = [];
+  Object.keys(days).forEach(d => { const t = recTopic(sid, sj, d); if (t && (t.u || []).indexOf(ui) >= 0) tps.push(days[d].tpAwarded || calcTP(rateOf(days[d]))); });
+  return tps.length ? clamp(Math.round(tps.reduce((a, x) => a + x, 0) / tps.length), 1, 6) : 0;
+}
+/* Tajuk yang sudah ada penilaian bagi kelas aktif (urutan DSKP) */
+function taughtUnits(cid, sj){
+  const set = new Set();
+  studentsOf(cid).forEach(s => Object.keys(((S.records[s.id] || {})[sj]) || {}).forEach(d => { const t = recTopic(s.id, sj, d); (t && t.u || []).forEach(u => set.add(u)); }));
+  return Array.from(set).sort((a, b) => a - b);
+}
+
+/* ---------- RUMUSAN PBD (muat turun) ----------
+   Semua data PBD kelas & subjek aktif dihimpun dalam satu laporan:
+   ringkasan murid, TP mengikut tajuk DSKP, log topik diajar & kehadiran,
+   bertarikh pada saat dimuat turun.                                  */
+function pbdSummary(){
+  const cid = S.ui.activeClassId, sj = S.ui.activeSubjectId, b = subjBook(sj);
+  const list = studentsOf(cid), now = new Date(), wk = weekOf(todayKey());
+  const units = b ? taughtUnits(cid, sj) : [];
+  const attDs = attDates(list);
+  const rows = list.map(s => {
+    const st = stats(s.id, sj), ses = sessionsOf(s.id, sj), a = attSummary(s.id, attDs);
+    return { s, st, last: ses.length ? ses[0].date : '', att: a, units: units.map(u => unitTP(s.id, sj, u)) };
+  });
+  const dates = Array.from(new Set([].concat.apply([], list.map(s => Object.keys(((S.records[s.id] || {})[sj]) || {}))))).sort();
+  const log = dates.map(d => {
+    const n = list.filter(s => ((S.records[s.id] || {})[sj] || {})[d]).length;
+    const t = list.map(s => recTopic(s.id, sj, d)).find(Boolean);
+    return { d, n, t };
+  });
+  return { cid, sj, b, list, rows, units, log, now, wk, attDs };
+}
+function pbdSummaryModal(){
+  if (!ctxOk()) return toast('Pilih Kelas dan Subjek dahulu.', null, true);
+  const R = pbdSummary();
+  const dist = [0,0,0,0,0,0]; R.rows.forEach(r => { if (r.st.finalTP) dist[r.st.finalTP - 1]++; });
+  openModal({ icon:'fa-file-lines', title:'Rumusan PBD',
+    body:'<div class="text-[12px]">' + esc(clsName(R.cid)) + ' · ' + esc(subjName(R.sj)) + '</div>' +
+      '<div class="text-[11px] text-muted">Dijana ' + R.now.toLocaleString('ms-MY') + (R.wk && R.wk.n ? ' · Minggu ' + R.wk.n : '') + '</div>' +
+      '<div class="grid grid-cols-3 gap-2 mt-3 text-center num">' +
+        '<div class="panel clip-s p-2"><div class="text-[18px] text-cyan">' + R.list.length + '</div><div class="text-[9px] text-muted">MURID</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">' + R.log.length + '</div><div class="text-[9px] text-muted">SESI PdP</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#4ADE80">' + R.units.length + '</div><div class="text-[9px] text-muted">TAJUK DINILAI</div></div></div>' +
+      '<div class="grid grid-cols-6 gap-1 mt-2 text-center">' + dist.map((n, i) => '<div><div class="num text-[10px]" style="color:' + TP_COLOR[i + 1] + '">TP' + (i + 1) + '</div><div class="num text-[13px]">' + n + '</div></div>').join('') + '</div>' +
+      '<div class="text-[11px] text-muted mt-3 leading-relaxed">Laporan mengandungi: (1) ringkasan setiap murid — skor, purata TP, TP akhir, kehadiran; (2) TP setiap murid mengikut tajuk DSKP yang telah diajar; (3) log tarikh PdP bersama SK yang diajar.</div>',
+    footer:'<button class="btn clip-s flex-1" data-x="csv" onclick="pbdSummaryCsv()"><i class="fa-solid fa-file-csv text-cyan"></i> Excel (CSV)</button>' +
+      '<button class="btn btn-o clip-s flex-1" onclick="pbdSummaryPrint()"><i class="fa-solid fa-file-pdf"></i> Cetak / PDF</button>' });
+}
+const unitName = (b, u) => b ? (b.u[u][1] || b.u[u][0] || 'Tajuk ' + (u + 1)) : '';
+function pbdSummaryCsv(){
+  const R = pbdSummary(), q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const L = [];
+  L.push(q('RUMUSAN PBD — ' + subjName(R.sj)));
+  L.push([q('Kelas'), q(clsName(R.cid))].join(','));
+  L.push([q('Subjek'), q(subjName(R.sj))].join(','));
+  L.push([q('Dijana pada'), q(R.now.toLocaleString('ms-MY')), q(R.wk && R.wk.n ? 'Minggu ' + R.wk.n : '')].join(','));
+  L.push('');
+  L.push(q('A. RINGKASAN MURID'));
+  L.push(['Bil','Nama','Skor','Purata TP','Bil. Penilaian','TP Akhir','Penilaian Terakhir','Hadir %'].map(q).join(','));
+  R.rows.forEach((r, i) => L.push([i + 1, q(r.s.name), fmtScore(r.st.score), r.st.avgTP.toFixed(1), r.st.sessions, r.st.finalTP ? 'TP' + r.st.finalTP : '-', r.last ? fmtDate(r.last) : '-', r.att.pct === null ? '-' : r.att.pct].join(',')));
+  if (R.units.length){
+    L.push(''); L.push(q('B. TP MENGIKUT TAJUK DSKP'));
+    L.push(['Bil','Nama'].concat(R.units.map(u => q(unitName(R.b, u)))).join(','));
+    R.rows.forEach((r, i) => L.push([i + 1, q(r.s.name)].concat(r.units.map(tp => tp ? 'TP' + tp : '-')).join(',')));
+  }
+  L.push(''); L.push(q('C. LOG PdP'));
+  L.push(['Tarikh','Minggu','Murid Dinilai','SK Diajar','Tajuk'].map(q).join(','));
+  R.log.forEach(x => L.push([q(fmtDate(x.d)), x.t && x.t.w ? x.t.w : '', x.n, q(x.t ? x.t.t : ''), q(x.t ? x.t.tj : '')].join(',')));
+  download('Rumusan_PBD_' + clsName(R.cid).replace(/\s+/g, '_') + '_' + subjName(R.sj).replace(/[^\w]+/g, '_') + '_' + todayKey() + '.csv', '﻿' + L.join('\n'), 'text/csv');
+  toast('Rumusan PBD dimuat turun.');
+}
+function pbdSummaryPrint(){
+  const R = pbdSummary(), e = esc;
+  const th = 'style="background:#eee"';
+  $('#printArea').innerHTML =
+    '<h2 style="margin:0">Rumusan Pentaksiran Bilik Darjah (PBD)</h2>' +
+    '<div style="margin:4px 0 10px">Kelas: <b>' + e(clsName(R.cid)) + '</b> &nbsp;|&nbsp; Subjek: <b>' + e(subjName(R.sj)) + '</b> &nbsp;|&nbsp; Dijana: ' + e(R.now.toLocaleString('ms-MY')) + (R.wk && R.wk.n ? ' (Minggu ' + R.wk.n + ')' : '') + '</div>' +
+    '<h3>A. Ringkasan Murid</h3><table><thead><tr ' + th + '><th>Bil</th><th>Nama</th><th>Skor</th><th>Purata TP</th><th>Penilaian</th><th>TP Akhir</th><th>Terakhir</th><th>Hadir</th></tr></thead><tbody>' +
+      R.rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + e(r.s.name) + '</td><td>' + fmtScore(r.st.score) + '</td><td>' + r.st.avgTP.toFixed(1) + '</td><td>' + r.st.sessions + '</td><td><b>' + (r.st.finalTP ? 'TP' + r.st.finalTP : '-') + '</b></td><td>' + (r.last ? fmtDate(r.last) : '-') + '</td><td>' + (r.att.pct === null ? '-' : r.att.pct + '%') + '</td></tr>').join('') + '</tbody></table>' +
+    (R.units.length ? '<h3>B. TP Mengikut Tajuk DSKP</h3><table><thead><tr ' + th + '><th>Bil</th><th>Nama</th>' + R.units.map(u => '<th>' + e(unitName(R.b, u)) + '</th>').join('') + '</tr></thead><tbody>' +
+      R.rows.map((r, i) => '<tr><td>' + (i + 1) + '</td><td>' + e(r.s.name) + '</td>' + r.units.map(tp => '<td style="text-align:center">' + (tp ? 'TP' + tp : '-') + '</td>').join('') + '</tr>').join('') + '</tbody></table>' : '') +
+    '<h3>C. Log PdP</h3><table><thead><tr ' + th + '><th>Tarikh</th><th>Minggu</th><th>Dinilai</th><th>SK Diajar</th><th>Tajuk</th></tr></thead><tbody>' +
+      R.log.map(x => '<tr><td>' + fmtDate(x.d) + '</td><td>' + (x.t && x.t.w ? x.t.w : '') + '</td><td>' + x.n + '</td><td>' + e(x.t ? x.t.t : '') + '</td><td>' + e(x.t ? x.t.tj : '') + '</td></tr>').join('') + '</tbody></table>' +
+    '<p style="margin-top:24px">Tandatangan Guru: ______________________ &nbsp;&nbsp; Disahkan oleh: ______________________</p>' +
+    '<p style="margin-top:12px;font-size:8pt;color:#666">Dijana oleh LagendaTP · dicipta oleh Arif Aziz</p>';
+  window.print();
+}
+
+/* ---------- Skop soalan AI: SK/SP DSKP ---------- */
+function dskpScopeOpts(sj){
+  const b = subjBook(sj); if (!b) return [];
+  const t = lessonTopic(S.ui.activeClassId, sj, recDate());
+  const out = [];
+  if (t && t.sks.length) out.push({ v:'now', label:'Minggu ini: ' + t.sks.map(k => skCode(k.sk) || shortTxt(k.sk, 20)).join(', '), sks: t.sks });
+  b.u.forEach((u, ui) => out.push({ v:'u' + ui, label: shortTxt((u[1] || u[0] || 'Tajuk ' + (ui + 1)), 60), sks: b.sk.filter(k => k.ui === ui) }));
+  return out;
+}
+function dskpPromptBlock(sj, scope){
+  const b = subjBook(sj), x = subj(sj);
+  const o = dskpScopeOpts(sj).find(z => z.v === scope); if (!b || !o) return '';
+  const lines = ['DSKP: ' + (x.dskpS || '') + ' — ' + formName(x.dskpF || ''), 'TEMA: ' + (o.sks[0].tema || '-'), 'TAJUK: ' + (o.sks[0].tajuk || '-'), 'STANDARD KANDUNGAN & STANDARD PEMBELAJARAN:'];
+  o.sks.forEach(k => { lines.push('  SK ' + k.sk); k.sp.forEach(p => lines.push('    SP ' + p)); });
+  return lines.join('\n');
+}
+/* Baris topik dalam modal penilaian */
+function evalTopicHtml(){
+  const sj = S.ui.activeSubjectId; if (!subjDskp(sj)) return '';
+  const t = lessonTopic(S.ui.activeClassId, sj, recDate());
+  if (!t || !t.sks.length) return '<div class="panel clip-s p-2 mb-2 text-[11px] text-muted"><i class="fa-solid fa-book-open"></i> Tiada topik DSKP untuk tarikh ini (' + (t && t.w && t.w.cuti ? esc(t.w.cuti) : 'luar RPT') + ').</div>';
+  return '<div class="panel clip-s p-2 mb-2 text-[11px]" data-nohint="1" style="border-left:3px solid #00F0FF"><div class="text-cyan num">TOPIK' + (t.w && t.w.n ? ' · MINGGU ' + t.w.n : '') + (t.own ? ' · DITUKAR' : '') + '</div>' +
+    '<div class="font-bold text-[12px]">' + esc(t.sks[0].tajuk) + '</div>' + t.sks.map(k => '<div>' + esc(k.sk) + '</div>').join('') + '</div>';
+}
+/* Soalan yang sepadan dengan topik minggu ini didahulukan dalam game */
+function topicalBank(sj){
+  const bank = qBank(sj); if (bank.length < 4) return bank;
+  const t = lessonTopic(S.ui.activeClassId, sj, recDate());
+  if (!t || !t.sks.length) return bank;
+  const codes = t.sks.map(k => skCode(k.sk)).filter(Boolean);
+  const top = bank.filter(q => q.sk && codes.indexOf(q.sk) >= 0);
+  return top.length >= 3 ? top : bank;
 }
 
 /* ============ GAME 2: KAD KOLEKSI (DILUKIS OLEH APP) ============
@@ -5640,6 +6190,8 @@ function tpdHtml(){
       '<button class="btn clip-s !px-3 !py-2" data-act="tpd-day" data-id="1"' + (i > 0 ? '' : ' disabled') + ' title="Tarikh seterusnya"><i class="fa-solid fa-chevron-right"></i></button></div>' +
     '<div class="flex gap-1 mt-2 overflow-x-auto scrollx pb-1">' + ds.slice(0, 30).map(x =>
       '<button class="btn clip-s !px-2 !py-1 text-[10px] num shrink-0' + (x === d ? ' btn-o' : '') + '" data-act="tpd-pick" data-id="' + x + '">' + x.slice(8) + '/' + x.slice(5, 7) + '</button>').join('') + '</div>' +
+    (() => { const t = list.map(x => x.r && recTopic(x.s.id, sj, d)).find(Boolean) || (subjDskp(sj) && lessonTopic(S.ui.activeClassId, sj, d) && lessonTopic(S.ui.activeClassId, sj, d).sks.length ? topicSnap(lessonTopic(S.ui.activeClassId, sj, d)) : null);
+      return t ? '<div class="panel clip-s p-2 mt-2 text-[11px]" style="border-left:3px solid #00F0FF"><span class="text-cyan num">' + (t.w ? 'MINGGU ' + t.w + ' · ' : '') + 'TOPIK</span> ' + esc(t.t) + '<div class="text-muted truncate">' + esc(t.tj || '') + '</div></div>' : ''; })() +
     (done.length ? '<div class="grid grid-cols-6 gap-1 mt-2">' + dist.map((n, k) => '<div class="text-center"><div class="num text-[10px]" style="color:' + TP_COLOR[k + 1] + '">TP' + (k + 1) + '</div><div class="num text-[13px]">' + n + '</div></div>').join('') + '</div>' : '') +
     '<div class="mt-2">' + list.map(x => {
       const a = attOf(attGet(x.s.id, d));
@@ -5768,7 +6320,7 @@ function escMathQ(){
   return { q: a + ' ' + sym + ' ' + b + ' = ?', c: Array.from(opts).map(String), a: 0, ans: String(ans), short: a + ' ' + sym + ' ' + b };
 }
 function escQuestion(){
-  const bank = qBank(S.ui.activeSubjectId);
+  const bank = topicalBank(S.ui.activeSubjectId);
   if (!bank.length) return escMathQ();
   const q = nextQ(bank);
   const keep = [0,1,2,3].filter(i => q.c[i] !== undefined && q.c[i] !== '');
@@ -5776,7 +6328,7 @@ function escQuestion(){
 }
 /* 4 pasangan untuk teka-teki padanan: soalan ↔ jawapan betul (hasil unik) */
 function escPairs(){
-  const bank = qBank(S.ui.activeSubjectId).filter(q => q.c && q.c[q.a] !== undefined);
+  const bank = topicalBank(S.ui.activeSubjectId).filter(q => q.c && q.c[q.a] !== undefined);
   const out = [], seen = new Set();
   bank.slice().sort(() => Math.random() - .5).forEach(q => {
     const a = String(q.c[q.a]);
@@ -6871,6 +7423,12 @@ const ACTS = {
   'chap-del': d => chapDel(d.id),
   'rpm': rpmModal,
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
+  'sub-link': d => subLink(d.id),
+  'lesson-pick': () => lessonPick(),
+  'rpt-open': () => rptModal(),
+  'wb-toggle': () => { S.ui.wbOpen = !S.ui.wbOpen; save(); rerenderKeepScroll(); },
+  'tk-grp': d => { const tk = takwim(); if (!takwimPreset(tk.year, d.id)) tk.grp = d.id; PLAN_MEMO = {}; save(true); renderTab(); toast('Takwim ' + TK_GRP[d.id].split(' — ')[0]); },
+  'pbd-sum': () => pbdSummaryModal(),
   'card-stu': cardStuPick,
   'tpc-topup': topupModal,
   'binder': d => binderModal(d.id),
@@ -7077,6 +7635,8 @@ function installGate(){
   Object.assign(PHOTOS, await idbAll());
   S = load();
   /* Aset sprite / peta / kad muat naik lama dipadam daripada peranti, sekali sahaja. */
+  S.subjects.filter(x => x.dskp).forEach(x => dskpLoad(x.dskp).then(() => renderTab()).catch(() => {}));
+  dskpIndex().catch(() => {});
   purgeSpriteAssets().then(n => { if (n) console.info('Aset lama dibuang:', n); });
   if (S.ui.tab === 'arena' && !['escape','cards','run'].includes(arenaUi().game)) arenaUi().game = 'cards';
   bgmInit();
