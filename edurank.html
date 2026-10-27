@@ -4095,8 +4095,37 @@ const TPC_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
 
 /* ---------- BUKA PACK ---------- */
 let SFX_ON = true;
+/* ---------- AUDIO ASET (assets/sfx) ----------
+   Fail audio sebenar (dijana di tools/jana-audio.html) menggantikan bunyi sintesis bila wujud.
+   assets/sfx/senarai.json ditulis oleh auto-push; bunyi yang belum ada guna bunyi lalai app. */
+const AUD_HAVE = new Map();
+let AUD_PROBED = null;
+function audProbe(){
+  if (!AUD_PROBED) AUD_PROBED = fetch('assets/sfx/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
+    .then(m => { Object.keys(m).forEach(id => AUD_HAVE.set(id, 'assets/sfx/' + m[id])); }).catch(() => {});
+  return AUD_PROBED;
+}
+/* main fail audio sekali; pulang false jika fail tiada (pemanggil guna bunyi lalai) */
+function audPlay(id, vol){
+  const url = AUD_HAVE.get(id); if (!url) return false;
+  if (!SFX_ON) return true;
+  const a = audCtx(); if (!a) return false;
+  if (a.state === 'suspended' && !document.hidden) a.resume();
+  audBuf(url).then(d => {
+    if (!d) return;
+    const src = a.createBufferSource(), g = a.createGain();
+    src.buffer = d.buf; g.gain.value = Math.min(1.5, vol == null ? 1 : vol) * 0.9;
+    src.connect(g); g.connect(a.destination); src.start(0, d.ls);
+  });
+  return true;
+}
+/* muat & nyahkod awal bunyi sesuatu game (dipanggil dari menu permulaan game) */
+const audPreload = key => audProbe().then(() => AUD_HAVE.forEach((u, id) => { if (id.indexOf('ui_') === 0 || id.indexOf(key + '_') === 0 || id === 'bgm_' + key) audBuf(u); }));
+const SFX_MAP = { flip:'ui_klik', hi:'ui_betul', low:'ui_salah', myth:'ui_hebat', tear:'kad_koyak', burst:'kad_letup' };
+const snd = (id, fallback) => { if (!audPlay(id) && fallback) sfx(fallback); };
 function sfx(type){
   if (!SFX_ON) return;
+  if (SFX_MAP[type] && audPlay(SFX_MAP[type])) return;
   try {
     const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
     SFX_CTX = SFX_CTX || new C();
@@ -4176,7 +4205,7 @@ const BGM_DEF = {
 const bgmDefUrl = k => BGM_DEF[k] ? 'https://cdn1.suno.ai/' + BGM_DEF[k].id + '.mp3' : null;
 const bgmOwn = k => { const r = (S.bgm || {})[k]; return r ? (resolveUrl(r.url) || PHOTOS['bgm:' + k] || null) : null; };
 const bgmDefOn = () => !(S && S.config && S.config.bgmDef === 0);
-const bgmSrc = k => bgmOwn(k) || (bgmDefOn() ? (PHOTOS['bgmdef:' + k] || bgmDefUrl(k)) : null);
+const bgmSrc = k => bgmOwn(k) || AUD_HAVE.get('bgm_' + k) || (bgmDefOn() ? (PHOTOS['bgmdef:' + k] || bgmDefUrl(k)) : null);
 /* Simpan lagu lalai yang sudah berjaya dimuat turun, sekali sahaja. */
 async function bgmCacheDef(k, ab){
   if (PHOTOS['bgmdef:' + k] || !ab) return;
@@ -4230,14 +4259,15 @@ const bgmOn = () => !(S && S.config && S.config.bgmOn === 0);
 /* Skrin mana sedang dipaparkan? Pentas lakonan dekat di atas papan, papan
    di atas menu. */
 function bgmScene(){
-  if (document.querySelector('#escRoot,#runRoot')) return 'game3d';   // game 3D: senyap, guna bunyi sendiri
+  for (const [sel, k] of [['#stRoot','stor'], ['#btRoot','duel'], ['#runRoot','run'], ['#escRoot','esc']]) if (document.querySelector(sel)) return k;
   return 'menu';
 }
 function bgmTarget(){
   if (BGM.preview) return BGM.preview;
   if (!bgmOn()) return null;
   const s = bgmScene();
-  return bgmSrc(s) ? s : null;
+  if (bgmSrc(s)) return s;
+  return (s === 'stor' || s === 'duel') && bgmSrc('menu') ? 'menu' : null;   // game 3D tanpa muzik aset: guna bunyi enjinnya sendiri
 }
 async function bgmSwitch(src){
   const a = audCtx(); if (!a) return;
@@ -4295,7 +4325,7 @@ function bgmApplyVol(){
    peranti bertukar sumber (URL Suno \u2192 salinan tempatan) tetapi ia masih
    lagu yang SAMA; kalau dibanding ikut sumber, lagu itu akan bermula semula
    dari awal sejurus selepas disimpan. */
-const bgmId = k => { if (!k) return null; const o = bgmOwn(k); return o ? 'own:' + k + ':' + audKey(o) : 'def:' + k; };
+const bgmId = k => { if (!k) return null; const o = bgmOwn(k); return o ? 'own:' + k + ':' + audKey(o) : AUD_HAVE.has('bgm_' + k) ? 'aset:' + k : 'def:' + k; };
 function bgmTick(){
   if (!BGM.unlocked) return;
   /* pratonton hanya hidup selagi bahagian Muzik dalam Tetapan terbuka */
@@ -5708,6 +5738,7 @@ function gameLobby(k){
     }
   });
   paint();
+  audPreload({ cards:'duel', run:'run', escape:'esc', stor:'stor' }[k]);
   if (def.preload){
     const t0 = Date.now();
     def.preload(setProg).catch(err => { console.warn('pramuat', err); })
@@ -6420,7 +6451,7 @@ function battleRun(tA, tB, mode){
     const dmg = Math.max(3, Math.round(ax.atk * (fast ? 1.4 : 1) * (0.9 + Math.random() * 0.2) * adv - dx.def * 0.6));
     const aEl = $b('#btA' + k), dEl = $b('#btA' + (1 - k));
     if (aEl) aEl.classList.add(k === 0 ? 'bt-lunge-up' : 'bt-lunge-dn');
-    sfx(fast ? 'hi' : 'flip');
+    snd(fast ? 'duel_kritikal' : 'duel_serang', fast ? 'hi' : 'flip');
     setTimeout(() => {
       if (!root.isConnected) return;
       if (aEl) aEl.classList.remove('bt-lunge-up', 'bt-lunge-dn');
@@ -6428,7 +6459,7 @@ function battleRun(tA, tB, mode){
       $b('#btGlow').classList.remove('on'); void $b('#btGlow').offsetWidth; $b('#btGlow').classList.add('on');
       dx.cur -= dmg;
       if (dEl){
-        dEl.classList.add('bt-hit'); vibrate(30);
+        dEl.classList.add('bt-hit'); vibrate(30); audPlay('duel_kena');
         const hp = dEl.querySelector('.bt-hp'); if (hp) hp.innerHTML = '<small>HP</small>' + Math.max(0, dx.cur);
         const bar = dEl.querySelector('.bt-hpbar i'); if (bar){ bar.style.width = Math.max(0, dx.cur / dx.hp * 100) + '%'; bar.style.background = hpCol(dx); }
         const r = dEl.getBoundingClientRect(), br = $b('#btBoard').getBoundingClientRect();
@@ -6441,7 +6472,7 @@ function battleRun(tA, tB, mode){
         setTimeout(() => {
           if (!root.isConnected) return;
           if (dEl) dEl.classList.add('bt-ko');
-          banner(esc(dx.c.name) + ' — KO!', '#FCA5A5', 1200); sfx('low');
+          banner(esc(dx.c.name) + ' — KO!', '#FCA5A5', 1200); snd('duel_ko', 'low');
           setTimeout(() => { if (!root.isConnected) return; d.ko.push(dx); d.i++; paintBoard(alive(d) ? 1 - k : undefined); }, 700);
         }, 500);
       } else setTimeout(() => { if (dEl) dEl.classList.remove('bt-hit'); }, 460);
@@ -6465,7 +6496,7 @@ function battleRun(tA, tB, mode){
     if (P[k].id) teamQuiz(P[k].id, ok);
     if (rebut){
       if (ok){ cur.done = true; strike(k, fast); return endRound(); }
-      cur.locked[k] = true; sfx('low'); vibrate(30);
+      cur.locked[k] = true; snd('ui_salah', 'low'); vibrate(30);
       if (cur.locked[0] && cur.locked[1]){ cur.done = true; banner('Kedua-dua salah! Jawapan: ' + esc(q.c[q.a]), '#FCA5A5', 2000); return endRound(); }
       banner(esc(P[k].name) + ' salah — ' + esc(P[1 - k].name) + ' boleh merebut!', '#FDE68A', 1600); paintQ(); return;
     }
@@ -6518,7 +6549,7 @@ function battleRun(tA, tB, mode){
     }
     save(true);
     const won0 = wk === 0;
-    sfx(ai && !won0 ? 'low' : 'myth');
+    snd(ai && !won0 ? 'duel_kalah' : 'duel_menang', ai && !won0 ? 'low' : 'myth');
     const e = document.createElement('div'); e.className = 'bt-end';
     e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:420px">' +
       '<div style="display:flex;justify-content:center">' + teamIco(W).replace(/26px/g, '60px') + '</div>' +
@@ -6540,6 +6571,7 @@ function battleRun(tA, tB, mode){
     if (x.dataset.x === 'again'){ quit(); setTimeout(() => battleRun(tA, tB, mode), 80); }
   });
   paintBoard(); paintQ();
+  audPlay('duel_mula');
   banner(ai ? esc(P[0].name) + ' lawan PENJAGA KAD' : esc(P[0].name) + ' lawan ' + esc(P[1].name), '#FFE14D', 1500);
   setTimeout(ask, 1700);
 }
@@ -7247,7 +7279,7 @@ function storRun(team){
   /* ---------- tindakan ---------- */
   function openShelf(id){
     const sh = ST_SHELVES.find(s => s[0] === id), its = ST_ITEMS.filter(i => i.sh === id), store = sh[2] === 's';
-    walk(sh[3] + 2); sfx('flip');
+    walk(sh[3] + 2); snd('ui_klik', 'flip');
     $s('#stPop').innerHTML = '<div class="st-pop" data-pc="1"><div class="pn">' +
       '<div class="hd">' + esc(sh[1]).toUpperCase() + '<span>' + (store ? 'Ketik / seret terus kepada pelanggan di Kaunter Stor' : 'Ketik / seret ke dulang · makanan 🍳🌀 perlu dimasak') + '</span></div>' +
       '<div class="gr">' + its.map(i => '<button data-it="' + i.id + '"' + (stock[i.id] <= 0 ? ' disabled' : '') + '>' +
@@ -7261,7 +7293,7 @@ function storRun(team){
     const c = cust[z][i]; if (!c) return;
     c.leaving = true; score += pts; coins += pay;
     fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5.5, 56);
-    sfx('hi'); vibrate(20); paintTray();
+    snd('stor_kaching', 'hi'); vibrate(20); paintTray();
     if (note) msg(note[0], note[1], 1800);
     setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
   }
@@ -7271,8 +7303,8 @@ function storRun(team){
     const i = at != null ? at : cust.s.findIndex(c => c && !c.leaving && c.o.need.includes(id) && !c.o.got.includes(id));
     const c = i >= 0 ? cust.s[i] : null;
     if (!c || c.leaving) return msg('Tiada pelanggan di Kaunter Stor yang perlukan ' + esc(it.n) + '.', '#FDE68A', 1400);
-    if (!c.o.need.includes(id) || c.o.got.includes(id)){ shake('s', i); sfx('low'); return msg('Bukan ini yang diminta!', '#FCA5A5', 1000); }
-    stock[id]--; c.o.got.push(id); sfx('flip'); flyTo(id, shelfPos(id), [SLOTX.s[i] + 5.5, 72]); walk(SLOTX.s[i] + 1.5);
+    if (!c.o.need.includes(id) || c.o.got.includes(id)){ shake('s', i); snd('stor_salah', 'low'); return msg('Bukan ini yang diminta!', '#FCA5A5', 1000); }
+    stock[id]--; c.o.got.push(id); snd('stor_serah', 'flip'); flyTo(id, shelfPos(id), [SLOTX.s[i] + 5.5, 72]); walk(SLOTX.s[i] + 1.5);
     paintShelves();
     if (c.o.got.length === c.o.need.length){
       const frac = Math.max(0, c.p / c.max);
@@ -7287,26 +7319,26 @@ function storRun(team){
     if (it.prep){
       const slots = stn[it.prep[0]], k = slots.findIndex(x => !x);
       if (k < 0) return msg((it.prep[0] === 'dapur' ? 'Dapur' : 'Blender') + ' penuh!', '#FCA5A5');
-      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; sfx('flip'); flyTo(id, shelfPos(id), STN_AT[it.prep[0]]);
+      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; snd(it.prep[0] === 'dapur' ? 'stor_masak' : 'stor_blender', 'flip'); flyTo(id, shelfPos(id), STN_AT[it.prep[0]]);
       msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
       $s('#stPop').innerHTML = ''; walk(91); paintStn(); paintShelves(); return;
     }
     if (tray.length >= TRAY_MAX) return msg('Dulang penuh! Seret makanan dari dulang ke rak untuk pulangkan.', '#FCA5A5', 1600);
-    stock[id]--; tray.push({ id }); sfx('flip'); flyTo(id, shelfPos(id), TRAY_AT);
+    stock[id]--; tray.push({ id }); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), TRAY_AT);
     openShelf(it.sh); paintTray(); paintShelves();
   }
   function takeStation(k, i){
     const x = stn[k][i]; if (!x) return;
-    if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); sfx('low'); return paintStn(); }
+    if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); snd('stor_hangus', 'low'); return paintStn(); }
     if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 700);
     if (tray.length >= TRAY_MAX) return msg('Dulang penuh!', '#FCA5A5');
-    stn[k][i] = null; tray.push({ id: x.id, cooked: true }); sfx('flip'); walk(91); paintStn(); paintTray();
+    stn[k][i] = null; tray.push({ id: x.id, cooked: true }); snd('stor_ambil', 'flip'); walk(91); paintStn(); paintTray();
   }
   function trayBack(i){
     const x = tray[i]; if (!x) return;
     tray.splice(i, 1);
     if (!x.cooked){ stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); } else msg('Makanan dimasak dibuang', '#FDE68A', 900);
-    sfx('low'); paintTray(); paintShelves();
+    snd('ui_klik', 'low'); paintTray(); paintShelves();
   }
   /* serah dulang kepada pelanggan Kedai Sihat: makin hampir kalori sasaran, makin tinggi skor */
   function serve(z, i){
@@ -7316,7 +7348,7 @@ function storRun(team){
     if (!tray.length){ shake(z, i); return msg('Dulang kosong — isi makanan dahulu.', '#FDE68A', 1200); }
     const o = c.o;
     if (o.alg && tray.some(t => ST_ALG[o.alg].ids.includes(t.id))){
-      c.p -= c.max * .3; score = Math.max(0, score - 20); sfx('low'); vibrate(60); shake(z, i);
+      c.p -= c.max * .3; score = Math.max(0, score - 20); snd('stor_alahan', 'low'); vibrate(60); shake(z, i);
       return msg('😨 "Saya alergik ' + ST_ALG[o.alg].n + '! Saya tak boleh makan itu." (−20⭐)', '#FCA5A5', 2400);
     }
     const kc = kcalOf(tray), diff = Math.abs(kc - o.target) / o.target, acc = Math.max(0, 1 - diff * 2.5);
@@ -7334,7 +7366,7 @@ function storRun(team){
   /* ---------- telefon & pembekal ---------- */
   function answerPhone(){
     if (!ring || call) return;
-    ring = null; walk(56.5); sfx('flip');                // berdiri di sisi meja telefon, bukan di belakangnya
+    ring = null; walk(56.5); snd('ui_klik', 'flip');                // berdiri di sisi meja telefon, bukan di belakangnya
     const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
     call = { q }; paused = true;
     $s('#stPhone').classList.remove('ring');
@@ -7347,7 +7379,7 @@ function storRun(team){
     const ok = i === call.q.a; qAsked++; if (ok) qRight++;
     teamQuiz(team, ok);
     $s('#stCall').innerHTML = ''; call = null; paused = false; lastTick = performance.now();
-    sfx(ok ? 'hi' : 'low');
+    snd(ok ? 'ui_betul' : 'ui_salah', ok ? 'hi' : 'low');
     msg(ok ? '✅ Betul! Pembekal hantar stok PENUH — sambut di pintu stok.' : '❌ Salah (jawapan: ' + esc(callAnsText) + '). Stok separuh sahaja.', ok ? '#86EFAC' : '#FCA5A5', 2600);
     sup = { arrive: T + 10, wait: 22, full: ok, here: false };
   }
@@ -7364,7 +7396,7 @@ function storRun(team){
     const add = sup.full ? 5 : 3;
     low.forEach(i => stock[i.id] += add);
     coins = Math.max(0, coins - (sup.full ? 20 : 10));
-    sup = null; $s('#stSup').innerHTML = ''; sfx('myth'); paintShelves();
+    sup = null; $s('#stSup').innerHTML = ''; snd('stor_stok', 'myth'); paintShelves();
     msg('📦 ' + low.length + ' jenis barang ditambah +' + add + ' (bayaran RM' + (add === 5 ? 20 : 10) + ')', '#7DD3FC', 2200);
   }
 
@@ -7383,7 +7415,7 @@ function storRun(team){
         const [z, i] = pick(free), o = makeOrder(z), n = o.need ? o.need.length : Math.max(1, Math.round(o.target / 250));
         const max = SABAR * (1 + (n - 1) * .2);
         cust[z][i] = { o, p: max, max, fresh: true };
-        sfx('flip'); paintCust();
+        snd('stor_loceng', 'flip'); paintCust();
       }
       spawnT = L.spawn * (1 - Math.min(.35, T / DUR * .35)) * (.8 + Math.random() * .4);
     }
@@ -7393,7 +7425,7 @@ function storRun(team){
       if (!c || c.leaving) return;
       c.p -= dt;
       if (c.p <= 0){
-        c.leaving = true; left++; hearts--; changed = true; sfx('low'); vibrate(60);
+        c.leaving = true; left++; hearts--; changed = true; snd('stor_marah', 'low'); vibrate(60);
         msg('😠 ' + esc(c.o.who.n) + ' pergi dengan marah!', '#FCA5A5', 1600);
         setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
       }
@@ -7403,14 +7435,15 @@ function storRun(team){
     // telefon
     if (!ring && !call && !sup && T >= nextRing){ ring = { until: T + 12 }; $s('#stPhone').classList.add('ring'); }
     if (ring){
-      if (Math.floor(T * 2) % 2 === 0 && !ring.b){ ring.b = 1; sfx('flip'); vibrate(15); } else if (Math.floor(T * 2) % 2) ring.b = 0;
+      if (AUD_HAVE.has('stor_telefon')){ if (T >= (ring.nf || 0)){ audPlay('stor_telefon'); vibrate(15); ring.nf = T + 3; } }
+      else if (Math.floor(T * 2) % 2 === 0 && !ring.b){ ring.b = 1; sfx('flip'); vibrate(15); } else if (Math.floor(T * 2) % 2) ring.b = 0;
       if (T >= ring.until){ ring = null; $s('#stPhone').classList.remove('ring'); nextRing = T + 35 + Math.random() * 20; msg('📵 Panggilan pembekal terlepas…', '#FDE68A', 1600); }
     }
     const ph = $s('#stPhone'), bb = ph.querySelector('.bb');
     if (ring && !bb) ph.insertAdjacentHTML('beforeend', '<div class="bb">' + stImg('ui_telefon', '📞') + ' ANGKAT!</div>'); else if (!ring && bb) bb.remove();
     // pembekal
     if (sup){
-      if (!sup.here && T >= sup.arrive){ sup.here = true; sup.until = T + sup.wait; sfx('hi'); msg('🚚 Pembekal sampai di pintu stok!', '#7DD3FC', 1600); }
+      if (!sup.here && T >= sup.arrive){ sup.here = true; sup.until = T + sup.wait; snd('stor_lori', 'hi'); msg('🚚 Pembekal sampai di pintu stok!', '#7DD3FC', 1600); }
       if (sup.here && T >= sup.until){ sup = null; nextRing = T + 30 + Math.random() * 20; msg('🚚 Pembekal pergi — stok tidak diterima', '#FDE68A', 1600); }
       else if (sup && sup.here) nextRing = T + 40;
     }
@@ -7439,7 +7472,7 @@ function storRun(team){
     if (best) d.best[team] = score;
     d.plays[team] = (d.plays[team] || 0) + 1;
     save(true);
-    sfx(failed ? 'low' : 'myth');
+    snd('stor_tamat', failed ? 'low' : 'myth');
     $s('#stEnd').innerHTML = '<div class="st-end"><div class="pn">' +
       '<div class="big">' + (failed ? 'KEDAI DITUTUP!' : 'SYIF TAMAT!') + '</div>' +
       '<div style="font-size:1.3cqw;color:#94A3B8;margin-top:.5cqw">' + esc(teamName(team)) + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
@@ -7503,7 +7536,7 @@ function storRun(team){
       drag.g = document.createElement('div'); drag.g.className = 'st-ghost'; drag.g.innerHTML = icon(itemId);
       document.body.appendChild(drag.g);
       if (drag.kind === 'it'){ const p = $s('#stPop'); p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }   // nampak atlet di bawah
-      sfx('flip');
+      snd('stor_ambil', 'flip');
     }
     drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
     const hot = dropAt(e.clientX, e.clientY);
@@ -7790,7 +7823,7 @@ function runGame(THREE, sid, ac){
     // muzik ceria ringkas: bass + arpeggio berulang
     let beat = 0, timer = null;
     const NOTES = [[262, 330, 392], [220, 277, 330], [175, 220, 262], [196, 247, 294]];
-    timer = setInterval(() => {
+    if (!AUD_HAVE.has('bgm_run')) timer = setInterval(() => {
       const ch = NOTES[Math.floor(beat / 8) % 4];
       if (beat % 2 === 0) tone('triangle', ch[0] / 2, 0, .22, .09);
       tone('square', ch[beat % 3], 0, .12, .025);
@@ -7807,7 +7840,7 @@ function runGame(THREE, sid, ac){
       stop:  () => { clearInterval(timer); try { out.gain.setTargetAtTime(0, ac.currentTime, .05); setTimeout(() => out.disconnect(), 300); } catch(e){} }
     };
   })();
-  const sfxR = k => { try { A && A[k] && A[k](); } catch(e){} };
+  const sfxR = k => { if (audPlay('run_' + k)) return; try { A && A[k] && A[k](); } catch(e){} };
 
   /* ---------- keadaan ---------- */
   const P = { lane: 1, x: 0, y: 0, vy: 0, inv: 0, phase: 0 };
@@ -8867,7 +8900,7 @@ function escRun(THREE, sid, ac){
       stop:   () => { nodes.forEach(n => { try { n.stop(); } catch(e){} }); try { out.gain.setTargetAtTime(0, ac.currentTime, .05); setTimeout(() => out.disconnect(), 300); } catch(e){} }
     };
   })();
-  const sfx = (k, v) => { try { A && A[k] && A[k](v); } catch(e){} };
+  const sfx = (k, v) => { if (audPlay('esc_' + k, v == null ? 1 : Math.min(1, v * 1.5))) return; try { A && A[k] && A[k](v); } catch(e){} };
 
   /* ---------- HUD ---------- */
   const hud = () => {
@@ -9626,7 +9659,7 @@ function installGate(){
   dskpIndex().catch(() => {});
   purgeSpriteAssets().then(n => { if (n) console.info('Aset lama dibuang:', n); });
   if (S.ui.tab === 'arena' && !['escape','cards','run','stor'].includes(arenaUi().game)) arenaUi().game = 'cards';
-  bgmInit();
+  bgmInit(); audProbe();
   hintInit();
   if (!S.ui.mtxClass) S.ui.mtxClass = S.ui.activeClassId || '';
   if (!S.ui.mtxSubject) S.ui.mtxSubject = S.ui.activeSubjectId || '';
