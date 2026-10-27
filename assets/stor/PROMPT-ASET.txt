@@ -1,0 +1,351 @@
+PROMPT ASET — SIMULASI STOR SUKAN (EduRank)
+110 aset. Simpan setiap gambar dengan nama fail di bawah (.png atau .webp) dalam folder ini.
+
+
+==================== LATAR ====================
+
+1. bg_lantai.png   [1600×1000 (16:10)]
+Cute chibi cartoon cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Empty room interior seen from a 3/4 top-down camera, wide 16:10 landscape. Left half: a school sports equipment store with light blue walls; right half: a healthy food cafe with mint green and cream walls; a wide doorway in the middle of the back wall. Clean light tiled floor, windows on the back wall, soft daylight. NO furniture, NO shelves, NO counters, NO people, NO text.
+
+2. bg_menu.png   [1600×1000 (16:10)]
+Cute chibi cartoon cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Leave empty space at the top centre for a logo. No text.
+
+
+==================== PERABOT & STESEN ====================
+
+3. rak_bola.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A tall wooden store shelf unit filled with sports balls of many kinds. Single object centred, whole object visible, transparent background, no text, no people.
+
+4. rak_raket.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A tall store rack holding badminton rackets, tennis rackets, hockey sticks and table tennis paddles. Single object centred, whole object visible, transparent background, no text, no people.
+
+5. rak_pakai.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A tall store shelf with folded sports jerseys, shorts, socks and running shoes. Single object centred, whole object visible, transparent background, no text, no people.
+
+6. rak_fit.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A tall store shelf with dumbbells, exercise mats, skipping ropes, cones, helmets and first aid kits. Single object centred, whole object visible, transparent background, no text, no people.
+
+7. rak_buah.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A cafe fruit and vegetable display stand with baskets of bananas, apples, oranges and greens. Single object centred, whole object visible, transparent background, no text, no people.
+
+8. rak_sejuk.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A glass-door drinks refrigerator filled with milk, water, coconut and sports drinks. Single object centred, whole object visible, transparent background, no text, no people.
+
+9. rak_bijirin.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A cafe shelf with bread, rice, oats, sweet potatoes, nuts and dates in jars. Single object centred, whole object visible, transparent background, no text, no people.
+
+10. rak_snek.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A small snack rack with chips, sweets, donuts and soda cans, marked with a red caution sign. Single object centred, whole object visible, transparent background, no text, no people.
+
+11. dapur.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A small cafe stove with a pot and a grill pan. Single object centred, whole object visible, transparent background, no text, no people.
+
+12. blender.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A kitchen blender on a small counter. Single object centred, whole object visible, transparent background, no text, no people.
+
+13. kaunter_stor.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A long wooden service counter for a sports store, front view, blue panel, with a small bell. Single object centred, whole object visible, transparent background, no text, no people.
+
+14. kaunter_kafe.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A long cafe service counter, front view, green panel, with a small menu stand. Single object centred, whole object visible, transparent background, no text, no people.
+
+15. meja_telefon.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A small desk with an old-style office telephone and a clipboard. Single object centred, whole object visible, transparent background, no text, no people.
+
+16. pintu_stor.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A double loading-bay door of a store room with cardboard boxes stacked beside it. Single object centred, whole object visible, transparent background, no text, no people.
+
+17. dulang.png   [512×512]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. An empty plastic service tray, top view. Single object centred, whole object visible, transparent background, no text, no people.
+
+
+==================== WATAK ====================
+
+18. pekerja_p.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron. Friendly expression. Single character centred, transparent background, no text.
+
+19. pekerja_l.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron. Friendly expression. Single character centred, transparent background, no text.
+
+20. pembekal.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box. Friendly expression. Single character centred, transparent background, no text.
+
+21. atl_bolasepak.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a football player boy in a red jersey and shorts, long socks. Friendly expression. Single character centred, transparent background, no text.
+
+22. atl_pecut.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a sprinter girl in a yellow running singlet with a race bib, hijab sports cap. Friendly expression. Single character centred, transparent background, no text.
+
+23. atl_maraton.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a marathon runner man with a headband and race number. Friendly expression. Single character centred, transparent background, no text.
+
+24. atl_renang.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a swimmer boy in a swimming jacket with goggles on his head. Friendly expression. Single character centred, transparent background, no text.
+
+25. atl_badminton.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a badminton player girl in a blue sports shirt and skort, sports hijab. Friendly expression. Single character centred, transparent background, no text.
+
+26. atl_keranjang.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a tall basketball player boy in an orange jersey. Friendly expression. Single character centred, transparent background, no text.
+
+27. atl_angkat.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a strong weightlifter man in a singlet with a lifting belt. Friendly expression. Single character centred, transparent background, no text.
+
+28. atl_silat.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a silat martial artist boy in black traditional silat attire with a sash. Friendly expression. Single character centred, transparent background, no text.
+
+29. atl_hoki.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a field hockey player girl in a green jersey, sports hijab. Friendly expression. Single character centred, transparent background, no text.
+
+30. atl_jaring.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a netball player girl in a purple bib with position letters. Friendly expression. Single character centred, transparent background, no text.
+
+31. atl_basikal.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a road cyclist man in a tight cycling jersey and helmet. Friendly expression. Single character centred, transparent background, no text.
+
+32. atl_takraw.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a sepak takraw player boy in a white jersey. Friendly expression. Single character centred, transparent background, no text.
+
+33. atl_tenis.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a tennis player girl in a white outfit and visor. Friendly expression. Single character centred, transparent background, no text.
+
+34. atl_pingpong.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a table tennis player boy in a red polo shirt. Friendly expression. Single character centred, transparent background, no text.
+
+35. atl_gimrama.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a rhythmic gymnast girl in a sparkly leotard with a ribbon. Friendly expression. Single character centred, transparent background, no text.
+
+36. atl_cikgu.png   [512×768 (2:3)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a friendly PE teacher man in a tracksuit with a whistle and clipboard. Friendly expression. Single character centred, transparent background, no text.
+
+
+==================== BARANG STOR SUKAN ====================
+
+37. bola_sepak.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a classic black and white soccer ball. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+38. bola_keranjang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of an orange basketball with black lines. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+39. bola_tampar.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white, blue and yellow volleyball. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+40. bola_jaring.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white netball with subtle panel lines. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+41. bola_ragbi.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a brown oval rugby ball with white stitching. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+42. bola_takraw.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a woven orange synthetic rattan sepak takraw ball. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+43. bulu_tangkis.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white feather badminton shuttlecock with cork base. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+44. bola_tenis.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fuzzy yellow-green tennis ball. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+45. bola_pingpong.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of three small orange table tennis balls. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+46. bola_hoki.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white dimpled field hockey ball. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+47. raket_badminton.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a badminton racket with a blue frame and white grip. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+48. raket_tenis.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a tennis racket with a red frame and black grip. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+49. bet_pingpong.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a table tennis paddle with red rubber and wooden handle. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+50. kayu_hoki.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a field hockey stick with a curved hook and blue grip tape. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+51. jersi.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a folded bright blue sports jersey with a white number 10. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+52. seluar_sukan.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of black athletic shorts with white side stripes. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+53. stokin.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of long white sports socks with blue bands. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+54. kasut_larian.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of lightweight running shoes, orange and white. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+55. but_bola.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of black football boots with studs. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+56. topi_renang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a smooth silicone swimming cap, bright red. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+57. cermin_renang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of swimming goggles with blue tinted lenses. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+58. sarung_gol.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of padded goalkeeper gloves, green and black. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+59. dumbel.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of hexagonal black dumbbells. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+60. tikar_yoga.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a rolled purple exercise mat. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+61. tali_lompat.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a skipping rope with yellow handles, loosely coiled. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+62. kon_latihan.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a stack of orange training cones. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+63. wisel.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a silver referee whistle on a red lanyard. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+64. jam_randik.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a digital stopwatch on a black cord. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+65. kit_kecemasan.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a red first aid kit box with a white cross. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+66. sarung_tinju.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of red boxing gloves. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+67. pelindung_lutut.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of black knee pads. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+68. pelindung_kaki.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of shin guards, white and blue. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+69. topi_keledar.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of an aerodynamic cycling helmet, white with green stripes. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+70. botol_air.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a clear sports water bottle with a blue cap. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+71. tuala.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a folded white sports towel with a blue stripe. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+
+==================== MAKANAN & MINUMAN ====================
+
+72. pisang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bunch of ripe yellow bananas. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+73. epal.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a shiny red apple with a leaf. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+74. oren.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fresh orange with a green leaf. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+75. tembikai.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a juicy watermelon slice. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+76. betik.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a halved ripe papaya showing orange flesh and black seeds. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+77. brokoli.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fresh green broccoli floret. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+78. salad.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bowl of fresh green salad with tomatoes and cucumber. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+79. alpukat.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a halved avocado with the seed. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+80. jus_oren.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a tall glass of fresh orange juice with a straw. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+81. smoothie.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a banana milk smoothie in a tall cup with a straw. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+82. susu.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a glass of fresh milk next to a small milk carton. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+83. yogurt.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a cup of plain yogurt with a spoon. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+84. air_kosong.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bottle of plain mineral water. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+85. air_kelapa.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a young green coconut with a straw. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+86. isotonik.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bottle of blue isotonic sports drink. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+87. tauhu.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of golden cubes of fried tofu on a small plate. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+88. telur_rebus.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of two boiled eggs, one halved showing the yolk. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+89. ayam_panggang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a grilled chicken breast with grill marks on a plate. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+90. ikan_bakar.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a grilled fish on a banana leaf with lime. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+91. nasi_perang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bowl of brown rice. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+92. roti_gandum.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of slices of wholemeal bread. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+93. oat.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a warm bowl of oatmeal topped with banana slices. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+94. ubi_keledek.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a roasted sweet potato cut in half. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+95. pasta.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a plate of wholemeal spaghetti with tomato sauce. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+96. granola.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a granola cereal bar with oats and nuts. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+97. kacang.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small bowl of almonds. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+98. kurma.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small plate of brown dates. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+99. sandwic.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a wholemeal tuna sandwich cut diagonally. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+100. kentang_goreng.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a red carton of french fries. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+101. air_bergas.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a can of fizzy soda with bubbles. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+102. donat.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pink frosted donut with sprinkles. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+103. gula_gula.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of colourful wrapped candies. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+104. burger.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a big cheeseburger. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+105. kerepek.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of an open bag of potato chips. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.
+
+
+==================== IKON UI ====================
+
+106. ui_syiling.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game UI icon: a shiny gold coin with the letters RM embossed. Centred, transparent background. No text.
+
+107. ui_hati.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game UI icon: a glossy red heart. Centred, transparent background. No text.
+
+108. ui_telefon.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game UI icon: a red ringing telephone with motion lines. Centred, transparent background. No text.
+
+109. ui_kotak.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game UI icon: a closed cardboard delivery box with tape. Centred, transparent background. No text.
+
+110. logo_stor.png   [256×256]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game UI icon: a game logo badge shape (no letters) combining a soccer ball, a dumbbell and an apple, blue and green. Centred, transparent background. Leave room for text to be added later.
+

@@ -5409,7 +5409,7 @@ function liveWatch(){
     // dibuka hanya bila siaran terbukti hidup (mesej baharu, bukan sisa lama)
     if (init && prev === undefined) return;
     if (prev !== undefined && prev === v.t) return;
-    if (RUN || ESC || document.getElementById('btRoot')) return;   // peranti ini sendiri sedang bermain
+    if (RUN || ESC || STOR || document.getElementById('btRoot')) return;   // peranti ini sendiri sedang bermain
     liveOpen(v);
   });
 }
@@ -5463,6 +5463,7 @@ function liveOpen(v){
     }
   };
   if (v.g === 'duel' && typeof btStyle === 'function') btStyle();
+  if (v.g === 'stor' && typeof stStyle === 'function') stStyle();
   window.addEventListener('resize', layout);
   offs.push(() => window.removeEventListener('resize', layout));
   $v('#lvX').onclick = () => V.close();
@@ -6346,7 +6347,7 @@ function pvpBoardHtml(){
    dan disimpan dalam rekod PBD hari itu bagi SETIAP ahli kumpulan (markah
    dikongsi). TP hari itu = purata penilaian guru (matrik) + setiap game.
    Setiap aktiviti game boleh dipadam satu demi satu dalam Sejarah.      */
-const GAME_NAMES = { esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)' };
+const GAME_NAMES = { esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)', stor:'Simulasi Stor Sukan' };
 const teamOf = id => { const g = (S.groups || []).find(x => x.id === id); return g ? { id, name: g.name, members: (g.members || []).map(stu).filter(Boolean), g } : null; };
 const teamName = id => (teamOf(id) || {}).name || '—';
 const classTeams = () => (S.groups || []).filter(g => g.classId === S.ui.activeClassId && (g.members || []).some(m => stu(m)));
@@ -6439,15 +6440,705 @@ function liveSetHtml(){
     sw('view', lvViewOn(), 'Papar game dari peranti lain', 'Hidupkan pada tablet yang disambung ke projektor.') + '</details>';
 }
 function viewGame(){
-  const g = ['cards','run','escape'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
+  const g = ['cards','run','escape','stor'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[12px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
-  const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + '</div>';
+  const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
   return tabs + teamPanelHtml() +
-    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : viewCards()) + liveSetHtml() +
+    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : viewCards()) + liveSetHtml() +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
+}
+
+/* ============ GAME 5: SIMULASI STOR SUKAN ============
+   Gaya "crazy cooking": atlet datang ke KAUNTER STOR (minta peralatan sukan)
+   atau ke KEDAI SIHAT (minta makanan bernutrisi). Ambil barang dari rak ke
+   dulang, kemudian ketik pelanggan untuk serah. Setiap pelanggan ada bar
+   kesabaran. Sesetengah makanan perlu dimasak di dapur / dikisar di blender.
+   Telefon berdering = pembekal; jawab soalan pengesahan (dari bank soalan),
+   kemudian sambut dia di pintu stor untuk menerima stok.
+   Aset: game berfungsi tanpa gambar (ikon dilukis app). Jika fail
+   assets/stor/<id>.webp (atau .png) wujud, gambar itu digunakan.        */
+let STOR = null;
+const ST_SHELVES = [
+  // id, nama, zon, kedudukan x (% pentas)
+  ['bola',   'Rak Bola',              's', 2],
+  ['raket',  'Rak Raket & Kayu',      's', 12.5],
+  ['pakai',  'Rak Pakaian & Kasut',   's', 23],
+  ['fit',    'Rak Kecergasan',        's', 33.5],
+  ['buah',   'Rak Buah & Sayur',      'k', 55.5],
+  ['sejuk',  'Peti Sejuk',            'k', 64],
+  ['bijirin','Rak Bijirin & Roti',    'k', 72.5],
+  ['snek',   'Rak Snek',              'k', 81]
+];
+const ST_TAGS = { k:['🍚','Karbohidrat'], p:['🍗','Protein'], l:['🥑','Lemak sihat'], v:['🥦','Vitamin & serat'], h:['💧','Cecair'], x:['⚠️','Tidak sihat'] };
+/* id, nama, emoji, rak, tag nutrisi, harga RM, penyediaan [stesen, saat], huraian untuk prompt aset */
+const ST_ITEMS = [
+  ['bola_sepak','Bola Sepak','⚽','bola','',25,null,'a classic black and white soccer ball'],
+  ['bola_keranjang','Bola Keranjang','🏀','bola','',30,null,'an orange basketball with black lines'],
+  ['bola_tampar','Bola Tampar','🏐','bola','',25,null,'a white, blue and yellow volleyball'],
+  ['bola_jaring','Bola Jaring','🟡','bola','',25,null,'a white netball with subtle panel lines'],
+  ['bola_ragbi','Bola Ragbi','🏉','bola','',30,null,'a brown oval rugby ball with white stitching'],
+  ['bola_takraw','Bola Takraw','🧶','bola','',20,null,'a woven orange synthetic rattan sepak takraw ball'],
+  ['bulu_tangkis','Bulu Tangkis','🪶','bola','',8,null,'a white feather badminton shuttlecock with cork base'],
+  ['bola_tenis','Bola Tenis','🎾','bola','',8,null,'a fuzzy yellow-green tennis ball'],
+  ['bola_pingpong','Bola Ping Pong','⚪','bola','',4,null,'three small orange table tennis balls'],
+  ['bola_hoki','Bola Hoki','🔘','bola','',10,null,'a white dimpled field hockey ball'],
+  ['raket_badminton','Raket Badminton','🏸','raket','',45,null,'a badminton racket with a blue frame and white grip'],
+  ['raket_tenis','Raket Tenis','🥍','raket','',60,null,'a tennis racket with a red frame and black grip'],
+  ['bet_pingpong','Bet Ping Pong','🏓','raket','',20,null,'a table tennis paddle with red rubber and wooden handle'],
+  ['kayu_hoki','Kayu Hoki','🏑','raket','',40,null,'a field hockey stick with a curved hook and blue grip tape'],
+  ['jersi','Jersi Sukan','👕','pakai','',30,null,'a folded bright blue sports jersey with a white number 10'],
+  ['seluar_sukan','Seluar Sukan','🩳','pakai','',20,null,'black athletic shorts with white side stripes'],
+  ['stokin','Stokin Sukan','🧦','pakai','',8,null,'a pair of long white sports socks with blue bands'],
+  ['kasut_larian','Kasut Larian','👟','pakai','',90,null,'a pair of lightweight running shoes, orange and white'],
+  ['but_bola','But Bola','🥾','pakai','',80,null,'a pair of black football boots with studs'],
+  ['topi_renang','Topi Renang','🧢','pakai','',12,null,'a smooth silicone swimming cap, bright red'],
+  ['cermin_renang','Cermin Mata Renang','🥽','pakai','',25,null,'swimming goggles with blue tinted lenses'],
+  ['sarung_gol','Sarung Tangan Gol','🧤','pakai','',35,null,'a pair of padded goalkeeper gloves, green and black'],
+  ['dumbel','Dumbel','🏋️','fit','',50,null,'a pair of hexagonal black dumbbells'],
+  ['tikar_yoga','Tikar Senaman','🧘','fit','',30,null,'a rolled purple exercise mat'],
+  ['tali_lompat','Tali Lompat','🪢','fit','',10,null,'a skipping rope with yellow handles, loosely coiled'],
+  ['kon_latihan','Kon Latihan','🔺','fit','',15,null,'a stack of orange training cones'],
+  ['wisel','Wisel','📯','fit','',6,null,'a silver referee whistle on a red lanyard'],
+  ['jam_randik','Jam Randik','⏱️','fit','',35,null,'a digital stopwatch on a black cord'],
+  ['kit_kecemasan','Kit Pertolongan Cemas','🩹','fit','',40,null,'a red first aid kit box with a white cross'],
+  ['sarung_tinju','Sarung Tinju','🥊','fit','',45,null,'a pair of red boxing gloves'],
+  ['pelindung_lutut','Pelindung Lutut','🦵','fit','',20,null,'a pair of black knee pads'],
+  ['pelindung_kaki','Pelindung Kaki','🛡️','fit','',18,null,'a pair of shin guards, white and blue'],
+  ['topi_keledar','Topi Keledar Basikal','⛑️','fit','',70,null,'an aerodynamic cycling helmet, white with green stripes'],
+  ['botol_air','Botol Air','🧴','fit','',12,null,'a clear sports water bottle with a blue cap'],
+  ['tuala','Tuala Sukan','🧻','fit','',10,null,'a folded white sports towel with a blue stripe'],
+  // ---- KEDAI SIHAT ----
+  ['pisang','Pisang','🍌','buah','kv',2,null,'a bunch of ripe yellow bananas'],
+  ['epal','Epal','🍎','buah','v',2,null,'a shiny red apple with a leaf'],
+  ['oren','Oren','🍊','buah','v',2,null,'a fresh orange with a green leaf'],
+  ['tembikai','Tembikai','🍉','buah','vh',3,null,'a juicy watermelon slice'],
+  ['betik','Betik','🥭','buah','v',3,null,'a halved ripe papaya showing orange flesh and black seeds'],
+  ['brokoli','Brokoli','🥦','buah','v',3,null,'a fresh green broccoli floret'],
+  ['salad','Salad Sayur','🥗','buah','v',6,null,'a bowl of fresh green salad with tomatoes and cucumber'],
+  ['alpukat','Alpukat','🥑','buah','lv',4,null,'a halved avocado with the seed'],
+  ['jus_oren','Jus Oren','🍹','buah','vh',5,['blender',4],'a tall glass of fresh orange juice with a straw'],
+  ['smoothie','Smoothie Pisang','🥤','buah','kp',7,['blender',5],'a banana milk smoothie in a tall cup with a straw'],
+  ['susu','Susu Rendah Lemak','🥛','sejuk','ph',3,null,'a glass of fresh milk next to a small milk carton'],
+  ['yogurt','Yogurt','🫙','sejuk','p',4,null,'a cup of plain yogurt with a spoon'],
+  ['air_kosong','Air Kosong','💧','sejuk','h',1,null,'a bottle of plain mineral water'],
+  ['air_kelapa','Air Kelapa','🥥','sejuk','h',4,null,'a young green coconut with a straw'],
+  ['isotonik','Minuman Isotonik','🧃','sejuk','h',4,null,'a bottle of blue isotonic sports drink'],
+  ['tauhu','Tauhu','🧈','sejuk','p',3,null,'golden cubes of fried tofu on a small plate'],
+  ['telur_rebus','Telur Rebus','🥚','sejuk','p',2,['dapur',5],'two boiled eggs, one halved showing the yolk'],
+  ['ayam_panggang','Dada Ayam Panggang','🍗','sejuk','p',9,['dapur',7],'a grilled chicken breast with grill marks on a plate'],
+  ['ikan_bakar','Ikan Bakar','🐟','sejuk','p',9,['dapur',7],'a grilled fish on a banana leaf with lime'],
+  ['nasi_perang','Nasi Perang','🍚','bijirin','k',3,null,'a bowl of brown rice'],
+  ['roti_gandum','Roti Gandum','🍞','bijirin','k',3,null,'slices of wholemeal bread'],
+  ['oat','Bubur Oat','🥣','bijirin','k',4,['dapur',5],'a warm bowl of oatmeal topped with banana slices'],
+  ['ubi_keledek','Ubi Keledek','🍠','bijirin','k',3,null,'a roasted sweet potato cut in half'],
+  ['pasta','Pasta Gandum','🍝','bijirin','k',6,['dapur',6],'a plate of wholemeal spaghetti with tomato sauce'],
+  ['granola','Bar Bijirin','🌾','bijirin','k',4,null,'a granola cereal bar with oats and nuts'],
+  ['kacang','Kacang Badam','🥜','bijirin','l',5,null,'a small bowl of almonds'],
+  ['kurma','Kurma','🌴','bijirin','k',4,null,'a small plate of brown dates'],
+  ['sandwic','Sandwic Tuna','🥪','bijirin','pk',6,null,'a wholemeal tuna sandwich cut diagonally'],
+  ['kentang_goreng','Kentang Goreng','🍟','snek','x',5,null,'a red carton of french fries'],
+  ['air_bergas','Minuman Bergas','🥫','snek','x',3,null,'a can of fizzy soda with bubbles'],
+  ['donat','Donat','🍩','snek','x',3,null,'a pink frosted donut with sprinkles'],
+  ['gula_gula','Gula-gula','🍬','snek','x',2,null,'colourful wrapped candies'],
+  ['burger','Burger','🍔','snek','x',8,null,'a big cheeseburger'],
+  ['kerepek','Kerepek','🍿','snek','x',3,null,'an open bag of potato chips']
+].map(([id, n, e, sh, tg, p, prep, d]) => ({ id, n, e, sh, tg, p, prep, d, z: ST_SHELVES.find(s => s[0] === sh)[2] }));
+const ST_IT = Object.fromEntries(ST_ITEMS.map(x => [x.id, x]));
+/* atlet: id, nama, emoji, peralatan yang biasa diminta, situasi pemakanan, huraian pakaian (prompt) */
+const ST_ATH = [
+  ['bolasepak','Pemain Bola Sepak','🧒','bola_sepak but_bola pelindung_kaki stokin jersi sarung_gol','pre post hid','a football player boy in a red jersey and shorts, long socks'],
+  ['pecut','Pelari Pecut','🏃','kasut_larian jam_randik seluar_sukan botol_air','pre post','a sprinter girl in a yellow running singlet with a race bib, hijab sports cap'],
+  ['maraton','Pelari Maraton','🏃‍♂️','kasut_larian botol_air jam_randik tuala','pre hid lemak','a marathon runner man with a headband and race number'],
+  ['renang','Perenang','🏊','cermin_renang topi_renang tuala botol_air','post vit hid','a swimmer boy in a swimming jacket with goggles on his head'],
+  ['badminton','Pemain Badminton','🙋‍♀️','raket_badminton bulu_tangkis kasut_larian tuala','pre hid vit','a badminton player girl in a blue sports shirt and skort, sports hijab'],
+  ['keranjang','Pemain Bola Keranjang','⛹️‍♂️','bola_keranjang jersi kasut_larian pelindung_lutut','post pre','a tall basketball player boy in an orange jersey'],
+  ['angkat','Atlet Angkat Berat','🏋️','dumbel tuala botol_air tikar_yoga','post lemak','a strong weightlifter man in a singlet with a lifting belt'],
+  ['silat','Pesilat','🤼','sarung_tinju tali_lompat tuala pelindung_kaki','post vit','a silat martial artist boy in black traditional silat attire with a sash'],
+  ['hoki','Pemain Hoki','👧','kayu_hoki bola_hoki pelindung_kaki jersi','pre hid','a field hockey player girl in a green jersey, sports hijab'],
+  ['jaring','Pemain Bola Jaring','⛹️‍♀️','bola_jaring jersi kasut_larian pelindung_lutut','pre vit','a netball player girl in a purple bib with position letters'],
+  ['basikal','Pelumba Basikal','🚴','topi_keledar botol_air jersi tuala','pre hid lemak','a road cyclist man in a tight cycling jersey and helmet'],
+  ['takraw','Pemain Sepak Takraw','🤾‍♂️','bola_takraw kasut_larian jersi','pre hid','a sepak takraw player boy in a white jersey'],
+  ['tenis','Pemain Tenis','👩','raket_tenis bola_tenis kasut_larian tuala','hid vit','a tennis player girl in a white outfit and visor'],
+  ['pingpong','Pemain Ping Pong','🧑','bet_pingpong bola_pingpong tuala','vit pre','a table tennis player boy in a red polo shirt'],
+  ['gimrama','Ahli Gimrama','🤸','tikar_yoga tuala botol_air','vit post','a rhythmic gymnast girl in a sparkly leotard with a ribbon'],
+  ['cikgu','Guru Pendidikan Jasmani','🧑‍🏫','wisel kon_latihan jam_randik kit_kecemasan bola_sepak','hid vit','a friendly PE teacher man in a tracksuit with a whistle and clipboard']
+].map(([id, n, e, kit, nut, d]) => ({ id, n, e, kit: kit.split(' '), nut: nut.split(' '), d }));
+const ST_NUT = {
+  pre:   { t:'Sebelum latihan — perlu TENAGA', slots:['k','k?','h'] },
+  post:  { t:'Lepas latihan — baiki otot dengan PROTEIN', slots:['p','p?','k?'] },
+  hid:   { t:'Cuaca panas — perlu CECAIR', slots:['h','h?','v?'] },
+  vit:   { t:'Nak kekal sihat — VITAMIN & SERAT', slots:['v','v?','h?'] },
+  lemak: { t:'Tenaga tahan lama — LEMAK SIHAT', slots:['l','k','v?'] }
+};
+const ST_LVL = {
+  mudah:     { name:'Mudah',     spawn:13, sabar:80, max:2, tag:false },
+  sederhana: { name:'Sederhana', spawn:10, sabar:60, max:3, tag:false },
+  pakar:     { name:'Pakar',     spawn:8,  sabar:50, max:3, tag:true }
+};
+function storCfg(){ S.config.stor = Object.assign({ lvl:'mudah', sabar:0, syif:5, watak:'p' }, S.config.stor || {}); return S.config.stor; }
+function storData(){ S.stor = S.stor || {}; S.stor.best = S.stor.best || {}; S.stor.plays = S.stor.plays || {}; return S.stor; }
+
+/* ---------- ASET (pilihan): senarai, prompt & semakan fail ---------- */
+const ST_STYLE = 'Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view';
+const ST_ASSETS = [].concat(
+  [{ id:'bg_lantai', g:'Latar', sz:'1600×1000 (16:10)', p: ST_STYLE.replace('mobile game asset, ', '') + '. Empty room interior seen from a 3/4 top-down camera, wide 16:10 landscape. Left half: a school sports equipment store with light blue walls; right half: a healthy food cafe with mint green and cream walls; a wide doorway in the middle of the back wall. Clean light tiled floor, windows on the back wall, soft daylight. NO furniture, NO shelves, NO counters, NO people, NO text.' },
+   { id:'bg_menu', g:'Latar', sz:'1600×1000 (16:10)', p: ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Leave empty space at the top centre for a logo. No text.' }],
+  [['rak_bola','a tall wooden store shelf unit filled with sports balls of many kinds'],
+   ['rak_raket','a tall store rack holding badminton rackets, tennis rackets, hockey sticks and table tennis paddles'],
+   ['rak_pakai','a tall store shelf with folded sports jerseys, shorts, socks and running shoes'],
+   ['rak_fit','a tall store shelf with dumbbells, exercise mats, skipping ropes, cones, helmets and first aid kits'],
+   ['rak_buah','a cafe fruit and vegetable display stand with baskets of bananas, apples, oranges and greens'],
+   ['rak_sejuk','a glass-door drinks refrigerator filled with milk, water, coconut and sports drinks'],
+   ['rak_bijirin','a cafe shelf with bread, rice, oats, sweet potatoes, nuts and dates in jars'],
+   ['rak_snek','a small snack rack with chips, sweets, donuts and soda cans, marked with a red caution sign'],
+   ['dapur','a small cafe stove with a pot and a grill pan'],
+   ['blender','a kitchen blender on a small counter'],
+   ['kaunter_stor','a long wooden service counter for a sports store, front view, blue panel, with a small bell'],
+   ['kaunter_kafe','a long cafe service counter, front view, green panel, with a small menu stand'],
+   ['meja_telefon','a small desk with an old-style office telephone and a clipboard'],
+   ['pintu_stor','a double loading-bay door of a store room with cardboard boxes stacked beside it'],
+   ['dulang','an empty plastic service tray, top view']
+  ].map(([id, d]) => ({ id, g:'Perabot & Stesen', sz:'512×512', p: ST_STYLE + '. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred, whole object visible, transparent background, no text, no people.' })),
+  [['pekerja_p','a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron'],
+   ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
+   ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
+  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).map(([id, d]) => ({ id, g:'Watak', sz:'512×768 (2:3)', p: ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. Single character centred, transparent background, no text.' })),
+  ST_ITEMS.map(x => ({ id: x.id, g: x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', sz:'256×256', p: ST_STYLE + '. Game item icon of ' + x.d + '. Single object centred, whole object visible, transparent background, no text, no shadow on the ground.' })),
+  [['ui_syiling','a shiny gold coin with the letters RM embossed'],
+   ['ui_hati','a glossy red heart'],
+   ['ui_telefon','a red ringing telephone with motion lines'],
+   ['ui_kotak','a closed cardboard delivery box with tape'],
+   ['logo_stor','a game logo badge shape (no letters) combining a soccer ball, a dumbbell and an apple, blue and green']
+  ].map(([id, d]) => ({ id, g:'Ikon UI', sz:'256×256', p: ST_STYLE + '. Game UI icon: ' + d + '. Centred, transparent background.' + (id === 'logo_stor' ? ' Leave room for text to be added later.' : ' No text.') }))
+);
+const ST_HAVE = new Map();                         // id → url fail yang wujud
+let ST_PROBED = null;
+function storProbe(){
+  if (ST_PROBED) return ST_PROBED;
+  const tryOne = (id, ext) => new Promise(r => { const im = new Image(); im.onload = () => r(true); im.onerror = () => r(false); im.src = 'assets/stor/' + id + '.' + ext; });
+  ST_PROBED = Promise.all(ST_ASSETS.map(async a => {
+    for (const ext of ['webp', 'png']) if (await tryOne(a.id, ext)){ ST_HAVE.set(a.id, 'assets/stor/' + a.id + '.' + ext); return; }
+  }));
+  return ST_PROBED;
+}
+const stImg = (id, emo, cls) => ST_HAVE.has(id) ? '<img src="' + ST_HAVE.get(id) + '" class="' + (cls || '') + '" draggable="false" alt="">' : '<span class="st-emo ' + (cls || '') + '">' + emo + '</span>';
+function storAssetsModal(){
+  const grp = {};
+  ST_ASSETS.forEach(a => (grp[a.g] = grp[a.g] || []).push(a));
+  const done = ST_ASSETS.filter(a => ST_HAVE.has(a.id)).length;
+  const body = '<div data-nohint="1">' +
+    '<div class="panel clip-s p-3 text-[12px] leading-relaxed">' +
+      '<div class="font-bold text-cyan mb-1">CARA JANA ASET (' + done + '/' + ST_ASSETS.length + ' siap)</div>' +
+      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). ChatGPT paling mudah untuk latar lutsinar.<br>' +
+      '2. Tekan <b>Salin</b> pada satu prompt, tampal, jana. Untuk gaya seragam: selepas gambar pertama cantik, lampirkan gambar itu bersama prompt seterusnya dan tambah "same art style as the attached image".<br>' +
+      '3. Jika latar tidak lutsinar, buang latar di <b>remove.bg</b> atau <b>Adobe Express</b> (percuma).<br>' +
+      '4. Simpan dengan nama fail <b>tepat</b> seperti di bawah (cth. <span class="num">bola_sepak.png</span>), format .png atau .webp.<br>' +
+      '5. Letak dalam folder <span class="num">student manager\\assets\\stor\\</span> di komputer. Auto-push menghantarnya ke GitHub dalam 5 minit. Gambar terus muncul dalam game; yang belum ada guna ikon lukisan app.' +
+    '</div>' +
+    '<button class="btn clip-s w-full mt-2 text-[12px]" data-sa="all"><i class="fa-solid fa-copy text-cyan"></i> Salin SEMUA prompt yang belum siap</button>' +
+    Object.keys(grp).map(g => '<div class="lbl mt-4">' + esc(g).toUpperCase() + ' · ' + grp[g].filter(a => ST_HAVE.has(a.id)).length + '/' + grp[g].length + '</div>' +
+      grp[g].map(a => '<div class="panel clip-s p-2 mt-1">' +
+        '<div class="flex items-center gap-2"><span>' + (ST_HAVE.has(a.id) ? '✅' : '⬜') + '</span><span class="num text-[12px] font-bold flex-1">' + a.id + '.png</span>' +
+        '<span class="text-[10px] text-muted">' + a.sz + '</span><button class="btn clip-s !px-2 !py-1 text-[11px]" data-sa="' + a.id + '"><i class="fa-solid fa-copy"></i> Salin</button></div>' +
+        '<div class="text-[11px] text-muted mt-1 leading-snug">' + esc(a.p) + '</div></div>').join('')).join('') + '</div>';
+  const id = openModal({ icon:'fa-images', title:'Aset Simulasi Stor Sukan', body });
+  $('[data-modal="' + id + '"]').addEventListener('click', e => {
+    const b = e.target.closest('[data-sa]'); if (!b) return;
+    if (b.dataset.sa === 'all') return copyText(ST_ASSETS.filter(a => !ST_HAVE.has(a.id)).map(a => '### ' + a.id + '.png (' + a.sz + ')\n' + a.p).join('\n\n'), 'Semua prompt disalin.');
+    const a = ST_ASSETS.find(x => x.id === b.dataset.sa); if (a) copyText(a.p, 'Prompt ' + a.id + ' disalin.');
+  });
+}
+
+/* ---------- tab game ---------- */
+function viewStor(){
+  if (!ctxOk()) return emptyState('fa-store','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas.');
+  const o = arenaUi(), d = storData(), c = storCfg();
+  const board = classTeams().filter(g => d.best[g.id]).sort((a, b) => d.best[b.id] - d.best[a.id]).slice(0, 5);
+  const have = ST_ASSETS.filter(a => ST_HAVE.has(a.id)).length;
+  const bgm = ST_HAVE.has('bg_menu') ? 'url(' + ST_HAVE.get('bg_menu') + ') center/cover,' : '';
+  let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(10,18,32,.35),rgba(10,18,32,.85)),' + bgm + 'linear-gradient(180deg,rgba(60,140,255,.25),rgba(60,200,120,.15) 60%,transparent),var(--panel,#141C26)">' +
+    '<div style="font-size:40px;line-height:1;display:flex;justify-content:center">' + (ST_HAVE.has('logo_stor') ? '<img src="' + ST_HAVE.get('logo_stor') + '" style="height:72px" alt="">' : '🏪') + '</div>' +
+    '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#7DD3FC;text-shadow:0 0 12px rgba(60,160,255,.6)">SIMULASI STOR SUKAN</div>' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Uruskan <b class="text-cyan">Stor Sukan</b> dan <b style="color:#4ADE80">Kedai Sihat</b>. Atlet datang meminta peralatan dan makanan bernutrisi — ambil dari rak, masak jika perlu, dan serahkan sebelum <b style="color:#FF7A7A">kesabaran</b> mereka habis. Jawab telefon pembekal untuk menambah stok!</div></div>';
+  h += '<div class="panel clip p-3 mt-3">' +
+    '<div class="text-[11px] text-muted"><i class="fa-solid fa-users text-cyan"></i> Dimainkan oleh <b>' + esc(teamName(o.team)) + '</b>. Pelanggan yang dilayan + soalan pembekal dikira sebagai TP.</div>' +
+    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[15px]" data-act="stor-start"><i class="fa-solid fa-store"></i> BUKA KEDAI</button>' +
+    '<div class="text-[10px] text-muted mt-2 text-center">Telefon: pegang melintang untuk paparan penuh</div></div>';
+  const seg = (k, opts) => '<div class="flex gap-1 mt-1">' + opts.map(([v, l]) =>
+    '<button class="btn clip-s flex-1 !py-1.5 !px-1 text-[11px] ' + (String(c[k]) === String(v) ? 'btn-o' : '') + '" data-act="stor-opt" data-k="' + k + '" data-v="' + v + '">' + l + '</button>').join('') + '</div>';
+  h += '<details class="panel clip p-3 mt-3"' + (o.storSet ? ' open' : '') + ' ontoggle="arenaUi().storSet=this.open">' +
+    '<summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-sliders"></i> TETAPAN GURU · <span class="text-orange">' + ST_LVL[c.lvl].name + '</span> · ' + c.syif + ' min</summary>' +
+    '<div class="lbl mt-3">TAHAP</div>' + seg('lvl', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']]) +
+    '<div class="text-[10px] text-muted mt-1">Mudah: 1–2 barang, gambar ditunjuk. Sederhana: lebih ramai pelanggan. Pakar: makanan diminta ikut <b>kumpulan nutrisi</b> sahaja (cth. "Protein ×2") — murid perlu tahu makanan mana.</div>' +
+    '<div class="lbl mt-3">MASA SABAR PELANGGAN</div>' + seg('sabar', [[0,'Auto'],[40,'40s'],[60,'60s'],[90,'90s'],[120,'120s']]) +
+    '<div class="lbl mt-3">TEMPOH SYIF</div>' + seg('syif', [[3,'3 min'],[5,'5 min'],[8,'8 min']]) +
+    '<div class="lbl mt-3">WATAK PEKERJA</div>' + seg('watak', [['p','Perempuan'],['l','Lelaki']]) +
+    '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="stor-assets"><i class="fa-solid fa-images text-cyan"></i> Aset & Prompt Gambar (' + have + '/' + ST_ASSETS.length + ' siap)</button></details>';
+  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">KEDAI TERBAIK (RM)</div>' + board.map((g, i) =>
+    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
+    '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#4ADE80">RM' + d.best[g.id] + '</span></div>').join('') + '</div>';
+  if (!ST_PROBED) storProbe().then(() => { if (S.ui.tab === 'arena' && arenaUi().game === 'stor') renderTab(); });
+  return h;
+}
+async function storStart(){
+  const o = arenaUi();
+  if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
+  if (STOR || RUN || ESC) return;
+  STOR = { loading: true };
+  await Promise.race([storProbe(), new Promise(r => setTimeout(r, 5000))]);
+  try { storRun(o.team); }
+  catch(e){ STOR = null; const r = $('#stRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
+}
+
+/* ---------- gaya ---------- */
+const ST_CSS = `
+.st{position:fixed;inset:0;z-index:955;background:#0B1220;container-type:size;user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden;font-family:inherit;color:#fff}
+.st-stage{position:absolute;left:50%;top:50%;width:min(100cqw,160cqh);height:min(62.5cqw,100cqh);transform:translate(-50%,-50%);container-type:size;overflow:hidden;
+  background:linear-gradient(180deg,#9CC9EE 0 8%,#BFE0F7 8% 41%,#E9EEF3 41%),#E9EEF3}
+@container (max-aspect-ratio:1/1){.st-stage{width:min(100cqh,160cqw);height:min(62.5cqh,100cqw);transform:translate(-50%,-50%) rotate(90deg)}}
+.st-stage>*{position:absolute}
+.st-wallk{left:50%;right:0;top:8%;height:33%;background:linear-gradient(180deg,#CDEFD9,#E8F7EC)}
+.st-floor{left:0;right:0;top:41%;bottom:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 6.25cqw),repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 6.25cqw),linear-gradient(180deg,#F3F5F8,#DDE3EA)}
+.st-bg{inset:0;width:100%;height:100%;object-fit:cover}
+.st-zl{top:8.6%;font-weight:800;letter-spacing:.15em;font-size:1.3cqw;color:#1E3A5F;opacity:.75}
+.st-shelf{top:10%;height:29%;border-radius:.6cqw;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.st-shelf .box{position:absolute;inset:0;border-radius:.6cqw;background:linear-gradient(180deg,#B07A45,#8A5A2E);border:.25cqw solid #5E3A1A;
+  box-shadow:0 .6cqw 1cqw rgba(0,0,0,.25);display:grid;grid-template-columns:1fr 1fr 1fr;align-content:space-evenly;justify-items:center;padding:.5cqw}
+.st-shelf .box.k{background:linear-gradient(180deg,#F5F1E6,#D8D0BC);border-color:#9C8F70}
+.st-shelf .box.cold{background:linear-gradient(180deg,#DDF3FF,#9FD1EE);border-color:#5A90B5}
+.st-shelf .box .st-emo{font-size:2.2cqw;line-height:1}
+.st-shelf>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st-shelf .nm{position:relative;z-index:2;margin-bottom:-1.3cqw;background:#1E293B;color:#fff;font-size:1cqw;font-weight:800;letter-spacing:.06em;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35)}
+.st-shelf:active{transform:scale(.97)}
+.st-shelf.low .nm{background:#B91C1C}
+.st-stn{width:7.5%;height:13.5%;left:90.5%;border-radius:.6cqw;background:linear-gradient(180deg,#E2E8F0,#94A3B8);border:.25cqw solid #475569;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3cqw}
+.st-stn>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st-stn .nm{position:absolute;bottom:-1.2cqw;left:50%;transform:translateX(-50%);background:#1E293B;font-size:.9cqw;font-weight:800;padding:.15cqw .6cqw;border-radius:99px;white-space:nowrap;z-index:3}
+.st-slot{position:relative;z-index:2;width:3.6cqw;height:3.6cqw;border-radius:50%;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;font-size:2cqw;cursor:pointer}
+.st-slot img,.st-cu img,.st-pop img,.st-tray img,.st-bub img{width:100%;height:100%;object-fit:contain}
+.st-slot svg{position:absolute;inset:-.3cqw;width:calc(100% + .6cqw);height:calc(100% + .6cqw);transform:rotate(-90deg)}
+.st-slot.ready{background:#16A34A;box-shadow:0 0 1cqw #4ADE80;animation:stPulse .8s infinite}
+.st-slot.burn{background:#7F1D1D}
+@keyframes stPulse{50%{transform:scale(1.12)}}
+.st-door{left:45%;width:10%;top:9%;height:30%;cursor:pointer;border-radius:.6cqw .6cqw 0 0;background:linear-gradient(90deg,#64748B 0 49.5%,#334155 49.5% 50.5%,#64748B 50.5%);border:.3cqw solid #1E293B}
+.st-door>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st-phone{left:44%;width:12%;top:42%;height:8%;cursor:pointer;border-radius:.5cqw;background:linear-gradient(180deg,#A16207,#713F12);display:flex;align-items:center;justify-content:center;font-size:2.4cqw;z-index:4}
+.st-phone>img{position:absolute;left:0;right:0;bottom:0;width:100%;height:220%;object-fit:contain}
+.st-phone.ring{animation:stRing .25s infinite}
+.st-phone .bb{position:absolute;top:-3.4cqw;left:50%;transform:translateX(-50%);background:#DC2626;color:#fff;font-size:1.1cqw;font-weight:800;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;z-index:5}
+@keyframes stRing{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+.st-counter{top:50%;height:9%;border-radius:.6cqw;box-shadow:0 .6cqw 1cqw rgba(0,0,0,.25);z-index:3}
+.st-counter.s{left:2%;width:41.5%;background:linear-gradient(180deg,#60A5FA 0 22%,#1D4ED8 22%)}
+.st-counter.k{left:55.5%;width:42.5%;background:linear-gradient(180deg,#86EFAC 0 22%,#15803D 22%)}
+.st-counter>img{position:absolute;inset:-25% 0 0 0;width:100%;height:125%;object-fit:fill}
+.st-counter .nm{position:absolute;left:50%;bottom:.6cqw;transform:translateX(-50%);font-size:1.1cqw;font-weight:800;letter-spacing:.15em;color:#fff;opacity:.9;white-space:nowrap}
+.st-me{width:7%;height:15%;top:36%;z-index:2;transition:left .35s ease;display:flex;align-items:flex-end;justify-content:center;font-size:5cqw;pointer-events:none}
+.st-me img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+.st-me.walk{animation:stBob .35s}
+@keyframes stBob{50%{transform:translateY(-.6cqw)}}
+.st-cu{width:11%;height:31%;top:66%;z-index:5;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;transition:transform .3s}
+.st-cu .who{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;font-size:8cqw;line-height:1}
+.st-cu .who img{object-position:bottom}
+.st-cu.in{animation:stIn .5s ease-out}
+@keyframes stIn{0%{transform:translateY(40%);opacity:0}100%{transform:none;opacity:1}}
+.st-cu.out{transform:translateY(60%);opacity:0;transition:all .6s}
+.st-cu.mad .who{filter:sepia(1) saturate(4) hue-rotate(-40deg)}
+.st-cu.no{animation:stNo .4s}
+@keyframes stNo{20%,60%{transform:translateX(-.8cqw)}40%,80%{transform:translateX(.8cqw)}}
+.st-bub{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:-.5cqw;background:#fff;color:#0F172A;border-radius:1cqw;padding:.6cqw;min-width:9cqw;box-shadow:0 .4cqw 1cqw rgba(0,0,0,.3);z-index:6}
+.st-bub::after{content:'';position:absolute;left:50%;top:100%;margin-left:-.8cqw;border:.8cqw solid transparent;border-top-color:#fff}
+.st-bub .it{display:flex;gap:.4cqw;justify-content:center}
+.st-bub .it>span{position:relative;width:3.6cqw;height:3.6cqw;display:flex;align-items:center;justify-content:center;font-size:2.4cqw;border-radius:.6cqw;background:#F1F5F9}
+.st-bub .it>span.ok{background:#BBF7D0}
+.st-bub .it>span.tag{width:auto;padding:0 .5cqw;font-size:1cqw;font-weight:800;gap:.2cqw;background:#FEF3C7}
+.st-bub .it>span.tag.ok{background:#BBF7D0}
+.st-bub .tx{font-size:.95cqw;font-weight:700;text-align:center;margin-top:.4cqw;max-width:15cqw;line-height:1.2;color:#334155}
+.st-bub .pt{height:.7cqw;background:#E2E8F0;border-radius:99px;overflow:hidden;margin-top:.5cqw}
+.st-bub .pt i{display:block;height:100%;border-radius:99px;transition:width .3s linear,background .3s}
+.st-cu .nm2{position:absolute;bottom:-.2cqw;left:50%;transform:translateX(-50%);font-size:.9cqw;font-weight:800;background:rgba(15,23,42,.75);padding:.1cqw .5cqw;border-radius:99px;white-space:nowrap}
+.st-hud{left:0;right:0;top:0;height:8%;display:flex;align-items:center;gap:1.4cqw;padding:0 1.2cqw;background:linear-gradient(180deg,#0F2747,#163A66);z-index:20;font-weight:800;font-size:1.5cqw}
+.st-hud .pill{display:flex;align-items:center;gap:.5cqw;background:rgba(0,0,0,.3);padding:.3cqw .9cqw;border-radius:99px}
+.st-hud .pill img{width:2cqw;height:2cqw;object-fit:contain}
+.st-hud button{margin-left:auto;width:4cqw;height:4cqw;border-radius:50%;background:rgba(255,255,255,.15);font-size:1.6cqw}
+.st-tray{left:42%;width:16%;top:70%;height:27%;z-index:8;border-radius:1cqw;background:rgba(15,23,42,.88);border:.25cqw solid #FACC15;display:flex;flex-direction:column;align-items:center;padding:.6cqw}
+.st-tray .t{font-size:1cqw;font-weight:800;letter-spacing:.12em;color:#FACC15}
+.st-tray .g{display:grid;grid-template-columns:1fr 1fr;gap:.5cqw;margin-top:.5cqw;flex:1;width:100%}
+.st-tray .g>div{border-radius:.6cqw;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:2.6cqw;cursor:pointer;position:relative;padding:.3cqw}
+.st-tray .g>div.f{background:rgba(250,204,21,.18)}
+.st-tray .g>div.x::after{content:'⚠️';position:absolute;right:-.3cqw;top:-.5cqw;font-size:1.2cqw}
+.st-sup{left:45.5%;width:9%;top:13%;height:26%;z-index:4;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;font-size:5cqw}
+.st-sup .bb{position:absolute;top:-2.6cqw;left:50%;transform:translateX(-50%);background:#F59E0B;color:#111;font-size:1.05cqw;font-weight:800;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;animation:stPulse 1s infinite}
+.st-pop{inset:8% 0 0 0;z-index:30;background:rgba(2,6,23,.55);display:flex;align-items:flex-start;justify-content:center;padding-top:2cqw}
+.st-pop .pn{background:#0F172A;border:.25cqw solid #38BDF8;border-radius:1.2cqw;padding:1.2cqw;width:62%;box-shadow:0 1cqw 3cqw rgba(0,0,0,.6)}
+.st-pop .hd{display:flex;align-items:center;font-weight:800;font-size:1.6cqw;letter-spacing:.06em}
+.st-pop .hd span{margin-left:auto;font-size:1cqw;color:#94A3B8;font-weight:600}
+.st-pop .gr{display:grid;grid-template-columns:repeat(5,1fr);gap:.8cqw;margin-top:1cqw}
+.st-pop .gr button{position:relative;background:linear-gradient(180deg,#1E293B,#111827);border:.15cqw solid #334155;border-radius:.8cqw;padding:.6cqw .3cqw .5cqw;display:flex;flex-direction:column;align-items:center;gap:.3cqw;color:#fff}
+.st-pop .gr button .ic{width:5.5cqw;height:5.5cqw;display:flex;align-items:center;justify-content:center;font-size:3.6cqw}
+.st-pop .gr button .n{font-size:.95cqw;line-height:1.1;text-align:center;min-height:2.1cqw}
+.st-pop .gr button .q{position:absolute;right:.3cqw;top:.3cqw;font-size:.9cqw;font-weight:800;background:#0EA5E9;border-radius:99px;padding:0 .45cqw}
+.st-pop .gr button .q.lo{background:#DC2626}
+.st-pop .gr button .pr{position:absolute;left:.3cqw;top:.3cqw;font-size:1.1cqw}
+.st-pop .gr button .tg{font-size:.85cqw;color:#FDE68A}
+.st-pop .gr button:disabled{opacity:.35}
+.st-pop .gr button:active{transform:scale(.95)}
+.st-call{inset:0;z-index:40;background:rgba(2,6,23,.7);display:flex;align-items:center;justify-content:center}
+.st-call .pn{width:58%;background:#0F172A;border:.3cqw solid #F59E0B;border-radius:1.4cqw;padding:1.6cqw;display:flex;gap:1.6cqw}
+.st-call .av{width:14cqw;height:20cqw;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;font-size:9cqw}
+.st-call .tx{font-size:1.4cqw;line-height:1.35}
+.st-call .q{font-size:1.7cqw;font-weight:800;margin-top:1cqw}
+.st-call .op{display:grid;grid-template-columns:1fr 1fr;gap:.8cqw;margin-top:1cqw}
+.st-call .op button{background:#1E293B;border:.15cqw solid #475569;border-radius:.8cqw;padding:1cqw;font-size:1.4cqw;text-align:left;color:#fff}
+.st-call .op button b{color:#F59E0B;margin-right:.5cqw}
+.st-msg{left:50%;top:44%;transform:translate(-50%,-50%);z-index:35;pointer-events:none;font-weight:900;font-size:2.6cqw;white-space:nowrap;text-shadow:0 .3cqw .6cqw rgba(0,0,0,.6),0 0 .3cqw #000;opacity:0;transition:opacity .25s}
+.st-fly{z-index:36;pointer-events:none;font-weight:900;font-size:2cqw;color:#FACC15;text-shadow:0 .2cqw .4cqw #000;animation:stFly 1.1s ease-out forwards}
+@keyframes stFly{0%{opacity:0;transform:translate(-50%,0)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-6cqw)}}
+.st-end{inset:0;z-index:50;background:rgba(2,6,23,.82);display:flex;align-items:center;justify-content:center}
+.st-end .pn{width:46%;background:#0F172A;border:.3cqw solid #38BDF8;border-radius:1.4cqw;padding:2cqw;text-align:center}
+.st-end .big{font-size:3cqw;font-weight:900;letter-spacing:.1em;color:#FACC15}
+.st-end .gr{display:grid;grid-template-columns:repeat(3,1fr);gap:.8cqw;margin-top:1.4cqw}
+.st-end .gr div{background:#1E293B;border-radius:.8cqw;padding:.8cqw;font-size:1.1cqw;color:#94A3B8}
+.st-end .gr b{display:block;font-size:2.2cqw;color:#fff}
+.st-end .bt{display:flex;gap:1cqw;margin-top:1.6cqw}
+.st-end .bt button{flex:1;padding:1.1cqw;border-radius:.8cqw;font-size:1.5cqw;font-weight:800;background:#1E293B;color:#fff}
+.st-end .bt button.o{background:#F97316}
+.st-emo{line-height:1}
+#stCust,#stSup,#stPop,#stCall,#stEnd{inset:0;pointer-events:none}
+.st-cu,.st-sup,.st-pop,.st-call,.st-end{pointer-events:auto;position:absolute}
+.st-shelf .box.k .st-emo,.st-shelf .box.cold .st-emo{font-size:1.75cqw}
+.st-shelf .box{overflow:hidden}
+.bb img,.st-hud .pill img{width:1.6cqw;height:1.6cqw;object-fit:contain;vertical-align:middle}
+.st-tray.img{background:center/contain no-repeat var(--tray),rgba(15,23,42,.6)}
+`;
+function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
+
+/* ---------- enjin ---------- */
+function storRun(team){
+  stStyle();
+  const cfg = storCfg(), L = ST_LVL[cfg.lvl] || ST_LVL.mudah;
+  const SABAR = +cfg.sabar || L.sabar, DUR = (+cfg.syif || 5) * 60, ME = cfg.watak === 'l' ? 'pekerja_l' : 'pekerja_p';
+  const SLOTX = { s: [3.5, 17.5, 31.5], k: [57.5, 71.5, 85.5] };
+  const root = document.createElement('div');
+  root.className = 'st'; root.id = 'stRoot';
+  const shelfHtml = ([id, nm, z, x]) => {
+    const its = ST_ITEMS.filter(i => i.sh === id), img = 'rak_' + id;
+    return '<div class="st-shelf" data-sh="' + id + '" style="left:' + x + '%;width:' + (z === 's' ? 10 : 8) + '%">' +
+      (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : ' k') : '') + '">' + its.slice(0, 9).map(i => '<span class="st-emo">' + i.e + '</span>').join('') + '</div>') +
+      '<div class="nm">' + nm + '</div></div>';
+  };
+  root.innerHTML = '<div class="st-stage" id="stStage">' +
+    (ST_HAVE.has('bg_lantai') ? stImg('bg_lantai', '', 'st-bg') : '<div class="st-wallk"></div><div class="st-floor"></div>') +
+    '<div class="st-zl" style="left:2%;top:42%">🏬 STOR SUKAN</div><div class="st-zl" style="left:86%;top:42%">🥗 KEDAI SIHAT</div>' +
+    ST_SHELVES.map(shelfHtml).join('') +
+    '<div class="st-stn" style="top:10%" data-stn="dapur">' + (ST_HAVE.has('dapur') ? stImg('dapur', '') : '') + '<div class="nm">DAPUR</div><div id="stS_dapur" style="display:flex;gap:.4cqw;position:relative;z-index:2"></div></div>' +
+    '<div class="st-stn" style="top:26%" data-stn="blender">' + (ST_HAVE.has('blender') ? stImg('blender', '') : '') + '<div class="nm">BLENDER</div><div id="stS_blender" style="display:flex;gap:.4cqw;position:relative;z-index:2"></div></div>' +
+    '<div class="st-door" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '') : '') + '</div>' +
+    '<div class="st-zl" style="left:46%;top:39.5%;font-size:.9cqw">PINTU STOK</div>' +
+    '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
+    '<div id="stSup"></div>' +
+    '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('meja_telefon') ? stImg('meja_telefon', '') : '☎️') + '</div>' +
+    '<div class="st-counter s">' + (ST_HAVE.has('kaunter_stor') ? stImg('kaunter_stor', '') : '') + '<div class="nm">KAUNTER STOR</div></div>' +
+    '<div class="st-counter k">' + (ST_HAVE.has('kaunter_kafe') ? stImg('kaunter_kafe', '') : '') + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
+    '<div id="stCust"></div>' +
+    '<div class="st-tray' + (ST_HAVE.has('dulang') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang') + ')' : '') + '"><div class="t">DULANG</div><div class="g" id="stTray"></div></div>' +
+    '<div class="st-hud" id="stHud"></div>' +
+    '<div class="st-msg" id="stMsg"></div>' +
+    '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
+  '</div>';
+  document.body.appendChild(root); lockBody();
+  const live = liveHost('stor', root, { title: 'Stor Sukan' });
+  const $s = q => root.querySelector(q);
+
+  /* ---------- keadaan ---------- */
+  const stock = {}; ST_ITEMS.forEach(i => stock[i.id] = i.tg === 'x' ? 6 : 5);
+  const tray = [];                                       // { id, cooked }
+  const stn = { dapur: [null, null], blender: [null] };  // { id, t, need }
+  const cust = { s: [null, null, null], k: [null, null, null] };
+  let T = 0, coins = 0, hearts = 5, served = 0, left = 0, qRight = 0, qAsked = 0, over = false, paused = false, spawnT = 3;
+  let ring = null, nextRing = 25 + Math.random() * 10, sup = null, call = null, lastTick = performance.now();
+  STOR = { close: () => quit() };
+  const hud = () => {
+    const tl = Math.max(0, DUR - T);
+    $s('#stHud').innerHTML = '<span class="pill">⏱ ' + Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0') + '</span>' +
+      '<span class="pill">' + stImg('ui_syiling', '🪙') + ' RM' + coins + '</span>' +
+      '<span class="pill">' + [0, 1, 2, 3, 4].map(i => i < hearts ? stImg('ui_hati', '❤️') : '<span class="st-emo" style="opacity:.3">🖤</span>').join('') + '</span>' +
+      '<span class="pill">😊 ' + served + '</span><span class="pill" style="font-size:1.1cqw;max-width:20cqw;overflow:hidden;white-space:nowrap">' + esc(teamName(team)) + '</span>' +
+      '<button data-x="quit"><i class="fa-solid fa-xmark"></i></button>';
+  };
+  let msgT = 0;
+  const msg = (t, c, ms) => { const m = $s('#stMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1300); };
+  const fly = (t, x, y) => { const n = document.createElement('div'); n.className = 'st-fly'; n.textContent = t; n.style.left = x + '%'; n.style.top = y + '%'; $s('#stStage').appendChild(n); setTimeout(() => n.remove(), 1150); };
+  const walk = x => { const m = $s('#stMe'); m.style.left = x + '%'; m.classList.remove('walk'); void m.offsetWidth; m.classList.add('walk'); };
+  const icon = (id, cls) => { const i = ST_IT[id]; return stImg(id, i.e, cls); };
+
+  /* ---------- pesanan ---------- */
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function makeOrder(z){
+    const a = pick(ST_ATH);
+    const n = 1 + Math.floor(Math.random() * L.max);
+    if (z === 's'){
+      const kit = a.kit.slice().sort(() => Math.random() - .5).slice(0, Math.min(n, a.kit.length));
+      return { a, z, slots: kit.map(id => ({ id })), tx: pick(['Saya perlukan peralatan ini!', 'Ada stok ini?', 'Untuk latihan petang ini', 'Perlawanan esok!']) };
+    }
+    const sc = ST_NUT[pick(a.nut)];
+    let tags = sc.slots.filter(t => !t.endsWith('?')).concat(sc.slots.filter(t => t.endsWith('?') && Math.random() < .5).map(t => t[0]));
+    tags = tags.slice(0, Math.max(1, Math.min(tags.length, L.max)));
+    if (L.tag) return { a, z, slots: tags.map(tag => ({ tag })), tx: sc.t };
+    const used = new Set();
+    const slots = tags.map(tag => {
+      const pool = ST_ITEMS.filter(i => i.tg.includes(tag) && i.tg !== 'x' && !used.has(i.id));
+      const it = pick(pool.length ? pool : ST_ITEMS.filter(i => i.tg.includes(tag)));
+      used.add(it.id); return { id: it.id };
+    });
+    return { a, z, slots, tx: sc.t };
+  }
+  /* padanan dulang → slot (barang tepat atau ikut tag nutrisi) */
+  function match(order, items){
+    const S2 = order.slots, used = new Array(items.length).fill(false), asg = new Array(S2.length).fill(-1);
+    const fits = (s, it) => s.id ? it.id === s.id : ST_IT[it.id].tg.includes(s.tag) && ST_IT[it.id].tg !== 'x';
+    const go = k => {
+      if (k === S2.length) return true;
+      for (let i = 0; i < items.length; i++) if (!used[i] && fits(S2[k], items[i])){ used[i] = true; asg[k] = i; if (go(k + 1)) return true; used[i] = false; }
+      return false;
+    };
+    // padanan penuh, jika gagal kira slot yang dapat dipenuhi (untuk tanda ✓ dalam belon)
+    if (go(0)) return { full: true, asg };
+    const part = new Array(S2.length).fill(-1), u2 = new Array(items.length).fill(false);
+    S2.forEach((s, k) => { const i = items.findIndex((it, j) => !u2[j] && fits(s, it)); if (i >= 0){ u2[i] = true; part[k] = i; } });
+    return { full: false, asg: part };
+  }
+  function custHtml(){
+    return ['s', 'k'].map(z => cust[z].map((c, i) => {
+      if (!c) return '';
+      const m = match(c.o, tray), frac = Math.max(0, c.p / c.max);
+      const col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444';
+      return '<div class="st-cu' + (c.fresh ? ' in' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
+        '<div class="st-bub"><div class="it">' + c.o.slots.map((s, k) => s.id ?
+          '<span class="' + (m.asg[k] >= 0 ? 'ok' : '') + '">' + icon(s.id) + '</span>' :
+          '<span class="tag' + (m.asg[k] >= 0 ? ' ok' : '') + '">' + ST_TAGS[s.tag][0] + ' ' + ST_TAGS[s.tag][1] + '</span>').join('') + '</div>' +
+          '<div class="tx">' + esc(c.o.tx) + '</div><div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
+        '<div class="who">' + stImg('atl_' + c.o.a.id, c.o.a.e) + '</div><div class="nm2">' + esc(c.o.a.n) + '</div></div>';
+    }).join('')).join('');
+  }
+  const paintCust = () => { $s('#stCust').innerHTML = custHtml(); ['s', 'k'].forEach(z => cust[z].forEach(c => { if (c) c.fresh = false; })); };
+  const paintTray = () => { $s('#stTray').innerHTML = [0, 1, 2, 3].map(i => tray[i] ? '<div class="f' + (ST_IT[tray[i].id].tg === 'x' ? ' x' : '') + '" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join(''); paintCust(); };
+  const paintShelves = () => ST_SHELVES.forEach(([id]) => { const el = $s('[data-sh="' + id + '"]'); if (el) el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && i.tg !== 'x' && stock[i.id] <= 1)); });
+  function paintStn(){
+    Object.keys(stn).forEach(k => {
+      $s('#stS_' + k).innerHTML = stn[k].map((x, i) => {
+        if (!x) return '<div class="st-slot" data-ss="' + k + i + '"></div>';
+        const p = Math.min(1, x.t / x.need), rd = x.t >= x.need, burn = k === 'dapur' && x.t >= x.need + 14;
+        return '<div class="st-slot' + (burn ? ' burn' : rd ? ' ready' : '') + '" data-ss="' + k + i + '">' + (burn ? '<span class="st-emo">🔥</span>' : icon(x.id)) +
+          (rd ? '' : '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#FACC15" stroke-width="3" stroke-dasharray="' + (p * 100.5) + ' 100.5"/></svg>') + '</div>';
+      }).join('');
+    });
+  }
+
+  /* ---------- tindakan ---------- */
+  function openShelf(id){
+    const sh = ST_SHELVES.find(s => s[0] === id), its = ST_ITEMS.filter(i => i.sh === id);
+    walk(sh[3] + 2); sfx('flip');
+    $s('#stPop').innerHTML = '<div class="st-pop" data-pc="1"><div class="pn">' +
+      '<div class="hd">' + esc(sh[1]).toUpperCase() + '<span>Ketik barang untuk masukkan ke dulang · ketik luar untuk tutup</span></div>' +
+      '<div class="gr">' + its.map(i => '<button data-it="' + i.id + '"' + (stock[i.id] <= 0 ? ' disabled' : '') + '>' +
+        '<div class="ic">' + icon(i.id) + '</div><div class="n">' + esc(i.n) + '</div>' +
+        (!i.tg || cfg.lvl === 'pakar' ? '' : '<div class="tg">' + i.tg.split('').map(t => ST_TAGS[t][0]).join(' ') + '</div>') +
+        (i.prep ? '<span class="pr">' + (i.prep[0] === 'dapur' ? '🍳' : '🌀') + '</span>' : '') +
+        '<span class="q' + (stock[i.id] <= 1 ? ' lo' : '') + '">' + stock[i.id] + '</span></button>').join('') + '</div></div></div>';
+  }
+  function takeItem(id){
+    const it = ST_IT[id]; if (!it || stock[id] <= 0) return;
+    if (it.prep){
+      const slots = stn[it.prep[0]], k = slots.findIndex(x => !x);
+      if (k < 0) return msg((it.prep[0] === 'dapur' ? 'Dapur' : 'Blender') + ' penuh!', '#FCA5A5');
+      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; sfx('flip');
+      msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
+      $s('#stPop').innerHTML = ''; walk(91); paintStn(); paintShelves(); return;
+    }
+    if (tray.length >= 4) return msg('Dulang penuh! Ketik barang dalam dulang untuk pulangkan.', '#FCA5A5', 1600);
+    stock[id]--; tray.push({ id }); sfx('flip');
+    openShelf(it.sh); paintTray(); paintShelves();
+  }
+  function takeStation(k, i){
+    const x = stn[k][i]; if (!x) return;
+    if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); sfx('low'); return paintStn(); }
+    if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 700);
+    if (tray.length >= 4) return msg('Dulang penuh!', '#FCA5A5');
+    stn[k][i] = null; tray.push({ id: x.id, cooked: true }); sfx('flip'); walk(91); paintStn(); paintTray();
+  }
+  function trayBack(i){
+    const x = tray[i]; if (!x) return;
+    tray.splice(i, 1);
+    if (!x.cooked) stock[x.id]++; else msg('Makanan dimasak dibuang', '#FDE68A', 900);
+    sfx('low'); paintTray(); paintShelves();
+  }
+  function serve(z, i){
+    const c = cust[z][i]; if (!c || c.leaving) return;
+    walk(SLOTX[z][i] + 1.5);
+    if (z === 'k' && tray.some(t => ST_IT[t.id].tg === 'x')){
+      c.p -= c.max * .15; sfx('low'); vibrate(40);
+      msg('⚠️ Atlet tak boleh makan makanan tidak sihat! Buang dari dulang.', '#FCA5A5', 2000);
+      const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); }
+      return;
+    }
+    const m = match(c.o, tray);
+    if (!m.full){
+      const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); }
+      return msg('Pesanan belum lengkap — lihat belon!', '#FDE68A', 1100);
+    }
+    const idx = m.asg.slice().sort((a, b) => b - a), got = idx.map(j => tray[j].id);
+    idx.forEach(j => tray.splice(j, 1));
+    const frac = Math.max(0, c.p / c.max), tip = Math.round(frac * 6), pay = got.reduce((a, id) => a + ST_IT[id].p, 0) + tip;
+    coins += pay; served++; c.leaving = true; sfx('hi'); vibrate(20);
+    fly('+RM' + pay + (tip ? ' (tip ' + tip + ')' : ''), SLOTX[z][i] + 5.5, 58);
+    msg(frac > .6 ? 'Hebat! 😄' : 'Terima kasih! 🙂', '#86EFAC', 900);
+    paintTray(); setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
+  }
+  /* ---------- telefon & pembekal ---------- */
+  function answerPhone(){
+    if (!ring || call) return;
+    ring = null; walk(48); sfx('flip');
+    const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
+    call = { q }; paused = true;
+    $s('#stPhone').classList.remove('ring');
+    $s('#stCall').innerHTML = '<div class="st-call"><div class="pn"><div class="av">' + stImg('pembekal', '🧑‍🔧') + '</div><div style="flex:1">' +
+      '<div class="tx">📞 <b>Encik Rahman, Syarikat Sukan Jaya:</b> "Hello! Saya nak hantar stok baharu. Sebelum saya bertolak, sahkan dulu kod pesanan — jawab soalan ini."</div>' +
+      '<div class="q">' + esc(q.q) + '</div><div class="op">' + order.map((i, j) => '<button data-ans="' + i + '"><b>' + String.fromCharCode(65 + j) + '</b>' + esc(q.c[i]) + '</button>').join('') + '</div></div></div></div>';
+  }
+  function callAnswer(i){
+    if (!call) return;
+    const ok = i === call.q.a; qAsked++; if (ok) qRight++;
+    teamQuiz(team, ok);
+    $s('#stCall').innerHTML = ''; call = null; paused = false; lastTick = performance.now();
+    sfx(ok ? 'hi' : 'low');
+    msg(ok ? '✅ Betul! Pembekal hantar stok PENUH — sambut di pintu stok.' : '❌ Salah (jawapan: ' + esc(callAnsText) + '). Stok separuh sahaja.', ok ? '#86EFAC' : '#FCA5A5', 2600);
+    sup = { arrive: T + 10, wait: 22, full: ok, here: false };
+  }
+  let callAnsText = '';
+  function supHtml(){
+    if (!sup || !sup.here) return '';
+    const left = Math.max(0, Math.ceil(sup.until - T));
+    return '<div class="st-sup" data-sup="1"><div class="bb">' + stImg('ui_kotak', '📦') + ' Terima stok! ' + left + 's</div>' + stImg('pembekal', '🧑‍🔧') + '</div>';
+  }
+  function receive(){
+    if (!sup || !sup.here) return;
+    walk(48);
+    const low = ST_ITEMS.filter(i => i.tg !== 'x').sort((a, b) => stock[a.id] - stock[b.id]).slice(0, sup.full ? 14 : 7);
+    const add = sup.full ? 5 : 3;
+    low.forEach(i => stock[i.id] += add);
+    coins = Math.max(0, coins - (sup.full ? 20 : 10));
+    sup = null; $s('#stSup').innerHTML = ''; sfx('myth'); paintShelves();
+    msg('📦 ' + low.length + ' jenis barang ditambah +' + add + ' (bayaran RM' + (add === 5 ? 20 : 10) + ')', '#7DD3FC', 2200);
+  }
+
+  /* ---------- gelung ---------- */
+  function tick(){
+    if (over || !root.isConnected) return;
+    const now = performance.now(), dt = Math.min(.5, (now - lastTick) / 1000); lastTick = now;
+    if (paused) return;
+    T += dt;
+    // pelanggan baharu
+    spawnT -= dt;
+    if (spawnT <= 0){
+      const free = [];
+      ['s', 'k'].forEach(z => cust[z].forEach((c, i) => { if (!c) free.push([z, i]); }));
+      if (free.length){
+        const [z, i] = pick(free), o = makeOrder(z), max = SABAR * (1 + (o.slots.length - 1) * .2);
+        cust[z][i] = { o, p: max, max, fresh: true };
+        sfx('flip'); paintCust();
+      }
+      spawnT = L.spawn * (1 - Math.min(.35, T / DUR * .35)) * (.8 + Math.random() * .4);
+    }
+    // kesabaran
+    let changed = false;
+    ['s', 'k'].forEach(z => cust[z].forEach((c, i) => {
+      if (!c || c.leaving) return;
+      c.p -= dt;
+      if (c.p <= 0){
+        c.leaving = true; left++; hearts--; changed = true; sfx('low'); vibrate(60);
+        msg('😠 ' + esc(c.o.a.n) + ' pergi dengan marah!', '#FCA5A5', 1600);
+        setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
+      }
+    }));
+    // stesen masak
+    Object.values(stn).forEach(a => a.forEach(x => { if (x) x.t += dt; }));
+    // telefon
+    if (!ring && !call && !sup && T >= nextRing){ ring = { until: T + 12 }; $s('#stPhone').classList.add('ring'); }
+    if (ring){
+      if (Math.floor(T * 2) % 2 === 0 && !ring.b){ ring.b = 1; sfx('flip'); vibrate(15); } else if (Math.floor(T * 2) % 2) ring.b = 0;
+      if (T >= ring.until){ ring = null; $s('#stPhone').classList.remove('ring'); nextRing = T + 35 + Math.random() * 20; msg('📵 Panggilan pembekal terlepas…', '#FDE68A', 1600); }
+    }
+    const ph = $s('#stPhone'), bb = ph.querySelector('.bb');
+    if (ring && !bb) ph.insertAdjacentHTML('beforeend', '<div class="bb">' + stImg('ui_telefon', '📞') + ' ANGKAT!</div>'); else if (!ring && bb) bb.remove();
+    // pembekal
+    if (sup){
+      if (!sup.here && T >= sup.arrive){ sup.here = true; sup.until = T + sup.wait; sfx('hi'); msg('🚚 Pembekal sampai di pintu stok!', '#7DD3FC', 1600); }
+      if (sup.here && T >= sup.until){ sup = null; nextRing = T + 30 + Math.random() * 20; msg('🚚 Pembekal pergi — stok tidak diterima', '#FDE68A', 1600); }
+      else if (sup && sup.here) nextRing = T + 40;
+    }
+    $s('#stSup').innerHTML = supHtml();
+    // kemas kini ringan
+    ['s', 'k'].forEach(z => cust[z].forEach((c, i) => {
+      if (!c) return; const e = $s('#stC_' + z + i); if (!e) return;
+      const frac = Math.max(0, c.p / c.max), bar = e.querySelector('.pt i');
+      if (bar){ bar.style.width = (frac * 100) + '%'; bar.style.background = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444'; }
+      e.classList.toggle('mad', frac < .25);
+    }));
+    if (changed) paintCust();
+    paintStn(); hud();
+    if (hearts <= 0 || T >= DUR) finish(hearts <= 0);
+  }
+  const loop = setInterval(tick, 200);
+
+  /* ---------- tamat ---------- */
+  function finish(failed){
+    if (over) return; over = true; clearInterval(loop);
+    const right = served + qRight, asked = served + left + qAsked;
+    const rp = clamp(Math.round(coins / 40), 2, 25), d = storData();
+    teamRP(team, rp);
+    const tp = asked ? gameToPBD(team, 'stor', right, asked, { coins }) : 0;
+    const best = !d.best[team] || coins > d.best[team];
+    if (best) d.best[team] = coins;
+    d.plays[team] = (d.plays[team] || 0) + 1;
+    save(true);
+    sfx(failed ? 'low' : 'myth');
+    $s('#stEnd').innerHTML = '<div class="st-end"><div class="pn">' +
+      '<div class="big">' + (failed ? 'KEDAI DITUTUP!' : 'SYIF TAMAT!') + '</div>' +
+      '<div style="font-size:1.3cqw;color:#94A3B8;margin-top:.5cqw">' + esc(teamName(team)) + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
+      '<div class="gr"><div><b>RM' + coins + '</b>pendapatan</div><div><b>' + served + '</b>dilayan</div><div><b>' + left + '</b>pergi marah</div>' +
+      '<div><b>' + qRight + '/' + qAsked + '</b>soalan pembekal</div><div><b style="color:#FB923C">+' + rp + '</b>RP</div><div><b style="color:' + (tp ? TP_COLOR[tp] : '#fff') + '">' + (tp ? 'TP' + tp : '—') + '</b>ke PBD</div></div>' +
+      '<div class="bt"><button data-x="quit">Tutup</button><button class="o" data-x="again">↻ Main Lagi</button></div></div></div>';
+    if (!failed) confettiBurst($s('#stEnd'), 70);
+  }
+  function quit(){
+    if (STOR && STOR.closed) return;
+    if (!over && (served || left)){ over = true; clearInterval(loop); save(); }
+    over = true; clearInterval(loop); STOR = null;
+    liveEnd(live); root.remove(); unlockBody();
+    if (S.ui.tab === 'arena') renderTab();
+  }
+  root.addEventListener('click', e => {
+    const t = e.target;
+    const x = t.closest('[data-x]'); if (x){ if (x.dataset.x === 'again'){ quit(); setTimeout(storStart, 80); } else quit(); return; }
+    if (over) return;
+    const an = t.closest('[data-ans]'); if (an){ callAnsText = call ? call.q.c[call.q.a] : ''; return callAnswer(+an.dataset.ans); }
+    if (call) return;
+    const it = t.closest('[data-it]'); if (it) return takeItem(it.dataset.it);
+    if (t.closest('[data-pc]') && !t.closest('.pn')){ $s('#stPop').innerHTML = ''; return; }
+    if (t.closest('.st-pop')) return;
+    const sh = t.closest('[data-sh]'); if (sh) return openShelf(sh.dataset.sh);
+    const ss = t.closest('[data-ss]'); if (ss) return takeStation(ss.dataset.ss.slice(0, -1), +ss.dataset.ss.slice(-1));
+    const tr = t.closest('[data-tr]'); if (tr) return trayBack(+tr.dataset.tr);
+    const cu = t.closest('[data-cu]'); if (cu) return serve(cu.dataset.cu[0], +cu.dataset.cu[1]);
+    if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
+    if (t.closest('[data-sup]')) return receive();
+    if (t.closest('[data-door]')) return msg(sup && sup.here ? 'Ketik pembekal untuk terima stok' : 'Tiada penghantaran sekarang.', '#94A3B8', 900);
+  });
+  hud(); paintTray(); paintStn(); paintShelves();
+  msg('KEDAI DIBUKA! 🏪', '#FACC15', 1600);
 }
 
 /* ============ GAME 4: LARIAN ILMU (3D) ============
@@ -8363,6 +9054,9 @@ const ACTS = {
   'duel-start': () => duelStart(),
   'duel-pvp': () => pvpSetup(),
   'duel-q': d => { S.config.duelQ = +d.id; save(); renderTab(); },
+  'stor-start': () => storStart(),
+  'stor-assets': () => storProbe().then(storAssetsModal),
+  'stor-opt': d => { const c = storCfg(); c[d.k] = ['sabar','syif'].includes(d.k) ? +d.v : d.v; arenaUi().storSet = true; save(); renderTab(); },
   'run-opt': d => { const c = runCfg(); c[d.k] = d.k === 'qt' ? +d.v : d.v; arenaUi().runSet = true; save(); renderTab(); },
   'card-guide': () => cardGuide(),
   'run-stu': runStuPick,
@@ -8557,7 +9251,7 @@ function installGate(){
   S.subjects.filter(x => x.dskp).forEach(x => dskpLoad(x.dskp).then(() => renderTab()).catch(() => {}));
   dskpIndex().catch(() => {});
   purgeSpriteAssets().then(n => { if (n) console.info('Aset lama dibuang:', n); });
-  if (S.ui.tab === 'arena' && !['escape','cards','run'].includes(arenaUi().game)) arenaUi().game = 'cards';
+  if (S.ui.tab === 'arena' && !['escape','cards','run','stor'].includes(arenaUi().game)) arenaUi().game = 'cards';
   bgmInit();
   hintInit();
   if (!S.ui.mtxClass) S.ui.mtxClass = S.ui.activeClassId || '';
