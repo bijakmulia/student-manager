@@ -225,6 +225,10 @@ function bmCore(px, w, h, o){
       if (a < 0.999) for (let c = 0; c < 3; c++) px[p + c] = Math.max(0, Math.min(255, (px[p + c] - (1 - a) * K[c]) / a));
       const r = px[p], g = px[p + 1], b = px[p + 2], m = Math.min(r, b);
       if (m > g && o.despill > 0){ const ex = (m - g) * o.despill; px[p] = r - ex; px[p + 2] = b - ex; }
+      if (a < 0.5){                                  // piksel tepi yang sangat lutsinar: ralat (hingar JPEG) diperbesar 1/a — kurangkan ketepuan
+        const L = 0.299 * px[p] + 0.587 * px[p + 1] + 0.114 * px[p + 2], mix = (0.5 - a) * 1.6;
+        for (let c = 0; c < 3; c++) px[p + c] += (L - px[p + c]) * mix;
+      }
     }
     px[p + 3] = Math.round(a * 255);
   }

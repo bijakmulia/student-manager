@@ -12,7 +12,8 @@ Letak gambar yang dijana AI di dalam folder ini.
    Format .png atau .webp (webp lebih kecil & laju).
 
 3. Prompt meminta latar MAGENTA (#FF00FF). Buang latar itu dengan web app "Buang Magenta"
-   (prompt untuk bina app itu: PROMPT-WEBAPP-BUANG-MAGENTA.txt) sebelum letak di sini.
+   https://bijakmulia.github.io/student-manager/tools/buang-magenta.html
+   (skrip Tampermonkey: tools/buang-magenta.user.js) sebelum letak di sini.
    Fail akhir mesti .png LUTSINAR — kecuali bg_lantai & bg_menu (latar penuh, tiada magenta).
 
 4. Auto-push (setiap ~5 minit) akan SECARA AUTOMATIK:
