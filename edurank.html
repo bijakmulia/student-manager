@@ -6498,7 +6498,7 @@ const ST_ITEMS = [
   ['cermin_renang','Cermin Mata Renang','🥽','pakai','',25,null,'swimming goggles with blue tinted lenses'],
   ['sarung_gol','Sarung Tangan Gol','🧤','pakai','',35,null,'a pair of padded goalkeeper gloves, green and black'],
   ['dumbel','Dumbel','🏋️','fit','',50,null,'a pair of hexagonal black dumbbells'],
-  ['tikar_yoga','Tikar Senaman','🧘','fit','',30,null,'a rolled purple exercise mat'],
+  ['tikar_yoga','Tikar Senaman','🧘','fit','',30,null,'a rolled teal exercise mat'],
   ['tali_lompat','Tali Lompat','🪢','fit','',10,null,'a skipping rope with yellow handles, loosely coiled'],
   ['kon_latihan','Kon Latihan','🔺','fit','',15,null,'a stack of orange training cones'],
   ['wisel','Wisel','📯','fit','',6,null,'a silver referee whistle on a red lanyard'],
@@ -6514,7 +6514,7 @@ const ST_ITEMS = [
   ['pisang','Pisang','🍌','buah','kv',2,null,'a bunch of ripe yellow bananas'],
   ['epal','Epal','🍎','buah','v',2,null,'a shiny red apple with a leaf'],
   ['oren','Oren','🍊','buah','v',2,null,'a fresh orange with a green leaf'],
-  ['tembikai','Tembikai','🍉','buah','vh',3,null,'a juicy watermelon slice'],
+  ['tembikai','Tembikai','🍉','buah','vh',3,null,'a juicy watermelon slice with deep red flesh and green rind'],
   ['betik','Betik','🥭','buah','v',3,null,'a halved ripe papaya showing orange flesh and black seeds'],
   ['brokoli','Brokoli','🥦','buah','v',3,null,'a fresh green broccoli floret'],
   ['salad','Salad Sayur','🥗','buah','v',6,null,'a bowl of fresh green salad with tomatoes and cucumber'],
@@ -6541,8 +6541,8 @@ const ST_ITEMS = [
   ['sandwic','Sandwic Tuna','🥪','bijirin','pk',6,null,'a wholemeal tuna sandwich cut diagonally'],
   ['kentang_goreng','Kentang Goreng','🍟','snek','x',5,null,'a red carton of french fries'],
   ['air_bergas','Minuman Bergas','🥫','snek','x',3,null,'a can of fizzy soda with bubbles'],
-  ['donat','Donat','🍩','snek','x',3,null,'a pink frosted donut with sprinkles'],
-  ['gula_gula','Gula-gula','🍬','snek','x',2,null,'colourful wrapped candies'],
+  ['donat','Donat','🍩','snek','x',3,null,'a chocolate frosted donut with yellow sprinkles'],
+  ['gula_gula','Gula-gula','🍬','snek','x',2,null,'yellow, green and orange wrapped candies'],
   ['burger','Burger','🍔','snek','x',8,null,'a big cheeseburger'],
   ['kerepek','Kerepek','🍿','snek','x',3,null,'an open bag of potato chips']
 ].map(([id, n, e, sh, tg, p, prep, d]) => ({ id, n, e, sh, tg, p, prep, d, z: ST_SHELVES.find(s => s[0] === sh)[2] }));
@@ -6558,12 +6558,12 @@ const ST_ATH = [
   ['angkat','Atlet Angkat Berat','🏋️','dumbel tuala botol_air tikar_yoga','post lemak','a strong weightlifter man in a singlet with a lifting belt'],
   ['silat','Pesilat','🤼','sarung_tinju tali_lompat tuala pelindung_kaki','post vit','a silat martial artist boy in black traditional silat attire with a sash'],
   ['hoki','Pemain Hoki','👧','kayu_hoki bola_hoki pelindung_kaki jersi','pre hid','a field hockey player girl in a green jersey, sports hijab'],
-  ['jaring','Pemain Bola Jaring','⛹️‍♀️','bola_jaring jersi kasut_larian pelindung_lutut','pre vit','a netball player girl in a purple bib with position letters'],
+  ['jaring','Pemain Bola Jaring','⛹️‍♀️','bola_jaring jersi kasut_larian pelindung_lutut','pre vit','a netball player girl in an orange bib with position letters'],
   ['basikal','Pelumba Basikal','🚴','topi_keledar botol_air jersi tuala','pre hid lemak','a road cyclist man in a tight cycling jersey and helmet'],
   ['takraw','Pemain Sepak Takraw','🤾‍♂️','bola_takraw kasut_larian jersi','pre hid','a sepak takraw player boy in a white jersey'],
   ['tenis','Pemain Tenis','👩','raket_tenis bola_tenis kasut_larian tuala','hid vit','a tennis player girl in a white outfit and visor'],
   ['pingpong','Pemain Ping Pong','🧑','bet_pingpong bola_pingpong tuala','vit pre','a table tennis player boy in a red polo shirt'],
-  ['gimrama','Ahli Gimrama','🤸','tikar_yoga tuala botol_air','vit post','a rhythmic gymnast girl in a sparkly leotard with a ribbon'],
+  ['gimrama','Ahli Gimrama','🤸','tikar_yoga tuala botol_air','vit post','a rhythmic gymnast girl in a sparkly blue leotard with a yellow ribbon'],
   ['cikgu','Guru Pendidikan Jasmani','🧑‍🏫','wisel kon_latihan jam_randik kit_kecemasan bola_sepak','hid vit','a friendly PE teacher man in a tracksuit with a whistle and clipboard']
 ].map(([id, n, e, kit, nut, d]) => ({ id, n, e, kit: kit.split(' '), nut: nut.split(' '), d }));
 const ST_NUT = {
@@ -6583,6 +6583,8 @@ function storData(){ S.stor = S.stor || {}; S.stor.best = S.stor.best || {}; S.s
 
 /* ---------- ASET (pilihan): senarai, prompt & semakan fail ---------- */
 const ST_STYLE = 'Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours';
+/* Latar MAGENTA tulen (chroma key) — dibuang dengan alat buang-magenta. Objek tidak boleh ada warna magenta/merah jambu/ungu. */
+const ST_MAG = 'Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object.';
 /* Nisbah gambar mengikut kotak dalam game. Alat AI memberi saiz piksel sendiri; yang penting NISBAH —
    game menskala sendiri. sz = nisbah + saiz cadangan selepas dikecilkan. */
 const ST_AR = {
@@ -6606,28 +6608,28 @@ const ST_ASSETS = [].concat(
    ['rak_sejuk','an empty tall drinks refrigerator with a clear glass door, 4 empty wire shelves visible inside, cool white interior light'],
    ['rak_bijirin','an empty tall cream-coloured cafe pantry shelf'],
    ['rak_snek','an empty tall red snack rack with a small yellow caution sign on the header']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. ' + d[0].toUpperCase() + d.slice(1) + '. It has exactly 4 shelf boards; the TOP SURFACES of the boards are at about 27%, 49%, 71% and 93% of the image height, and the area above the first board is a plain header panel. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. Transparent background, no text, no people.')),
-  [stA('pintu_stor', 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. A tall closed double loading-bay door of a store room, grey metal with a small window. The door fills the ENTIRE image edge to edge. Transparent background, no text, no people.')],
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. ' + d[0].toUpperCase() + d.slice(1) + '. It has exactly 4 shelf boards; the TOP SURFACES of the boards are at about 27%, 49%, 71% and 93% of the image height, and the area above the first board is a plain header panel. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. ' + ST_MAG + ' No text, no people.')),
+  [stA('pintu_stor', 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. A tall closed double loading-bay door of a store room, grey metal with a small window. The door fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no people.')],
   [['dapur','a small cafe stove with a pot and a grill pan'],
    ['blender','a kitchen blender on a small counter'],
    ['meja_telefon','a small office desk with an old-style telephone and a clipboard on it'],
    ['dulang','an empty plastic service tray seen from above']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'sqL', ST_STYLE + ', slight 3/4 top-down view. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred and filling most of the image, transparent background, no text, no people.')),
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'sqL', ST_STYLE + ', slight 3/4 top-down view. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred and filling most of the image. ' + ST_MAG + ' No text, no people.')),
   /* kaunter: satu bahagian modular, diulang mendatar oleh game */
   [['kaunter_stor','a sports store service counter, blue front panel with a light wooden top'],
    ['kaunter_kafe','a cafe service counter, green front panel with a cream top']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'wide', ST_STYLE + '. ONE modular section of ' + d + ', straight front view (not angled). The counter fills the whole image from the left edge to the right edge, with flat cut-off sides so several copies can be placed side by side seamlessly. Nothing on the counter top. Transparent background, no text, no people.')),
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'wide', ST_STYLE + '. ONE modular section of ' + d + ', straight front view (not angled). The counter fills the whole image from the left edge to the right edge, with flat cut-off sides so several copies can be placed side by side seamlessly. Nothing on the counter top. ' + ST_MAG + ' No text, no people.')),
   [['pekerja_p','a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron'],
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
    ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
-  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Transparent background, no text.')),
-  ST_ITEMS.map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, transparent background, no text, no ground shadow.')),
+  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. ' + ST_MAG + ' No text.')),
+  ST_ITEMS.map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
   [['ui_syiling','a shiny gold coin with a simple embossed star'],
    ['ui_hati','a glossy red heart'],
    ['ui_telefon','a red ringing telephone with motion lines'],
    ['ui_kotak','a closed cardboard delivery box with tape'],
    ['logo_stor','a round game logo badge (no letters) combining a soccer ball, a dumbbell and an apple, blue and green']
-  ].map(([id, d]) => stA(id, 'Ikon UI', id === 'logo_stor' ? 'sqL' : 'sq', ST_STYLE + '. Game UI icon: ' + d + '. Centred, filling most of the image, transparent background, no text.'))
+  ].map(([id, d]) => stA(id, 'Ikon UI', id === 'logo_stor' ? 'sqL' : 'sq', ST_STYLE + '. Game UI icon: ' + d + '. Centred, filling most of the image. ' + ST_MAG + ' No text.'))
 );
 const ST_HAVE = new Map();                         // id → url fail yang wujud
 let ST_PROBED = null;
@@ -6651,10 +6653,10 @@ function storAssetsModal(){
   const body = '<div data-nohint="1">' +
     '<div class="panel clip-s p-3 text-[12px] leading-relaxed">' +
       '<div class="font-bold text-cyan mb-1">CARA JANA ASET (' + done + '/' + ST_ASSETS.length + ' siap)</div>' +
-      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). ChatGPT paling mudah untuk latar lutsinar (Gemini biasanya beri latar putih — buang latar selepas itu).<br>' +
+      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). Prompt meminta latar <b style="color:#FF00FF">MAGENTA</b> (#FF00FF) supaya mudah dibuang dengan sempurna.<br>' +
       '<b>Saiz:</b> alat AI memberi saiz piksel sendiri — yang penting <b>NISBAH</b> (1:1 segi empat, 2:3 menegak, 3:2 melintang). Prompt sudah menyebut nisbahnya; game menskala gambar sendiri. Saiz "simpan" ialah cadangan supaya fail kecil dan game laju.<br>' +
       '2. Tekan <b>Salin</b> pada satu prompt, tampal, jana. Untuk gaya seragam: selepas gambar pertama cantik, lampirkan gambar itu bersama prompt seterusnya dan tambah "same art style as the attached image".<br>' +
-      '3. Jika latar tidak lutsinar, buang latar di <b>remove.bg</b> atau <b>Adobe Express</b> (percuma).<br>' +
+      '3. Buang latar magenta dengan web app <b>Buang Magenta</b> (lihat PROMPT-WEBAPP-BUANG-MAGENTA.txt dalam folder aset). Hasil mesti .png lutsinar.<br>' +
       '4. Simpan dengan nama fail <b>tepat</b> seperti di bawah (cth. <span class="num">bola_sepak.png</span>), format .png atau .webp.<br>' +
       '5. Letak dalam folder <span class="num">student manager\\assets\\stor\\</span> di komputer. Auto-push <b>mengecilkan gambar secara automatik</b> (ikut saiz \"simpan\", nama dikemas, latar jadi .jpg) lalu menghantarnya ke GitHub dalam 5 minit. Gambar terus muncul dalam game; yang belum ada guna ikon lukisan app.' +
     '</div>' +

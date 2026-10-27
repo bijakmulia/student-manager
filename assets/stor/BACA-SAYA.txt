@@ -11,7 +11,9 @@ Letak gambar yang dijana AI di dalam folder ini.
       bola_sepak.png    pisang.png    atl_renang.png    bg_lantai.png
    Format .png atau .webp (webp lebih kecil & laju).
 
-3. Latar belakang mesti LUTSINAR (transparent), kecuali bg_lantai & bg_menu.
+3. Prompt meminta latar MAGENTA (#FF00FF). Buang latar itu dengan web app "Buang Magenta"
+   (prompt untuk bina app itu: PROMPT-WEBAPP-BUANG-MAGENTA.txt) sebelum letak di sini.
+   Fail akhir mesti .png LUTSINAR — kecuali bg_lantai & bg_menu (latar penuh, tiada magenta).
 
 4. Auto-push (setiap ~5 minit) akan SECARA AUTOMATIK:
    - kemas nama fail (cth. "Bola Sepak.PNG" -> bola_sepak.png)

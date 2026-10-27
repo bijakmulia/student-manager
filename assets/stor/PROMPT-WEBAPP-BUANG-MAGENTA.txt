@@ -1,0 +1,108 @@
+PROMPT: WEB APP "BUANG MAGENTA" (buang latar magenta dengan sempurna + automasi Tampermonkey)
+===========================================================================================
+Cara guna: salin SEMUA teks di bawah garisan ini, tampal ke Claude (claude.ai) atau ChatGPT,
+dan minta ia hasilkan fail. Simpan fail index.html dan fail .user.js yang diberi.
+-------------------------------------------------------------------------------------------
+
+Build a single-file web app called "Buang Magenta" (one self-contained index.html, no build step,
+no server, works offline after first load and on GitHub Pages). It removes a solid MAGENTA
+(#FF00FF) chroma-key background from AI-generated game sprites and outputs perfect transparent PNGs.
+All user-facing text must be in Bahasa Melayu. Dark, clean UI that also works on a phone.
+Also write a companion Tampermonkey userscript (described at the end).
+
+## 1. Input
+- Drag & drop many images at once, a "Pilih fail" button (multiple), a "Pilih folder" button
+  (webkitdirectory), and paste from clipboard (Ctrl+V).
+- Accept PNG, JPG, WEBP. Handle images from 256 px up to 4096 px.
+- Keep a processing queue; show a thumbnail list with status (menunggu / memproses / siap / ralat).
+
+## 2. Background removal — quality is the top priority
+Implement a proper chroma-key matte, not a simple colour replace:
+1. Key colour: default #FF00FF. Auto-detect it per image from the border pixels (median of border
+   pixels whose hue is near magenta) and show the swatch. Allow an eyedropper (click on preview).
+2. Similarity: convert to YCbCr and measure the distance between the pixel's chroma (Cb, Cr) and
+   the key's chroma, combined with a "magenta-ness" term m = min(R, B) - G. Build a soft alpha with
+   two thresholds (Toleransi dalam / Toleransi luar) and a smoothstep ramp between them, so edges
+   stay anti-aliased instead of jagged.
+3. Remove only BACKGROUND: flood-fill (8-connected) from all four image borders through key-like
+   pixels, so magenta-ish colours inside the object are never erased. ALSO remove enclosed holes
+   (e.g. the gap between an arm and the body, the inside of a racket frame): any interior region
+   whose pixels are within a strict tolerance of the key and whose area is above a small minimum
+   (setting "Buang lubang tertutup", default ON, min 30 px).
+4. Colour decontamination (despill) on edge and semi-transparent pixels: un-mix the key colour,
+   C = (C_observed - (1 - alpha) * K) / alpha, clamped; then suppress any remaining magenta cast
+   (if min(R, B) > G, pull R and B down toward G by the excess times a strength slider).
+   Result: NO pink/purple fringe when the sprite is placed on black, white or any colour.
+5. Edge refinement options: "Kecutkan tepi" (choke 0–3 px, default 0.5 px, sub-pixel via alpha
+   erosion), "Lembutkan tepi" (alpha-only feather 0–2 px, default 0.5), "Buang bintik" (remove
+   isolated opaque specks / transparent pinholes smaller than N px, default 12).
+6. Robust to JPEG noise and gradients in the magenta (some generators are not perfectly flat):
+   light median filter on the similarity map only, never on the colour image.
+7. Preserve object pixels exactly where alpha = 1 (no blur, no colour shift).
+8. Do everything in a Web Worker with OffscreenCanvas when available (fallback to main thread),
+   so 50 images of 1024 px process smoothly.
+
+## 3. Output
+- 32-bit PNG with real transparency.
+- Filename: keep the original base name, lowercase, spaces and dashes -> underscore, always .png
+  (e.g. "Bola Sepak.jpg" -> "bola_sepak.png"). Optional prefix/suffix fields (default empty).
+- "Potong ruang kosong" (auto-trim transparent margins, default ON) with "Ruang tepi" padding
+  (default 2%). Option "Kekalkan saiz asal" to skip trimming.
+- Optional "Saiz maksimum" (e.g. 256 / 512 / 768 / 1024 / asal) using high-quality downscaling.
+- Buttons: download one, "Muat turun semua (ZIP)" (use JSZip from cdnjs), and an "Auto muat turun"
+  toggle that downloads each result as soon as it is done.
+
+## 4. Preview & checking
+- Before/after comparison slider, zoom (fit, 100%, 200%, 400%) and pan.
+- Background switcher for the result: checkerboard, black, white, red, green — to spot fringes.
+- "Tunjuk sisa magenta" toggle that highlights any remaining pixel with a magenta cast in bright
+  green so I can see problems instantly.
+- Per-image settings override + "Proses semula"; global settings saved in localStorage;
+  "Set semula" restores defaults.
+
+## 5. Automation API (for Tampermonkey) — must be stable and documented in a "Bantuan" panel
+- Global object window.BuangMagenta:
+    process(input, options?) -> Promise<{ name, blob, dataURL, width, height }>
+        input = File | Blob | dataURL string | http(s) URL string
+    processAll(inputs, options?) -> Promise<Array<result>>
+    getSettings() / setSettings(partialSettings)
+    download(result) and downloadZip(results, zipName)
+- Stable DOM hooks: <input type="file" id="bm-input" multiple>, button #bm-download-all,
+  checkbox #bm-auto-download.
+- Events on document: "bm:done" (detail = { name, dataURL, width, height }) for each image and
+  "bm:all-done" (detail = { count }) when the queue is empty.
+- Cross-tab messaging: listen to window "message" events and to BroadcastChannel("buang-magenta").
+  Request:  { type: "bm:process", id, name, dataURL, options }
+  Reply:    { type: "bm:result",  id, name, dataURL, width, height }  (to event.source, or posted on
+            the BroadcastChannel)   and   { type: "bm:error", id, message } on failure.
+  Also answer { type: "bm:ping" } with { type: "bm:pong", version }.
+- URL parameters: ?auto=1 (auto download), ?zip=1 (download one ZIP when queue finishes),
+  ?trim=0, ?max=512, ?tol=… (override tolerances) so a script can open the app pre-configured.
+
+## 6. Companion Tampermonkey userscript (separate file buang-magenta.user.js)
+- @match https://chatgpt.com/* and https://gemini.google.com/*; @grant GM_xmlhttpRequest,
+  GM_download, GM_setValue, GM_getValue, GM_registerMenuCommand; @connect * .
+- Adds a small floating button "✂ Buang Magenta" on every generated image (hover).
+  Click -> fetch the full-resolution image as a Blob via GM_xmlhttpRequest (avoid CORS), ask for
+  the file name once with a text prompt (pre-filled with the last name used + suggestion), open or
+  reuse the Buang Magenta tab (URL configurable via the Tampermonkey menu, default
+  https://bijakmulia.github.io/student-manager/tools/buang-magenta.html), send it with
+  postMessage { type: "bm:process", ... }, wait for "bm:result", then save the PNG with
+  GM_download into the sub-folder "edurank-aset/" of the Downloads folder.
+- Menu command "Proses semua gambar di halaman ini" that queues every generated image on the page.
+- Show small toast notifications (berjaya / gagal) and keep a log in GM_setValue.
+- Explain in a comment at the top that Tampermonkey's "Download Mode" must be set to
+  "Browser API" for sub-folders to work.
+
+## 7. Acceptance tests (include a "Uji" button that generates these synthetic images and shows
+##    a pass/fail table)
+- Flat magenta background with a dark-outlined cartoon object -> zero magenta pixels left, outline
+  intact, alpha edges smooth.
+- Thin details (hair strands, racket strings, shuttlecock feathers) survive.
+- Enclosed hole (ring/donut shape) becomes transparent.
+- Pink/red object colour that is NOT magenta (e.g. #E53935 red, #FF8A80 salmon) is kept.
+- Slight JPEG noise and a soft magenta gradient in the background are still fully removed.
+- Result placed on white AND on black shows no pink fringe (measure: max magenta cast of pixels
+  with alpha > 0.1 must be below a small threshold).
+
+Deliver: the complete index.html and buang-magenta.user.js, plus short usage notes in Malay.
