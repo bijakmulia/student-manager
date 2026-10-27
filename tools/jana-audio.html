@@ -87,8 +87,21 @@ const log = t => { const l = $('#log'); l.textContent = new Date().toLocaleTimeS
 
 /* ---------- kunci API ---------- */
 const getKey = () => { try { return localStorage.getItem(KEY_LS) || ''; } catch(e){ return ''; } };
-function showKey(){ const k = getKey(); $('#stKey').innerHTML = k ? '<span class="st ok">✓ Kunci disimpan (…' + k.slice(-4) + ')</span>' : '<span class="st warn">Belum ada kunci API.</span>'; }
-$('#bKey').onclick = () => { const v = $('#key').value.trim(); if (!v) return; try { localStorage.setItem(KEY_LS, v); } catch(e){} $('#key').value = ''; showKey(); };
+function showKey(){
+  const k = getKey();
+  if (k && !/^sk_/.test(k)){ try { localStorage.removeItem(KEY_LS); } catch(e){} }   // buang kunci salah yang tersimpan sebelum ini
+  const ok = getKey();
+  $('#stKey').innerHTML = ok ? '<span class="st ok">✓ Kunci disimpan (…' + ok.slice(-4) + ')</span>' : '<span class="st warn">Belum ada kunci API (bermula dengan sk_).</span>';
+}
+$('#bKey').onclick = () => {
+  const v = $('#key').value.trim(); if (!v) return;
+  if (!/^sk_/.test(v)){                                 // ID kunci (bukan kunci) kerap tersalin dari senarai API Keys
+    $('#stKey').innerHTML = '<span class="st bad">✗ Ini bukan kunci API. Kunci API sebenar bermula dengan <b>sk_</b> dan hanya dipaparkan SEKALI semasa kunci dicipta. ' +
+      'Di elevenlabs.io → API Keys, tekan <b>Create API Key</b>, kemudian salin kunci panjang yang bermula dengan sk_.</span>';
+    return;
+  }
+  try { localStorage.setItem(KEY_LS, v); } catch(e){} $('#key').value = ''; showKey();
+};
 
 /* ---------- folder (File System Access API, diingat dalam IndexedDB) ---------- */
 const idb = () => new Promise((res, rej) => { const r = indexedDB.open('jana-audio', 1); r.onupgradeneeded = () => r.result.createObjectStore('h'); r.onsuccess = () => res(r.result); r.onerror = rej; });
@@ -130,7 +143,7 @@ async function saveFile(id, blob){
 async function apiErr(r){
   let m = 'HTTP ' + r.status;
   try { const j = await r.json(); const d = j.detail; m = (typeof d === 'string' ? d : d && (d.message || d.status || (Array.isArray(d) ? d.map(x => x.msg).join('; ') : JSON.stringify(d)))) || m; } catch(e){}
-  if (r.status === 401) m = 'Kunci API salah atau tiada kebenaran (' + m + ')';
+  if (r.status === 401 || /api key/i.test(m)) m = 'Kunci API salah atau tiada kebenaran (' + m + ')';
   if (r.status === 402 || /quota|credit/i.test(m)) m = 'Kredit tidak cukup (' + m + ')';
   return m;
 }
