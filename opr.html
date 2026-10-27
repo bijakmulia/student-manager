@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A8A">
+<title>Jana OPR</title>
+<meta name="description" content="Jana One Page Report (OPR) daripada pautan Google Form, pratonton dan muat turun.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#F3F5F9; --card:#FFFFFF; --ink:#0F172A; --muted:#64748B; --line:#E2E8F0;
+  --brand:#1E3A8A; --brand-2:#3B82F6; --danger:#DC2626; --ok:#059669;
+  /* report theme (set from JS) */
+  --c1:#1E3A8A; --c2:#0F1F4D; --acc:#3B82F6; --tint:#EEF3FF;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+
+/* ---------- App shell ---------- */
+.topbar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.topbar .in{max-width:1320px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.logo-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:.5px}
+.topbar h1{font-size:17px;margin:0;font-weight:800;letter-spacing:-.2px}
+.topbar p{margin:0;color:var(--muted);font-size:12.5px}
+.wrap{max-width:1320px;margin:0 auto;padding:20px 16px 120px;display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:980px){.wrap{grid-template-columns:minmax(0,1fr)}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{display:flex;align-items:center;gap:10px;font-size:15px;margin:0 0 4px;font-weight:700}
+.card h2 .n{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;display:grid;place-items:center;flex:none}
+.card .hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+.row{display:flex;gap:8px}
+.input,select.input,textarea.input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;outline:none;transition:border-color .15s, box-shadow .15s}
+.input:focus{border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+textarea.input{min-height:92px;resize:vertical}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;transition:transform .05s, background .15s, opacity .15s}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover:not(:disabled){background:#172F72}
+.btn-ghost{background:#EEF2F7;color:var(--ink)}
+.btn-ghost:hover:not(:disabled){background:#E3E8F0}
+.btn-link{background:none;border:0;color:var(--brand);font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+.btn svg{width:17px;height:17px}
+.msg{font-size:13px;margin-top:10px;padding:10px 12px;border-radius:10px;display:none}
+.msg.show{display:block}
+.msg.err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+.msg.ok{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0}
+.msg.info{background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE}
+
+.field{margin-bottom:14px}
+.field label.l{display:block;font-weight:600;font-size:13.5px;margin-bottom:6px}
+.field label.l .req{color:var(--danger)}
+.field .h{color:var(--muted);font-size:12px;margin:-3px 0 6px}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+.checks input{margin-top:3px}
+.formmeta{background:var(--tint);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px}
+.formmeta b{display:block;font-size:14px}
+
+/* photos */
+.drop{border:2px dashed #CBD5E1;border-radius:12px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .15s, background .15s;font-size:13.5px}
+.drop:hover,.drop.over{border-color:var(--brand-2);background:#F8FAFF}
+.drop b{color:var(--ink)}
+.thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.thumb{position:relative;aspect-ratio:4/3;border-radius:9px;background:#E2E8F0 center/cover no-repeat;overflow:hidden}
+.thumb .tools{position:absolute;inset:auto 0 0 0;display:flex;justify-content:space-between;padding:4px;background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.thumb button{width:26px;height:26px;border-radius:7px;border:0;background:rgba(255,255,255,.92);cursor:pointer;display:grid;place-items:center;font-size:14px;line-height:1;padding:0}
+.thumb button:disabled{opacity:.35}
+.thumb .no{position:absolute;top:5px;left:5px;background:rgba(15,23,42,.75);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px}
+.count{font-size:12.5px;color:var(--muted);margin-top:8px}
+
+/* theme */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.sw{border:2px solid var(--line);border-radius:11px;padding:8px;cursor:pointer;background:#fff;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;text-align:left}
+.sw .dot{width:24px;height:24px;border-radius:7px;flex:none;position:relative;overflow:hidden}
+.sw .dot::after{content:"";position:absolute;right:0;bottom:0;width:10px;height:10px;background:var(--a)}
+.sw.on{border-color:var(--ink)}
+.sw small{display:block;color:var(--muted);font-weight:500;font-size:11px}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-prev{width:46px;height:46px;border-radius:10px;border:1px solid var(--line);background:#F8FAFC center/contain no-repeat;flex:none}
+
+/* preview */
+.pv{position:sticky;top:76px}
+.pv-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.pv-head h2{margin:0;font-size:15px}
+.pv-head .acts{display:flex;gap:8px;flex-wrap:wrap}
+.fitnote{font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
+.fitnote.warn{color:#B45309}
+.stage{background:#E5E9F0;border-radius:14px;padding:16px;overflow:hidden}
+.scaler{margin:0 auto;position:relative}
+.scaler > .opr{transform-origin:top left;position:absolute;top:0;left:0;box-shadow:0 10px 30px rgba(15,23,42,.18)}
+@media (max-width:980px){.pv{position:static}}
+
+.mbar{display:none}
+@media (max-width:980px){
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));gap:8px;z-index:30}
+  .mbar .btn{flex:1}
+}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+
+/* ---------- The report (A4 @96dpi = 794 x 1123) ---------- */
+.opr{--fs:13.5px;width:794px;height:1123px;background:#fff;color:#1E293B;font-family:'Plus Jakarta Sans',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden;position:relative;font-size:var(--fs);line-height:1.55}
+.opr *{box-sizing:border-box}
+.r-head{background:var(--c1);background-image:linear-gradient(120deg,var(--c2) 0%,var(--c1) 70%);color:#fff;padding:30px 40px 26px;display:flex;align-items:center;gap:18px;position:relative;flex:none}
+.r-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--acc)}
+.r-logo{width:64px;height:64px;border-radius:12px;background:#fff center/contain no-repeat;flex:none;border:3px solid #fff}
+.r-titles{flex:1;min-width:0}
+.r-kick{font-size:11px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;opacity:.85}
+.r-title{font-size:25px;font-weight:800;line-height:1.2;margin:5px 0 0;letter-spacing:-.3px;word-wrap:break-word}
+.r-sub{font-size:12.5px;opacity:.85;margin-top:5px}
+.r-badge{flex:none;text-align:center;border:1.5px solid rgba(255,255,255,.55);border-radius:12px;padding:8px 12px;min-width:74px}
+.r-badge b{display:block;font-size:20px;font-weight:800;line-height:1.1}
+.r-badge span{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;opacity:.85}
+
+.r-info{display:grid;gap:0;margin:18px 40px 0;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;flex:none;background:var(--tint)}
+.r-info .it{padding:9px 14px;border-right:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;min-width:0}
+.r-info .it .k{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--c1);opacity:.9}
+.r-info .it .v{font-size:calc(var(--fs) * .98);font-weight:600;color:#0F172A;word-wrap:break-word;line-height:1.35;margin-top:2px}
+
+.r-body{flex:0 1 auto;min-height:0;overflow:hidden;margin:16px 40px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;align-content:start}
+.r-body.one{grid-template-columns:1fr}
+.r-body.solo{flex:1 1 auto;margin-bottom:14px}
+.r-sec{min-width:0}
+.r-sec.full{grid-column:1 / -1}
+.r-sec h3{margin:0 0 5px;font-size:calc(var(--fs) * .86);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--c1);display:flex;align-items:center;gap:8px}
+.r-sec h3::before{content:"";width:14px;height:3px;border-radius:2px;background:var(--acc);flex:none}
+.r-sec .t{white-space:pre-line;word-wrap:break-word;color:#334155;text-align:justify}
+.r-empty{color:#94A3B8;font-style:italic;text-align:center;padding:30px 0;grid-column:1/-1}
+
+.r-photos{flex:1 1 auto;margin:14px 40px 14px;display:grid;gap:8px;max-height:560px}
+.r-photos .ph{border-radius:8px;background:#E2E8F0 center/cover no-repeat;min-height:0;min-width:0}
+.r-photos.n1{grid-template-columns:1fr;min-height:330px;max-height:500px}
+.r-photos.n2{grid-template-columns:1fr 1fr;min-height:260px;max-height:420px}
+.r-photos.n3{grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;min-height:330px}
+.r-photos.n3 .ph:first-child{grid-row:1 / 3}
+.r-photos.n4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;min-height:380px}
+.r-photos.n5{grid-template-columns:repeat(6,1fr);grid-template-rows:1.15fr 1fr;min-height:380px}
+.r-photos.n5 .ph:nth-child(-n+2){grid-column:span 3}
+.r-photos.n5 .ph:nth-child(n+3){grid-column:span 2}
+.r-photos.n6{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;min-height:350px}
+
+.r-foot{flex:none;margin:auto 40px 0;padding:12px 0 22px;border-top:2px solid var(--tint);display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.r-prep .k{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:#64748B}
+.r-prep .v{font-weight:700;color:#0F172A;font-size:calc(var(--fs) * 1.02)}
+.r-prep .p{color:#475569;font-size:calc(var(--fs) * .9)}
+.r-stamp{font-size:10.5px;color:#94A3B8;text-align:right}
+.r-bar{position:absolute;left:0;right:0;bottom:0;height:6px;background:var(--c1)}
+
+/* print: only the report, real A4 */
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  .topbar,.wrap > .left,.pv-head,.fitnote,.mbar{display:none!important}
+  .wrap{display:block;padding:0;max-width:none}
+  .pv{position:static}
+  .stage{background:none;padding:0;border-radius:0}
+  .scaler{width:auto!important;height:auto!important}
+  .scaler > .opr{position:static;transform:none!important;box-shadow:none;width:210mm;height:297mm;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="in">
+    <div class="logo-mark">OPR</div>
+    <div>
+      <h1>Jana OPR</h1>
+      <p>One Page Report daripada pautan Google Form</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="left">
+
+    <div class="card">
+      <h2><span class="n">1</span> Pautan Google Form</h2>
+      <p class="hint">Tampal pautan borang (contoh: https://docs.google.com/forms/d/e/…/viewform atau forms.gle/…). Pautan pra-isi (pre-filled) juga diterima.</p>
+      <div class="row">
+        <input id="url" class="input" type="url" inputmode="url" placeholder="https://docs.google.com/forms/d/e/…/viewform" autocomplete="off">
+        <button id="btnRead" class="btn btn-primary">Baca</button>
+      </div>
+      <div id="msg" class="msg"></div>
+      <p class="hint" style="margin:10px 0 0">Tiada borang? <button class="btn-link" id="btnTpl" type="button">Guna templat OPR standard</button></p>
+    </div>
+
+    <div class="card hidden" id="cardFields">
+      <h2><span class="n">2</span> Maklumat Laporan</h2>
+      <p class="hint">Medan dijana daripada soalan borang. Medan kosong tidak dipaparkan dalam laporan.</p>
+      <div id="formMeta" class="formmeta"></div>
+      <div id="fields"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">3</span> Gambar <span style="font-weight:500;color:var(--muted);font-size:13px">(pilihan, maksimum 6)</span></h2>
+      <p class="hint">Susun atur laporan menyesuaikan diri untuk 0 hingga 6 gambar.</p>
+      <label class="drop" id="drop">
+        <input id="photoIn" type="file" accept="image/*" multiple hidden>
+        <b>Klik untuk pilih gambar</b><br>atau seret &amp; lepas di sini
+      </label>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="count" id="photoCount">Tiada gambar — laporan akan dipaparkan tanpa ruang gambar.</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">4</span> Tema &amp; Tetapan</h2>
+      <p class="hint">Jika tidak dipilih, tema lalai <b>Biru Korporat</b> digunakan.</p>
+      <div class="swatches" id="swatches"></div>
+      <div class="field" style="margin-top:16px">
+        <label class="l" for="org">Nama sekolah / organisasi <span style="color:var(--muted);font-weight:500">(pilihan)</span></label>
+        <input id="org" class="input" type="text" placeholder="Contoh: SK Taman Desa">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="l">Logo <span style="color:var(--muted);font-weight:500">(pilihan)</span></label>
+        <div class="logo-row">
+          <div class="logo-prev" id="logoPrev"></div>
+          <label class="btn btn-ghost" style="cursor:pointer">Pilih logo<input id="logoIn" type="file" accept="image/*" hidden></label>
+          <button class="btn btn-ghost hidden" id="logoDel" type="button">Buang</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pv">
+    <div class="pv-head">
+      <h2>Pratonton</h2>
+      <div class="acts">
+        <button class="btn btn-ghost" id="btnPrint" type="button">Cetak</button>
+        <button class="btn btn-ghost" id="btnPng" type="button">PNG</button>
+        <button class="btn btn-primary" id="btnPdf" type="button">Muat Turun PDF</button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="scaler" id="scaler">
+        <div class="opr" id="page"></div>
+      </div>
+    </div>
+    <div class="fitnote" id="fitnote"></div>
+  </section>
+</main>
+
+<div class="mbar">
+  <button class="btn btn-ghost" id="mPng" type="button">PNG</button>
+  <button class="btn btn-primary" id="mPdf" type="button">Muat Turun PDF</button>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ---------- constants ----------
+const THEMES = {
+  biru:  {name:'Biru Korporat', c1:'#1E3A8A', c2:'#0F1F4D', acc:'#60A5FA', tint:'#F1F5FF'},
+  hijau: {name:'Hijau Zamrud',  c1:'#065F46', c2:'#022C22', acc:'#34D399', tint:'#EFFCF6'},
+  marun: {name:'Merah Marun',   c1:'#881337', c2:'#4C0519', acc:'#FB7185', tint:'#FFF3F5'},
+  ungu:  {name:'Ungu Diraja',   c1:'#5B21B6', c2:'#2E1065', acc:'#A78BFA', tint:'#F6F3FF'},
+  teal:  {name:'Teal Moden',    c1:'#0F766E', c2:'#042F2E', acc:'#2DD4BF', tint:'#EFFCFA'},
+  oren:  {name:'Oren Terakota', c1:'#C2410C', c2:'#6C2510', acc:'#FDBA74', tint:'#FFF7EF'},
+  hitam: {name:'Hitam Emas',    c1:'#1F2937', c2:'#0B0F14', acc:'#D4A017', tint:'#F7F6F2'}
+};
+const DEFAULT_THEME = 'biru';
+const MAX_PHOTOS = 6;
+const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+// Google Form item types we can turn into inputs
+const T = {SHORT:0, PARA:1, RADIO:2, DROP:3, CHECK:4, SCALE:5, DATE:9, TIME:10};
+const SUPPORTED = new Set(Object.values(T));
+const PROXIES = [
+  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+  u => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u)
+];
+const TEMPLATE = {
+  title:'One Page Report', desc:'', fromTemplate:true,
+  fields:[
+    {entry:'t1', label:'Nama Program', type:T.SHORT, required:true},
+    {entry:'t2', label:'Tarikh', type:T.DATE},
+    {entry:'t3', label:'Masa', type:T.TIME},
+    {entry:'t4', label:'Tempat', type:T.SHORT},
+    {entry:'t5', label:'Anjuran', type:T.SHORT},
+    {entry:'t6', label:'Sasaran / Peserta', type:T.SHORT},
+    {entry:'t7', label:'Objektif', type:T.PARA},
+    {entry:'t8', label:'Ringkasan Aktiviti', type:T.PARA},
+    {entry:'t9', label:'Impak / Rumusan', type:T.PARA},
+    {entry:'t10', label:'Disediakan oleh', type:T.SHORT},
+    {entry:'t11', label:'Jawatan', type:T.SHORT}
+  ]
+};
+
+// ---------- state ----------
+const S = {form:null, values:{}, photos:[], theme:DEFAULT_THEME, org:'', logo:null};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('opr.'+k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem('opr.'+k, JSON.stringify(v)); }catch(e){} }
+};
+
+// ---------- Google Form reading ----------
+function normaliseUrl(raw){
+  const s = raw.trim();
+  if(!s) throw new Error('Sila tampal pautan Google Form.');
+  let u;
+  try{ u = new URL(/^https?:\/\//i.test(s) ? s : 'https://' + s); }catch(e){ throw new Error('Pautan tidak sah.'); }
+  const prefill = {};
+  u.searchParams.forEach((v,k) => {
+    const m = k.match(/^entry\.(\d+)/);
+    if(m){ (prefill[m[1]] = prefill[m[1]] || []).push(v); }
+  });
+  if(/(^|\.)forms\.gle$/i.test(u.hostname)) return {fetchUrl:u.origin + u.pathname, prefill};
+  if(!/docs\.google\.com$/i.test(u.hostname)) throw new Error('Ini bukan pautan Google Form.');
+  let m = u.pathname.match(/\/forms\/(?:u\/\d+\/)?d\/e\/([\w-]+)/);
+  if(m) return {fetchUrl:'https://docs.google.com/forms/d/e/' + m[1] + '/viewform', prefill};
+  m = u.pathname.match(/\/forms\/(?:u\/\d+\/)?d\/([\w-]+)/);
+  if(m) return {fetchUrl:'https://docs.google.com/forms/d/' + m[1] + '/viewform', prefill};
+  throw new Error('Pautan Google Form tidak dikenali.');
+}
+
+async function fetchVia(url){
+  let lastErr;
+  for(const p of PROXIES){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try{
+      const res = await fetch(p(url), {signal:ctrl.signal});
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if(text.includes('FB_PUBLIC_LOAD_DATA_')) return text;
+      if(/accounts\.google\.com|ServiceLogin/i.test(text)) throw Object.assign(new Error('login'), {login:true});
+      throw new Error('Tiada data borang');
+    }catch(e){ lastErr = e; if(e.login) throw e; }
+    finally{ clearTimeout(timer); }
+  }
+  throw lastErr || new Error('Gagal');
+}
+
+function parseForm(html){
+  const m = html.match(/FB_PUBLIC_LOAD_DATA_\s*=\s*([\s\S]*?);\s*<\/script>/);
+  if(!m) throw new Error('Data borang tidak ditemui.');
+  const d = JSON.parse(m[1]);
+  const info = d[1] || [];
+  const fields = (info[1] || []).map(it => {
+    const q = Array.isArray(it[4]) ? it[4][0] : null;
+    return {
+      entry: q ? String(q[0]) : null,
+      label: (it[1] || '').trim(),
+      help: (it[2] || '').trim(),
+      type: it[3],
+      options: q && Array.isArray(q[1]) ? q[1].map(o => o && o[0]).filter(Boolean) : [],
+      required: !!(q && q[2])
+    };
+  }).filter(f => f.entry && f.label && SUPPORTED.has(f.type));
+  return {title:(info[8] || d[3] || 'One Page Report').trim(), desc:(info[0] || '').trim(), fields};
+}
+
+// ---------- field roles ----------
+const RX = {
+  title: /^(nama|tajuk)\s*(program|aktiviti|projek|kursus|majlis|bengkel|pertandingan|kegiatan|acara|laporan)|^(program|aktiviti|tajuk|tajuk program|nama aktiviti)$/i,
+  prep:  /disediakan|penyedia|dilaporkan|pelapor|prepared|nama guru|nama pegawai/i,
+  post:  /^jawatan|designation|position/i,
+  date:  /tarikh|date/i
+};
+
+function roleOf(f, val){
+  if(RX.prep.test(f.label)) return 'prep';
+  if(RX.post.test(f.label)) return 'post';
+  if(f.type === T.PARA) return 'sec';
+  if(f.type === T.CHECK) return displayValue(f, val).length > 70 ? 'sec' : 'info';
+  return String(displayValue(f, val)).length > 90 ? 'sec' : 'info';
+}
+
+function displayValue(f, v){
+  if(v == null) return '';
+  if(Array.isArray(v)) return v.filter(Boolean).join(', ');
+  v = String(v).trim();
+  if(!v) return '';
+  if(f.type === T.DATE) return fmtDate(v);
+  if(f.type === T.TIME) return fmtTime(v);
+  return v;
+}
+function fmtDate(v){
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? (+m[3]) + ' ' + MONTHS[+m[2]-1] + ' ' + m[1] : v;
+}
+function fmtTime(v){
+  const m = v.match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return v;
+  const h = +m[1], h12 = h % 12 || 12;
+  const part = h < 12 ? 'pagi' : h < 14 ? 'tengah hari' : h < 19 ? 'petang' : 'malam';
+  return h12 + '.' + m[2] + ' ' + part;
+}
+
+// ---------- form UI ----------
+function loadForm(form, prefill){
+  S.form = form;
+  S.values = {};
+  form.fields.forEach(f => {
+    const pre = prefill && prefill[f.entry];
+    if(pre) S.values[f.entry] = f.type === T.CHECK ? pre : pre[0];
+  });
+  $('formMeta').innerHTML = '<b>' + esc(form.title) + '</b>' +
+    (form.fromTemplate ? 'Templat OPR standard' : form.fields.length + ' soalan dibaca daripada borang');
+  renderFields();
+  $('cardFields').classList.remove('hidden');
+  render();
+}
+
+function renderFields(){
+  const box = $('fields');
+  box.innerHTML = '';
+  if(!S.form.fields.length){
+    box.innerHTML = '<p class="hint">Borang ini tiada soalan yang boleh digunakan.</p>';
+    return;
+  }
+  S.form.fields.forEach(f => {
+    const id = 'f_' + f.entry, val = S.values[f.entry];
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    let html = '<label class="l" for="' + id + '">' + esc(f.label) + (f.required ? ' <span class="req">*</span>' : '') + '</label>';
+    if(f.help) html += '<div class="h">' + esc(f.help) + '</div>';
+    switch(f.type){
+      case T.PARA:
+        html += '<textarea class="input" id="' + id + '" rows="4">' + esc(val || '') + '</textarea>'; break;
+      case T.DATE:
+        html += '<input class="input" type="date" id="' + id + '" value="' + esc(val || '') + '">'; break;
+      case T.TIME:
+        html += '<input class="input" type="time" id="' + id + '" value="' + esc(val || '') + '">'; break;
+      case T.RADIO: case T.DROP: case T.SCALE:
+        if(f.options.length){
+          html += '<select class="input" id="' + id + '"><option value="">— Pilih —</option>' +
+            f.options.map(o => '<option' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+        }else html += '<input class="input" type="text" id="' + id + '" value="' + esc(val || '') + '">';
+        break;
+      case T.CHECK: {
+        const sel = new Set(val || []);
+        html += '<div class="checks" id="' + id + '">' + f.options.map(o =>
+          '<label><input type="checkbox" value="' + esc(o) + '"' + (sel.has(o) ? ' checked' : '') + '> <span>' + esc(o) + '</span></label>').join('') + '</div>';
+        break;
+      }
+      default:
+        html += '<input class="input" type="text" id="' + id + '" value="' + esc(val || '') + '">';
+    }
+    wrap.innerHTML = html;
+    box.appendChild(wrap);
+    const el = $(id);
+    const update = () => {
+      S.values[f.entry] = f.type === T.CHECK
+        ? [...el.querySelectorAll('input:checked')].map(i => i.value)
+        : el.value;
+      scheduleRender();
+    };
+    el.addEventListener('input', update);
+    el.addEventListener('change', update);
+  });
+}
+
+// ---------- report rendering ----------
+let rTimer;
+function scheduleRender(){ clearTimeout(rTimer); rTimer = setTimeout(render, 120); }
+
+function buildReport(){
+  const form = S.form || {title:'One Page Report', fields:[]};
+  const info = [], secs = [];
+  let title = '', prep = '', post = '', year = '';
+  form.fields.forEach(f => {
+    const v = displayValue(f, S.values[f.entry]);
+    if(!v) return;
+    if(!title && f.type === T.SHORT && RX.title.test(f.label)){ title = v; return; }
+    if(!year && f.type === T.DATE){ const y = String(S.values[f.entry]).match(/^\d{4}/); if(y) year = y[0]; }
+    const role = roleOf(f, S.values[f.entry]);
+    if(role === 'prep' && !prep){ prep = v; return; }
+    if(role === 'post' && !post){ post = v; return; }
+    (role === 'sec' ? secs : info).push({k:f.label, v});
+  });
+  const usedFormTitle = !title;
+  title = title || form.title;
+  year = year || String(new Date().getFullYear());
+
+  const n = Math.min(S.photos.length, MAX_PHOTOS);
+  const kick = 'One Page Report' + (S.org ? ' · ' + S.org : '');
+  const sub = usedFormTitle ? '' : form.title;
+
+  let h = '<header class="r-head">' +
+    (S.logo ? '<div class="r-logo" style="background-image:url(' + S.logo + ')"></div>' : '') +
+    '<div class="r-titles"><div class="r-kick">' + esc(kick) + '</div>' +
+    '<h1 class="r-title">' + esc(title) + '</h1>' +
+    (sub && sub.toLowerCase() !== title.toLowerCase() ? '<div class="r-sub">' + esc(sub) + '</div>' : '') +
+    '</div><div class="r-badge"><span>Laporan</span><b>' + esc(year) + '</b></div></header>';
+
+  if(info.length){
+    const c = info.length <= 4 ? info.length : (info.length % 3 === 0 || info.length === 5 ? 3 : 4);
+    h += '<div class="r-info" style="grid-template-columns:repeat(' + c + ',minmax(0,1fr))">' +
+      info.map(i => '<div class="it"><div class="k">' + esc(i.k) + '</div><div class="v">' + esc(i.v) + '</div></div>').join('') + '</div>';
+  }
+
+  // single column when there is only one section or many photos leave a narrow body
+  const one = secs.length <= 1;
+  h += '<div class="r-body' + (one ? ' one' : '') + (n ? '' : ' solo') + '" id="rBody">';
+  if(secs.length){
+    h += secs.map((s, i) => {
+      const full = !one && secs.length % 2 === 1 && i === secs.length - 1;
+      return '<div class="r-sec' + (full ? ' full' : '') + '"><h3>' + esc(s.k) + '</h3><div class="t">' + esc(s.v) + '</div></div>';
+    }).join('');
+  }else if(!info.length){
+    h += '<div class="r-empty">Isi maklumat di sebelah untuk melihat laporan anda.</div>';
+  }
+  h += '</div>';
+
+  if(n){
+    h += '<div class="r-photos n' + n + '">' +
+      S.photos.slice(0, n).map(p => '<div class="ph" style="background-image:url(' + p + ')"></div>').join('') + '</div>';
+  }
+
+  const today = new Date();
+  h += '<footer class="r-foot"><div class="r-prep">' +
+    (prep ? '<div class="k">Disediakan oleh</div><div class="v">' + esc(prep) + '</div>' + (post ? '<div class="p">' + esc(post) + '</div>' : '') : '') +
+    '</div><div class="r-stamp">Tarikh laporan: ' + today.getDate() + ' ' + MONTHS[today.getMonth()] + ' ' + today.getFullYear() + '</div></footer>' +
+    '<div class="r-bar"></div>';
+  return h;
+}
+
+function applyTheme(el){
+  const t = THEMES[S.theme] || THEMES[DEFAULT_THEME];
+  el.style.setProperty('--c1', t.c1);
+  el.style.setProperty('--c2', t.c2);
+  el.style.setProperty('--acc', t.acc);
+  el.style.setProperty('--tint', t.tint);
+}
+
+// Shrinks body text until every section fits on the single page.
+function fitText(page){
+  const body = page.querySelector('#rBody');
+  // without photos the text may use a larger size to fill the page
+  let fs = page.querySelector('.r-photos') ? 13.5 : 15;
+  page.style.setProperty('--fs', fs + 'px');
+  while(body.scrollHeight > body.clientHeight + 1 && fs > 8.5){
+    fs -= 0.25;
+    page.style.setProperty('--fs', fs + 'px');
+  }
+  return {fs, overflow: body.scrollHeight > body.clientHeight + 1};
+}
+
+function render(){
+  const page = $('page');
+  applyTheme(page);
+  page.innerHTML = buildReport();
+  const fit = fitText(page);
+  const note = $('fitnote');
+  if(fit.overflow){
+    note.className = 'fitnote warn';
+    note.textContent = 'Teks terlalu panjang untuk satu muka surat — ringkaskan teks atau kurangkan gambar.';
+  }else{
+    note.className = 'fitnote';
+    note.textContent = 'A4 · ' + (S.photos.length ? S.photos.length + ' gambar' : 'tanpa gambar') + ' · tema ' + THEMES[S.theme].name;
+  }
+  scalePreview();
+}
+
+function scalePreview(){
+  const stage = $('stage'), scaler = $('scaler'), page = $('page');
+  const w = stage.clientWidth - 32;
+  const s = Math.min(1, w / 794);
+  page.style.transform = 'scale(' + s + ')';
+  scaler.style.width = (794 * s) + 'px';
+  scaler.style.height = (1123 * s) + 'px';
+}
+
+// ---------- photos ----------
+function readImage(file, maxSide){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = reject;
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const r = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * r);
+        c.height = Math.round(img.height * r);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL(file.type === 'image/png' && maxSide <= 400 ? 'image/png' : 'image/jpeg', 0.86));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+async function addPhotos(files){
+  const list = [...files].filter(f => f.type.startsWith('image/'));
+  const room = MAX_PHOTOS - S.photos.length;
+  if(list.length > room) toast('Maksimum ' + MAX_PHOTOS + ' gambar. ' + (list.length - room) + ' gambar diabaikan.', 'info');
+  for(const f of list.slice(0, Math.max(0, room))){
+    try{ S.photos.push(await readImage(f, 1600)); }catch(e){}
+  }
+  renderThumbs();
+  render();
+}
+
+function renderThumbs(){
+  const box = $('thumbs');
+  box.innerHTML = S.photos.map((p, i) =>
+    '<div class="thumb" style="background-image:url(' + p + ')"><span class="no">' + (i + 1) + '</span><div class="tools">' +
+    '<span><button type="button" data-a="l" data-i="' + i + '" title="Ke kiri"' + (i === 0 ? ' disabled' : '') + '>‹</button> ' +
+    '<button type="button" data-a="r" data-i="' + i + '" title="Ke kanan"' + (i === S.photos.length - 1 ? ' disabled' : '') + '>›</button></span>' +
+    '<button type="button" data-a="x" data-i="' + i + '" title="Buang">✕</button></div></div>').join('');
+  $('photoCount').textContent = S.photos.length
+    ? S.photos.length + ' / ' + MAX_PHOTOS + ' gambar · gambar pertama menjadi gambar utama'
+    : 'Tiada gambar — laporan akan dipaparkan tanpa ruang gambar.';
+  $('drop').classList.toggle('hidden', S.photos.length >= MAX_PHOTOS);
+}
+
+$('thumbs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]');
+  if(!b) return;
+  const i = +b.dataset.i, a = b.dataset.a;
+  if(a === 'x') S.photos.splice(i, 1);
+  else{
+    const j = a === 'l' ? i - 1 : i + 1;
+    [S.photos[i], S.photos[j]] = [S.photos[j], S.photos[i]];
+  }
+  renderThumbs();
+  render();
+});
+$('photoIn').addEventListener('change', e => { addPhotos(e.target.files); e.target.value = ''; });
+const drop = $('drop');
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => addPhotos(e.dataTransfer.files));
+
+// ---------- theme & settings ----------
+function renderSwatches(){
+  $('swatches').innerHTML = Object.entries(THEMES).map(([k, t]) =>
+    '<button type="button" class="sw' + (k === S.theme ? ' on' : '') + '" data-k="' + k + '">' +
+    '<span class="dot" style="background:' + t.c1 + ';--a:' + t.acc + '"></span><span>' + esc(t.name) +
+    (k === DEFAULT_THEME ? '<small>Lalai</small>' : '') + '</span></button>').join('');
+}
+$('swatches').addEventListener('click', e => {
+  const b = e.target.closest('.sw');
+  if(!b) return;
+  S.theme = b.dataset.k;
+  store.set('theme', S.theme);
+  renderSwatches();
+  render();
+});
+$('org').addEventListener('input', e => { S.org = e.target.value.trim(); store.set('org', S.org); scheduleRender(); });
+$('logoIn').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if(!f) return;
+  try{ S.logo = await readImage(f, 300); }catch(err){ return; }
+  store.set('logo', S.logo);
+  showLogo();
+  render();
+});
+$('logoDel').addEventListener('click', () => { S.logo = null; store.set('logo', null); showLogo(); render(); });
+function showLogo(){
+  $('logoPrev').style.backgroundImage = S.logo ? 'url(' + S.logo + ')' : '';
+  $('logoDel').classList.toggle('hidden', !S.logo);
+}
+
+// ---------- reading the link ----------
+function toast(text, kind){
+  const m = $('msg');
+  m.className = 'msg show ' + (kind || 'info');
+  m.innerHTML = text;
+}
+
+async function readLink(){
+  const btn = $('btnRead');
+  let target;
+  try{ target = normaliseUrl($('url').value); }
+  catch(e){ toast(esc(e.message), 'err'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  toast('Membaca borang…', 'info');
+  try{
+    const html = await fetchVia(target.fetchUrl);
+    const form = parseForm(html);
+    loadForm(form, target.prefill);
+    store.set('url', $('url').value.trim());
+    const pre = Object.keys(target.prefill).length;
+    toast('<b>' + esc(form.title) + '</b> berjaya dibaca: ' + form.fields.length + ' soalan' +
+      (pre ? ', ' + pre + ' jawapan pra-isi dimuatkan' : '') + '.', 'ok');
+  }catch(e){
+    toast(e.login
+      ? 'Borang ini memerlukan log masuk Google. Tetapkan borang supaya boleh diakses tanpa log masuk, atau guna templat OPR standard.'
+      : 'Borang tidak dapat dibaca. Pastikan borang dikongsi secara awam dan pautannya betul, kemudian cuba lagi — atau <button class="btn-link" type="button" data-tpl>guna templat OPR standard</button>.', 'err');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Baca';
+  }
+}
+$('btnRead').addEventListener('click', readLink);
+$('url').addEventListener('keydown', e => { if(e.key === 'Enter') readLink(); });
+function useTemplate(){ loadForm(JSON.parse(JSON.stringify(TEMPLATE)), null); toast('Templat OPR standard dimuatkan.', 'ok'); }
+$('btnTpl').addEventListener('click', useTemplate);
+$('msg').addEventListener('click', e => { if(e.target.closest('[data-tpl]')) useTemplate(); });
+
+// ---------- export ----------
+function fileBase(){
+  const t = ($('page').querySelector('.r-title') || {}).textContent || 'OPR';
+  return ('OPR ' + t).replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+
+// Renders an unscaled copy of the page off-screen so the capture is full A4 resolution.
+async function capture(){
+  if(!window.html2canvas) throw new Error('lib');
+  if(document.fonts && document.fonts.ready) await document.fonts.ready;
+  const src = $('page');
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;height:1123px;';
+  const clone = src.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.style.transform = 'none';
+  holder.appendChild(clone);
+  document.body.appendChild(holder);
+  try{
+    return await html2canvas(clone, {scale:2.5, backgroundColor:'#ffffff', useCORS:true, logging:false, width:794, height:1123, windowWidth:1200});
+  }finally{ holder.remove(); }
+}
+
+function busy(btns, on, label){
+  btns.forEach(b => {
+    if(on){ b.dataset.t = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin" style="border-color:rgba(0,0,0,.2);border-top-color:currentColor"></span> ' + label; }
+    else{ b.disabled = false; b.innerHTML = b.dataset.t; }
+  });
+}
+function download(href, name){
+  const a = document.createElement('a');
+  a.href = href; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+async function savePdf(){
+  const btns = [$('btnPdf'), $('mPdf')];
+  busy(btns, true, 'Menjana…');
+  try{
+    const canvas = await capture();
+    const pdf = new window.jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4', compress:true});
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', 0, 0, 210, 297);
+    pdf.save(fileBase() + '.pdf');
+  }catch(e){
+    toast('PDF gagal dijana. Cuba butang <b>Cetak</b> dan pilih "Simpan sebagai PDF".', 'err');
+  }finally{ busy(btns, false); }
+}
+async function savePng(){
+  const btns = [$('btnPng'), $('mPng')];
+  busy(btns, true, '…');
+  try{
+    const canvas = await capture();
+    download(canvas.toDataURL('image/png'), fileBase() + '.png');
+  }catch(e){
+    toast('Gambar PNG gagal dijana.', 'err');
+  }finally{ busy(btns, false); }
+}
+$('btnPdf').addEventListener('click', savePdf);
+$('mPdf').addEventListener('click', savePdf);
+$('btnPng').addEventListener('click', savePng);
+$('mPng').addEventListener('click', savePng);
+$('btnPrint').addEventListener('click', () => window.print());
+
+// ---------- init ----------
+S.theme = THEMES[store.get('theme')] ? store.get('theme') : DEFAULT_THEME;
+S.org = store.get('org') || '';
+S.logo = store.get('logo') || null;
+$('org').value = S.org;
+$('url').value = store.get('url') || '';
+showLogo();
+renderSwatches();
+renderThumbs();
+render();
+window.addEventListener('resize', scalePreview);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+})();
+</script>
+</body>
+</html>
