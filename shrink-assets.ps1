@@ -25,7 +25,7 @@ if (Test-Path $list) {
 
 function Get-MaxSize([string]$id) {
     if ($id -like 'bg_*') { return @(1600, 1000) }
-    if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'pekerja_*' -or $id -in @('pintu_stor', 'pembekal')) { return @(512, 768) }
+    if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -in @('pintu_stor', 'pembekal')) { return @(512, 768) }
     if ($id -like 'kaunter_*') { return @(768, 512) }
     if ($id -in @('dapur', 'blender', 'meja_telefon', 'dulang', 'logo_stor')) { return @(512, 512) }
     return @(256, 256)

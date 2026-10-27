@@ -1,5 +1,5 @@
 PROMPT ASET — SIMULASI STOR SUKAN (EduRank)
-110 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini.
+116 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini.
 
 LATAR MAGENTA: semua prompt (kecuali bg_lantai & bg_menu) meminta latar magenta tulen #FF00FF.
 Letak sahaja gambar magenta dalam folder ini — auto-push membuang latar magenta secara automatik.
@@ -54,7 +54,7 @@ Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A kitchen blender on a small counter. Single object centred and filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
 
 14. meja_telefon.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A small office desk with an old-style telephone and a clipboard on it. Single object centred and filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. A small round wooden side table about knee height with a red old-style rotary telephone and a small notepad on top. Single object centred and filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
 
 15. dulang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. An empty plastic service tray seen from above. Single object centred and filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
@@ -125,234 +125,252 @@ Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold
 36. atl_cikgu.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a friendly PE teacher man in a tracksuit with a whistle and clipboard. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
 
+37. org_pakcik.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a friendly Malaysian elderly man with a white beard, songkok cap and batik shirt. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
+
+38. org_makcik.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a cheerful Malaysian auntie in a hijab and baju kurung, holding a small handbag. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
+
+39. org_pelajar.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a Malaysian secondary school student in a white shirt and blue trousers, carrying a school bag. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
+
+40. org_pejabat.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a young Malaysian office worker in a neat shirt and tie with a lanyard. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
+
+41. org_ibu.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a young Malaysian mother in a hijab and casual clothes. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
+
+42. org_remaja.png   [nisbah 2:3 menegak (cth. 1024×1536 → simpan 512×768)]
+Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, a Malaysian teenager in a hoodie and sneakers. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Tall portrait 2:3 image (1024x1536).
+
 
 ==================== BARANG STOR SUKAN ====================
 
-37. bola_sepak.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+43. bola_sepak.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a classic black and white soccer ball. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-38. bola_keranjang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+44. bola_keranjang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of an orange basketball with black lines. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-39. bola_tampar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+45. bola_tampar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white, blue and yellow volleyball. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-40. bola_jaring.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+46. bola_jaring.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white netball with subtle panel lines. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-41. bola_ragbi.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+47. bola_ragbi.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a brown oval rugby ball with white stitching. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-42. bola_takraw.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+48. bola_takraw.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a woven orange synthetic rattan sepak takraw ball. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-43. bulu_tangkis.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+49. bulu_tangkis.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white feather badminton shuttlecock with cork base. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-44. bola_tenis.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+50. bola_tenis.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fuzzy yellow-green tennis ball. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-45. bola_pingpong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+51. bola_pingpong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of three small orange table tennis balls. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-46. bola_hoki.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+52. bola_hoki.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a white dimpled field hockey ball. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-47. raket_badminton.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+53. raket_badminton.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a badminton racket with a blue frame and white grip. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-48. raket_tenis.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+54. raket_tenis.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a tennis racket with a red frame and black grip. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-49. bet_pingpong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+55. bet_pingpong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a table tennis paddle with red rubber and wooden handle. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-50. kayu_hoki.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+56. kayu_hoki.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a field hockey stick with a curved hook and blue grip tape. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-51. jersi.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+57. jersi.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a folded bright blue sports jersey with a white number 10. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-52. seluar_sukan.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+58. seluar_sukan.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of black athletic shorts with white side stripes. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-53. stokin.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+59. stokin.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of long white sports socks with blue bands. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-54. kasut_larian.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+60. kasut_larian.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of lightweight running shoes, orange and white. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-55. but_bola.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+61. but_bola.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of black football boots with studs. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-56. topi_renang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+62. topi_renang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a smooth silicone swimming cap, bright red. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-57. cermin_renang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+63. cermin_renang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of swimming goggles with blue tinted lenses. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-58. sarung_gol.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+64. sarung_gol.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of padded goalkeeper gloves, green and black. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-59. dumbel.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+65. dumbel.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of hexagonal black dumbbells. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-60. tikar_yoga.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+66. tikar_yoga.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a rolled teal exercise mat. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-61. tali_lompat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+67. tali_lompat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a skipping rope with yellow handles, loosely coiled. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-62. kon_latihan.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+68. kon_latihan.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a stack of orange training cones. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-63. wisel.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+69. wisel.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a silver referee whistle on a red lanyard. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-64. jam_randik.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+70. jam_randik.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a digital stopwatch on a black cord. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-65. kit_kecemasan.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+71. kit_kecemasan.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a red first aid kit box with a white cross. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-66. sarung_tinju.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+72. sarung_tinju.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of red boxing gloves. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-67. pelindung_lutut.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+73. pelindung_lutut.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of black knee pads. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-68. pelindung_kaki.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+74. pelindung_kaki.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a pair of shin guards, white and blue. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-69. topi_keledar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+75. topi_keledar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of an aerodynamic cycling helmet, white with green stripes. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-70. botol_air.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+76. botol_air.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a clear sports water bottle with a blue cap. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-71. tuala.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+77. tuala.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a folded white sports towel with a blue stripe. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
 
 ==================== MAKANAN & MINUMAN ====================
 
-72. pisang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+78. pisang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bunch of ripe yellow bananas. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-73. epal.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+79. epal.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a shiny red apple with a leaf. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-74. oren.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+80. oren.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fresh orange with a green leaf. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-75. tembikai.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+81. tembikai.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a juicy watermelon slice with deep red flesh and green rind. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-76. betik.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+82. betik.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a halved ripe papaya showing orange flesh and black seeds. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-77. brokoli.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+83. brokoli.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fresh green broccoli floret. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-78. salad.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+84. salad.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bowl of fresh green salad with tomatoes and cucumber. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-79. alpukat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+85. alpukat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a halved avocado with the seed. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-80. jus_oren.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+86. jus_oren.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a tall glass of fresh orange juice with a straw. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-81. smoothie.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+87. smoothie.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a banana milk smoothie in a tall cup with a straw. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-82. susu.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+88. susu.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a glass of fresh milk next to a small milk carton. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-83. yogurt.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+89. yogurt.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a cup of plain yogurt with a spoon. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-84. air_kosong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+90. air_kosong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bottle of plain mineral water. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-85. air_kelapa.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+91. air_kelapa.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a young green coconut with a straw. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-86. isotonik.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+92. isotonik.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bottle of blue isotonic sports drink. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-87. tauhu.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+93. tauhu.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of golden cubes of fried tofu on a small plate. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-88. telur_rebus.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+94. telur_rebus.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of two boiled eggs, one halved showing the yolk. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-89. ayam_panggang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+95. ayam_panggang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a grilled chicken breast with grill marks on a plate. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-90. ikan_bakar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+96. ikan_bakar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a grilled fish on a banana leaf with lime. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-91. nasi_perang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+97. nasi_perang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a bowl of brown rice. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-92. roti_gandum.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+98. roti_gandum.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of slices of wholemeal bread. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-93. oat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+99. oat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a warm bowl of oatmeal topped with banana slices. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-94. ubi_keledek.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+100. ubi_keledek.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a roasted sweet potato cut in half. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-95. pasta.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+101. pasta.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a plate of wholemeal spaghetti with tomato sauce. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-96. granola.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+102. granola.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a granola cereal bar with oats and nuts. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-97. kacang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+103. kacang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small bowl of almonds. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-98. kurma.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+104. kurma.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small plate of brown dates. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-99. sandwic.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+105. sandwic.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a wholemeal tuna sandwich cut diagonally. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-100. kentang_goreng.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+106. kentang_goreng.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a red carton of french fries. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-101. air_bergas.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+107. air_bergas.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a can of fizzy soda with bubbles. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-102. donat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+108. donat.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a chocolate frosted donut with yellow sprinkles. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-103. gula_gula.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+109. gula_gula.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of yellow, green and orange wrapped candies. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-104. burger.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+110. burger.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a big cheeseburger. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-105. kerepek.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+111. kerepek.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of an open bag of potato chips. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
 
 ==================== IKON UI ====================
 
-106. ui_syiling.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+112. ui_syiling.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a shiny gold coin with a simple embossed star. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-107. ui_hati.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+113. ui_hati.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a glossy red heart. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-108. ui_telefon.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+114. ui_telefon.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a red ringing telephone with motion lines. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-109. ui_kotak.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+115. ui_kotak.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a closed cardboard delivery box with tape. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-110. logo_stor.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
+116. logo_stor.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a round game logo badge (no letters) combining a soccer ball, a dumbbell and an apple, blue and green. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
