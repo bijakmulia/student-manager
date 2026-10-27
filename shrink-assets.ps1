@@ -3,7 +3,7 @@
 # Runs automatically from auto-push.ps1; can also be run by hand:
 #   powershell -ExecutionPolicy Bypass -File .\shrink-assets.ps1
 #
-# - Names are tidied: "Bola Sepak.PNG" -> "bola_sepak.png"
+# - Names are tidied: "Bola Sepak.PNG" -> "bola_sepak.png", "bola_sepak_nobg (1).png" -> "bola_sepak.png"
 # - Images larger than their box are scaled down (aspect ratio kept)
 # - Backgrounds (bg_*) are saved as JPG (much smaller; they need no transparency)
 # - Files whose name is not in PROMPT-ASET.txt are left alone and reported
@@ -44,7 +44,13 @@ $changed = 0
 Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' } | ForEach-Object {
     $file = $_
     # 1) tidy the name
-    $base = $file.BaseName.Trim().ToLower() -replace '[\s\-]+', '_'
+    $base = ($file.BaseName.Trim().ToLower() -replace '[\s\-]+', '_').Trim('_')
+    # Extra bits added by downloads / background-removal tools ("bola_sepak (1)", "bola_sepak_nobg",
+    # "bola_sepak-removebg-preview") are dropped by matching the longest known asset name at the start.
+    if ($known.Count -and -not $known.ContainsKey($base)) {
+        $hit = $known.Keys | Where-Object { $base.StartsWith($_ + '_') } | Sort-Object Length -Descending | Select-Object -First 1
+        if ($hit) { $base = $hit }
+    }
     $ext = $file.Extension.ToLower(); if ($ext -eq '.jpeg') { $ext = '.jpg' }
     $path = $file.FullName
     if ("$base$ext" -cne $file.Name) {
