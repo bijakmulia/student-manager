@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini Auto Jana Gambar (Aset Stor Sukan)
 // @namespace    student-manager
-// @version      1.0
+// @version      1.1
 // @description  Tampal senarai prompt (### nama.png ... / PROMPT-ASET.txt). Skrip hantar satu-satu ke Gemini, tunggu gambar siap, muat turun dengan nama fail yang betul, lalu teruskan prompt seterusnya.
 // @match        https://gemini.google.com/*
 // @grant        GM_getValue
@@ -25,7 +25,7 @@
     idx: 0,
     running: false,
     failStreak: 0,
-    opts: { whiteBg: true, cutBg: true, prefix: 'Generate an image: ', waitSec: 240, gapSec: 6, newChat: true },
+    opts: { cutWhite: false, prefix: 'Generate an image: ', waitSec: 240, gapSec: 6, newChat: true },
     log: [],
   };
   let S = Object.assign({}, defaults, GM_getValue(KEY, {}));
@@ -65,12 +65,8 @@
   }
 
   function buildPrompt(item) {
-    let p = item.prompt;
-    // Gemini cannot output real transparency; a plain white background is easy to cut out afterwards.
-    if (S.opts.whiteBg && !item.name.startsWith('bg_')) {
-      p = p.replace(/transparent background/gi, 'plain solid pure white background (#FFFFFF), no checkerboard pattern');
-    }
-    return (S.opts.prefix || '') + p;
+    // The prompts already ask for a magenta/green chroma-key background; send them as they are.
+    return (S.opts.prefix || '') + item.prompt;
   }
 
   // ---------- Gemini DOM helpers ----------
@@ -197,7 +193,7 @@
     c.width = im.naturalWidth; c.height = im.naturalHeight;
     const ctx = c.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(im, 0, 0);
-    if (S.opts.cutBg && !name.startsWith('bg_')) cutBackground(ctx, c.width, c.height);
+    if (S.opts.cutWhite && !name.startsWith('bg_')) cutBackground(ctx, c.width, c.height);
     const png = await new Promise(r => c.toBlob(r, 'image/png'));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(png);
@@ -327,8 +323,7 @@
         el('button', { className: 'g', textContent: '↻ Cuba semula yg gagal', onclick: retryFailed }),
         el('button', { className: 'r', textContent: 'Reset', onclick: reset }),
         el('div', { style: 'margin-top:6px' }, [
-          opt('whiteBg', 'Tukar "transparent background" → latar putih (lebih mudah dibuang)'),
-          opt('cutBg', 'Buang latar putih → PNG lutsinar (kecuali bg_*)'),
+          opt('cutWhite', 'Buang latar PUTIH sendiri (biarkan mati jika guna latar magenta + software sendiri)'),
           opt('newChat', 'Chat baru untuk setiap gambar (disyorkan)'),
           num('waitSec', 'Tunggu maksimum (saat):'),
           num('gapSec', 'Rehat antara gambar (saat):'),

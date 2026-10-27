@@ -12,6 +12,7 @@ Letak gambar yang dijana AI di dalam folder ini.
    Format .png atau .webp (webp lebih kecil & laju).
 
 3. Latar belakang mesti LUTSINAR (transparent), kecuali bg_lantai & bg_menu.
+   (Prompt minta latar magenta/hijau — buang dulu sebelum letak di sini.)
 
 4. Auto-push (setiap ~5 minit) akan SECARA AUTOMATIK:
    - kemas nama fail (cth. "Bola Sepak.PNG" -> bola_sepak.png)
@@ -24,5 +25,7 @@ Letak gambar yang dijana AI di dalam folder ini.
 5. Jana automatik di Gemini (Tampermonkey):
    - Pasang Tampermonkey, buat skrip baru, tampal isi tools/gemini-auto-gambar.user.js, simpan.
    - Buka gemini.google.com, panel "Auto Jana Gambar Gemini" muncul di bawah kanan.
-   - Tampal isi PROMPT-ASET.txt (atau senarai "### nama.png") > Muat senarai > Mula.
+   - Tampal isi PROMPT-ASET.txt (atau PROMPT-GEMINI.md) > Muat senarai > Mula.
+   - Prompt minta latar magenta (#FF00FF), atau hijau (#00FF00) untuk aset merah jambu/ungu.
+     Buang latar itu dengan alat chroma key sebelum letak di folder ini.
    - Gambar dimuat turun ke folder Downloads dengan nama yang betul; pindahkan ke folder ini.

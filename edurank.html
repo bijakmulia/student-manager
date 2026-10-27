@@ -6592,7 +6592,13 @@ const ST_AR = {
   wide: ['3:2 melintang (cth. 1536×1024 → simpan 768×512)', 'Wide landscape 3:2 image (1536x1024).'],
   bg:   ['3:2 atau 16:9 melintang (cth. 1536×1024 → simpan 1600×1000)', 'Wide landscape 3:2 image (1536x1024).']
 };
-const stA = (id, g, ar, p) => ({ id, g, ar, sz: ST_AR[ar][0], p: p + ' ' + ST_AR[ar][1] });
+/* AI tak boleh beri latar lutsinar sebenar → minta latar warna kunci (chroma key) yang mudah dibuang.
+   Magenta untuk semua; hijau untuk aset yang ada warna merah jambu/ungu supaya objek tidak terpadam sekali. */
+const ST_GREEN = new Set(['tikar_yoga', 'donat', 'gula_gula', 'atl_jaring', 'atl_gimrama', 'rak_fit', 'rak_snek']);
+const stKey = id => ST_GREEN.has(id)
+  ? 'solid flat pure green (#00FF00) chroma key background filling the whole canvas edge to edge, no gradient, no shadow on the background, do not use that green anywhere on the subject'
+  : 'solid flat pure magenta (#FF00FF) chroma key background filling the whole canvas edge to edge, no gradient, no shadow on the background, do not use magenta or pink anywhere on the subject';
+const stA = (id, g, ar, p) => ({ id, g, ar, sz: ST_AR[ar][0], p: p.replace(/transparent background/i, stKey(id)) + ' ' + ST_AR[ar][1] });
 const ST_ASSETS = [].concat(
   [stA('bg_lantai', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile simulation game: an EMPTY room interior, camera facing the back wall straight-on and slightly from above, perfectly symmetric. The back wall fills the TOP 40% of the image and the tiled floor fills the BOTTOM 60%. Left half of the wall: light blue (school sports equipment store); right half: mint green and cream (healthy food cafe). One wide doorway exactly in the centre of the back wall. Small windows high on the wall, soft daylight, clean light floor tiles. NO furniture, NO shelves, NO counters, NO people, NO text.'),
    stA('bg_menu', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Keep the important details in the middle; leave empty space at the top centre for a logo. No text.')],
@@ -6650,10 +6656,10 @@ function storAssetsModal(){
   const body = '<div data-nohint="1">' +
     '<div class="panel clip-s p-3 text-[12px] leading-relaxed">' +
       '<div class="font-bold text-cyan mb-1">CARA JANA ASET (' + done + '/' + ST_ASSETS.length + ' siap)</div>' +
-      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). ChatGPT paling mudah untuk latar lutsinar (Gemini biasanya beri latar putih — buang latar selepas itu).<br>' +
+      '1. Buka <b>ChatGPT</b> (chatgpt.com) atau <b>Google Gemini</b> (gemini.google.com). Prompt meminta <b>latar magenta (#FF00FF)</b> — atau <b>hijau (#00FF00)</b> untuk aset yang ada warna merah jambu/ungu — supaya latar mudah dibuang.<br>' +
       '<b>Saiz:</b> alat AI memberi saiz piksel sendiri — yang penting <b>NISBAH</b> (1:1 segi empat, 2:3 menegak, 3:2 melintang). Prompt sudah menyebut nisbahnya; game menskala gambar sendiri. Saiz "simpan" ialah cadangan supaya fail kecil dan game laju.<br>' +
       '2. Tekan <b>Salin</b> pada satu prompt, tampal, jana. Untuk gaya seragam: selepas gambar pertama cantik, lampirkan gambar itu bersama prompt seterusnya dan tambah "same art style as the attached image".<br>' +
-      '3. Jika latar tidak lutsinar, buang latar di <b>remove.bg</b> atau <b>Adobe Express</b> (percuma).<br>' +
+      '3. Buang latar warna kunci itu (alat chroma key / remove.bg) supaya jadi PNG lutsinar. Latar bg_lantai & bg_menu kekal penuh.<br>' +
       '4. Simpan dengan nama fail <b>tepat</b> seperti di bawah (cth. <span class="num">bola_sepak.png</span>), format .png atau .webp.<br>' +
       '5. Letak dalam folder <span class="num">student manager\\assets\\stor\\</span> di komputer. Auto-push <b>mengecilkan gambar secara automatik</b> (ikut saiz \"simpan\", nama dikemas, latar jadi .jpg) lalu menghantarnya ke GitHub dalam 5 minit. Gambar terus muncul dalam game; yang belum ada guna ikon lukisan app.' +
     '</div>' +
