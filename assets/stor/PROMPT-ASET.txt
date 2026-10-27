@@ -2,7 +2,7 @@ PROMPT ASET — SIMULASI STOR SUKAN (EduRank)
 110 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini.
 
 LATAR MAGENTA: semua prompt (kecuali bg_lantai & bg_menu) meminta latar magenta tulen #FF00FF.
-Buang latar itu dengan web app Buang Magenta (lihat PROMPT-WEBAPP-BUANG-MAGENTA.txt) — hasil mesti .png lutsinar.
+Letak sahaja gambar magenta dalam folder ini — auto-push membuang latar magenta secara automatik.
 
 SAIZ: alat AI memberi saiz piksel sendiri. Yang penting ialah NISBAH yang tertulis (1:1, 2:3 menegak, 3:2 melintang).
 Auto-push mengecilkan gambar sendiri.

@@ -4,12 +4,14 @@
 #   powershell -ExecutionPolicy Bypass -File .\shrink-assets.ps1
 #
 # - Names are tidied: "Bola Sepak.PNG" -> "bola_sepak.png"
+# - Magenta (#FF00FF) backgrounds are removed (tools\BmKey.cs, same engine as tools/buang-magenta.html)
 # - Images larger than their box are scaled down (aspect ratio kept)
 # - Backgrounds (bg_*) are saved as JPG (much smaller; they need no transparency)
 # - Files whose name is not in PROMPT-ASET.txt are left alone and reported
 param([string]$Dir = (Join-Path $PSScriptRoot 'assets\stor'))
 
 Add-Type -AssemblyName System.Drawing
+if (-not ('BmKey' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'tools\BmKey.cs') }
 if (-not (Test-Path $Dir)) { return }
 
 # Known asset names come from the prompt list the app generates.
@@ -61,13 +63,33 @@ Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' 
     $bytes = [System.IO.File]::ReadAllBytes($path)
     $ms = New-Object System.IO.MemoryStream (, $bytes)
     try { $src = [System.Drawing.Image]::FromStream($ms) } catch { Write-Host "  [aset] $base$ext : bukan gambar yang sah"; $ms.Dispose(); return }
+    # 3) remove a magenta background (sprites only; full backgrounds bg_* are never keyed)
+    $bmp = New-Object System.Drawing.Bitmap $src.Width, $src.Height, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $g0 = [System.Drawing.Graphics]::FromImage($bmp); $g0.DrawImage($src, 0, 0, $src.Width, $src.Height); $g0.Dispose()
+    $src.Dispose(); $ms.Dispose(); $src = $bmp
+    $keyed = $false
+    if ($base -notlike 'bg_*') {
+        $rect = New-Object System.Drawing.Rectangle 0, 0, $bmp.Width, $bmp.Height
+        $bd = $bmp.LockBits($rect, [System.Drawing.Imaging.ImageLockMode]::ReadWrite, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $buf = New-Object byte[] ($bd.Stride * $bmp.Height)
+        [System.Runtime.InteropServices.Marshal]::Copy($bd.Scan0, $buf, 0, $buf.Length)
+        $key = [BmKey]::DetectKey($buf, $bmp.Width, $bmp.Height)
+        if ($key) {
+            # same defaults as the web app: lo .15, hi .75, strict .8, despill 1, choke .5, specks < 12 px, holes >= 30 px, denoise
+            $cleared = [BmKey]::Run($buf, $bmp.Width, $bmp.Height, $key, 0.15, 0.75, 0.8, 1.0, 0.5, 12, $true, 30, $true)
+            [System.Runtime.InteropServices.Marshal]::Copy($buf, 0, $bd.Scan0, $buf.Length)
+            $keyed = $true
+            Write-Host ("  [aset] {0}: latar magenta rgb({1},{2},{3}) dibuang ({4:N0} piksel lutsinar)" -f $base, $key[0], $key[1], $key[2], $cleared)
+        }
+        $bmp.UnlockBits($bd)
+    }
     $max = Get-MaxSize $base
     $k = [Math]::Min(1.0, [Math]::Min($max[0] / $src.Width, $max[1] / $src.Height))
-    $fmt = if ($base -like 'bg_*') { 'jpg' } elseif ($ext -eq '.jpg') { 'jpg' } else { 'png' }
+    $fmt = if ($base -like 'bg_*') { 'jpg' } elseif ($keyed) { 'png' } elseif ($ext -eq '.jpg') { 'jpg' } else { 'png' }
     $outPath = Join-Path $Dir ($base + '.' + $fmt)
-    if ($k -ge 1.0 -and $outPath -eq $path) { $src.Dispose(); $ms.Dispose(); return }   # already fine
+    if ($k -ge 1.0 -and $outPath -eq $path -and -not $keyed) { $src.Dispose(); return }   # already fine
 
-    # 3) scale down with high quality, keeping transparency
+    # 4) scale down with high quality, keeping transparency
     $w = [Math]::Max(1, [int][Math]::Round($src.Width * $k)); $h = [Math]::Max(1, [int][Math]::Round($src.Height * $k))
     $dst = New-Object System.Drawing.Bitmap $w, $h, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
     $g = [System.Drawing.Graphics]::FromImage($dst)
@@ -79,7 +101,7 @@ Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' 
     $attr = New-Object System.Drawing.Imaging.ImageAttributes
     $attr.SetWrapMode([System.Drawing.Drawing2D.WrapMode]::TileFlipXY)                   # no dark fringe at edges
     $g.DrawImage($src, (New-Object System.Drawing.Rectangle 0, 0, $w, $h), 0, 0, $src.Width, $src.Height, [System.Drawing.GraphicsUnit]::Pixel, $attr)
-    $g.Dispose(); $src.Dispose(); $ms.Dispose()
+    $g.Dispose(); $src.Dispose()
     $before = $bytes.Length
     Save-Image $dst $outPath $fmt
     $dst.Dispose()

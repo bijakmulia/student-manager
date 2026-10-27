@@ -11,13 +11,16 @@ Letak gambar yang dijana AI di dalam folder ini.
       bola_sepak.png    pisang.png    atl_renang.png    bg_lantai.png
    Format .png atau .webp (webp lebih kecil & laju).
 
-3. Prompt meminta latar MAGENTA (#FF00FF). Buang latar itu dengan web app "Buang Magenta"
+3. Prompt meminta latar MAGENTA (#FF00FF). Letak sahaja gambar magenta di sini —
+   auto-push MEMBUANG LATAR MAGENTA SECARA AUTOMATIK (jadi .png lutsinar).
+   (Pilihan: web app untuk semak/laras sendiri
    https://bijakmulia.github.io/student-manager/tools/buang-magenta.html
-   (skrip Tampermonkey: tools/buang-magenta.user.js) sebelum letak di sini.
-   Fail akhir mesti .png LUTSINAR — kecuali bg_lantai & bg_menu (latar penuh, tiada magenta).
+   dan skrip Tampermonkey tools/buang-magenta.user.js.)
+   bg_lantai & bg_menu ialah latar penuh — tidak dibuang latarnya.
 
 4. Auto-push (setiap ~5 minit) akan SECARA AUTOMATIK:
    - kemas nama fail (cth. "Bola Sepak.PNG" -> bola_sepak.png)
+   - buang latar magenta (tepi bersih, tiada pinggir merah jambu)
    - kecilkan gambar ikut saiz cadangan (barang 256, watak/rak 512x768, latar 1600x1000)
    - tukar latar (bg_*) kepada .jpg supaya ringan
    - kemas kini senarai.json (jangan ubah fail ini sendiri)
