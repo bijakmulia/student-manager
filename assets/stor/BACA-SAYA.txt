@@ -20,3 +20,9 @@ Letak gambar yang dijana AI di dalam folder ini.
    - kemas kini senarai.json (jangan ubah fail ini sendiri)
    lalu menghantarnya ke GitHub. Nama yang tidak dikenali dilaporkan di tetingkap auto-push.
    Gambar yang belum ada akan guna ikon lukisan app — game tetap boleh dimain.
+
+5. Jana automatik di Gemini (Tampermonkey):
+   - Pasang Tampermonkey, buat skrip baru, tampal isi tools/gemini-auto-gambar.user.js, simpan.
+   - Buka gemini.google.com, panel "Auto Jana Gambar Gemini" muncul di bawah kanan.
+   - Tampal isi PROMPT-ASET.txt (atau senarai "### nama.png") > Muat senarai > Mula.
+   - Gambar dimuat turun ke folder Downloads dengan nama yang betul; pindahkan ke folder ini.
