@@ -5728,105 +5728,6 @@ function duelFoe(mine){
     return Object.assign({ c, lv }, cardStats(c, lv));
   });
 }
-function duelStart(){
-  const sid = arenaUi().team;
-  if (!sid || !teamOf(sid)) return toast('Pilih kumpulan dahulu.', null, true);
-  const me = duelDeck(sid);
-  if (!me.length) return toast('Buka pack dahulu untuk mendapatkan kad.', null, true);
-  const foe = duelFoe(me);
-  me.forEach(x => x.cur = x.hp); foe.forEach(x => x.cur = x.hp);
-  let mi = 0, fi = 0, busy = false, over = false, right = 0, asked = 0;
-  const id = openModal({ center:true, bare:true,
-    body:'<div class="pkwrap" id="dlWrap">' +
-      '<div class="flex items-center gap-2 mb-2">' + teamAvatar(sid, 28) +
-        '<div class="flex-1 font-bold text-[13px] truncate">' + esc(teamName(sid)) + ' <span class="text-muted">lawan</span> <span class="text-orange">Penjaga Kad</span></div>' +
-        '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-close="1"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div id="dlArena"></div><div id="dlLog" class="text-center text-[13px] font-bold mt-2" style="min-height:20px"></div>' +
-      '<div id="dlQ" class="mt-2"></div></div>',
-    onClose: () => { over = true; } });                 // ditutup separuh jalan: tiada keputusan direkod
-  const bd = $('[data-modal="' + id + '"]');
-  const side = (arr, i, who) => {
-    i = Math.min(i, arr.length - 1);
-    const x = arr[i];
-    const dots = arr.map((y, k) => '<span style="display:inline-block;width:9px;height:9px;margin:0 2px;border-radius:50%;background:' + (y.cur > 0 ? (k === i ? '#FFD76A' : '#4ADE80') : '#3A1A1A') + '"></span>').join('');
-    return '<div class="flex-1 min-w-0 text-center" id="dl' + who + '">' +
-      '<div style="width:86%;margin:0 auto;transition:transform .2s">' + cardFaceHtml(x.c, x.c.tier, { lv: x.lv }) + '</div>' +
-      '<div style="height:8px;background:#1B2531;margin-top:6px;border:1px solid var(--line)"><div style="height:100%;width:' + Math.max(0, x.cur / x.hp * 100) + '%;background:' + (x.cur / x.hp > .4 ? '#4ADE80' : '#E23B3B') + ';transition:width .4s"></div></div>' +
-      '<div class="num text-[11px] mt-1">' + Math.max(0, x.cur) + '/' + x.hp + ' ♥</div><div class="mt-1">' + dots + '</div></div>';
-  };
-  const paint = () => {
-    $('#dlArena', bd).innerHTML = '<div class="flex items-start gap-2">' + side(me, mi, 'Me') +
-      '<div class="num text-[20px] text-orange self-center">VS</div>' + side(foe, fi, 'Foe') + '</div>';
-  };
-  const log = (t, c) => { const l = $('#dlLog', bd); if (l){ l.innerHTML = t; l.style.color = c || '#E6EEF7'; } };
-  const hit = (att, def, fast) => {
-    const adv = elemBeats(cardSet(att.c).el, cardSet(def.c).el) ? 1.5 : elemBeats(cardSet(def.c).el, cardSet(att.c).el) ? 0.75 : 1;
-    const dmg = Math.max(3, Math.round((att.atk * (fast ? 1.4 : 1) * (0.9 + Math.random() * 0.2)) * adv - def.def * 0.6));
-    def.cur -= dmg;
-    return { dmg, adv };
-  };
-  const shake = who => { const e = $('#dl' + who + ' > div', bd); if (!e) return; e.style.transform = 'translateX(' + (who === 'Me' ? -8 : 8) + 'px) rotate(' + (who === 'Me' ? -3 : 3) + 'deg)'; setTimeout(() => e.style.transform = '', 220); };
-  const finish = won => {
-    over = true;
-    S.duel = S.duel || { wins:{}, losses:{} }; S.duel.wins = S.duel.wins || {}; S.duel.losses = S.duel.losses || {};
-    const alive = me.filter(x => x.cur > 0).length, rp = won ? 6 + alive * 3 : 2;
-    if (won) S.duel.wins[sid] = (S.duel.wins[sid] || 0) + 1; else S.duel.losses[sid] = (S.duel.losses[sid] || 0) + 1;
-    teamRP(sid, rp);
-    const tp = gameToPBD(sid, 'duel', right, asked, { win: won ? 1 : 0 });
-    save(true);
-    if (won){ sfx('myth'); confettiBurst($('#dlWrap', bd), 70); } else sfx('low');
-    $('#dlQ', bd).innerHTML = '<div class="panel clip p-3 text-center" style="border-color:' + (won ? '#4ADE80' : '#E23B3B') + '">' +
-      '<div class="font-bold tracking-widest text-[18px]" style="color:' + (won ? '#4ADE80' : '#E23B3B') + '">' + (won ? 'MENANG!' : 'KALAH…') + '</div>' +
-      '<div class="text-[12px] text-muted mt-1">Jawapan betul ' + right + '/' + asked + ' · <span class="text-orange">+' + rp + ' RP</span>' + (tp ? ' · <b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b> ke PBD ahli kumpulan' : '') + '</div>' +
-      '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1" data-close="1">Tutup</button><button class="btn btn-o clip-s flex-1" data-dl="again"><i class="fa-solid fa-rotate"></i> Lagi</button></div></div>';
-    renderTab();
-  };
-  const ask = () => {
-    if (over) return;
-    if (mi >= me.length) return finish(false);
-    if (fi >= foe.length) return finish(true);
-    paint();
-    const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
-    const t0 = performance.now(); let raf = 0, done = false;
-    $('#dlQ', bd).innerHTML = '<div class="panel clip p-3">' +
-      '<div style="height:6px;background:#0E151E"><div id="dlBar" style="height:100%;width:100%;background:#4ADE80"></div></div>' +
-      '<div class="text-[15px] font-bold leading-snug mt-2">' + esc(q.q) + '</div>' +
-      '<div class="grid grid-cols-2 gap-2 mt-2">' + order.map((i, k) =>
-        '<button class="btn clip-s !py-2 text-left text-[13px]" data-ans="' + i + '"><span class="num text-orange mr-1">' + String.fromCharCode(65 + k) + '.</span>' + esc(q.c[i]) + '</button>').join('') + '</div></div>';
-    const tick = () => {
-      const QS = duelQ(), left = Math.max(0, QS - (performance.now() - t0) / 1000), bar = $('#dlBar', bd);
-      if (!bar || over) return;
-      bar.style.width = (left / QS * 100) + '%'; bar.style.background = left > QS * .6 ? '#4ADE80' : left > QS * .27 ? '#FACC15' : '#E23B3B';
-      if (left <= 0) return answer(-1);
-      raf = requestAnimationFrame(tick);
-    };
-    const answer = pick => {
-      if (done || over) return; done = true; cancelAnimationFrame(raf);
-      const ok = pick === q.a, fast = ok && (performance.now() - t0) / 1000 < duelQ() * .4;
-      asked++; if (ok) right++;
-      teamQuiz(sid, ok);
-      $('#dlQ', bd).innerHTML = '';
-      if (ok){
-        const r = hit(me[mi], foe[fi], fast); sfx(fast ? 'hi' : 'flip'); shake('Foe');
-        log((fast ? 'KRITIKAL! ' : 'Betul! ') + esc(me[mi].c.name) + ' menyerang −' + r.dmg + (r.adv > 1 ? ' · elemen kuat!' : r.adv < 1 ? ' · elemen lemah' : ''), '#4ADE80');
-        if (foe[fi].cur <= 0){ fi++; setTimeout(() => log('Kad lawan tumbang!', '#FFD76A'), 700); }
-      } else {
-        const r = hit(foe[fi], me[mi], false); sfx('low'); shake('Me'); vibrate(40);
-        log((pick === -1 ? 'Masa tamat! ' : 'Salah! ') + 'Jawapan: ' + esc(q.c[q.a]) + ' · −' + r.dmg, '#FF7A7A');
-        if (me[mi].cur <= 0) mi++;
-      }
-      paint();
-      setTimeout(ask, 1500);
-    };
-    bd.querySelectorAll('[data-ans]').forEach(b => b.addEventListener('click', () => answer(+b.dataset.ans)));
-    raf = requestAnimationFrame(tick);
-  };
-  bd.addEventListener('click', e => { if (e.target.closest('[data-dl="again"]')){ closeModal(id); setTimeout(duelStart, 200); } });
-  log('Kad lawan: ' + foe.map(x => x.c.emo).join(' ') + ' — bersedia!', '#FFD76A');
-  paint();
-  setTimeout(ask, 1200);
-}
-
 /* ---------- DUEL KAD: 2 PEMAIN, 1 PERANTI ----------
    REBUT  : skrin dibahagi dua, murid duduk bertentang (separuh atas diterbalikkan).
             Soalan sama untuk kedua-dua. Jawapan BETUL pertama = kad dia menyerang
@@ -5867,142 +5768,332 @@ function pvpSetup(){
     save(); closeModal(id); pvpRun(p1, p2, mode);
   });
 }
-function pvpRun(p1, p2, mode){
-  const A = pvpDeck(p1), B = pvpDeck(p2);
-  const P = [{ sid:p1, deck:A.deck, i:0, starter:A.starter, right:0, asked:0 }, { sid:p2, deck:B.deck, i:0, starter:B.starter, right:0, asked:0 }];
+const pvpRun = (p1, p2, mode) => battleRun(p1, p2, mode);
+/* ============ PAPAN PERLAWANAN DUEL KAD (gaya TCG) ============
+   Satu enjin untuk semua mod:
+     ai    — kumpulan lawan Penjaga Kad (komputer); betul = serang, salah = diserang
+     gilir — 2 kumpulan, 1 peranti, bergilir; betul = serang, salah = diserang
+     rebut — 2 kumpulan duduk bertentang; jawapan BETUL pertama menyerang
+   Papan: separuh atas (lawan, merah) & bawah (kumpulan 1, biru), arena oktagon,
+   kad aktif besar, bench, timbunan dek & KO, papan skor, dan animasi serangan.
+   Saiz mengikut kotak papan (unit cq*) supaya kemas di telefon & tablet.  */
+const BT_CSS = `
+.bt{position:fixed;inset:0;z-index:960;display:flex;flex-direction:column;background:#070B14;user-select:none;-webkit-user-select:none;font-family:inherit;overflow:hidden}
+.bt-board{position:relative;flex:1 1 auto;min-height:0;container-type:size;overflow:hidden}
+.bt-half{position:absolute;left:0;right:0;height:50%}
+.bt-half.t{top:0;background:linear-gradient(180deg,#5A0712 0%,#A8142A 38%,#7C0E1F 70%,#3A0710 100%)}
+.bt-half.b{bottom:0;background:linear-gradient(0deg,#08174A 0%,#1A47C4 38%,#12338F 70%,#081A4E 100%)}
+.bt-half::after{content:'';position:absolute;inset:0;opacity:.18;background:repeating-linear-gradient(90deg,transparent 0 46px,rgba(255,255,255,.25) 46px 48px)}
+.bt-half.turn{animation:btTurn 1.6s ease-in-out infinite}
+@keyframes btTurn{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.bt-ring{position:absolute;left:2cqw;right:2cqw;top:calc(13cqh - 6px);bottom:calc(13cqh - 6px);
+  clip-path:polygon(7% 0,93% 0,100% 20%,100% 80%,93% 100%,7% 100%,0 80%,0 20%);
+  background:linear-gradient(180deg,#FFD23F 0%,#FFB800 48%,#38BDF8 52%,#0EA5E9 100%);box-shadow:0 0 30px #000}
+.bt-arena{position:absolute;left:calc(2cqw + 4px);right:calc(2cqw + 4px);top:13cqh;bottom:13cqh;overflow:hidden;
+  clip-path:polygon(7% 0,93% 0,100% 20%,100% 80%,93% 100%,7% 100%,0 80%,0 20%);
+  background:radial-gradient(ellipse at 50% 50%,#46506E 0%,#2A3150 45%,#161B30 100%)}
+.bt-arena::before{content:'';position:absolute;inset:0;opacity:.35;
+  background:radial-gradient(circle at 20% 30%,#5A6488 0 6%,transparent 7%),radial-gradient(circle at 70% 60%,#5A6488 0 8%,transparent 9%),
+  radial-gradient(circle at 45% 80%,#4A5478 0 5%,transparent 6%),radial-gradient(circle at 85% 20%,#4A5478 0 4%,transparent 5%),
+  radial-gradient(circle at 10% 75%,#525C80 0 7%,transparent 8%),radial-gradient(circle at 60% 15%,#525C80 0 5%,transparent 6%)}
+.bt-arena::after{content:'';position:absolute;left:0;right:0;top:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent)}
+.bt-rays{position:absolute;left:50%;top:50%;width:160cqmax;height:160cqmax;margin:-80cqmax 0 0 -80cqmax;opacity:0;pointer-events:none;
+  background:conic-gradient(from 0deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,.55) 6deg,rgba(255,255,255,0) 14deg,rgba(255,255,255,0) 30deg,rgba(200,180,255,.5) 36deg,rgba(255,255,255,0) 44deg,
+    rgba(255,255,255,0) 60deg,rgba(255,255,255,.45) 66deg,rgba(255,255,255,0) 74deg,rgba(255,255,255,0) 90deg,rgba(180,220,255,.5) 96deg,rgba(255,255,255,0) 104deg,
+    rgba(255,255,255,0) 120deg,rgba(255,255,255,.5) 126deg,rgba(255,255,255,0) 134deg,rgba(255,255,255,0) 150deg,rgba(220,190,255,.45) 156deg,rgba(255,255,255,0) 164deg,
+    rgba(255,255,255,0) 180deg,rgba(255,255,255,.55) 186deg,rgba(255,255,255,0) 194deg,rgba(255,255,255,0) 210deg,rgba(190,230,255,.5) 216deg,rgba(255,255,255,0) 224deg,
+    rgba(255,255,255,0) 240deg,rgba(255,255,255,.45) 246deg,rgba(255,255,255,0) 254deg,rgba(255,255,255,0) 270deg,rgba(230,200,255,.5) 276deg,rgba(255,255,255,0) 284deg,
+    rgba(255,255,255,0) 300deg,rgba(255,255,255,.5) 306deg,rgba(255,255,255,0) 314deg,rgba(255,255,255,0) 330deg,rgba(200,220,255,.5) 336deg,rgba(255,255,255,0) 344deg)}
+.bt-rays.on{animation:btRays 1.1s ease-out}
+@keyframes btRays{0%{opacity:0;transform:rotate(0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:rotate(40deg) scale(1)}}
+.bt-glow{position:absolute;left:50%;top:50%;width:70cqmin;height:70cqmin;margin:-35cqmin 0 0 -35cqmin;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(190,160,255,.6) 25%,rgba(120,80,255,0) 65%)}
+.bt-glow.on{animation:btGlow .9s ease-out}
+@keyframes btGlow{0%{opacity:0;transform:scale(.3)}30%{opacity:1}100%{opacity:0;transform:scale(1.3)}}
+.bt-card{position:absolute;transition:transform .35s cubic-bezier(.3,1.4,.5,1),opacity .4s}
+.bt-card .cardface{box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 18px var(--tg)}
+.bt-act{--H:min(34cqh,30cqw);height:var(--H);width:calc(var(--H) / 1.5);left:50%;margin-left:calc(var(--H) / -3)}
+.bt-act.s1{bottom:calc(50% + 1.2cqh)}
+.bt-act.s0{top:calc(50% + 1.2cqh)}
+.bt-act .cardface{height:100%}
+.bt-act .cf-flav{display:none}
+.bt-hp{position:absolute;right:-6%;top:-5%;z-index:3;min-width:34%;padding:1px 6px;border-radius:999px;text-align:center;background:#fff;color:#111;
+  font-weight:800;font-size:clamp(11px,3.6cqh,22px);line-height:1.15;box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.bt-hp small{font-size:.55em;margin-right:2px;color:#C0392B}
+.bt-hpbar{position:absolute;left:4%;right:4%;bottom:-7%;height:clamp(5px,1.4cqh,9px);background:rgba(0,0,0,.65);border-radius:9px;overflow:hidden;z-index:3}
+.bt-hpbar i{display:block;height:100%;border-radius:9px;transition:width .5s}
+.bt-el{position:absolute;left:-7%;top:-5%;z-index:3;width:clamp(18px,5cqh,30px);height:clamp(18px,5cqh,30px);border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#111;border:2px solid #fff;font-size:clamp(10px,2.8cqh,16px)}
+.bt-row{position:absolute;left:0;right:0;display:flex;justify-content:center;gap:1.2cqw}
+.bt-row.s1{top:1.5cqh}.bt-row.s0{bottom:1.5cqh}
+.bt-mini{height:min(11cqh,15cqw);aspect-ratio:2/3;border-radius:4px;overflow:hidden;position:relative;box-shadow:0 3px 10px rgba(0,0,0,.6)}
+.bt-mini .cardface{height:100%;border-width:1.5px}
+.bt-mini .cf-body,.bt-mini .cf-stars,.bt-mini .cf-rib{display:none}
+.bt-mini.ko{filter:grayscale(1) brightness(.45)}
+.bt-mini .mhp{position:absolute;left:0;right:0;bottom:0;height:12%;background:rgba(0,0,0,.6)}
+.bt-mini .mhp i{display:block;height:100%}
+.bt-pile{position:absolute;height:min(12cqh,15cqw);aspect-ratio:2/3}
+.bt-pile.dk.s1{right:2.5cqw;top:1.5cqh}.bt-pile.dk.s0{right:2.5cqw;bottom:1.5cqh}
+.bt-pile.ko.s1{left:2.5cqw;top:1.5cqh}
+.bt-pile.s1 .lb{top:auto;bottom:-2.5em}.bt-pile.ko.s0{left:2.5cqw;bottom:1.5cqh}
+.bt-pile .bk{position:absolute;inset:0;border-radius:4px;border:2px solid #E8ECF1;box-shadow:0 2px 6px rgba(0,0,0,.6);
+  background:radial-gradient(circle at 50% 45%,#2B4C8C,#0D1A33 70%),repeating-linear-gradient(45deg,#16264A 0 6px,#0F1C38 6px 12px)}
+.bt-pile .bk::after{content:'?';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#FFD23F;font-weight:800;font-size:clamp(12px,4cqh,24px);text-shadow:0 0 8px #FFB800}
+.bt-pile .n{position:absolute;left:50%;bottom:-2px;transform:translate(-50%,50%);z-index:3;background:#111;color:#fff;border:1px solid #fff;border-radius:999px;padding:0 6px;font-size:clamp(9px,2.4cqh,13px);font-weight:700}
+.bt-pile .lb{position:absolute;left:0;right:0;top:-1.2em;text-align:center;font-size:clamp(7px,1.9cqh,10px);letter-spacing:.12em;color:rgba(255,255,255,.7)}
+.bt-name{position:absolute;left:2.5cqw;display:flex;align-items:center;gap:6px;max-width:34cqw;color:#fff;text-shadow:0 1px 3px #000;font-weight:700;font-size:clamp(10px,2.8cqh,15px)}
+.bt-name.s1{bottom:calc(50% + 14cqh)}.bt-name.s0{top:calc(50% + 14cqh)}
+.bt-name span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.bt-score{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;z-index:4;box-shadow:-2px 0 10px rgba(0,0,0,.6)}
+.bt-score div{width:clamp(26px,7cqh,44px);padding:2px 0;text-align:center;color:#fff;font-weight:800;font-size:clamp(14px,4.4cqh,26px);line-height:1.1}
+.bt-score small{display:block;font-size:.4em;font-weight:600;opacity:.85;letter-spacing:.05em}
+.bt-score .r{background:#C8102E}.bt-score .b{background:#1D4ED8}
+.bt-x{position:absolute;left:1.5cqw;top:50%;transform:translateY(-50%);z-index:6;width:clamp(28px,7cqh,40px);height:clamp(28px,7cqh,40px);border-radius:50%;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:clamp(12px,3cqh,18px)}
+.bt-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;white-space:nowrap;padding:4px 16px;border-radius:6px;
+  font-weight:800;letter-spacing:.08em;color:#fff;font-size:clamp(13px,4.4cqh,26px);text-shadow:0 2px 6px #000;background:rgba(0,0,0,.55);opacity:0;transition:opacity .25s}
+.bt-dmg{position:absolute;z-index:8;font-weight:900;color:#fff;-webkit-text-stroke:2px #B91C1C;paint-order:stroke fill;font-size:clamp(22px,8cqh,54px);pointer-events:none;animation:btDmg 1.1s ease-out forwards}
+.bt-dmg.crit{color:#FFE14D;-webkit-text-stroke:2px #9A3412;font-size:clamp(28px,11cqh,70px)}
+@keyframes btDmg{0%{opacity:0;transform:translate(-50%,0) scale(.4)}20%{opacity:1;transform:translate(-50%,-30%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-140%) scale(1)}}
+.bt-lunge-up{transform:translateY(-12cqh) scale(1.12)!important}
+.bt-lunge-dn{transform:translateY(12cqh) scale(1.12)!important}
+.bt-hit{animation:btHit .45s linear}
+@keyframes btHit{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px) rotate(-3deg)}40%{transform:translateX(8px) rotate(3deg)}60%{transform:translateX(-6px)}80%{transform:translateX(5px)}}
+.bt-hit .cardface{filter:brightness(1.6) saturate(.6) sepia(.5) hue-rotate(-30deg)}
+.bt-ko{opacity:0!important;transform:translateY(6cqh) rotate(-18deg) scale(.6)!important;transition:all .7s ease-in!important}
+.bt-enter{animation:btEnter .55s cubic-bezier(.3,1.5,.5,1)}
+@keyframes btEnter{0%{opacity:0;transform:scale(.5) translateY(var(--from,0))}100%{opacity:1;transform:none}}
+.bt-q{flex:0 0 auto;padding:8px 10px calc(8px + var(--safe-b,0px));background:linear-gradient(180deg,#121A2B,#0A0F1A);border-top:3px solid var(--qc,#1D4ED8)}
+.bt-q.top{transform:rotate(180deg);padding-bottom:8px;padding-top:calc(8px + var(--safe-t,0px))}
+.bt-q .who{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--qc,#60A5FA)}
+.bt-q .bar{height:5px;background:#1B2537;border-radius:4px;overflow:hidden;margin:6px 0}
+.bt-q .bar i{display:block;height:100%;width:100%;background:#4ADE80}
+.bt-q .qt{font-size:15px;font-weight:700;color:#fff;line-height:1.3}
+.bt-q .mv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.bt-q .mv button{display:flex;align-items:center;gap:6px;text-align:left;padding:9px 10px;border-radius:8px;color:#fff;font-size:13px;line-height:1.2;
+  background:linear-gradient(180deg,#24324D,#172238);border:1px solid #33456A;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.bt-q .mv button b{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--qc,#1D4ED8);font-size:11px}
+.bt-q .mv button:active{transform:scale(.97)}
+.bt-q .mv button.locked{opacity:.35}
+.bt-q .msg{text-align:center;font-size:12px;color:#FCA5A5;margin-top:6px}
+.bt-q.idle .mv,.bt-q.idle .bar{display:none}
+.bt-q.idle .qt{font-size:13px;color:#94A3B8;font-weight:600;text-align:center}
+@media (min-width:900px){.bt-q .mv{grid-template-columns:repeat(4,1fr)}}
+.bt-end{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.78)}
+`;
+function btStyle(){ if (!document.getElementById('btCss')){ const st = document.createElement('style'); st.id = 'btCss'; st.textContent = BT_CSS; document.head.appendChild(st); } }
+
+/* tA = id kumpulan bawah (biru). tB = id kumpulan atas (merah), atau null = Penjaga Kad (komputer). */
+function battleRun(tA, tB, mode){
+  btStyle();
+  const ai = !tB;
+  const dA = pvpDeck(tA), dB = ai ? { deck: duelFoe(dA.deck), starter: false } : pvpDeck(tB);
+  const P = [
+    { id: tA, name: teamName(tA), deck: dA.deck, starter: dA.starter, i: 0, ko: [], right: 0, asked: 0, col: '#3B82F6' },
+    { id: tB, name: ai ? 'Penjaga Kad' : teamName(tB), deck: dB.deck, starter: dB.starter, i: 0, ko: [], right: 0, asked: 0, col: '#EF4444' }
+  ];
   P.forEach(p => p.deck.forEach(x => x.cur = x.hp));
-  let turn = 0, over = false, round = 0, raf = 0;
   const rebut = mode === 'rebut';
+  let turn = 0, over = false, round = 0, raf = 0, cur = null;
   const root = document.createElement('div');
-  root.id = 'pvpRoot';
-  root.style.cssText = 'position:fixed;inset:0;z-index:960;background:radial-gradient(circle at 50% 50%,#1A2636,#0A0F15);display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;font-family:inherit';
-  root.innerHTML = rebut
-    ? '<div id="pvH1" style="flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:10px 12px;transform:rotate(180deg)"></div>' +
-      '<div id="pvMid" style="padding:4px 12px;border-top:1px solid #24333F;border-bottom:1px solid #24333F;background:#0C121A"></div>' +
-      '<div id="pvH0" style="flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:10px 12px"></div>'
-    : '<div id="pvTop" style="padding:calc(10px + var(--safe-t,0px)) 12px 6px"></div><div id="pvMid" style="padding:4px 12px"></div><div id="pvH0" style="flex:1;display:flex;flex-direction:column;padding:6px 12px 14px"></div>';
+  root.className = 'bt'; root.id = 'btRoot';
+  root.innerHTML = (rebut ? '<div class="bt-q top" id="btQ1"></div>' : '') +
+    '<div class="bt-board" id="btBoard">' +
+      '<div class="bt-half t" id="btH1"></div><div class="bt-half b" id="btH0"></div>' +
+      '<div class="bt-ring"></div><div class="bt-arena"><div class="bt-glow" id="btGlow"></div><div class="bt-rays" id="btRays"></div></div>' +
+      '<div id="btS1"></div><div id="btS0"></div>' +
+      '<div class="bt-score" id="btScore"></div>' +
+      '<button class="bt-x" data-x="quit"><i class="fa-solid fa-xmark"></i></button>' +
+      '<div class="bt-banner" id="btBanner"></div>' +
+    '</div>' +
+    '<div class="bt-q" id="btQ0"></div>';
   document.body.appendChild(root); lockBody();
-  const $p = s => root.querySelector(s);
+  const $b = s => root.querySelector(s);
   const act = p => p.deck[Math.min(p.i, p.deck.length - 1)];
   const alive = p => p.deck.filter(x => x.cur > 0).length;
-  const sideHtml = (k, q, order, locked, mine) => {
-    const p = P[k], o = P[1 - k], x = act(p), s = { name: teamName(p.sid) };
-    const dots = p.deck.map((y, j) => '<span style="display:inline-block;width:8px;height:8px;margin:0 2px;border-radius:50%;background:' + (y.cur > 0 ? (j === p.i ? '#FFD76A' : '#4ADE80') : '#3A1A1A') + '"></span>').join('');
-    return '<div class="flex items-center gap-2">' + teamAvatar(p.sid, 28) + '<div class="flex-1 min-w-0"><div class="font-bold text-[13px] truncate">' + esc(s.name) + (p.starter ? ' <span class="tag !text-[8px]">KAD LATIHAN</span>' : '') + '</div>' +
-        '<div class="num text-[10px] text-muted">' + p.right + '/' + p.asked + ' betul · ' + dots + '</div></div>' +
-        '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-x="quit"><i class="fa-solid fa-xmark"></i></button></div>' +
-      '<div class="flex items-center gap-3 mt-2"><div style="width:20%;max-width:84px;transition:transform .2s" class="pv-card" data-who="' + k + '">' + cardFaceHtml(x.c, x.c.tier, { lv: x.lv }) + '</div>' +
-        '<div class="flex-1 min-w-0"><div class="text-[11px] text-muted">' + elemOf(cardSet(x.c).el).ico + ' ' + esc(x.c.name) + ' · ⚔' + x.atk + ' 🛡' + x.def + '</div>' +
-          '<div style="height:9px;background:#1B2531;margin-top:4px;border:1px solid #24333F"><div style="height:100%;width:' + Math.max(0, x.cur / x.hp * 100) + '%;background:' + (x.cur / x.hp > .4 ? '#4ADE80' : '#E23B3B') + ';transition:width .4s"></div></div>' +
-          '<div class="num text-[11px] mt-1">' + Math.max(0, x.cur) + '/' + x.hp + ' ♥</div>' +
-          (q ? '' : '<div class="text-[11px] text-muted mt-1">lawan: ' + elemOf(cardSet(act(o).c).el).ico + ' ' + esc(act(o).c.name) + '</div>') + '</div></div>' +
-      (q && mine ? '<div class="text-[14px] font-bold leading-snug mt-1">' + esc(q.q) + '</div><div class="grid grid-cols-2 gap-2 mt-2">' + order.map((i, j) =>
-        '<button class="btn clip-s !py-2 text-left text-[13px]' + (locked ? ' opacity-40' : '') + '" data-a="' + k + ':' + i + '"' + (locked ? ' disabled' : '') + '><span class="num text-orange mr-1">' + String.fromCharCode(65 + j) + '.</span>' + esc(q.c[i]) + '</button>').join('') + '</div>' +
-        (locked ? '<div class="text-center text-[12px] mt-2" style="color:#FF7A7A">Salah — tunggu lawan…</div>' : '') : '');
-  };
-  let cur = null;     // { q, order, t0, locked:[bool,bool], done }
-  const paint = () => {
-    const mid = '<div style="height:6px;background:#0E151E;margin:4px 0"><div id="pvBar" style="height:100%;width:100%;background:#4ADE80"></div></div><div id="pvLog" class="text-center text-[13px] font-bold" style="min-height:18px"></div>';
-    if (rebut){
-      $p('#pvH0').innerHTML = sideHtml(0, cur && cur.q, cur && cur.order, cur && cur.locked[0], true);
-      $p('#pvH1').innerHTML = sideHtml(1, cur && cur.q, cur && cur.order, cur && cur.locked[1], true);
-      if (!$p('#pvBar')) $p('#pvMid').innerHTML = mid;
-    } else {
-      const o = 1 - turn;
-      $p('#pvTop').innerHTML = sideHtml(o, null, null, false, false);
-      $p('#pvH0').innerHTML = '<div class="text-center lbl mb-1" style="color:#FFD76A">GILIRAN: ' + esc(teamName(P[turn].sid)).toUpperCase() + '</div>' + sideHtml(turn, cur && cur.q, cur && cur.order, false, true);
-      if (!$p('#pvBar')) $p('#pvMid').innerHTML = mid;
+  const hpCol = x => x.cur / x.hp > .5 ? '#4ADE80' : x.cur / x.hp > .25 ? '#FACC15' : '#EF4444';
+  const teamIco = p => p.id ? teamAvatar(p.id, 26) : '<div class="circ flex items-center justify-center" style="width:26px;height:26px;background:#111;border:2px solid #EF4444">🤖</div>';
+
+  /* ---------- lukis satu pihak ---------- */
+  function side(k){
+    const p = P[k], x = act(p);
+    const bench = p.deck.map((y, j) => j === p.i ? '' : '<div class="bt-mini' + (y.cur <= 0 ? ' ko' : '') + '">' + cardFaceHtml(y.c, y.c.tier) +
+      '<div class="mhp"><i style="width:' + Math.max(0, y.cur / y.hp * 100) + '%;background:' + hpCol(y) + '"></i></div></div>').join('');
+    const kos = p.ko.length ? cardFaceHtml(p.ko[p.ko.length - 1].c, p.ko[p.ko.length - 1].c.tier) : '';
+    return '<div class="bt-row s' + k + '">' + bench + '</div>' +
+      '<div class="bt-pile dk s' + k + '"><div class="lb">DEK</div><div class="bk" style="transform:translate(3px,-3px)"></div><div class="bk" style="transform:translate(1.5px,-1.5px)"></div><div class="bk"></div><div class="n">' + alive(p) + '</div></div>' +
+      '<div class="bt-pile ko s' + k + '"><div class="lb">KO</div>' + (kos ? '<div class="bt-mini ko" style="height:100%">' + kos + '</div>' : '<div style="position:absolute;inset:0;border:2px dashed rgba(255,255,255,.3);border-radius:4px"></div>') + '<div class="n">' + p.ko.length + '</div></div>' +
+      '<div class="bt-name s' + k + '">' + teamIco(p) + '<span>' + esc(p.name) + (p.starter ? ' · kad latihan' : '') + '</span></div>' +
+      '<div class="bt-card bt-act s' + k + '" id="btA' + k + '">' + cardFaceHtml(x.c, x.c.tier, { lv: x.lv }) +
+                '<div class="bt-hp"><small>HP</small>' + Math.max(0, x.cur) + '</div>' +
+        '<div class="bt-hpbar"><i style="width:' + Math.max(0, x.cur / x.hp * 100) + '%;background:' + hpCol(x) + '"></i></div></div>';
+  }
+  function paintBoard(enter){
+    $b('#btS0').innerHTML = side(0); $b('#btS1').innerHTML = side(1);
+    $b('#btScore').innerHTML = '<div class="r">' + alive(P[1]) + '<small>KAD</small></div><div class="b">' + alive(P[0]) + '<small>KAD</small></div>';
+    $b('#btH0').classList.toggle('turn', !over && !rebut && turn === 0 && !!cur);
+    $b('#btH1').classList.toggle('turn', !over && !rebut && turn === 1 && !!cur);
+    if (enter !== undefined){ const a = $b('#btA' + enter); if (a){ a.style.setProperty('--from', enter ? '-14cqh' : '14cqh'); a.classList.add('bt-enter'); } }
+  }
+  const banner = (t, c, ms) => { const b = $b('#btBanner'); b.innerHTML = t; b.style.color = c || '#fff'; b.style.opacity = 1; clearTimeout(banner.t); banner.t = setTimeout(() => b.style.opacity = 0, ms || 1300); };
+
+  /* ---------- panel soalan ---------- */
+  function qPanel(k){
+    const box = $b('#btQ' + k); if (!box) return;
+    const p = P[k], mine = rebut || (!ai && turn === k) || (ai && k === 0);
+    box.style.setProperty('--qc', p.col);
+    if (!cur || !mine){
+      box.className = 'bt-q idle' + (k === 1 ? ' top' : '');
+      box.innerHTML = '<div class="qt">' + (over ? '' : cur ? 'Giliran ' + esc(P[turn].name) + '…' : 'Bersedia…') + '</div>';
+      return;
     }
-  };
-  const log = (t, c) => { const l = $p('#pvLog'); if (l){ l.innerHTML = t; l.style.color = c || '#E6EEF7'; } };
-  const shake = k => { const e = root.querySelector('.pv-card[data-who="' + k + '"]'); if (e){ e.style.transform = 'translateX(8px) rotate(3deg)'; setTimeout(() => e.style.transform = '', 220); } };
-  const hit = (att, def, fast) => {
-    const adv = elemBeats(cardSet(att.c).el, cardSet(def.c).el) ? 1.5 : elemBeats(cardSet(def.c).el, cardSet(att.c).el) ? 0.75 : 1;
-    const dmg = Math.max(3, Math.round(att.atk * (fast ? 1.4 : 1) * (0.9 + Math.random() * 0.2) * adv - def.def * 0.6));
-    def.cur -= dmg; return { dmg, adv };
-  };
-  /* k menyerang lawannya */
-  const strike = (k, fast, why) => {
-    const a = P[k], d = P[1 - k], r = hit(act(a), act(d), fast);
-    sfx(fast ? 'hi' : 'flip'); shake(1 - k);
-    log((why || '') + esc(teamName(a.sid)) + ': ' + esc(act(a).c.name) + ' −' + r.dmg + (fast ? ' KRITIKAL!' : '') + (r.adv > 1 ? ' · elemen kuat' : r.adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFD76A' : '#4ADE80');
-    if (act(d).cur <= 0){ d.i++; setTimeout(() => log('Kad ' + esc(teamName(d.sid)) + ' tumbang!', '#FF7A7A'), 650); }
-  };
-  const endRound = () => {
-    cancelAnimationFrame(raf); cur = null; paint();
-    if (!alive(P[0]) || !alive(P[1])) return setTimeout(finish, 900);
-    if (!rebut) turn = 1 - turn;
-    setTimeout(ask, 1700);
-  };
-  const answer = (k, pick) => {
+    const locked = cur.locked[k], el = elemOf(cardSet(act(p).c).el);
+    box.className = 'bt-q' + (k === 1 ? ' top' : '');
+    box.innerHTML = '<div class="who">' + teamIco(p) + '<span>' + esc(p.name).toUpperCase() + ' · PILIH SERANGAN</span><span style="margin-left:auto" class="num">PUSINGAN ' + round + '</span></div>' +
+      '<div class="bar"><i id="btBar' + k + '"></i></div>' +
+      '<div class="qt">' + esc(cur.q.q) + '</div>' +
+      '<div class="mv">' + cur.order.map((i, j) => '<button data-a="' + k + ':' + i + '"' + (locked ? ' class="locked" disabled' : '') + '><b>' + String.fromCharCode(65 + j) + '</b><span>' + esc(cur.q.c[i]) + '</span>' +
+        '<span style="margin-left:auto;opacity:.6">' + el.ico + '</span></button>').join('') + '</div>' +
+      (locked ? '<div class="msg">Salah — tunggu lawan…</div>' : '');
+  }
+  const paintQ = () => { qPanel(0); qPanel(1); };
+
+  /* ---------- serangan ---------- */
+  function strike(k, fast){
+    const a = P[k], d = P[1 - k], ax = act(a), dx = act(d);
+    const adv = elemBeats(cardSet(ax.c).el, cardSet(dx.c).el) ? 1.5 : elemBeats(cardSet(dx.c).el, cardSet(ax.c).el) ? 0.75 : 1;
+    const dmg = Math.max(3, Math.round(ax.atk * (fast ? 1.4 : 1) * (0.9 + Math.random() * 0.2) * adv - dx.def * 0.6));
+    const aEl = $b('#btA' + k), dEl = $b('#btA' + (1 - k));
+    if (aEl) aEl.classList.add(k === 0 ? 'bt-lunge-up' : 'bt-lunge-dn');
+    sfx(fast ? 'hi' : 'flip');
+    setTimeout(() => {
+      if (!root.isConnected) return;
+      if (aEl) aEl.classList.remove('bt-lunge-up', 'bt-lunge-dn');
+      $b('#btRays').classList.remove('on'); void $b('#btRays').offsetWidth; $b('#btRays').classList.add('on');
+      $b('#btGlow').classList.remove('on'); void $b('#btGlow').offsetWidth; $b('#btGlow').classList.add('on');
+      dx.cur -= dmg;
+      if (dEl){
+        dEl.classList.add('bt-hit'); vibrate(30);
+        const hp = dEl.querySelector('.bt-hp'); if (hp) hp.innerHTML = '<small>HP</small>' + Math.max(0, dx.cur);
+        const bar = dEl.querySelector('.bt-hpbar i'); if (bar){ bar.style.width = Math.max(0, dx.cur / dx.hp * 100) + '%'; bar.style.background = hpCol(dx); }
+        const r = dEl.getBoundingClientRect(), br = $b('#btBoard').getBoundingClientRect();
+        const n = document.createElement('div'); n.className = 'bt-dmg' + (fast ? ' crit' : '');
+        n.textContent = '-' + dmg; n.style.left = (r.left - br.left + r.width / 2) + 'px'; n.style.top = (r.top - br.top + r.height * .3) + 'px';
+        $b('#btBoard').appendChild(n); setTimeout(() => n.remove(), 1200);
+      }
+      banner((fast ? '⚡ KRITIKAL! ' : '') + esc(ax.c.name) + (adv > 1 ? ' · ELEMEN KUAT!' : adv < 1 ? ' · elemen lemah' : ''), fast ? '#FFE14D' : '#fff', 1200);
+      if (dx.cur <= 0){
+        setTimeout(() => {
+          if (!root.isConnected) return;
+          if (dEl) dEl.classList.add('bt-ko');
+          banner(esc(dx.c.name) + ' — KO!', '#FCA5A5', 1200); sfx('low');
+          setTimeout(() => { if (!root.isConnected) return; d.ko.push(dx); d.i++; paintBoard(alive(d) ? 1 - k : undefined); }, 700);
+        }, 500);
+      } else setTimeout(() => { if (dEl) dEl.classList.remove('bt-hit'); }, 460);
+    }, 330);
+  }
+
+  /* ---------- pusingan ---------- */
+  function endRound(ms){                                  // tunggu animasi serangan/KO selesai
+    cancelAnimationFrame(raf); cur = null; paintQ();
+    setTimeout(() => {
+      if (over || !root.isConnected) return;
+      if (!alive(P[0]) || !alive(P[1])) return finish();
+      if (!rebut && !ai) turn = 1 - turn;
+      ask();
+    }, ms || 2200);
+  }
+  function answer(k, pick){
     if (!cur || cur.done || over) return;
-    const q = cur.q, ok = pick === q.a, used = (performance.now() - cur.t0) / 1000;
+    const q = cur.q, ok = pick === q.a, fast = ok && (performance.now() - cur.t0) / 1000 < duelQ() * .4;
     P[k].asked++; if (ok) P[k].right++;
-    teamQuiz(P[k].sid, ok);
+    if (P[k].id) teamQuiz(P[k].id, ok);
     if (rebut){
-      if (ok){ cur.done = true; strike(k, used < duelQ() * .4, 'Betul! '); return endRound(); }
+      if (ok){ cur.done = true; strike(k, fast); return endRound(); }
       cur.locked[k] = true; sfx('low'); vibrate(30);
-      if (cur.locked[0] && cur.locked[1]){ cur.done = true; log('Kedua-dua salah! Jawapan: ' + esc(q.c[q.a]), '#FF7A7A'); return endRound(); }
-      log(esc(teamName(P[k].sid)) + ' salah — ' + esc(teamName(P[1 - k].sid)) + ' boleh merebut!', '#FFC24D'); paint();
-    } else {
-      cur.done = true;
-      if (ok) strike(k, used < duelQ() * .4, 'Betul! ');
-      else { strike(1 - k, false, (pick === -1 ? 'Masa tamat! ' : 'Salah! ') + 'Jawapan: ' + esc(q.c[q.a]) + ' · '); vibrate(40); }
-      endRound();
+      if (cur.locked[0] && cur.locked[1]){ cur.done = true; banner('Kedua-dua salah! Jawapan: ' + esc(q.c[q.a]), '#FCA5A5', 2000); return endRound(); }
+      banner(esc(P[k].name) + ' salah — ' + esc(P[1 - k].name) + ' boleh merebut!', '#FDE68A', 1600); paintQ(); return;
     }
-  };
-  const ask = () => {
+    cur.done = true;
+    if (ok) strike(k, fast);
+    else { banner((pick === -1 ? 'Masa tamat! ' : 'Salah! ') + 'Jawapan: ' + esc(q.c[q.a]), '#FCA5A5', 1500); setTimeout(() => { if (root.isConnected) strike(1 - k, false); }, 900); return endRound(3100); }
+    endRound();
+  }
+  function ask(){
     if (over) return;
     round++;
     const q = escQuestion();
     cur = { q, order: q.c.map((_, i) => i).sort(() => Math.random() - .5), t0: performance.now(), locked: [false, false], done: false };
-    paint();
-    log(rebut ? 'Pusingan ' + round + ' — siapa cepat?' : 'Pusingan ' + round, '#7E93A8');
+    paintBoard(); paintQ();
+    banner(rebut ? 'PUSINGAN ' + round + ' — SIAPA CEPAT?' : ai ? 'PUSINGAN ' + round : 'GILIRAN ' + esc(P[turn].name).toUpperCase(), '#fff', 1100);
     const tick = () => {
       if (!cur || cur.done || over) return;
-      const QS = duelQ(), left = Math.max(0, QS - (performance.now() - cur.t0) / 1000), bar = $p('#pvBar');
-      if (bar){ bar.style.width = (left / QS * 100) + '%'; bar.style.background = left > QS * .6 ? '#4ADE80' : left > QS * .27 ? '#FACC15' : '#E23B3B'; }
+      const QS = duelQ(), left = Math.max(0, QS - (performance.now() - cur.t0) / 1000);
+      [0, 1].forEach(k => { const bar = $b('#btBar' + k); if (bar){ bar.style.width = (left / QS * 100) + '%'; bar.style.background = left > QS * .6 ? '#4ADE80' : left > QS * .27 ? '#FACC15' : '#EF4444'; } });
       if (left <= 0){
-        if (rebut){ cur.done = true; log('Masa tamat! Jawapan: ' + esc(cur.q.c[cur.q.a]), '#FF7A7A'); return endRound(); }
-        return answer(turn, -1);
+        if (rebut){ cur.done = true; banner('Masa tamat! Jawapan: ' + esc(cur.q.c[cur.q.a]), '#FCA5A5', 2000); return endRound(); }
+        return answer(ai ? 0 : turn, -1);
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-  };
-  const finish = () => {
-    if (over) return; over = true;
-    const w = alive(P[0]) ? 0 : 1, W = P[w], L = P[1 - w];
-    const rpW = 8 + alive(W) * 2, rpL = 2;
-    S.duel = S.duel || {}; S.duel.pvp = S.duel.pvp || {}; S.duel.log = S.duel.log || [];
-    [[W, 'w'], [L, 'l']].forEach(([p, k]) => { const r = S.duel.pvp[p.sid] = S.duel.pvp[p.sid] || { w:0, l:0 }; r[k]++; });
-    teamRP(W.sid, rpW); teamRP(L.sid, rpL);
-    const tpW = gameToPBD(W.sid, 'pvp', W.right, W.asked, { win: 1, vs: teamName(L.sid) }), tpL = gameToPBD(L.sid, 'pvp', L.right, L.asked, { win: 0, vs: teamName(W.sid) });
-    S.duel.log.unshift({ a: P[0].sid, b: P[1].sid, w: W.sid, d: todayKey(), m: mode, r: round }); S.duel.log = S.duel.log.slice(0, 100);
-    save(true); sfx('myth');
-    const ov = document.createElement('div');
-    ov.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.82)';
-    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:380px">' + '<div style="display:flex;justify-content:center">' + teamAvatar(W.sid, 64) + '</div>' +
-      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#FFD76A">' + esc(teamName(W.sid)).toUpperCase() + ' MENANG!</div>' +
-      '<div class="text-[12px] text-muted mt-1">' + (rebut ? 'Rebut Jawapan' : 'Bergilir') + ' · ' + round + ' pusingan</div>' +
-      '<div class="grid grid-cols-2 gap-2 mt-3 num">' + [W, L].map((p, j) => '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(teamName(p.sid)) + '</div>' +
-        '<div class="text-[16px]" style="color:' + (j ? '#7E93A8' : '#4ADE80') + '">' + p.right + '/' + p.asked + '</div><div class="text-[10px] text-orange">+' + (j ? rpL : rpW) + ' RP · TP' + ((j ? tpL : tpW) || '-') + '</div></div>').join('') + '</div>' +
+  }
+
+  /* ---------- tamat: ganjaran, TP & rekod ---------- */
+  function finish(){
+    if (over) return; over = true; cancelAnimationFrame(raf); paintQ();
+    const wk = alive(P[0]) ? 0 : 1, W = P[wk], L = P[1 - wk];
+    S.duel = S.duel || {};
+    let rows;
+    if (ai){
+      const won = wk === 0, rp = won ? 6 + alive(P[0]) * 3 : 2;
+      S.duel.wins = S.duel.wins || {}; S.duel.losses = S.duel.losses || {};
+      if (won) S.duel.wins[tA] = (S.duel.wins[tA] || 0) + 1; else S.duel.losses[tA] = (S.duel.losses[tA] || 0) + 1;
+      teamRP(tA, rp);
+      const tp = gameToPBD(tA, 'duel', P[0].right, P[0].asked, { win: won ? 1 : 0 });
+      rows = [[P[0], rp, tp]];
+    } else {
+      const rpW = 8 + alive(W) * 2, rpL = 2;
+      S.duel.pvp = S.duel.pvp || {}; S.duel.log = S.duel.log || [];
+      [[W, 'w'], [L, 'l']].forEach(([p, k]) => { const r = S.duel.pvp[p.id] = S.duel.pvp[p.id] || { w:0, l:0 }; r[k]++; });
+      teamRP(W.id, rpW); teamRP(L.id, rpL);
+      const tpW = gameToPBD(W.id, 'pvp', W.right, W.asked, { win: 1, vs: L.name }), tpL = gameToPBD(L.id, 'pvp', L.right, L.asked, { win: 0, vs: W.name });
+      S.duel.log.unshift({ a: tA, b: tB, w: W.id, d: todayKey(), m: mode, r: round }); S.duel.log = S.duel.log.slice(0, 100);
+      rows = [[W, rpW, tpW], [L, rpL, tpL]];
+    }
+    save(true);
+    const won0 = wk === 0;
+    sfx(ai && !won0 ? 'low' : 'myth');
+    const e = document.createElement('div'); e.className = 'bt-end';
+    e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:420px">' +
+      '<div style="display:flex;justify-content:center">' + teamIco(W).replace(/26px/g, '60px') + '</div>' +
+      '<div class="font-bold tracking-widest text-[22px] mt-2" style="color:' + (ai && !won0 ? '#EF4444' : '#FFD76A') + '">' + (ai ? (won0 ? 'MENANG!' : 'KALAH…') : esc(W.name).toUpperCase() + ' MENANG!') + '</div>' +
+      '<div class="text-[12px] text-muted mt-1">' + (ai ? 'Lawan Penjaga Kad' : rebut ? 'Rebut Jawapan' : 'Bergilir') + ' · ' + round + ' pusingan</div>' +
+      '<div class="grid gap-2 mt-3 num" style="grid-template-columns:repeat(' + rows.length + ',1fr)">' + rows.map(([p, rp, tp]) =>
+        '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(p.name) + '</div><div class="text-[16px]" style="color:#4ADE80">' + p.right + '/' + p.asked + ' betul</div>' +
+        '<div class="text-[11px] text-orange">+' + rp + ' RP' + (tp ? ' · <b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b>' : '') + '</div></div>').join('') + '</div>' +
+      '<div class="text-[10px] text-muted mt-2">TP direkod dalam PBD hari ini untuk setiap ahli kumpulan.</div>' +
       '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-x="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-x="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button></div></div>';
-    root.appendChild(ov);
-    confettiBurst(root, 80);
-  };
+    $b('#btBoard').appendChild(e);
+    if (!ai || won0) confettiBurst(e, 80);
+  }
   const quit = () => { over = true; cancelAnimationFrame(raf); root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab(); };
   root.addEventListener('click', e => {
     const a = e.target.closest('[data-a]'); if (a){ const [k, i] = a.dataset.a.split(':').map(Number); return answer(k, i); }
     const x = e.target.closest('[data-x]'); if (!x) return;
     if (x.dataset.x === 'quit') return quit();
-    if (x.dataset.x === 'again'){ quit(); setTimeout(() => pvpRun(p1, p2, mode), 80); }
+    if (x.dataset.x === 'again'){ quit(); setTimeout(() => battleRun(tA, tB, mode), 80); }
   });
-  paint();
-  log(rebut ? 'Duduk bertentang — ' + esc(teamName(p2)) + ' di sebelah atas.' : esc(teamName(p1)) + ' mula dahulu.', '#FFD76A');
-  setTimeout(ask, 1500);
+  paintBoard(); paintQ();
+  banner(ai ? esc(P[0].name) + ' lawan PENJAGA KAD' : esc(P[0].name) + ' lawan ' + esc(P[1].name), '#FFE14D', 1500);
+  setTimeout(ask, 1700);
 }
-/* Papan Juara Duel (lawan rakan) bagi kelas aktif */
+function duelStart(){
+  const t = arenaUi().team;
+  if (!t || !teamOf(t)) return toast('Pilih kumpulan dahulu.', null, true);
+  battleRun(t, null, 'ai');
+}
+
 function pvpBoardHtml(){
   const d = (S.duel || {}).pvp || {};
   const rows = classTeams().filter(s => d[s.id] && (d[s.id].w + d[s.id].l)).sort((a, b) => d[b.id].w - d[a.id].w || d[a.id].l - d[b.id].l).slice(0, 5);
