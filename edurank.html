@@ -3705,15 +3705,27 @@ function hintInit(){
 /* ============ BANK SOALAN (digunakan oleh semua game) ============
    Keputusan kuiz TIDAK menyentuh TP atau rekod PBD — hanya statistik kuiz. */
 const QUIZ_TIME = 15;                       // saat (rujukan dalam prompt AI)
-/* Soalan diambil ikut URUTAN bank, bukan rawak. Setelah semua soalan
-   ditanya sekali, kitaran bermula semula dari awal. */
-let QSEQ = { key:'', i:0 };
+/* Soalan dipilih secara RAWAK dan tidak berulang: soalan yang pernah keluar (bagi kelas & subjek ini,
+   disimpan dalam S.qSeen) dilangkau sehingga semua soalan dalam bank habis ditanya, barulah kitaran
+   baharu bermula. Soalan SK/SP pelajaran hari ini (bank.prefer, dari topicalBank) didahulukan. */
+let QLAST = '', QCOUNT = 0;
 function nextQ(bank){
   if (!bank || !bank.length) return null;
-  const key = bank.map(q => q.id).join('|');
-  if (QSEQ.key !== key) QSEQ = { key, i:0 };
-  const q = bank[QSEQ.i % bank.length];
-  QSEQ.i++;
+  const key = (S.ui.activeClassId || '') + '|' + (bank[0].subjectId || '');
+  S.qSeen = S.qSeen || {};
+  const seen = new Set(S.qSeen[key] || []);
+  let pool = bank.filter(q => !seen.has(q.id));
+  if (!pool.length){                                   // semua sudah ditanya: kitaran baharu
+    bank.forEach(q => seen.delete(q.id));
+    pool = bank.length > 1 ? bank.filter(q => q.id !== QLAST) : bank;
+  }
+  const pref = bank.prefer ? pool.filter(q => bank.prefer.has(q.id)) : [];
+  const from = pref.length ? pref : pool;
+  const q = from[Math.floor(Math.random() * from.length)];
+  seen.add(q.id); QLAST = q.id;
+  const live = new Set((S.quiz || []).map(x => x.id));
+  S.qSeen[key] = [...seen].filter(id => live.has(id));
+  if (++QCOUNT % 5 === 0) save();                      // simpan sekali-sekala, bukan setiap soalan
   return q;
 }
 const qBank = (sj, ch) => (S.quiz || []).filter(q => q.subjectId === sj && (!ch || q.chapterId === ch));
@@ -5248,12 +5260,14 @@ function evalTopicHtml(){
 }
 /* Soalan yang sepadan dengan topik minggu ini didahulukan dalam game */
 function topicalBank(sj){
-  const bank = qBank(sj); if (bank.length < 4) return bank;
+  const bank = qBank(sj); if (!bank.length) return bank;
   const t = lessonTopic(S.ui.activeClassId, sj, recDate());
   if (!t || !t.sks.length) return bank;
   const codes = t.sks.map(k => skCode(k.sk)).filter(Boolean);
   const top = bank.filter(q => q.sk && codes.indexOf(q.sk) >= 0);
-  return top.length >= 3 ? top : bank;
+  if (top.length >= 4) return top;                     // cukup soalan SK/SP hari ini: guna itu sahaja
+  bank.prefer = new Set(top.map(q => q.id));           // sedikit: didahulukan, kemudian soalan lain
+  return bank;
 }
 
 /* ============ TAYANG LANGSUNG (game telefon → tablet/projektor) ============
@@ -5601,7 +5615,7 @@ const GAME_LOBBY = {
     desc: 'Uruskan Stor Sukan dan Kedai Sihat. Sediakan peralatan dan makanan bernutrisi untuk atlet sebelum kesabaran mereka habis!',
     cfg: () => storCfg(),
     opts: () => [
-      lbSeg('lvl', 'TAHAP', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']], 'Mudah: 1–2 barang, gambar ditunjuk. Sederhana: lebih ramai pelanggan. Pakar: makanan diminta ikut <b>kumpulan nutrisi</b> sahaja.'),
+      lbSeg('lvl', 'TAHAP', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']], 'Mudah: kalori setiap makanan ditunjuk, tiada alahan. Sederhana: lebih ramai pelanggan, ada yang alergik. Pakar: kalori makanan disembunyikan — murid perlu menganggar.'),
       lbSeg('sabar', 'MASA SABAR PELANGGAN', [[0,'Auto'],[40,'40s'],[60,'60s'],[90,'90s'],[120,'120s']]),
       lbSeg('syif', 'TEMPOH SYIF', [[3,'3 min'],[5,'5 min'],[8,'8 min']]),
       lbSeg('watak', 'WATAK PEKERJA', [['p','Perempuan'],['l','Lelaki']])],
@@ -5613,7 +5627,7 @@ const GAME_LOBBY = {
       p(1);
     },
     starts: [['🏪 BUKA KEDAI', () => storStart()]],
-    how: () => '<b>Ketik atau seret</b> barang dari rak ke <b>dulang</b>, kemudian seret dulang/barang ke atlet (atau ketik atlet). Sesetengah makanan perlu dimasak di <b>dapur</b> atau dikisar di <b>blender</b>.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
+    how: () => '<b>Kaunter Stor:</b> ketik atau seret peralatan sukan <b>terus kepada atlet</b>.<br><b>Kedai Sihat:</b> masukkan makanan ke <b>dulang</b> sehingga jumlah kalori hampir dengan sasaran 🎯 pelanggan, kemudian seret dulang kepada pelanggan (atau ketik pelanggan). Makin hampir kalori, makin tinggi ⭐ skor. Jangan beri makanan yang pelanggan alergik! Sesetengah makanan perlu dimasak di <b>dapur</b> atau dikisar di <b>blender</b>.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
   }
 };
 
@@ -6748,7 +6762,22 @@ const ST_ITEMS = [
   ['burger','Burger','🍔','snek','x',8,null,'a big cheeseburger'],
   ['kerepek','Kerepek','🍿','snek','x',3,null,'an open bag of potato chips']
 ].map(([id, n, e, sh, tg, p, prep, d]) => ({ id, n, e, sh, tg, p, prep, d, z: ST_SHELVES.find(s => s[0] === sh)[2] }));
+/* kalori sehidang (anggaran, kcal) */
+const ST_KCAL = { pisang:105, epal:95, oren:60, tembikai:85, betik:120, brokoli:55, salad:150, alpukat:160, jus_oren:110, smoothie:250,
+  susu:130, yogurt:100, air_kosong:0, air_kelapa:45, isotonik:80, tauhu:150, telur_rebus:140, ayam_panggang:230, ikan_bakar:200,
+  nasi_perang:215, roti_gandum:140, oat:160, ubi_keledek:115, pasta:220, granola:190, kacang:160, kurma:120, sandwic:290,
+  kentang_goreng:320, air_bergas:140, donat:260, gula_gula:100, burger:500, kerepek:150 };
+ST_ITEMS.forEach(i => i.kcal = ST_KCAL[i.id] || 0);
 const ST_IT = Object.fromEntries(ST_ITEMS.map(x => [x.id, x]));
+/* alahan: makanan yang mengandunginya */
+const ST_ALG = {
+  kacang: { n:'kacang', ic:'🥜', ids:['kacang','granola'] },
+  susu:   { n:'susu', ic:'🥛', ids:['susu','yogurt','smoothie'] },
+  telur:  { n:'telur', ic:'🥚', ids:['telur_rebus'] },
+  gluten: { n:'gandum (gluten)', ic:'🌾', ids:['roti_gandum','pasta','sandwic','granola','donat','burger'] },
+  ikan:   { n:'ikan & makanan laut', ic:'🐟', ids:['ikan_bakar','sandwic'] }
+};
+const stAlgOf = id => Object.keys(ST_ALG).filter(k => ST_ALG[k].ids.includes(id));
 /* atlet: id, nama, emoji, peralatan yang biasa diminta, situasi pemakanan, huraian pakaian (prompt) */
 const ST_ATH = [
   ['bolasepak','Pemain Bola Sepak','🧒','bola_sepak but_bola pelindung_kaki stokin jersi sarung_gol','pre post hid','a football player boy in a red jersey and shorts, long socks'],
@@ -6768,6 +6797,32 @@ const ST_ATH = [
   ['gimrama','Ahli Gimrama','🤸','tikar_yoga tuala botol_air','vit post','a rhythmic gymnast girl in a sparkly blue leotard with a yellow ribbon'],
   ['cikgu','Guru Pendidikan Jasmani','🧑‍🏫','wisel kon_latihan jam_randik kit_kecemasan bola_sepak','hid vit','a friendly PE teacher man in a tracksuit with a whistle and clipboard']
 ].map(([id, n, e, kit, nut, d]) => ({ id, n, e, kit: kit.split(' '), nut: nut.split(' '), d }));
+/* pelanggan biasa (bukan atlet) di Kedai Sihat */
+const ST_ORG = [
+  ['org_pakcik','Pakcik','👴','a friendly Malaysian elderly man with a white beard, songkok cap and batik shirt'],
+  ['org_makcik','Makcik','👵','a cheerful Malaysian auntie in a hijab and baju kurung, holding a small handbag'],
+  ['org_pelajar','Pelajar','🧑‍🎓','a Malaysian secondary school student in a white shirt and blue trousers, carrying a school bag'],
+  ['org_pejabat','Pekerja Pejabat','🧑‍💼','a young Malaysian office worker in a neat shirt and tie with a lanyard'],
+  ['org_ibu','Ibu','👩','a young Malaysian mother in a hijab and casual clothes'],
+  ['org_remaja','Remaja','🧑','a Malaysian teenager in a hoodie and sneakers']
+].map(([id, n, e, d]) => ({ id, n, e, d, img: id }));
+/* situasi makan: siapa, dialog biasa (tanpa sebut kalori), julat kalori sasaran */
+const ST_MEAL = [
+  [['maraton','basikal'], 'Esok saya lari maraton. Saya perlu sarapan yang cukup tenaga.', 650, 800],
+  [['angkat','keranjang'], 'Baru habis latihan beban, perut saya lapar sangat!', 700, 900],
+  [['renang','gimrama'], 'Saya baru habis berenang. Nak makan sikit sebelum balik.', 300, 420],
+  [['bolasepak','hoki','takraw','jaring'], 'Petang ni ada perlawanan. Saya nak makan tengah hari yang bertenaga.', 550, 700],
+  [['pecut','tenis','badminton','pingpong'], 'Sejam lagi saya ada latihan. Nak makan yang tak berat sangat.', 300, 450],
+  [['silat'], 'Lepas latihan silat, saya nak makanan untuk pulihkan tenaga.', 500, 650],
+  [['cikgu'], 'Saya nak makan tengah hari sebelum kelas petang.', 450, 600],
+  [['org_pakcik'], 'Pakcik nak makan sesuatu yang ringan sahaja.', 200, 320],
+  [['org_makcik'], 'Makcik tengah jaga makan. Nak makan tengah hari yang sihat.', 350, 480],
+  [['org_pelajar'], 'Saya nak bekal makanan untuk waktu rehat sekolah.', 350, 500],
+  [['org_pejabat'], 'Saya nak sarapan cepat sebelum masuk pejabat.', 300, 450],
+  [['org_ibu'], 'Saya nak snek petang untuk anak saya.', 150, 260],
+  [['org_remaja'], 'Saya lapar, tapi nak makan yang sihat sikit.', 400, 600]
+].map(([who, t, lo, hi]) => ({ who, t, lo, hi }));
+const stPerson = id => { const a = ST_ATH.find(x => x.id === id); return a ? { id, n: a.n, e: a.e, img: 'atl_' + id } : ST_ORG.find(x => x.id === id); };
 const ST_NUT = {
   pre:   { t:'Sebelum latihan — perlu TENAGA', slots:['k','k?','h'] },
   post:  { t:'Lepas latihan — baiki otot dengan PROTEIN', slots:['p','p?','k?'] },
@@ -6776,9 +6831,9 @@ const ST_NUT = {
   lemak: { t:'Tenaga tahan lama — LEMAK SIHAT', slots:['l','k','v?'] }
 };
 const ST_LVL = {
-  mudah:     { name:'Mudah',     spawn:13, sabar:80, max:2, tag:false },
-  sederhana: { name:'Sederhana', spawn:10, sabar:60, max:3, tag:false },
-  pakar:     { name:'Pakar',     spawn:8,  sabar:50, max:3, tag:true }
+  mudah:     { name:'Mudah',     spawn:13, sabar:80, max:2, alg:0,   kcal:true },
+  sederhana: { name:'Sederhana', spawn:10, sabar:60, max:3, alg:.3,  kcal:true },
+  pakar:     { name:'Pakar',     spawn:8,  sabar:50, max:3, alg:.45, kcal:false }
 };
 function storCfg(){ S.config.stor = Object.assign({ lvl:'mudah', sabar:0, syif:5, watak:'p' }, S.config.stor || {}); return S.config.stor; }
 function storData(){ S.stor = S.stor || {}; S.stor.best = S.stor.best || {}; S.stor.plays = S.stor.plays || {}; return S.stor; }
@@ -6814,7 +6869,7 @@ const ST_ASSETS = [].concat(
   [stA('pintu_stor', 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. A tall closed double loading-bay door of a store room, grey metal with a small window. The door fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no people.')],
   [['dapur','a small cafe stove with a pot and a grill pan'],
    ['blender','a kitchen blender on a small counter'],
-   ['meja_telefon','a small office desk with an old-style telephone and a clipboard on it'],
+   ['meja_telefon','a small round wooden side table about knee height with a red old-style rotary telephone and a small notepad on top'],
    ['dulang','an empty plastic service tray seen from above']
   ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'sqL', ST_STYLE + ', slight 3/4 top-down view. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred and filling most of the image. ' + ST_MAG + ' No text, no people.')),
   /* kaunter: satu bahagian modular, diulang mendatar oleh game */
@@ -6824,7 +6879,7 @@ const ST_ASSETS = [].concat(
   [['pekerja_p','a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron'],
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
    ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
-  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. ' + ST_MAG + ' No text.')),
+  ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).concat(ST_ORG.map(o => [o.id, o.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. ' + ST_MAG + ' No text.')),
   ST_ITEMS.map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
   [['ui_syiling','a shiny gold coin with a simple embossed star'],
    ['ui_hati','a glossy red heart'],
@@ -6888,9 +6943,9 @@ function viewStor(){
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#7DD3FC;text-shadow:0 0 12px rgba(60,160,255,.6)">SIMULASI STOR SUKAN</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Uruskan <b class="text-cyan">Stor Sukan</b> dan <b style="color:#4ADE80">Kedai Sihat</b>. Atlet datang meminta peralatan dan makanan bernutrisi — ambil dari rak, masak jika perlu, dan serahkan sebelum <b style="color:#FF7A7A">kesabaran</b> mereka habis. Jawab telefon pembekal untuk menambah stok!</div></div>';
   h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="stor"><i class="fa-solid fa-play"></i> MAIN</button>';
-  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">KEDAI TERBAIK (RM)</div>' + board.map((g, i) =>
+  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERBAIK KUMPULAN</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
-    '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#4ADE80">RM' + d.best[g.id] + '</span></div>').join('') + '</div>';
+    '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#FDE68A">⭐ ' + d.best[g.id] + '</span></div>').join('') + '</div>';
   if (!ST_PROBED) storProbe().then(() => { if (S.ui.tab === 'arena' && arenaUi().game === 'stor') renderTab(); });
   return h;
 }
@@ -6915,7 +6970,7 @@ const ST_CSS = `
 .st-floor{left:0;right:0;top:41%;bottom:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 6.25cqw),repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 6.25cqw),linear-gradient(180deg,#F3F5F8,#DDE3EA)}
 .st-bg{inset:0;width:100%;height:100%;object-fit:cover}
 .st-zl{top:8.6%;font-weight:800;letter-spacing:.15em;font-size:1.3cqw;color:#1E3A5F;opacity:.75}
-.st-shelf{top:10%;height:29%;border-radius:.6cqw;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.st-shelf{top:10%;height:29%;border-radius:.6cqw;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .st-shelf .box{--bd:#5E3A1A;--bg1:#B07A45;--bg2:#8A5A2E;position:absolute;inset:0;border-radius:.6cqw;border:.25cqw solid var(--bd);box-shadow:0 .6cqw 1cqw rgba(0,0,0,.25);
   background:linear-gradient(180deg,rgba(0,0,0,.28) 0 8%,transparent 8%),
     linear-gradient(180deg,transparent 27%,var(--bd) 27% 30%,transparent 30% 49%,var(--bd) 49% 52%,transparent 52% 71%,var(--bd) 71% 74%,transparent 74% 93%,var(--bd) 93% 96%,transparent 96%),
@@ -6933,7 +6988,7 @@ const ST_CSS = `
 .st-flyit{position:absolute;width:4.5cqw;height:4.5cqw;transform:translate(-50%,-50%);z-index:37;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:3.4cqw;
   transition:left .45s cubic-bezier(.4,0,.6,1),top .45s cubic-bezier(.3,-.5,.6,1),opacity .2s .4s}
 .st-flyit img{width:100%;height:100%;object-fit:contain}
-.st-shelf .nm{position:relative;z-index:2;margin-bottom:-1.3cqw;background:#1E293B;color:#fff;font-size:1cqw;font-weight:800;letter-spacing:.06em;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35)}
+.st-shelf .nm{position:relative;z-index:2;margin-top:-1.2cqw;background:#1E293B;color:#fff;font-size:1cqw;font-weight:800;letter-spacing:.06em;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35)}
 .st-shelf:active{transform:scale(.97)}
 .st-shelf.low .nm{background:#B91C1C}
 .st-stn{width:7.5%;height:13.5%;left:90.5%;border-radius:.6cqw;background:linear-gradient(180deg,#E2E8F0,#94A3B8);border:.25cqw solid #475569;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3cqw}
@@ -6947,7 +7002,7 @@ const ST_CSS = `
 @keyframes stPulse{50%{transform:scale(1.12)}}
 .st-door{left:45%;width:10%;top:9%;height:30%;cursor:pointer;border-radius:.6cqw .6cqw 0 0;background:linear-gradient(90deg,#64748B 0 49.5%,#334155 49.5% 50.5%,#64748B 50.5%);border:.3cqw solid #1E293B}
 .st-door>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
-.st-phone{left:44%;width:12%;top:42%;height:8%;cursor:pointer;border-radius:.5cqw;background:linear-gradient(180deg,#A16207,#713F12);display:flex;align-items:center;justify-content:center;font-size:2.4cqw;z-index:4}
+.st-phone{left:45.5%;width:9%;top:42%;height:8%;cursor:pointer;border-radius:.5cqw;background:linear-gradient(180deg,#A16207,#713F12);display:flex;align-items:center;justify-content:center;font-size:2.4cqw;z-index:4}
 .st-phone>img{position:absolute;left:0;right:0;bottom:0;width:100%;height:220%;object-fit:contain}
 .st-phone.ring{animation:stRing .25s infinite}
 .st-phone .bb{position:absolute;top:-3.4cqw;left:50%;transform:translateX(-50%);background:#DC2626;color:#fff;font-size:1.1cqw;font-weight:800;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;z-index:5}
@@ -6990,6 +7045,17 @@ const ST_CSS = `
 .st-tray .g{display:grid;grid-template-columns:1fr 1fr;gap:.5cqw;margin-top:.5cqw;flex:1;width:100%}
 .st-tray .g>div{border-radius:.6cqw;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:2.6cqw;cursor:pointer;position:relative;padding:.3cqw}
 .st-tray .g>div.f{background:rgba(250,204,21,.18)}
+.st-tray{background:none!important;border:0!important;padding:.3cqw .6cqw .6cqw}
+.st-tray.img{background:center 62%/96% auto no-repeat var(--tray)!important}
+.st-tray:not(.img) .g{background:linear-gradient(180deg,#F1F8E9,#C5E1A5);border:.25cqw solid #9CCC65;border-radius:1.2cqw}
+.st-tray .t{background:#1E293B;color:#FACC15;padding:.15cqw .9cqw;border-radius:99px}
+.st-tray .g{grid-template-columns:repeat(3,1fr);padding:1.2cqw 1cqw}
+.st-tray .g>div,.st-tray .g>div.f{background:none!important;filter:drop-shadow(0 .3cqw .2cqw rgba(0,0,0,.35))}
+.st-tray .k{margin-top:.3cqw;font-size:1.25cqw;font-weight:900;color:#0F172A;background:#FDE68A;border-radius:99px;padding:.05cqw .8cqw}
+.st-bub .tx.big{font-size:1.02cqw;max-width:17cqw;font-style:italic}
+.st-bub .kc{margin:.4cqw auto 0;width:max-content;font-weight:900;font-size:1.25cqw;color:#075985;background:#E0F2FE;border-radius:99px;padding:.05cqw .8cqw}
+.st-bub .kc .al{color:#B91C1C;margin-left:.3cqw}
+.st-pop .gr button .kc{font-size:.9cqw;color:#7DD3FC;font-weight:700}
 .st-tray .g>div.x::after{content:'⚠️';position:absolute;right:-.3cqw;top:-.5cqw;font-size:1.2cqw}
 .st-sup{left:45.5%;width:9%;top:13%;height:26%;z-index:4;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;font-size:5cqw}
 .st-sup .bb{position:absolute;top:-2.6cqw;left:50%;transform:translateX(-50%);background:#F59E0B;color:#111;font-size:1.05cqw;font-weight:800;padding:.2cqw .7cqw;border-radius:99px;white-space:nowrap;animation:stPulse 1s infinite}
@@ -7079,7 +7145,7 @@ function storRun(team){
     '<div class="st-counter s' + (ST_HAVE.has('kaunter_stor') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_stor') + ')' : '') + '">' + '<div class="nm">KAUNTER STOR</div></div>' +
     '<div class="st-counter k' + (ST_HAVE.has('kaunter_kafe') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_kafe') + ')' : '') + '">' + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
     '<div id="stCust"></div>' +
-    '<div class="st-tray' + (ST_HAVE.has('dulang') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang') + ')' : '') + '"><div class="t">DULANG</div><div class="g" id="stTray"></div></div>' +
+    '<div class="st-tray' + (ST_HAVE.has('dulang') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang') + ')' : '') + '"><div class="t">DULANG</div><div class="g" id="stTray"></div><div class="k" id="stTrayK">kosong</div></div>' +
     '<div class="st-hud" id="stHud"></div>' +
     '<div class="st-msg" id="stMsg"></div>' +
     '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
@@ -7093,7 +7159,7 @@ function storRun(team){
   const tray = [];                                       // { id, cooked }
   const stn = { dapur: [null, null], blender: [null] };  // { id, t, need }
   const cust = { s: [null, null, null], k: [null, null, null] };
-  let T = 0, coins = 0, hearts = 5, served = 0, left = 0, qRight = 0, qAsked = 0, over = false, paused = false, spawnT = 3;
+  let T = 0, coins = 0, score = 0, hearts = 5, good = 0, poor = 0, left = 0, qRight = 0, qAsked = 0, over = false, paused = false, spawnT = 3;
   let ring = null, nextRing = 25 + Math.random() * 10, sup = null, call = null, lastTick = performance.now();
   STOR = { close: () => quit() };
   const hud = () => {
@@ -7101,7 +7167,7 @@ function storRun(team){
     $s('#stHud').innerHTML = '<span class="pill">⏱ ' + Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0') + '</span>' +
       '<span class="pill">' + stImg('ui_syiling', '🪙') + ' RM' + coins + '</span>' +
       '<span class="pill">' + [0, 1, 2, 3, 4].map(i => i < hearts ? stImg('ui_hati', '❤️') : '<span class="st-emo" style="opacity:.3">🖤</span>').join('') + '</span>' +
-      '<span class="pill">😊 ' + served + '</span><span class="pill" style="font-size:1.1cqw;max-width:20cqw;overflow:hidden;white-space:nowrap">' + esc(teamName(team)) + '</span>' +
+      '<span class="pill" style="color:#FDE68A">⭐ ' + score + '</span><span class="pill">😊 ' + (good + poor) + '</span><span class="pill" style="font-size:1.1cqw;max-width:20cqw;overflow:hidden;white-space:nowrap">' + esc(teamName(team)) + '</span>' +
       '<button data-x="quit"><i class="fa-solid fa-xmark"></i></button>';
   };
   let msgT = 0;
@@ -7112,55 +7178,37 @@ function storRun(team){
 
   /* ---------- pesanan ---------- */
   const pick = a => a[Math.floor(Math.random() * a.length)];
+  const kcalOf = items => items.reduce((a, t) => a + ST_IT[t.id].kcal, 0);
   function makeOrder(z){
-    const a = pick(ST_ATH);
-    const n = 1 + Math.floor(Math.random() * L.max);
-    if (z === 's'){
-      const kit = a.kit.slice().sort(() => Math.random() - .5).slice(0, Math.min(n, a.kit.length));
-      return { a, z, slots: kit.map(id => ({ id })), tx: pick(['Saya perlukan peralatan ini!', 'Ada stok ini?', 'Untuk latihan petang ini', 'Perlawanan esok!']) };
+    if (z === 's'){                                     // peralatan sukan: atlet, terus diserah (tanpa dulang)
+      const a = pick(ST_ATH), n = 1 + Math.floor(Math.random() * L.max);
+      const need = a.kit.slice().sort(() => Math.random() - .5).slice(0, Math.min(n, a.kit.length));
+      return { who: stPerson(a.id), z, need, got: [], tx: pick(['Saya perlukan peralatan ini!', 'Ada stok ini?', 'Untuk latihan petang ini.', 'Perlawanan esok!']) };
     }
-    const sc = ST_NUT[pick(a.nut)];
-    let tags = sc.slots.filter(t => !t.endsWith('?')).concat(sc.slots.filter(t => t.endsWith('?') && Math.random() < .5).map(t => t[0]));
-    tags = tags.slice(0, Math.max(1, Math.min(tags.length, L.max)));
-    if (L.tag) return { a, z, slots: tags.map(tag => ({ tag })), tx: sc.t };
-    const used = new Set();
-    const slots = tags.map(tag => {
-      const pool = ST_ITEMS.filter(i => i.tg.includes(tag) && i.tg !== 'x' && !used.has(i.id));
-      const it = pick(pool.length ? pool : ST_ITEMS.filter(i => i.tg.includes(tag)));
-      used.add(it.id); return { id: it.id };
-    });
-    return { a, z, slots, tx: sc.t };
+    const m = pick(ST_MEAL), target = Math.round((m.lo + Math.random() * (m.hi - m.lo)) / 10) * 10;
+    return { who: stPerson(pick(m.who)), z, target, alg: Math.random() < L.alg ? pick(Object.keys(ST_ALG)) : null, tx: m.t };
   }
-  /* padanan dulang → slot (barang tepat atau ikut tag nutrisi) */
-  function match(order, items){
-    const S2 = order.slots, used = new Array(items.length).fill(false), asg = new Array(S2.length).fill(-1);
-    const fits = (s, it) => s.id ? it.id === s.id : ST_IT[it.id].tg.includes(s.tag) && ST_IT[it.id].tg !== 'x';
-    const go = k => {
-      if (k === S2.length) return true;
-      for (let i = 0; i < items.length; i++) if (!used[i] && fits(S2[k], items[i])){ used[i] = true; asg[k] = i; if (go(k + 1)) return true; used[i] = false; }
-      return false;
-    };
-    // padanan penuh, jika gagal kira slot yang dapat dipenuhi (untuk tanda ✓ dalam belon)
-    if (go(0)) return { full: true, asg };
-    const part = new Array(S2.length).fill(-1), u2 = new Array(items.length).fill(false);
-    S2.forEach((s, k) => { const i = items.findIndex((it, j) => !u2[j] && fits(s, it)); if (i >= 0){ u2[i] = true; part[k] = i; } });
-    return { full: false, asg: part };
-  }
+  const shake = (z, i) => { const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); } };
   function custHtml(){
     return ['s', 'k'].map(z => cust[z].map((c, i) => {
       if (!c) return '';
-      const m = match(c.o, tray), frac = Math.max(0, c.p / c.max);
-      const col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444';
+      const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o;
+      const body = z === 's'
+        ? '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx">' + esc(o.tx) + '</div>'
+        : '<div class="tx big">"' + esc(o.tx) + (o.alg ? ' Oh ya, saya alergik ' + ST_ALG[o.alg].n + '.' : '') + '"</div>' +
+          '<div class="kc">🎯 ' + o.target + ' kcal' + (o.alg ? ' <span class="al">' + ST_ALG[o.alg].ic + '✕</span>' : '') + '</div>';
       return '<div class="st-cu' + (c.fresh ? ' in' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
-        '<div class="st-bub"><div class="it">' + c.o.slots.map((s, k) => s.id ?
-          '<span class="' + (m.asg[k] >= 0 ? 'ok' : '') + '">' + icon(s.id) + '</span>' :
-          '<span class="tag' + (m.asg[k] >= 0 ? ' ok' : '') + '">' + ST_TAGS[s.tag][0] + ' ' + ST_TAGS[s.tag][1] + '</span>').join('') + '</div>' +
-          '<div class="tx">' + esc(c.o.tx) + '</div><div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
-        '<div class="who">' + stImg('atl_' + c.o.a.id, c.o.a.e) + '</div><div class="nm2">' + esc(c.o.a.n) + '</div></div>';
+        '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
+        '<div class="who">' + stImg(o.who.img, o.who.e) + '</div><div class="nm2">' + esc(o.who.n) + '</div></div>';
     }).join('')).join('');
   }
   const paintCust = () => { $s('#stCust').innerHTML = custHtml(); ['s', 'k'].forEach(z => cust[z].forEach(c => { if (c) c.fresh = false; })); };
-  const paintTray = () => { $s('#stTray').innerHTML = [0, 1, 2, 3].map(i => tray[i] ? '<div class="f' + (ST_IT[tray[i].id].tg === 'x' ? ' x' : '') + '" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join(''); paintCust(); };
+  const TRAY_MAX = 6;
+  const paintTray = () => {
+    $s('#stTray').innerHTML = Array.from({ length: TRAY_MAX }, (_, i) => tray[i] ? '<div class="f' + (ST_IT[tray[i].id].tg === 'x' ? ' x' : '') + '" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join('');
+    $s('#stTrayK').textContent = tray.length ? kcalOf(tray) + ' kcal' : 'kosong';
+    paintCust();
+  };
   const shown = {};
   const paintShelves = () => ST_SHELVES.forEach(([id]) => {
     const el = $s('[data-sh="' + id + '"]'); if (!el) return;
@@ -7198,18 +7246,44 @@ function storRun(team){
 
   /* ---------- tindakan ---------- */
   function openShelf(id){
-    const sh = ST_SHELVES.find(s => s[0] === id), its = ST_ITEMS.filter(i => i.sh === id);
+    const sh = ST_SHELVES.find(s => s[0] === id), its = ST_ITEMS.filter(i => i.sh === id), store = sh[2] === 's';
     walk(sh[3] + 2); sfx('flip');
     $s('#stPop').innerHTML = '<div class="st-pop" data-pc="1"><div class="pn">' +
-      '<div class="hd">' + esc(sh[1]).toUpperCase() + '<span>Ketik barang untuk masukkan ke dulang · ketik luar untuk tutup</span></div>' +
+      '<div class="hd">' + esc(sh[1]).toUpperCase() + '<span>' + (store ? 'Ketik / seret terus kepada pelanggan di Kaunter Stor' : 'Ketik / seret ke dulang · makanan 🍳🌀 perlu dimasak') + '</span></div>' +
       '<div class="gr">' + its.map(i => '<button data-it="' + i.id + '"' + (stock[i.id] <= 0 ? ' disabled' : '') + '>' +
         '<div class="ic">' + icon(i.id) + '</div><div class="n">' + esc(i.n) + '</div>' +
-        (!i.tg || cfg.lvl === 'pakar' ? '' : '<div class="tg">' + i.tg.split('').map(t => ST_TAGS[t][0]).join(' ') + '</div>') +
+        (store ? '' : '<div class="kc">' + (L.kcal ? i.kcal + ' kcal' : '? kcal') + ' ' + stAlgOf(i.id).map(k => ST_ALG[k].ic).join('') + '</div>') +
         (i.prep ? '<span class="pr">' + (i.prep[0] === 'dapur' ? '🍳' : '🌀') + '</span>' : '') +
         '<span class="q' + (stock[i.id] <= 1 ? ' lo' : '') + '">' + stock[i.id] + '</span></button>').join('') + '</div></div></div>';
   }
+  /* skor & bayaran bila pelanggan selesai */
+  function finishCust(z, i, pts, pay, note){
+    const c = cust[z][i]; if (!c) return;
+    c.leaving = true; score += pts; coins += pay;
+    fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5.5, 56);
+    sfx('hi'); vibrate(20); paintTray();
+    if (note) msg(note[0], note[1], 1800);
+    setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
+  }
+  /* peralatan sukan: terus kepada pelanggan (ketik = pelanggan pertama yang perlukan; seret = pelanggan itu) */
+  function giveEquip(id, at){
+    const it = ST_IT[id]; if (!it || stock[id] <= 0) return;
+    const i = at != null ? at : cust.s.findIndex(c => c && !c.leaving && c.o.need.includes(id) && !c.o.got.includes(id));
+    const c = i >= 0 ? cust.s[i] : null;
+    if (!c || c.leaving) return msg('Tiada pelanggan di Kaunter Stor yang perlukan ' + esc(it.n) + '.', '#FDE68A', 1400);
+    if (!c.o.need.includes(id) || c.o.got.includes(id)){ shake('s', i); sfx('low'); return msg('Bukan ini yang diminta!', '#FCA5A5', 1000); }
+    stock[id]--; c.o.got.push(id); sfx('flip'); flyTo(id, shelfPos(id), [SLOTX.s[i] + 5.5, 72]); walk(SLOTX.s[i] + 1.5);
+    paintShelves();
+    if (c.o.got.length === c.o.need.length){
+      const frac = Math.max(0, c.p / c.max);
+      good++;
+      finishCust('s', i, 50 + Math.round(50 * frac), c.o.need.reduce((a, x) => a + ST_IT[x].p, 0) + Math.round(frac * 6), [frac > .6 ? 'Lengkap! 😄' : 'Terima kasih! 🙂', '#86EFAC']);
+    } else paintCust();
+    if ($s('.st-pop')) openShelf(it.sh);
+  }
   function takeItem(id){
     const it = ST_IT[id]; if (!it || stock[id] <= 0) return;
+    if (it.z === 's') return giveEquip(id);
     if (it.prep){
       const slots = stn[it.prep[0]], k = slots.findIndex(x => !x);
       if (k < 0) return msg((it.prep[0] === 'dapur' ? 'Dapur' : 'Blender') + ' penuh!', '#FCA5A5');
@@ -7217,7 +7291,7 @@ function storRun(team){
       msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
       $s('#stPop').innerHTML = ''; walk(91); paintStn(); paintShelves(); return;
     }
-    if (tray.length >= 4) return msg('Dulang penuh! Ketik barang dalam dulang untuk pulangkan.', '#FCA5A5', 1600);
+    if (tray.length >= TRAY_MAX) return msg('Dulang penuh! Seret makanan dari dulang ke rak untuk pulangkan.', '#FCA5A5', 1600);
     stock[id]--; tray.push({ id }); sfx('flip'); flyTo(id, shelfPos(id), TRAY_AT);
     openShelf(it.sh); paintTray(); paintShelves();
   }
@@ -7225,7 +7299,7 @@ function storRun(team){
     const x = stn[k][i]; if (!x) return;
     if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); sfx('low'); return paintStn(); }
     if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 700);
-    if (tray.length >= 4) return msg('Dulang penuh!', '#FCA5A5');
+    if (tray.length >= TRAY_MAX) return msg('Dulang penuh!', '#FCA5A5');
     stn[k][i] = null; tray.push({ id: x.id, cooked: true }); sfx('flip'); walk(91); paintStn(); paintTray();
   }
   function trayBack(i){
@@ -7234,32 +7308,33 @@ function storRun(team){
     if (!x.cooked){ stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); } else msg('Makanan dimasak dibuang', '#FDE68A', 900);
     sfx('low'); paintTray(); paintShelves();
   }
+  /* serah dulang kepada pelanggan Kedai Sihat: makin hampir kalori sasaran, makin tinggi skor */
   function serve(z, i){
     const c = cust[z][i]; if (!c || c.leaving) return;
     walk(SLOTX[z][i] + 1.5);
-    if (z === 'k' && tray.some(t => ST_IT[t.id].tg === 'x')){
-      c.p -= c.max * .15; sfx('low'); vibrate(40);
-      msg('⚠️ Atlet tak boleh makan makanan tidak sihat! Buang dari dulang.', '#FCA5A5', 2000);
-      const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); }
-      return;
+    if (z === 's') return msg('Seret peralatan dari rak terus kepada pelanggan ini.', '#FDE68A', 1400);
+    if (!tray.length){ shake(z, i); return msg('Dulang kosong — isi makanan dahulu.', '#FDE68A', 1200); }
+    const o = c.o;
+    if (o.alg && tray.some(t => ST_ALG[o.alg].ids.includes(t.id))){
+      c.p -= c.max * .3; score = Math.max(0, score - 20); sfx('low'); vibrate(60); shake(z, i);
+      return msg('😨 "Saya alergik ' + ST_ALG[o.alg].n + '! Saya tak boleh makan itu." (−20⭐)', '#FCA5A5', 2400);
     }
-    const m = match(c.o, tray);
-    if (!m.full){
-      const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); }
-      return msg('Pesanan belum lengkap — lihat belon!', '#FDE68A', 1100);
-    }
-    const idx = m.asg.slice().sort((a, b) => b - a), got = idx.map(j => tray[j].id);
-    idx.forEach(j => tray.splice(j, 1));
-    const frac = Math.max(0, c.p / c.max), tip = Math.round(frac * 6), pay = got.reduce((a, id) => a + ST_IT[id].p, 0) + tip;
-    coins += pay; served++; c.leaving = true; sfx('hi'); vibrate(20);
-    fly('+RM' + pay + (tip ? ' (tip ' + tip + ')' : ''), SLOTX[z][i] + 5.5, 58);
-    msg(frac > .6 ? 'Hebat! 😄' : 'Terima kasih! 🙂', '#86EFAC', 900);
-    paintTray(); setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
+    const kc = kcalOf(tray), diff = Math.abs(kc - o.target) / o.target, acc = Math.max(0, 1 - diff * 2.5);
+    const junk = tray.filter(t => ST_IT[t.id].tg === 'x').length, frac = Math.max(0, c.p / c.max);
+    const pts = Math.max(0, Math.round(100 * acc) + Math.round(20 * frac) - junk * 15);
+    const pay = tray.reduce((a, t) => a + ST_IT[t.id].p, 0) + Math.round(frac * 6);
+    if (acc >= .6) good++; else poor++;
+    const verdict = diff <= .05 ? ['🎯 Tepat! ' + kc + '/' + o.target + ' kcal', '#86EFAC'] :
+      kc < o.target ? ['Kurang kalori: ' + kc + '/' + o.target + ' kcal', acc >= .6 ? '#FDE68A' : '#FCA5A5'] :
+                      ['Terlebih kalori: ' + kc + '/' + o.target + ' kcal', acc >= .6 ? '#FDE68A' : '#FCA5A5'];
+    if (junk) verdict[0] += ' · makanan tidak sihat −' + junk * 15;
+    tray.length = 0;
+    finishCust(z, i, pts, pay, verdict);
   }
   /* ---------- telefon & pembekal ---------- */
   function answerPhone(){
     if (!ring || call) return;
-    ring = null; walk(48); sfx('flip');
+    ring = null; walk(56.5); sfx('flip');                // berdiri di sisi meja telefon, bukan di belakangnya
     const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
     call = { q }; paused = true;
     $s('#stPhone').classList.remove('ring');
@@ -7284,7 +7359,7 @@ function storRun(team){
   }
   function receive(){
     if (!sup || !sup.here) return;
-    walk(48);
+    walk(40);
     const low = ST_ITEMS.filter(i => i.tg !== 'x').sort((a, b) => stock[a.id] - stock[b.id]).slice(0, sup.full ? 14 : 7);
     const add = sup.full ? 5 : 3;
     low.forEach(i => stock[i.id] += add);
@@ -7305,7 +7380,8 @@ function storRun(team){
       const free = [];
       ['s', 'k'].forEach(z => cust[z].forEach((c, i) => { if (!c) free.push([z, i]); }));
       if (free.length){
-        const [z, i] = pick(free), o = makeOrder(z), max = SABAR * (1 + (o.slots.length - 1) * .2);
+        const [z, i] = pick(free), o = makeOrder(z), n = o.need ? o.need.length : Math.max(1, Math.round(o.target / 250));
+        const max = SABAR * (1 + (n - 1) * .2);
         cust[z][i] = { o, p: max, max, fresh: true };
         sfx('flip'); paintCust();
       }
@@ -7318,7 +7394,7 @@ function storRun(team){
       c.p -= dt;
       if (c.p <= 0){
         c.leaving = true; left++; hearts--; changed = true; sfx('low'); vibrate(60);
-        msg('😠 ' + esc(c.o.a.n) + ' pergi dengan marah!', '#FCA5A5', 1600);
+        msg('😠 ' + esc(c.o.who.n) + ' pergi dengan marah!', '#FCA5A5', 1600);
         setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
       }
     }));
@@ -7355,26 +7431,26 @@ function storRun(team){
   /* ---------- tamat ---------- */
   function finish(failed){
     if (over) return; over = true; clearInterval(loop);
-    const right = served + qRight, asked = served + left + qAsked;
-    const rp = clamp(Math.round(coins / 40), 2, 25), d = storData();
+    const served = good + poor, right = good + qRight, asked = served + left + qAsked;
+    const rp = clamp(Math.round(score / 60), 2, 25), d = storData();
     teamRP(team, rp);
-    const tp = asked ? gameToPBD(team, 'stor', right, asked, { coins }) : 0;
-    const best = !d.best[team] || coins > d.best[team];
-    if (best) d.best[team] = coins;
+    const tp = asked ? gameToPBD(team, 'stor', right, asked, { coins, score }) : 0;
+    const best = !d.best[team] || score > d.best[team];
+    if (best) d.best[team] = score;
     d.plays[team] = (d.plays[team] || 0) + 1;
     save(true);
     sfx(failed ? 'low' : 'myth');
     $s('#stEnd').innerHTML = '<div class="st-end"><div class="pn">' +
       '<div class="big">' + (failed ? 'KEDAI DITUTUP!' : 'SYIF TAMAT!') + '</div>' +
       '<div style="font-size:1.3cqw;color:#94A3B8;margin-top:.5cqw">' + esc(teamName(team)) + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
-      '<div class="gr"><div><b>RM' + coins + '</b>pendapatan</div><div><b>' + served + '</b>dilayan</div><div><b>' + left + '</b>pergi marah</div>' +
+      '<div class="gr"><div><b style="color:#FDE68A">⭐ ' + score + '</b>skor</div><div><b>RM' + coins + '</b>pendapatan</div><div><b>' + served + '</b>dilayan · ' + left + ' pergi marah</div>' +
       '<div><b>' + qRight + '/' + qAsked + '</b>soalan pembekal</div><div><b style="color:#FB923C">+' + rp + '</b>RP</div><div><b style="color:' + (tp ? TP_COLOR[tp] : '#fff') + '">' + (tp ? 'TP' + tp : '—') + '</b>ke PBD</div></div>' +
       '<div class="bt"><button data-x="quit">Tutup</button><button class="o" data-x="again">↻ Main Lagi</button></div></div></div>';
     if (!failed) confettiBurst($s('#stEnd'), 70);
   }
   function quit(){
     if (STOR && STOR.closed) return;
-    if (!over && (served || left)){ over = true; clearInterval(loop); save(); }
+    if (!over && (good || poor || left)){ over = true; clearInterval(loop); save(); }
     over = true; clearInterval(loop); STOR = null;
     liveEnd(live); unDrag(); root.remove(); unlockBody();
     if (S.ui.tab === 'arena') renderTab();
@@ -7411,9 +7487,9 @@ function storRun(team){
   };
   root.addEventListener('pointerdown', e => {
     if (over || call) return;
-    const src = e.target.closest('[data-it],[data-tr],.st-slot.ready'); if (!src) return;
+    const src = e.target.closest('[data-it],[data-tr],.st-slot.ready,.st-tray'); if (!src) return;
     drag = { src, x: e.clientX, y: e.clientY, on: false, hot: null,
-      kind: src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : 'ss',
+      kind: src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.classList.contains('st-tray') ? 'tray' : 'ss',
       id: src.dataset.it || src.dataset.tr || src.dataset.ss };
   });
   window.addEventListener('pointermove', e => {
@@ -7421,7 +7497,8 @@ function storRun(team){
     if (!drag.on){
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 10) return;
       drag.on = true;
-      const itemId = drag.kind === 'it' ? drag.id : drag.kind === 'tr' ? (tray[+drag.id] || {}).id : ((stn[drag.id.slice(0, -1)] || [])[+drag.id.slice(-1)] || {}).id;
+      const itemId = drag.kind === 'it' ? drag.id : drag.kind === 'tr' ? (tray[+drag.id] || {}).id : drag.kind === 'tray' ? (tray[0] || {}).id :
+        ((stn[(drag.id || '').slice(0, -1)] || [])[+(drag.id || '').slice(-1)] || {}).id;
       if (!itemId){ drag = null; return; }
       drag.g = document.createElement('div'); drag.g.className = 'st-ghost'; drag.g.innerHTML = icon(itemId);
       document.body.appendChild(drag.g);
@@ -7442,14 +7519,19 @@ function storRun(team){
     const tgt = e.type === 'pointerup' ? d.hot : null;     // sasaran terakhir yang menyala (panel rak sudah dipapar semula)
     const cu = tgt && tgt.dataset.cu, toTray = tgt && tgt.classList.contains('st-tray'), toShelf = tgt && tgt.dataset.sh;
     if (d.kind === 'it'){
-      if (cu){ const n = tray.length; takeItem(d.id); $s('#stPop').innerHTML = ''; if (tray.length > n) serve(cu[0], +cu[1]); }
-      else if (toTray) takeItem(d.id);
-    } else if (d.kind === 'tr'){
-      if (cu) serve(cu[0], +cu[1]); else if (toShelf) trayBack(+d.id);
+      const it = ST_IT[d.id];
+      if (it.z === 's'){                               // peralatan: hanya kepada pelanggan Kaunter Stor
+        if (cu && cu[0] === 's') giveEquip(d.id, +cu[1]);
+        else if (cu || toTray) msg('Peralatan sukan diberi terus kepada pelanggan di Kaunter Stor.', '#FDE68A', 1600);
+      } else if (cu || toTray){                        // makanan: masuk dulang dahulu
+        if (cu && cu[0] === 's') msg('Makanan untuk pelanggan Kedai Sihat.', '#FDE68A', 1300);
+        else { takeItem(d.id); if (cu) msg('Masuk dulang — cukupkan kalori, kemudian seret dulang kepada pelanggan.', '#FDE68A', 1800); }
+      }
+    } else if (d.kind === 'tr' || d.kind === 'tray'){
+      if (cu) serve(cu[0], +cu[1]); else if (toShelf && d.kind === 'tr') trayBack(+d.id);
     } else {
       const k = d.id.slice(0, -1), i = +d.id.slice(-1);
-      if (cu){ const n = tray.length; takeStation(k, i); if (tray.length > n) serve(cu[0], +cu[1]); }
-      else if (toTray) takeStation(k, i);
+      if (cu || toTray) takeStation(k, i);
     }
   };
   window.addEventListener('pointerup', endDrag);
