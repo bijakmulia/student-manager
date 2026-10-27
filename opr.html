@@ -62,6 +62,10 @@ textarea.input{min-height:92px;resize:vertical}
 .checks{display:flex;flex-direction:column;gap:6px}
 .checks label{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
 .checks input{margin-top:3px}
+.alt{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:13px}
+.alt summary{cursor:pointer;font-weight:600;color:var(--brand)}
+.alt ol{margin:8px 0;padding-left:20px;color:var(--muted)}
+.alt kbd{background:#F1F5F9;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:12px;font-family:inherit}
 .formmeta{background:var(--tint);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px}
 .formmeta b{display:block;font-size:14px}
 
@@ -193,6 +197,17 @@ textarea.input{min-height:92px;resize:vertical}
       </div>
       <div id="msg" class="msg"></div>
       <p class="hint" style="margin:10px 0 0">Tiada borang? <button class="btn-link" id="btnTpl" type="button">Guna templat OPR standard</button></p>
+      <details class="alt" id="altBox">
+        <summary>Pautan gagal dibaca? Guna cara alternatif</summary>
+        <ol>
+          <li>Buka borang Google Form itu dalam Chrome/Edge di komputer.</li>
+          <li>Tekan <kbd>Ctrl</kbd>+<kbd>U</kbd> (lihat sumber halaman).</li>
+          <li>Tekan <kbd>Ctrl</kbd>+<kbd>A</kbd>, kemudian <kbd>Ctrl</kbd>+<kbd>C</kbd>.</li>
+          <li>Tampal di bawah dan tekan <b>Guna</b>.</li>
+        </ol>
+        <textarea id="src" class="input" rows="3" placeholder="Tampal kod sumber borang di sini…"></textarea>
+        <button id="btnSrc" class="btn btn-ghost" type="button" style="margin-top:8px">Guna</button>
+      </details>
     </div>
 
     <div class="card hidden" id="cardFields">
@@ -275,10 +290,17 @@ const MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','S
 // Google Form item types we can turn into inputs
 const T = {SHORT:0, PARA:1, RADIO:2, DROP:3, CHECK:4, SCALE:5, DATE:9, TIME:10};
 const SUPPORTED = new Set(Object.values(T));
+// Browsers cannot read docs.google.com directly (CORS), so the page is fetched through
+// public proxies. They come and go, so all are tried at once and the first good answer wins.
+const enc = encodeURIComponent;
 const PROXIES = [
-  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-  u => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
-  u => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u)
+  {url: u => 'https://api.allorigins.win/raw?url=' + enc(u)},
+  {url: u => 'https://api.allorigins.win/get?url=' + enc(u), json:'contents'},
+  {url: u => 'https://api.codetabs.com/v1/proxy?quest=' + enc(u)},
+  {url: u => 'https://corsproxy.io/?url=' + enc(u)},
+  {url: u => 'https://cors.eu.org/' + u},
+  {url: u => 'https://whateverorigin.org/get?url=' + enc(u), json:'contents'},
+  {url: u => 'https://r.jina.ai/' + u, headers:{'X-Return-Format':'html'}}
 ];
 const TEMPLATE = {
   title:'One Page Report', desc:'', fromTemplate:true,
@@ -328,21 +350,26 @@ function normaliseUrl(raw){
 }
 
 async function fetchVia(url){
-  let lastErr;
-  for(const p of PROXIES){
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
-    try{
-      const res = await fetch(p(url), {signal:ctrl.signal});
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      const text = await res.text();
-      if(text.includes('FB_PUBLIC_LOAD_DATA_')) return text;
-      if(/accounts\.google\.com|ServiceLogin/i.test(text)) throw Object.assign(new Error('login'), {login:true});
-      throw new Error('Tiada data borang');
-    }catch(e){ lastErr = e; if(e.login) throw e; }
-    finally{ clearTimeout(timer); }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20000);
+  const tries = PROXIES.map(async p => {
+    const res = await fetch(p.url(url), {signal:ctrl.signal, headers:p.headers});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    let text = await res.text();
+    if(p.json){ try{ text = String(JSON.parse(text)[p.json] || ''); }catch(e){ throw new Error('JSON'); } }
+    if(text.includes('FB_PUBLIC_LOAD_DATA_')) return text;
+    if(/accounts\.google\.com\/(v3\/)?signin|ServiceLogin/i.test(text)) throw Object.assign(new Error('login'), {login:true});
+    throw new Error('Tiada data borang');
+  });
+  try{
+    return await Promise.any(tries);
+  }catch(agg){
+    const errs = agg.errors || [];
+    throw errs.find(e => e && e.login) || new Error('Gagal');
+  }finally{
+    clearTimeout(timer);
+    ctrl.abort();
   }
-  throw lastErr || new Error('Gagal');
 }
 
 function parseForm(html){
@@ -689,28 +716,56 @@ async function readLink(){
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
   toast('Membaca borang…', 'info');
+  const cacheKey = 'form:' + target.fetchUrl;
+  store.set('url', $('url').value.trim());
   try{
-    const html = await fetchVia(target.fetchUrl);
-    const form = parseForm(html);
-    loadForm(form, target.prefill);
-    store.set('url', $('url').value.trim());
-    const pre = Object.keys(target.prefill).length;
-    toast('<b>' + esc(form.title) + '</b> berjaya dibaca: ' + form.fields.length + ' soalan' +
-      (pre ? ', ' + pre + ' jawapan pra-isi dimuatkan' : '') + '.', 'ok');
+    const form = parseForm(await fetchVia(target.fetchUrl));
+    store.set(cacheKey, form);
+    showLoaded(form, target.prefill, '');
   }catch(e){
-    toast(e.login
-      ? 'Borang ini memerlukan log masuk Google. Tetapkan borang supaya boleh diakses tanpa log masuk, atau guna templat OPR standard.'
-      : 'Borang tidak dapat dibaca. Pastikan borang dikongsi secara awam dan pautannya betul, kemudian cuba lagi — atau <button class="btn-link" type="button" data-tpl>guna templat OPR standard</button>.', 'err');
+    const cached = store.get(cacheKey);
+    if(cached && cached.fields){
+      showLoaded(cached, target.prefill, ' (salinan tersimpan daripada bacaan lepas)');
+    }else{
+      toast((e.login
+        ? 'Borang ini memerlukan log masuk Google. Dalam tetapan borang, matikan pilihan yang mewajibkan log masuk (contoh: “Hadkan kepada pengguna organisasi” atau kumpul e-mel “Disahkan”).'
+        : 'Pautan tidak dapat dibaca sekarang (pelayan perantara sibuk). Cuba tekan <b>Baca</b> sekali lagi.') +
+        ' Atau guna <button class="btn-link" type="button" data-alt>cara alternatif</button> / <button class="btn-link" type="button" data-tpl>templat OPR standard</button>.', 'err');
+    }
   }finally{
     btn.disabled = false;
     btn.textContent = 'Baca';
   }
 }
+function showLoaded(form, prefill, note){
+  loadForm(form, prefill);
+  const pre = Object.keys(prefill || {}).length;
+  toast('<b>' + esc(form.title) + '</b> berjaya dibaca: ' + form.fields.length + ' soalan' +
+    (pre ? ', ' + pre + ' jawapan pra-isi dimuatkan' : '') + esc(note) + '.', 'ok');
+}
+function readSource(){
+  const html = $('src').value;
+  let prefill = {};
+  try{ prefill = normaliseUrl($('url').value).prefill; }catch(e){}
+  try{
+    const form = parseForm(html);
+    try{ store.set('form:' + normaliseUrl($('url').value).fetchUrl, form); }catch(e){}
+    showLoaded(form, prefill, '');
+    $('src').value = '';
+    $('altBox').open = false;
+  }catch(e){
+    toast('Kod sumber tidak sah. Pastikan anda menyalin <b>semua</b> teks daripada halaman Ctrl+U borang tersebut.', 'err');
+  }
+}
+$('btnSrc').addEventListener('click', readSource);
 $('btnRead').addEventListener('click', readLink);
 $('url').addEventListener('keydown', e => { if(e.key === 'Enter') readLink(); });
 function useTemplate(){ loadForm(JSON.parse(JSON.stringify(TEMPLATE)), null); toast('Templat OPR standard dimuatkan.', 'ok'); }
 $('btnTpl').addEventListener('click', useTemplate);
-$('msg').addEventListener('click', e => { if(e.target.closest('[data-tpl]')) useTemplate(); });
+$('msg').addEventListener('click', e => {
+  if(e.target.closest('[data-tpl]')) useTemplate();
+  if(e.target.closest('[data-alt]')){ $('altBox').open = true; $('src').focus(); }
+});
 
 // ---------- export ----------
 function fileBase(){
