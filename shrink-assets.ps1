@@ -229,7 +229,7 @@ function Shrink-Art($dir, $tag, $promptFile, $max, $dlRx, $hint) {
         Write-Host "  [$tag] senarai.json dikemas kini ($($have.Count) gambar)"
     }
 }
-# assets\kad: Ilmon card art (k01..k96), 512px.
-Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^(edurank__kad__)?k\d\d( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96'
+# assets\kad: Ilmon card art (k01..k96) + belakang (card back), 512px.
+Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^(edurank__kad__)?(k\d\d|belakang)( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96 atau belakang'
 # assets\seram: jumpscare faces for Sekolah Berhantu (muka_putih, muka_pontianak, muka_toyol + "2" variants), 900px.
 Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 900.0 '^(edurank__seram__)?muka_(putih|pontianak|toyol)2?( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-SERAM.txt'

@@ -7,6 +7,9 @@ Auto-push mengecilkan gambar (512px, JPG) dan menerbitkannya; kad terus guna gam
 Gambar ialah ilustrasi penuh (ada latar) — TIDAK perlu latar magenta.
 
 
+BELAKANG KAD
+  belakang  Belakang kad Kombo Ilmon (tangan pemain lain dipapar terbalik). Prompt: ### belakang.png
+
 HUTAN AKSARA (Bahasa)
   k01  Kutu Huruf  [Percikan]
   k02  Siput Koma  [Percikan]
