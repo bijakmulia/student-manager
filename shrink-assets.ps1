@@ -23,6 +23,19 @@ if (Test-Path $list) {
     }
 }
 
+# Pictures saved by the Gemini userscript (tools/jana-gambar-gemini.user.js) land in Downloads named
+# "edurank__stor__<name>.png": pull them in. Other files in Downloads are never touched.
+$dlDir = Join-Path $env:USERPROFILE 'Downloads'
+if ($known.Count -and (Test-Path $dlDir)) {
+    Get-ChildItem $dlDir -File | Where-Object { $_.Name -match '^edurank__stor__' -and $_.Extension -match '^\.(png|jpe?g)$' -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | ForEach-Object {
+        $b = ($_.BaseName -replace '^edurank__stor__', '' -replace ' \(\d+\)$', '').Trim().ToLower()
+        if ($known.ContainsKey($b)) {
+            Move-Item -LiteralPath $_.FullName -Destination (Join-Path $Dir ($b + $_.Extension.ToLower())) -Force
+            Write-Host "  [aset] $($_.Name) dipindah dari Downloads"
+        }
+    }
+}
+
 function Get-MaxSize([string]$id) {
     if ($id -like 'bg_*') { return @(1600, 1000) }
     if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -like 'pintu_*' -or $id -eq 'pembekal') { return @(512, 768) }
@@ -183,7 +196,7 @@ function Shrink-Art($dir, $tag, $promptFile, $max, $dlRx, $hint) {
     $dl = Join-Path $env:USERPROFILE 'Downloads'
     if (Test-Path $dl) {
         Get-ChildItem $dl -File | Where-Object { $_.Name -match $dlRx -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | Sort-Object LastWriteTime | ForEach-Object {
-            $dest = Join-Path $dir (($_.BaseName -replace ' \(\d+\)$', '') + $_.Extension.ToLower())
+            $dest = Join-Path $dir (($_.BaseName -replace '^edurank__[a-z]+__', '' -replace ' \(\d+\)$', '') + $_.Extension.ToLower())
             Move-Item -LiteralPath $_.FullName -Destination $dest -Force
             Write-Host "  [$tag] $($_.Name) dipindah dari Downloads"
         }
@@ -217,6 +230,6 @@ function Shrink-Art($dir, $tag, $promptFile, $max, $dlRx, $hint) {
     }
 }
 # assets\kad: Ilmon card art (k01..k96), 512px.
-Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^k\d\d( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96'
+Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^(edurank__kad__)?k\d\d( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96'
 # assets\seram: jumpscare faces for Sekolah Berhantu (muka_putih, muka_pontianak, muka_toyol + "2" variants), 900px.
-Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 900.0 '^muka_(putih|pontianak|toyol)2?( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-SERAM.txt'
+Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 900.0 '^(edurank__seram__)?muka_(putih|pontianak|toyol)2?( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-SERAM.txt'
