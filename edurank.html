@@ -5712,9 +5712,8 @@ const GAME_LOBBY = {
     cfg: () => S.config,
     opts: () => [lbSeg('duelQ', 'MASA MENJAWAB (MOD KUIZ)', [[10,'10s'],[15,'15s'],[20,'20s'],[30,'30s'],[45,'45s']], 'Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.')],
     starts: [],
-    menu: [['koleksi', '🎴 Koleksi & Pack', 'TPC ›'], ['juara', '🏆 Juara Duel', '›']],
+    menu: [['juara', '🏆 Juara Duel', '›']],
     views: {
-      koleksi: { t: 'KOLEKSI & PACK', h: () => '<div data-nohint="1">' + cardsHubHtml() + '</div>' },
       juara:   { t: 'JUARA DUEL KELAS', h: () => pvpBoardHtml() || '<div class="lb-note">Belum ada perlawanan kumpulan lawan kumpulan.</div>' },
       opp:     { t: 'PILIH KUMPULAN LAWAN', h: () => classTeams().filter(g => g.id !== arenaUi().team).map(g =>
         '<button class="lb-team' + (g.id === duelLb().opp ? ' on' : '') + '" data-lb="opp:' + g.id + '">' + teamAvatar(g.id, 34) +
