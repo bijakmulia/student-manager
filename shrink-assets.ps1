@@ -175,6 +175,15 @@ if (Test-Path $kadDir) {
     $kknown = @{}
     $klist = Join-Path $kadDir 'PROMPT-KAD.txt'
     if (Test-Path $klist) { Get-Content $klist -Encoding UTF8 | ForEach-Object { if ($_ -match '^###\s+([a-z0-9_]+)\.png') { $kknown[$Matches[1]] = $true } } }
+    # Gemini/Tampermonkey downloads land in Downloads (a userscript cannot pick the folder): pull finished kNN.png in.
+    $dl = Join-Path $env:USERPROFILE 'Downloads'
+    if (Test-Path $dl) {
+        Get-ChildItem $dl -File | Where-Object { $_.Name -match '^k\d\d( \(\d+\))?\.(png|jpe?g)$' -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | Sort-Object LastWriteTime | ForEach-Object {
+            $dest = Join-Path $kadDir (($_.BaseName -replace ' \(\d+\)$', '') + $_.Extension.ToLower())
+            Move-Item -LiteralPath $_.FullName -Destination $dest -Force
+            Write-Host "  [kad] $($_.Name) dipindah dari Downloads"
+        }
+    }
     Get-ChildItem $kadDir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g|webp)$' } | ForEach-Object {
         $kid = ($_.BaseName.Trim().ToLower() -replace '[\s\-]+', '_')
         if ($kid -match '^(k\d\d)_') { $kid = $Matches[1] }                    # "k01_kutu_huruf" -> k01
