@@ -7656,11 +7656,13 @@ const ST_CSS = `
 .st-bub .jr .gl img{width:100%;height:100%;object-fit:contain}
 .st-me{pointer-events:auto!important;cursor:grab;touch-action:none}
 .st-me.drag{transition:none;cursor:grabbing;filter:drop-shadow(0 .4cqw .5cqw rgba(0,0,0,.35))}
-.st-tin{position:relative;display:flex;align-items:center;justify-content:center;width:78%;height:92%;margin:auto;border-radius:18% / 9%;
+.st-tin{position:relative;display:flex;align-items:center;justify-content:center;width:62%;height:92%;margin:auto;border-radius:18% / 9%;
   background:linear-gradient(90deg,#8A949E,#E4E9EE 28%,#FFFFFF 42%,#C3CAD1 70%,#7D8791);box-shadow:inset 0 .25cqw 0 rgba(255,255,255,.5),inset 0 -.25cqw 0 rgba(0,0,0,.25),0 .2cqw .3cqw rgba(0,0,0,.3)}
 .st-tin::before{content:'';position:absolute;left:0;right:0;top:4%;height:6%;border-radius:50%;background:rgba(0,0,0,.18)}
 .st-tin b{display:flex;align-items:center;justify-content:center;width:100%;height:56%;background:var(--c);border-top:.15cqw solid rgba(0,0,0,.2);border-bottom:.15cqw solid rgba(0,0,0,.2);font-size:2.3cqw;line-height:1;text-shadow:0 0 .2cqw #fff}
 .st-flyit .st-tin b,.st-ghost .st-tin b{font-size:26px}
+.st-tin b.tx{font-size:.85cqw;font-weight:900;letter-spacing:.02em;color:#1E293B;text-shadow:none;white-space:nowrap}
+.st-flyit .st-tin b.tx,.st-ghost .st-tin b.tx{font-size:11px}
 .st-tray .g>div.jus{filter:drop-shadow(0 0 .5cqw #FDE68A)}
 .st-bub .jr .tx{margin-top:0;text-align:left;max-width:12cqw;font-size:.95cqw}
 .st-shelf .nm{margin-top:.5cqw}
@@ -7745,7 +7747,8 @@ function storRun(team){
   const fly = (t, x, y) => { const n = document.createElement('div'); n.className = 'st-fly'; n.textContent = t; n.style.left = x + '%'; n.style.top = y + '%'; $s('#stStage').appendChild(n); setTimeout(() => n.remove(), 1150); };
   const walk = x => { const m = $s('#stMe'); m.style.left = x + '%'; m.classList.remove('walk'); void m.offsetWidth; m.classList.add('walk'); };
   const icon = (id, cls) => { const i = ST_IT[id];
-    if (i.tg === 'j') return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b>' + i.e + '</b></span>';   // bahan jus: tin berlabel emoji, tanpa aset
+    if (i.tg === 'j'){ const tx = { j_susu: 'SUSU', j_yogurt: 'YOGURT', chia: 'CHIA' }[id];      // bahan jus: tin berlabel emoji (atau nama), tanpa aset
+      return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b' + (tx ? ' class="tx">' + tx : '>' + i.e) + '</b></span>'; }
     return stImg(i.img || id, i.e, cls); };
   const trayIcon = x => x.jus ? stImg('jus_' + x.jus, '🥤') : icon(x.id);
   const jusOf = id => ST_JUS.find(r => r.id === id);
