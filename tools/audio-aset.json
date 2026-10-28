@@ -32,6 +32,15 @@
     { "id": "stor_alahan",    "g": "Stor Sukan", "k": "sfx", "s": 0.8, "p": "Warning alert, two quick urgent but friendly beeps" },
     { "id": "stor_tamat",     "g": "Stor Sukan", "k": "sfx", "s": 2.0, "p": "End of work shift bell with a cheerful short jingle" },
 
+    { "id": "kombo_serang",   "g": "Kombo Ilmon", "k": "sfx", "s": 1.0, "p": "Magical energy volley launching at several targets at once, bright whoosh with sparkles, anime card battle game" },
+    { "id": "kombo_kena",     "g": "Kombo Ilmon", "k": "sfx", "s": 0.6, "p": "Punchy magical impact hit, short heavy thud with energy crackle" },
+    { "id": "kombo_perisai",  "g": "Kombo Ilmon", "k": "sfx", "s": 0.8, "p": "Glowing energy shield absorbing a hit, glassy deflecting clang with a soft hum" },
+    { "id": "kombo_bertahan", "g": "Kombo Ilmon", "k": "sfx", "s": 1.2, "p": "Raising a big glowing magic shield dome, rising shimmer whoosh and steady low hum" },
+    { "id": "kombo_balas",    "g": "Kombo Ilmon", "k": "sfx", "s": 1.0, "p": "Fireball counterattack, fiery whoosh followed by a crackling flame burst" },
+    { "id": "kombo_sembuh",   "g": "Kombo Ilmon", "k": "sfx", "s": 1.2, "p": "Gentle healing nature magic, soft rising chimes with rustling leaves" },
+    { "id": "kombo_air",      "g": "Kombo Ilmon", "k": "sfx", "s": 1.0, "p": "Water power-up, bubbly splash swirling upward into a bright sparkling chime" },
+    { "id": "kombo_cas",      "g": "Kombo Ilmon", "k": "sfx", "s": 1.0, "p": "Electric power charge-up, crackling electricity building quickly into a sharp zap" },
+
     { "id": "run_coin",       "g": "Larian Ilmu", "k": "sfx", "s": 0.5, "p": "Collecting a star in an endless runner game, bright sparkle ding" },
     { "id": "run_jump",       "g": "Larian Ilmu", "k": "sfx", "s": 0.5, "p": "Light cartoon jump whoosh boing" },
     { "id": "run_lane",       "g": "Larian Ilmu", "k": "sfx", "s": 0.5, "p": "Very quick side swipe whoosh" },
