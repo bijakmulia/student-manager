@@ -1,0 +1,120 @@
+GAMBAR KAD ILMON (Alam Ilmuria) — 96 kad
+=========================================
+
+Jana gambar dengan prompt dalam PROMPT-KAD.txt (format ### k01.png).
+Simpan sebagai k01.png ... k96.png dalam folder ini (boleh juga k01_kutu_huruf.png).
+Auto-push mengecilkan gambar (512px, JPG) dan menerbitkannya; kad terus guna gambar baharu.
+Gambar ialah ilustrasi penuh (ada latar) — TIDAK perlu latar magenta.
+
+
+HUTAN AKSARA (Bahasa)
+  k01  Kutu Huruf  [Percikan]
+  k02  Siput Koma  [Percikan]
+  k03  Kumbang Noktah  [Percikan]
+  k04  Arnab Abjad  [Cahaya]
+  k05  Burung Pantun  [Cahaya]
+  k06  Katak Kamus  [Cahaya]
+  k07  Rusa Rangkap  [Kristal]
+  k08  Musang Metafora  [Kristal]
+  k09  Gajah Glosari  [Mistik]
+  k10  Harimau Hikayat  [Mistik]
+  k11  Naga Peribahasa  [Legenda]
+  k12  Garuda Pujangga  [Mitos]
+
+KUBU ZAMAN (Sejarah)
+  k13  Tikus Tembikar  [Percikan]
+  k14  Kelawar Gua  [Percikan]
+  k15  Ketam Syiling  [Percikan]
+  k16  Kuda Kembara  [Cahaya]
+  k17  Penyu Prasasti  [Cahaya]
+  k18  Burung Hantu Arkib  [Cahaya]
+  k19  Singa Kota  [Kristal]
+  k20  Kerbau Keris  [Kristal]
+  k21  Badak Benteng  [Mistik]
+  k22  Merak Diraja  [Mistik]
+  k23  Naga Purba  [Legenda]
+  k24  Burung Api Zaman  [Mitos]
+
+TAMAN WARNA (Seni & Muzik)
+  k25  Lebah Lakaran  [Percikan]
+  k26  Ulat Krayon  [Percikan]
+  k27  Rama Palet  [Percikan]
+  k28  Kucing Kanvas  [Cahaya]
+  k29  Burung Seruling  [Cahaya]
+  k30  Ikan Gendang  [Cahaya]
+  k31  Merpati Melodi  [Kristal]
+  k32  Labah Rebab  [Kristal]
+  k33  Kijang Kompang  [Mistik]
+  k34  Angsa Wau  [Mistik]
+  k35  Unikorn Pelangi  [Legenda]
+  k36  Singa Simfoni  [Mitos]
+
+MAKMAL BERCAHAYA (Sains)
+  k37  Atomi  [Percikan]
+  k38  Sel Bulu  [Percikan]
+  k39  Kumbang Magnet  [Percikan]
+  k40  Tupai Litar  [Cahaya]
+  k41  Kodok Kimia  [Cahaya]
+  k42  Kerang Kristal  [Cahaya]
+  k43  Serigala Volt  [Kristal]
+  k44  Ular Heliks  [Kristal]
+  k45  Rusa Robo  [Mistik]
+  k46  Belalang Laser  [Mistik]
+  k47  Griffin Graviti  [Legenda]
+  k48  Naga Kuantum  [Mitos]
+
+LANGIT BINTANG (Astronomi)
+  k49  Bintik Bintang  [Percikan]
+  k50  Meteor Comel  [Percikan]
+  k51  Kucing Bulan  [Percikan]
+  k52  Penguin Planet  [Cahaya]
+  k53  Lumba Komet  [Cahaya]
+  k54  Gurita Galaksi  [Cahaya]
+  k55  Burung Aurora  [Kristal]
+  k56  Kala Nebula  [Kristal]
+  k57  Paus Bintang  [Mistik]
+  k58  Kuda Orbit  [Mistik]
+  k59  Singa Suria  [Legenda]
+  k60  Naga Lohong Hitam  [Mitos]
+
+LAUTAN NOMBOR (Matematik)
+  k61  Ikan Kosong  [Percikan]
+  k62  Udang Tambah  [Percikan]
+  k63  Obor Tolak  [Percikan]
+  k64  Ketam Sempoa  [Cahaya]
+  k65  Anjing Laut Darab  [Cahaya]
+  k66  Kuda Laut Bahagi  [Cahaya]
+  k67  Buntal Pecahan  [Kristal]
+  k68  Sotong Sudut  [Kristal]
+  k69  Penyu Pi  [Mistik]
+  k70  Jerung Geometri  [Mistik]
+  k71  Leviatan Infiniti  [Legenda]
+  k72  Naga Algebra  [Mitos]
+
+BENUA PETA (Geografi)
+  k73  Ketam Kompas  [Percikan]
+  k74  Titis Hujan  [Percikan]
+  k75  Daun Musim  [Percikan]
+  k76  Memerang Sungai  [Cahaya]
+  k77  Unta Gurun  [Cahaya]
+  k78  Beruang Kutub  [Cahaya]
+  k79  Helang Gunung  [Kristal]
+  k80  Buaya Delta  [Kristal]
+  k81  Raksasa Taufan  [Mistik]
+  k82  Gajah Glasier  [Mistik]
+  k83  Penyu Benua  [Legenda]
+  k84  Naga Tsunami  [Mitos]
+
+ARENA JUARA (Sukan)
+  k85  Bola Bara  [Percikan]
+  k86  Cicak Lompat  [Percikan]
+  k87  Ayam Pecut  [Percikan]
+  k88  Kanggaru Tinju  [Cahaya]
+  k89  Monyet Gimrama  [Cahaya]
+  k90  Kambing Pendaki  [Cahaya]
+  k91  Cheetah Kilat  [Kristal]
+  k92  Kuda Belang Lumba  [Kristal]
+  k93  Beruang Jaring  [Mistik]
+  k94  Helang Badminton  [Mistik]
+  k95  Harimau Juara  [Legenda]
+  k96  Phoenix Olimpik  [Mitos]

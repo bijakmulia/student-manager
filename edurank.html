@@ -5607,7 +5607,7 @@ const lbSeg = (k, label, choices, note) => ({ k, label, choices, note });
 const GAME_LOBBY = {
   cards: {
     title: 'DUEL KAD', ico: '⚔️', c: '#FF8A3D',
-    desc: 'Kumpul kad, bina pasukan dan bertarung.',
+    desc: 'Kumpul Ilmon — makhluk ajaib Alam Ilmuria — bina pasukan dan bertarung.',
     cfg: () => S.config,
     opts: () => [lbSeg('duelQ', 'MASA MENJAWAB (MOD KUIZ)', [[10,'10s'],[15,'15s'],[20,'20s'],[30,'30s'],[45,'45s']], 'Kurang masa = lebih sukar. Jawapan dalam 40% masa pertama = serangan KRITIKAL.')],
     starts: [],
@@ -5801,10 +5801,10 @@ function gameLobby(k){
    Pendua menaikkan LEVEL kad (Lv 1–5) yang menguatkannya dalam Duel Kad.
    Hasil kad TIDAK PERNAH mengubah TP, skor atau rekod PBD.            */
 const CARD_TIERS = [
-  { k:'sial',    name:'Sial',    color:'#7E8794', glow:'#5A6672', fx:'low',  atk:6,  hp:30, def:2 },
-  { k:'biasa',   name:'Biasa',   color:'#9FB4C7', glow:'#6E8296', fx:'low',  atk:8,  hp:36, def:3 },
-  { k:'jarang',  name:'Jarang',  color:'#00F0FF', glow:'#00A8B8', fx:'low',  atk:11, hp:44, def:4 },
-  { k:'epik',    name:'Epik',    color:'#C084FC', glow:'#7C3AED', fx:'hi',   atk:14, hp:54, def:5 },
+  { k:'sial',    name:'Percikan',    color:'#7E8794', glow:'#5A6672', fx:'low',  atk:6,  hp:30, def:2 },
+  { k:'biasa',   name:'Cahaya',   color:'#9FB4C7', glow:'#6E8296', fx:'low',  atk:8,  hp:36, def:3 },
+  { k:'jarang',  name:'Kristal',  color:'#00F0FF', glow:'#00A8B8', fx:'low',  atk:11, hp:44, def:4 },
+  { k:'epik',    name:'Mistik',    color:'#C084FC', glow:'#7C3AED', fx:'hi',   atk:14, hp:54, def:5 },
   { k:'legenda', name:'Legenda', color:'#FFD76A', glow:'#C9922B', fx:'hi',   atk:18, hp:66, def:7 },
   { k:'mitos',   name:'Mitos',   color:'#FF5A3C', glow:'#FF2D6F', fx:'myth', atk:24, hp:84, def:9 }
 ];
@@ -5812,11 +5812,11 @@ const tierOfCard = k => CARD_TIERS.find(t => t.k === k) || CARD_TIERS[0];
 const tierRank = k => CARD_TIERS.findIndex(t => t.k === k);
 const tierStars = k => tierRank(k) + 1;                       // Sial 1 ⭐ … Mitos 6 ⭐
 const PACKS = [
-  { k:'murah',     name:'Pack Murah',     cost:14, base:9, rare:2, lucky:1, color:'#00C2D4',
+  { k:'murah',     name:'Peti Gangsa',     cost:14, base:9, rare:2, lucky:1, color:'#00C2D4',
     luck:{ jarang:76, epik:19, legenda:4.5, mitos:0.5 }, grant:null },
-  { k:'sederhana', name:'Pack Sederhana', cost:28, base:7, rare:3, lucky:2, color:'#C084FC',
+  { k:'sederhana', name:'Peti Perak', cost:28, base:7, rare:3, lucky:2, color:'#C084FC',
     luck:{ jarang:62, epik:28, legenda:9, mitos:1 }, grant:null },
-  { k:'mahal',     name:'Pack Mahal',     cost:50, base:5, rare:4, lucky:3, color:'#FFD76A',
+  { k:'mahal',     name:'Peti Emas',     cost:50, base:5, rare:4, lucky:3, color:'#FFD76A',
     luck:{ jarang:46, epik:36, legenda:16.8, mitos:1.2 }, grant:'epik' }
 ];
 const PACK_SIZE = 12, PITY_MAX = 25;
@@ -5833,120 +5833,129 @@ const ELEMENTS = [
 const elemOf = k => ELEMENTS.find(e => e.k === k) || ELEMENTS[0];
 const elemBeats = (a, b) => { const i = ELEMENTS.findIndex(e => e.k === a); return ELEMENTS[(i + 1) % ELEMENTS.length].k === b; };
 
+/* ALAM ILMURIA — dunia ajaib tempat ILMON (makhluk ilmu) tinggal. 8 alam = 8 bidang sekolah. */
 const CARD_SETS = [
-  { k:'haiwan',  name:'Haiwan Malaysia',   el:'alam',  c1:'#1F6B3A', c2:'#07210F', motif:'leaf' },
-  { k:'legenda', name:'Legenda Nusantara', el:'api',   c1:'#8A1E1E', c2:'#250606', motif:'flame' },
-  { k:'warisan', name:'Warisan Budaya',    el:'alam',  c1:'#8A5A12', c2:'#2A1A04', motif:'songket' },
-  { k:'sains',   name:'Makmal Sains',      el:'kilat', c1:'#1E4E8A', c2:'#08162C', motif:'hex' },
-  { k:'angkasa', name:'Angkasa Lepas',     el:'kilat', c1:'#3A1E7A', c2:'#0C0620', motif:'stars' },
-  { k:'nombor',  name:'Dunia Nombor',      el:'air',   c1:'#0F6B6B', c2:'#032020', motif:'grid' },
-  { k:'alamsk',  name:'Keajaiban Alam',    el:'air',   c1:'#1A5C8A', c2:'#04182A', motif:'wave' },
-  { k:'juadah',  name:'Juadah Malaysia',   el:'api',   c1:'#9A4A10', c2:'#2A1004', motif:'batik' }
+  { k:'haiwan',  name:'Hutan Aksara',      el:'alam',  c1:'#1F6B3A', c2:'#07210F', motif:'leaf',    sub:'Bahasa',     scene:'an enchanted forest where glowing letters grow on trees and pages float like leaves' },
+  { k:'legenda', name:'Kubu Zaman',        el:'api',   c1:'#8A1E1E', c2:'#250606', motif:'flame',   sub:'Sejarah',    scene:'an ancient magical fortress with glowing runes, old scrolls and torches' },
+  { k:'warisan', name:'Taman Warna',       el:'alam',  c1:'#8A5A12', c2:'#2A1A04', motif:'songket', sub:'Seni & Muzik', scene:'a colourful magical garden of paint splashes, floating musical notes and songket patterns' },
+  { k:'sains',   name:'Makmal Bercahaya',  el:'kilat', c1:'#1E4E8A', c2:'#08162C', motif:'hex',     sub:'Sains',      scene:'a glowing magical science lab with floating atoms, bubbling flasks and electric sparks' },
+  { k:'angkasa', name:'Langit Bintang',    el:'kilat', c1:'#3A1E7A', c2:'#0C0620', motif:'stars',   sub:'Astronomi',  scene:'a starry cosmic sky with planets, nebula clouds and shooting stars' },
+  { k:'nombor',  name:'Lautan Nombor',     el:'air',   c1:'#0F6B6B', c2:'#032020', motif:'grid',    sub:'Matematik',  scene:'a magical ocean where glowing numbers and geometric shapes drift like bubbles' },
+  { k:'alamsk',  name:'Benua Peta',        el:'air',   c1:'#1A5C8A', c2:'#04182A', motif:'wave',    sub:'Geografi',   scene:'a fantasy world map landscape with rivers, mountains, compass roses and swirling weather' },
+  { k:'juadah',  name:'Arena Juara',       el:'api',   c1:'#9A4A10', c2:'#2A1004', motif:'batik',   sub:'Sukan',      scene:'a blazing magical sports arena with torches, banners and a glowing track' }
 ];
-/* [set, emoji, nama, tier, kata-kata] — 3 sial, 3 biasa, 2 jarang, 2 epik, 1 legenda, 1 mitos setiap set */
+/* [set, emoji, nama, tier, kata-kata, huraian gambar] — 3 percikan, 3 cahaya, 2 kristal, 2 mistik, 1 legenda, 1 mitos setiap alam.
+   Susunan & tier sama seperti dahulu: id kad (k01…k96) kekal, jadi koleksi lama terus menjadi Ilmon baharu. */
 const CARD_DATA = [
-  ['haiwan','🦎','Cicak Rumah','sial','Penghuni dinding yang paling setia.'],
-  ['haiwan','🐸','Katak Puru','sial','Bunyinya kuat bila hujan turun.'],
-  ['haiwan','🐜','Semut Api','sial','Kecil, tetapi gigitannya tidak dilupakan.'],
-  ['haiwan','🦌','Sang Kancil','biasa','Kecil, bijak dan sentiasa ada helah.'],
-  ['haiwan','🐒','Monyet Ekor Panjang','biasa','Pencuri pisang nombor satu.'],
-  ['haiwan','🐓','Ayam Serama','biasa','Ayam terkecil, gaya paling besar.'],
-  ['haiwan','🐢','Penyu Belimbing','jarang','Pulang ke pantai Terengganu untuk bertelur.'],
-  ['haiwan','🐦','Burung Kenyalang','jarang','Lambang megah Bumi Kenyalang.'],
-  ['haiwan','🦧','Orang Utan','epik','"Orang hutan" yang bijak dari Borneo.'],
-  ['haiwan','🐘','Gajah Pygmy','epik','Gajah comel dari hutan Sabah.'],
-  ['haiwan','🐅','Harimau Malaya','legenda','Raja rimba dan semangat bola sepak negara.'],
-  ['haiwan','🐃','Seladang Emas','mitos','Kekuatannya menggegarkan seluruh hutan.'],
-  ['legenda','🧑‍🌾','Pak Pandir','sial','Niat baik, hasil selalu terbalik.'],
-  ['legenda','💭','Mat Jenin','sial','Berangan sampai jatuh dari pokok kelapa.'],
-  ['legenda','🛶','Si Tanggang','sial','Ingatlah ibu walau setinggi mana terbang.'],
-  ['legenda','🧕','Bawang Putih','biasa','Baik hati walau selalu dianiaya.'],
-  ['legenda','🧔','Lebai Malang','biasa','Mengejar dua kenduri, dapat tiada.'],
-  ['legenda','🐊','Sang Bedal','biasa','Buaya yang tertipu oleh Sang Kancil.'],
-  ['legenda','💪','Badang','jarang','Gagah perkasa selepas makan muntah hantu.'],
-  ['legenda','🌾','Mahsuri','jarang','Darah putihnya bukti ia tidak bersalah.'],
-  ['legenda','🗡️','Hang Jebat','epik','Pahlawan yang menuntut keadilan.'],
-  ['legenda','👸','Puteri Gunung Ledang','epik','Tujuh syaratnya mustahil dipenuhi.'],
-  ['legenda','⚔️','Hang Tuah','legenda','"Takkan Melayu hilang di dunia."'],
-  ['legenda','🦅','Garuda Sakti','mitos','Sayapnya menutup langit Nusantara.'],
-  ['warisan','🪨','Batu Seremban','sial','Lima biji batu, seribu kenangan.'],
-  ['warisan','👣','Teng-Teng','sial','Lompat sebelah kaki, jangan pijak garisan.'],
-  ['warisan','🥥','Congkak','sial','Kira biji dengan teliti, menang pasti.'],
-  ['warisan','🌀','Gasing Uri','biasa','Berpusing paling lama, dialah juara.'],
-  ['warisan','🎨','Batik Lukis','biasa','Canting dan lilin, seni turun-temurun.'],
-  ['warisan','🥁','Rebana Ubi','biasa','Paluannya bergema dari kampung ke kampung.'],
-  ['warisan','🪁','Wau Bulan','jarang','Terbang megah di langit Kelantan.'],
-  ['warisan','🔱','Keris Taming Sari','jarang','Pemiliknya dikatakan kebal.'],
-  ['warisan','🥋','Silat Gayung','epik','Seni mempertahankan diri warisan bangsa.'],
-  ['warisan','🎤','Dikir Barat','epik','Tok juara dan awok-awok bersahut.'],
-  ['warisan','🎭','Mak Yong','legenda','Seni persembahan warisan dunia UNESCO.'],
-  ['warisan','👑','Mahkota Diraja','mitos','Lambang daulat yang tidak ternilai.'],
-  ['sains','🧪','Bikar Retak','sial','Hati-hati, jangan tumpah di makmal!'],
-  ['sains','🔍','Kanta Pembesar','sial','Yang kecil jadi besar di depan mata.'],
-  ['sains','🧲','Magnet Ladam','sial','Kutub sama menolak, berbeza menarik.'],
-  ['sains','🔬','Mikroskop','biasa','Melihat sel yang tidak terlihat oleh mata.'],
-  ['sains','🌡️','Termometer','biasa','Mengukur panas tanpa ragu.'],
-  ['sains','🔋','Sel Kering','biasa','Tenaga kimia menjadi tenaga elektrik.'],
-  ['sains','⚛️','Atom','jarang','Proton, neutron dan elektron menari bersama.'],
-  ['sains','🩸','Sel Darah Merah','jarang','Pembawa oksigen ke seluruh badan.'],
-  ['sains','🧬','DNA Berpilin','epik','Pelan rahsia setiap hidupan.'],
-  ['sains','🤖','Robot Pintar','epik','Diprogram untuk membantu manusia.'],
-  ['sains','⚡','Gegelung Tesla','legenda','Kilat buatan manusia, ribuan volt!'],
-  ['sains','⏳','Mesin Masa','mitos','Satu putaran, kembali ke zaman dahulu.'],
-  ['angkasa','☄️','Batu Meteor','sial','Tetamu kecil yang jatuh dari langit.'],
-  ['angkasa','🛰️','Satelit Usang','sial','Masih mengorbit walau tiada lagi berfungsi.'],
-  ['angkasa','⭐','Bintang Malap','sial','Cahayanya berjalan beribu tahun ke sini.'],
-  ['angkasa','🌕','Bulan Purnama','biasa','Penentu awal Ramadan dan Syawal.'],
-  ['angkasa','🚀','Roket Air','biasa','Pam, lepas, dan terbang tinggi!'],
-  ['angkasa','🔭','Teleskop','biasa','Mata manusia ke hujung alam semesta.'],
-  ['angkasa','🪐','Planet Zuhal','jarang','Gelangnya diperbuat daripada ais dan batu.'],
-  ['angkasa','💫','Komet Halley','jarang','Muncul sekali dalam 76 tahun.'],
-  ['angkasa','👨‍🚀','Angkasawan Negara','epik','Membawa Jalur Gemilang ke angkasa.'],
-  ['angkasa','🕳️','Lubang Hitam','epik','Cahaya pun tidak dapat lari daripadanya.'],
-  ['angkasa','🌌','Galaksi Bima Sakti','legenda','Rumah kepada ratusan bilion bintang.'],
-  ['angkasa','✨','Buruj Belantik','mitos','Pemburu bintang yang menjaga malam.'],
-  ['nombor','0️⃣','Si Kosong','sial','Tanpa aku, sepuluh hanya satu.'],
-  ['nombor','➕','Tambah','sial','Sedikit demi sedikit, lama-lama jadi bukit.'],
-  ['nombor','➖','Tolak','sial','Kurangkan yang tidak perlu.'],
-  ['nombor','✖️','Sifir Darab','biasa','Hafal sifir, hidup lebih mudah.'],
-  ['nombor','➗','Pecahan','biasa','Satu pizza, dibahagi sama rata.'],
-  ['nombor','💯','Peratus','biasa','Seratus peratus usaha!'],
-  ['nombor','📐','Sudut Tegak','jarang','Tepat 90 darjah, tidak lebih tidak kurang.'],
-  ['nombor','🧭','Jangka Lukis','jarang','Pelukis bulatan yang sempurna.'],
-  ['nombor','🥧','Pi','epik','3.14159… tiada penghujungnya.'],
-  ['nombor','🐚','Jujukan Fibonacci','epik','1, 1, 2, 3, 5, 8 — corak alam semula jadi.'],
-  ['nombor','🔺','Teorem Pythagoras','legenda','a² + b² = c², selama-lamanya.'],
-  ['nombor','♾️','Infiniti','mitos','Kira sampai bila-bila pun tidak habis.'],
-  ['alamsk','💧','Titisan Hujan','sial','Sedikit-sedikit, lama-lama jadi lautan.'],
-  ['alamsk','🍂','Daun Kering','sial','Gugur untuk memberi ruang yang baharu.'],
-  ['alamsk','🌫️','Kabus Pagi','sial','Menyelimuti Cameron Highlands.'],
-  ['alamsk','🌈','Pelangi','biasa','Tujuh warna selepas hujan.'],
-  ['alamsk','🌺','Bunga Raya','biasa','Bunga kebangsaan, merah menyala.'],
-  ['alamsk','🌊','Ombak Pantai','biasa','Bergulung tanpa henti di pantai timur.'],
-  ['alamsk','🏵️','Rafflesia','jarang','Bunga terbesar dunia — dan paling busuk!'],
-  ['alamsk','🏞️','Air Terjun','jarang','Jeram sejuk di tengah hutan hujan.'],
-  ['alamsk','⛰️','Gunung Kinabalu','epik','Puncak tertinggi di Malaysia.'],
-  ['alamsk','🦇','Gua Mulu','epik','Jutaan kelawar keluar setiap senja.'],
-  ['alamsk','🌋','Gunung Berapi','legenda','Lahar panas dari perut bumi.'],
-  ['alamsk','🐉','Naga Tasik Chini','mitos','Penjaga tasik yang bersembunyi di dasar.'],
-  ['juadah','🫓','Roti Canai','sial','Ditebar, dilipat, dicicah kari.'],
-  ['juadah','☕','Teh Tarik','sial','Ditarik tinggi, berbuih manis.'],
-  ['juadah','🍘','Keropok Lekor','sial','Rangup di luar, lembut di dalam.'],
-  ['juadah','🍢','Sate Kajang','biasa','Dibakar atas bara, kuah kacang wajib.'],
-  ['juadah','🍙','Ketupat','biasa','Dianyam daun kelapa untuk Hari Raya.'],
-  ['juadah','🍧','Cendol','biasa','Sejuk, manis, penawar hari panas.'],
-  ['juadah','🍛','Nasi Lemak','jarang','Sarapan rasmi rakyat Malaysia.'],
-  ['juadah','🍜','Laksa Penang','jarang','Masam, pedas dan penuh rasa.'],
-  ['juadah','🍖','Rendang Tok','epik','Dimasak berjam-jam hingga hitam.'],
-  ['juadah','🍈','Durian Musang King','epik','Raja segala buah — bau pun raja.'],
-  ['juadah','🍱','Nasi Kerabu','legenda','Nasi biru dari bunga telang Kelantan.'],
-  ['juadah','🍰','Kek Lapis Sarawak','mitos','Berpuluh lapisan, warna-warni ajaib.']
+  ['haiwan','🐛','Kutu Huruf','sial','Setiap bintiknya ialah satu huruf.','a tiny green caterpillar whose body spots are glowing alphabet letters'],
+  ['haiwan','🐌','Siput Koma','sial','Rumahnya berbentuk koma — dia suka berhenti seketika.','a cute snail whose shell is shaped like a big glowing comma'],
+  ['haiwan','🐞','Kumbang Noktah','sial','Menamatkan setiap ayat dengan gaya.','a small ladybug with perfect round full-stop dots on its glowing shell'],
+  ['haiwan','🐇','Arnab Abjad','biasa','Telinganya membentuk huruf A dan B.','a fluffy rabbit whose long ears form the letters A and B, carrying a pencil'],
+  ['haiwan','🐦','Burung Pantun','biasa','Berkicau dalam rangkap empat baris.','a cheerful songbird with scroll-shaped tail feathers singing floating verse lines'],
+  ['haiwan','🐸','Katak Kamus','biasa','Perutnya penuh dengan makna perkataan.','a round frog whose belly looks like an open dictionary page'],
+  ['haiwan','🦌','Rusa Rangkap','jarang','Tanduknya bercabang seperti baris puisi.','an elegant deer whose antlers are made of flowing lines of poetry that glow'],
+  ['haiwan','🦊','Musang Metafora','jarang','Licik bermain kata, sukar diteka.','a clever fox with a tail made of swirling words and a mysterious smile'],
+  ['haiwan','🐘','Gajah Glosari','epik','Tidak pernah lupa maksud satu perkataan pun.','a wise elephant whose huge ears are giant open book pages, wearing round glasses'],
+  ['haiwan','🐅','Harimau Hikayat','epik','Belangnya ialah kisah-kisah lama yang berlari.','a powerful tiger whose stripes are glowing lines of ancient story text'],
+  ['haiwan','🐉','Naga Peribahasa','legenda','"Di mana ada kemahuan, di situ ada jalan."','a majestic leafy green dragon wrapped in glowing proverb scrolls'],
+  ['haiwan','🦅','Garuda Pujangga','mitos','Raja segala kata, sayapnya menulis langit.','a mythical golden eagle-like bird with wings made of glowing calligraphy feathers'],
+
+  ['legenda','🐀','Tikus Tembikar','sial','Bersembunyi dalam pasu purba.','a small mouse peeking out of a cracked ancient clay pot'],
+  ['legenda','🦇','Kelawar Gua','sial','Dilukis di dinding gua sejak zaman batu.','a little bat with cave-painting patterns on its wings'],
+  ['legenda','🦀','Ketam Syiling','sial','Cangkerangnya ialah syiling kerajaan lama.','a small crab whose shell is an ancient gold coin'],
+  ['legenda','🐎','Kuda Kembara','biasa','Pelananya ialah peta laluan rempah.','an adventurous horse with a treasure-map saddle and travel bags'],
+  ['legenda','🐢','Penyu Prasasti','biasa','Batu bersurat di belakangnya menyimpan rahsia.','a turtle carrying an ancient inscribed stone tablet as its shell'],
+  ['legenda','🦉','Burung Hantu Arkib','biasa','Penjaga semua dokumen bersejarah.','a wise owl wearing a tiny crown, surrounded by floating old scrolls'],
+  ['legenda','🦁','Singa Kota','jarang','Pengawal pintu gerbang kota purba.','a proud lion statue come to life, guarding an ancient city gate'],
+  ['legenda','🐃','Kerbau Keris','jarang','Tanduknya berlekuk seperti keris pusaka.','a strong water buffalo whose horns curve like ornate keris blades'],
+  ['legenda','🦏','Badak Benteng','epik','Badannya sekuat dinding kota.','an armoured rhino whose body is covered in stone fortress walls and towers'],
+  ['legenda','🦚','Merak Diraja','epik','Ekornya memaparkan sejarah tujuh kerajaan.','a royal peacock whose tail feathers show glowing scenes of ancient kingdoms'],
+  ['legenda','🐲','Naga Purba','legenda','Sudah wujud sebelum sejarah ditulis.','an ancient fire dragon with rune-carved scales and glowing ember eyes'],
+  ['legenda','🔥','Burung Api Zaman','mitos','Terbang merentasi masa lalu dan masa depan.','a mythical phoenix of time with flaming wings and a glowing hourglass on its chest'],
+
+  ['warisan','🐝','Lebah Lakaran','sial','Melakar bunga sebelum hinggap.','a tiny bee drawing with a pencil-shaped stinger'],
+  ['warisan','🖍️','Ulat Krayon','sial','Meninggalkan jejak warna-warni.','a caterpillar made of colourful crayon segments'],
+  ['warisan','🦋','Rama Palet','sial','Sayapnya ialah palet cat.','a butterfly whose wings are artist paint palettes'],
+  ['warisan','🐱','Kucing Kanvas','biasa','Bulunya berubah warna ikut lukisan.','a playful cat whose fur looks like a painted canvas with brush strokes'],
+  ['warisan','🐤','Burung Seruling','biasa','Paruhnya mengalunkan lagu merdu.','a small bird with a flute-shaped beak playing floating music notes'],
+  ['warisan','🐟','Ikan Gendang','biasa','Ekornya memukul rentak kompang.','a round fish with a drum-skin belly drumming with its tail'],
+  ['warisan','🕊️','Merpati Melodi','jarang','Setiap kepakannya satu not muzik.','a graceful dove leaving a trail of glowing musical notes'],
+  ['warisan','🕷️','Labah Rebab','jarang','Sarangnya bertali seperti rebab.','a friendly spider whose web strings play like a traditional rebab'],
+  ['warisan','🥁','Kijang Kompang','epik','Melompat mengikut irama kompang.','a leaping barking deer with kompang drums on its back and rhythm waves'],
+  ['warisan','🦢','Angsa Wau','epik','Terbang tinggi seperti wau bulan.','a swan with wings shaped like a colourful Malaysian wau bulan kite'],
+  ['warisan','🦄','Unikorn Pelangi','legenda','Tanduknya melukis pelangi di langit.','a majestic unicorn whose horn is a paintbrush painting rainbows'],
+  ['warisan','🎼','Singa Simfoni','mitos','Ngaumannya ialah orkestra penuh.','a mythical lion whose mane is made of swirling sheet music and golden instruments'],
+
+  ['sains','⚛️','Atomi','sial','Bulat kecil, tetapi penuh tenaga.','a tiny cute atom creature with orbiting electron rings'],
+  ['sains','🦠','Sel Bulu','sial','Membelah diri bila teruja.','a fuzzy friendly single-cell creature with a glowing nucleus'],
+  ['sains','🧲','Kumbang Magnet','sial','Semua benda besi melekat padanya.','a beetle with a horseshoe-magnet shaped body pulling small bolts'],
+  ['sains','🐿️','Tupai Litar','biasa','Ekornya mengalirkan arus elektrik.','a squirrel with a glowing electric circuit-board tail'],
+  ['sains','🧪','Kodok Kimia','biasa','Bertukar warna bila bercampur.','a toad with a bubbling chemistry flask on its back'],
+  ['sains','🐚','Kerang Kristal','biasa','Cangkerangnya membentuk hablur sempurna.','a clam with a shell made of growing glowing crystals'],
+  ['sains','🐺','Serigala Volt','jarang','Melolong bersama kilat.','a wolf crackling with blue electricity and lightning fur'],
+  ['sains','🐍','Ular Heliks','jarang','Berpintal seperti rantai DNA.','a snake twisted in a glowing double-helix DNA shape'],
+  ['sains','🤖','Rusa Robo','epik','Separuh haiwan, separuh mesin.','a robotic deer with glowing gears and circuit antlers'],
+  ['sains','🦗','Belalang Laser','epik','Matanya memancarkan cahaya laser.','a grasshopper with prism wings shooting rainbow laser beams'],
+  ['sains','🌀','Griffin Graviti','legenda','Mampu membengkokkan tarikan bumi.','a legendary griffin surrounded by floating rocks and swirling gravity waves'],
+  ['sains','💠','Naga Kuantum','mitos','Berada di dua tempat pada masa yang sama.','a mythical glowing dragon that appears in two places at once, with quantum particle trails'],
+
+  ['angkasa','⭐','Bintik Bintang','sial','Bintang kecil yang terlepas dari langit.','a tiny cute star sprite with sparkly eyes'],
+  ['angkasa','☄️','Meteor Comel','sial','Laju, tetapi sentiasa tersenyum.','a small happy meteor creature with a flaming tail'],
+  ['angkasa','🌙','Kucing Bulan','sial','Tidur di atas bulan sabit.','a sleepy cat curled on a crescent moon'],
+  ['angkasa','🐧','Penguin Planet','biasa','Memakai cincin seperti Zuhal.','a penguin wearing Saturn-like rings around its waist'],
+  ['angkasa','🐬','Lumba Komet','biasa','Berenang di antara bintang.','a dolphin swimming through space with a comet tail'],
+  ['angkasa','🐙','Gurita Galaksi','biasa','Setiap lengannya galaksi kecil.','an octopus whose tentacles hold tiny swirling galaxies'],
+  ['angkasa','🦜','Burung Aurora','jarang','Bulunya menari seperti aurora.','a parrot with shimmering aurora borealis feathers'],
+  ['angkasa','🦂','Kala Nebula','jarang','Ekornya bersinar seperti buruj.','a scorpion made of nebula clouds with a constellation tail'],
+  ['angkasa','🐋','Paus Bintang','epik','Membawa buruj di belakangnya.','a giant whale swimming through space with constellations on its back'],
+  ['angkasa','🐴','Kuda Orbit','epik','Berlari mengelilingi planet.','a winged cosmic horse galloping along a glowing planetary orbit'],
+  ['angkasa','☀️','Singa Suria','legenda','Surainya ialah matahari yang membara.','a legendary lion whose mane is a blazing sun'],
+  ['angkasa','🌌','Naga Lohong Hitam','mitos','Menelan cahaya, melepaskan bintang baharu.','a mythical cosmic dragon spiralling around a black hole'],
+
+  ['nombor','🐠','Ikan Kosong','sial','Badannya berbentuk sifar.','a small round fish shaped like the number zero'],
+  ['nombor','🦐','Udang Tambah','sial','Sentiasa menambah kawan.','a little shrimp with plus-sign shaped claws'],
+  ['nombor','🪼','Obor Tolak','sial','Mengapung sambil menolak ombak.','a jellyfish with a minus-sign shaped glowing bell'],
+  ['nombor','🧮','Ketam Sempoa','biasa','Mengira dengan manik di cangkerangnya.','a crab with abacus beads on its shell'],
+  ['nombor','🦭','Anjing Laut Darab','biasa','Mengimbang bola-bola berganda.','a seal balancing balls marked with multiplication signs'],
+  ['nombor','🌊','Kuda Laut Bahagi','biasa','Membahagi ombak sama rata.','a seahorse with a division-sign shaped crest'],
+  ['nombor','🐡','Buntal Pecahan','jarang','Mengembang dalam pecahan.','a pufferfish divided into glowing fraction segments'],
+  ['nombor','🦑','Sotong Sudut','jarang','Lengannya membentuk sudut tepat.','a squid whose tentacles form perfect geometric angles'],
+  ['nombor','π','Penyu Pi','epik','Cangkerangnya berputar tanpa henti.','a turtle with a shell spiralling with the endless digits of pi'],
+  ['nombor','🦈','Jerung Geometri','epik','Badannya diperbuat daripada segi tiga.','a sleek shark made of glowing geometric triangles'],
+  ['nombor','♾️','Leviatan Infiniti','legenda','Tiada permulaan, tiada penghujung.','a legendary sea serpent forming an infinity symbol'],
+  ['nombor','∑','Naga Algebra','mitos','Menyelesaikan setiap persamaan dunia.','a mythical water dragon surrounded by glowing algebra equations'],
+
+  ['alamsk','🧭','Ketam Kompas','sial','Sentiasa tahu arah utara.','a small crab with a compass rose on its shell'],
+  ['alamsk','💧','Titis Hujan','sial','Jatuh dari awan, sentiasa ceria.','a cute raindrop sprite with a tiny umbrella'],
+  ['alamsk','🍂','Daun Musim','sial','Berubah warna ikut musim.','a little leaf sprite changing colour through four seasons'],
+  ['alamsk','🦦','Memerang Sungai','biasa','Pakar laluan sungai dan delta.','an otter riding a river map current'],
+  ['alamsk','🐫','Unta Gurun','biasa','Menyimpan oasis dalam bonggolnya.','a camel whose humps hold tiny glowing oases'],
+  ['alamsk','🐻‍❄️','Beruang Kutub','biasa','Penjaga ais di hujung peta.','a polar bear standing on a floating iceberg map piece'],
+  ['alamsk','🦅','Helang Gunung','jarang','Melihat seluruh banjaran dari langit.','an eagle soaring over a snowy mountain range'],
+  ['alamsk','🐊','Buaya Delta','jarang','Belakangnya seperti peta sungai.','a crocodile whose back looks like a river delta map'],
+  ['alamsk','🌪️','Raksasa Taufan','epik','Berputar membawa hujan ribut.','a swirling storm-cloud giant with lightning and spinning winds'],
+  ['alamsk','🧊','Gajah Glasier','epik','Langkahnya membentuk lembah.','a giant elephant made of glacier ice carving valleys as it walks'],
+  ['alamsk','🗺️','Penyu Benua','legenda','Memikul tujuh benua di belakangnya.','a legendary giant turtle carrying the seven continents on its shell'],
+  ['alamsk','🌊','Naga Tsunami','mitos','Mengawal pasang surut seluruh lautan.','a mythical ocean dragon rising from a giant wave'],
+
+  ['juadah','⚽','Bola Bara','sial','Bola yang tidak pernah berhenti bergolek.','a small fiery ball creature with sneakers'],
+  ['juadah','🦎','Cicak Lompat','sial','Juara lompat jauh dinding sekolah.','a little gecko in a sports headband doing a long jump'],
+  ['juadah','🐓','Ayam Pecut','sial','Bangun awal untuk berlari.','a rooster in running shoes sprinting at dawn'],
+  ['juadah','🦘','Kanggaru Tinju','biasa','Pantas menumbuk, pantas melompat.','a kangaroo wearing red boxing gloves'],
+  ['juadah','🐒','Monyet Gimrama','biasa','Berpusing dengan reben warna-warni.','a monkey doing gymnastics with a flowing ribbon'],
+  ['juadah','🐐','Kambing Pendaki','biasa','Tiada gunung yang terlalu tinggi.','a mountain goat with climbing gear on a rocky peak'],
+  ['juadah','🐆','Cheetah Kilat','jarang','Pelari terpantas di Alam Ilmuria.','a cheetah sprinting with speed lines and flame trails'],
+  ['juadah','🦓','Kuda Belang Lumba','jarang','Belangnya ialah garisan trek.','a zebra whose stripes are running track lanes'],
+  ['juadah','🐻','Beruang Jaring','epik','Rejaman tiga mata tidak pernah tersasar.','a bear in a basketball jersey slam-dunking a glowing ball'],
+  ['juadah','🏸','Helang Badminton','epik','Smesnya selaju kilat.','an eagle with shuttlecock feathers smashing with a racket'],
+  ['juadah','🐯','Harimau Juara','legenda','Semangat juara di setiap gelanggang.','a legendary Malayan tiger athlete holding a golden trophy'],
+  ['juadah','🏆','Phoenix Olimpik','mitos','Lahir semula dari api obor sukan.','a mythical phoenix rising from a sports torch flame with golden rings']
 ];
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-const CARDS = CARD_DATA.map(([set, emo, name, tier, flavor], i) => {
+const CARDS = CARD_DATA.map(([set, emo, name, tier, flavor, art], i) => {
   const t = tierOfCard(tier), h = hashStr(name);
   const v = n => 0.85 + ((h >>> n) & 255) / 255 * 0.3;          // variasi ±15% yang tetap untuk setiap kad
-  return { id: 'k' + String(i + 1).padStart(2, '0'), set, emo, name, tier, flavor,
+  return { id: 'k' + String(i + 1).padStart(2, '0'), set, emo, name, tier, flavor, art,
     atk: Math.round(t.atk * v(0)), hp: Math.round(t.hp * v(8)), def: Math.round(t.def * v(16)) };
 });
 const cardById = id => CARDS.find(c => c.id === id) || null;
@@ -5983,9 +5992,19 @@ function motifSvg(m, col){
   if (m === 'batik') return '<g ' + o + '>' + [[40,50],[150,40],[100,140],[30,220],[170,210]].map(([x,y]) => '<circle cx="' + x + '" cy="' + y + '" r="22"/><circle cx="' + x + '" cy="' + y + '" r="10"/>').join('') + '</g>';
   return '';
 }
+/* Gambar Ilmon sebenar (assets/kad/<id>.jpg, senarai.json oleh auto-push) menggantikan latar & emoji */
+const KAD_HAVE = new Map();
+let KAD_PROBED = null;
+function kadProbe(){
+  if (!KAD_PROBED) KAD_PROBED = fetch('assets/kad/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
+    .then(m => { Object.keys(m).forEach(id => KAD_HAVE.set(id, 'assets/kad/' + m[id])); if (KAD_HAVE.size){ Object.keys(CARD_ART).forEach(k => delete CARD_ART[k]); if (S && S.ui && S.ui.tab === 'arena') renderTab(); } })
+    .catch(() => {});
+  return KAD_PROBED;
+}
 /* Seni kad: latar set, corak, cincin tier, emoji besar, elemen & stat */
 function cardArtSvg(c){
   if (CARD_ART[c.id]) return CARD_ART[c.id];
+  const art = KAD_HAVE.get(c.id);
   const st = cardSet(c), t = tierOfCard(c.tier), el = elemOf(st.el), r = tierRank(c.tier);
   const id = 'g' + c.id;
   const rays = r >= 3 ? '<g opacity="' + (0.12 + r * 0.04) + '">' + Array.from({ length: 12 }, (_, k) =>
@@ -5994,10 +6013,13 @@ function cardArtSvg(c){
   const svg = '<svg viewBox="0 0 200 236" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">' +
     '<defs><radialGradient id="' + id + 'b" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="' + st.c1 + '"/><stop offset="1" stop-color="' + st.c2 + '"/></radialGradient>' +
     '<radialGradient id="' + id + 'h" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="' + t.color + '" stop-opacity=".55"/><stop offset="1" stop-color="' + t.color + '" stop-opacity="0"/></radialGradient></defs>' +
-    '<rect width="200" height="236" fill="url(#' + id + 'b)"/>' + motifSvg(st.motif, '#ffffff') + rays +
-    '<circle cx="100" cy="118" r="78" fill="url(#' + id + 'h)"/>' +
-    '<circle cx="100" cy="118" r="58" fill="rgba(0,0,0,.28)" stroke="' + t.color + '" stroke-width="' + (1.5 + r * 0.5) + '" stroke-dasharray="' + (r >= 4 ? '0' : '6 4') + '"/>' +
-    '<text x="100" y="138" font-size="66" text-anchor="middle" dominant-baseline="middle" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))">' + c.emo + '</text>' +
+    '<rect width="200" height="236" fill="url(#' + id + 'b)"/>' +
+    (art ? '<image href="' + art + '" x="0" y="0" width="200" height="236" preserveAspectRatio="xMidYMid slice"/>' +
+           '<rect y="196" width="200" height="40" fill="rgba(0,0,0,.35)"/>' :
+      motifSvg(st.motif, '#ffffff') + rays +
+      '<circle cx="100" cy="118" r="78" fill="url(#' + id + 'h)"/>' +
+      '<circle cx="100" cy="118" r="58" fill="rgba(0,0,0,.28)" stroke="' + t.color + '" stroke-width="' + (1.5 + r * 0.5) + '" stroke-dasharray="' + (r >= 4 ? '0' : '6 4') + '"/>' +
+      '<text x="100" y="138" font-size="66" text-anchor="middle" dominant-baseline="middle" style="filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))">' + c.emo + '</text>') +
     '<circle cx="22" cy="22" r="15" fill="rgba(0,0,0,.55)" stroke="' + el.color + '" stroke-width="2"/>' +
     '<text x="22" y="23" font-size="15" text-anchor="middle" dominant-baseline="middle">' + el.ico + '</text>' +
     '<g font-family="Share Tech Mono,monospace" font-weight="700" font-size="15">' +
@@ -6027,6 +6049,8 @@ function cardFaceHtml(card, tier, opts){
 /* Kad kecil (senarai, hasil pack) */
 function cardMiniHtml(c, locked){
   const st = cardSet(c), t = tierOfCard(c.tier);
+  const art = !locked && KAD_HAVE.get(c.id);
+  if (art) return '<div style="aspect-ratio:2/3;border:1.5px solid ' + t.color + ';background:center/cover no-repeat url(' + art + '),' + st.c2 + ';box-shadow:0 0 8px ' + t.glow + '66"></div>';
   return '<div style="aspect-ratio:2/3;border:1.5px solid ' + (locked ? '#2B3B4D' : t.color) + ';background:' +
     (locked ? 'repeating-linear-gradient(45deg,#121A23,#121A23 6px,#0E151D 6px,#0E151D 12px)' : 'radial-gradient(circle at 50% 40%,' + st.c1 + ',' + st.c2 + ')') +
     ';display:flex;align-items:center;justify-content:center;font-size:clamp(14px,5vw,26px);' + (locked ? 'filter:grayscale(1);opacity:.5' : 'box-shadow:0 0 8px ' + t.glow + '66') + '">' +
@@ -6035,7 +6059,7 @@ function cardMiniHtml(c, locked){
 /* Rupa kotak pack (tiada gambar) */
 function packArt(p){
   return '<div class="pkbox-def" style="--pc:' + p.color + '">' +
-    '<div class="num" style="color:' + p.color + '">LAGENDA KAD</div>' +
+    '<div class="num" style="color:' + p.color + '">ALAM ILMURIA</div>' +
     '<div class="pkbox-x" style="--pc:' + p.color + '">?</div>' +
     '<div class="num">' + esc(p.name.toUpperCase()) + '</div>' +
     '<div style="font-size:9px;letter-spacing:.15em;color:#7E93A8">' + PACK_SIZE + ' KAD · ' + p.lucky + ' BERTUAH</div></div>';
@@ -6103,7 +6127,7 @@ function viewCards(){
   return '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(255,138,61,.25),rgba(120,60,200,.12) 60%,transparent),var(--panel,#141C26)">' +
     '<div style="font-size:40px;line-height:1">⚔️</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FF8A3D;text-shadow:0 0 12px rgba(255,138,61,.6)">DUEL KAD</div>' +
-    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kumpul kad, bina pasukan dan bertarung — mod <b>Kuiz</b> atau <b>Klasik</b>. Koleksi, pack dan tetapan ada di dalam menu.</div></div>' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kumpul <b>Ilmon</b> — makhluk ajaib Alam Ilmuria — bina pasukan dan bertarung dalam mod <b>Kuiz</b> atau <b>Klasik</b>.</div></div>' +
     '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN</button>';
 }
 /* Koleksi, TPC, pack & set kumpulan — dipaparkan dalam menu Duel Kad */
@@ -6166,7 +6190,7 @@ function cardGuide(){
       sec('⬆️', 'Kad pendua tidak sia-sia', 'Dapat kad yang sama lagi = kad itu <b>naik level</b> (sehingga Lv5). Setiap level menambah <b>+10%</b> semua kuasa. Lv5 = 40% lebih kuat daripada Lv1.') +
       sec('📚', 'Kumpul set', '96 kad dalam 8 set (Haiwan Malaysia, Legenda Nusantara, Sains, Angkasa…). Lengkapkan satu set = <b>+20 RP</b> ke rank murid.') +
       sec('⚔️', 'Sistem perlawanan — DUEL KAD',
-        '<b>1. Pasukan.</b> App memilih <b>3 kad terkuat</b> murid secara automatik. Lawannya <b>Penjaga Kad</b> (komputer) dengan 3 kad yang kekuatannya setara.<br>' +
+        '<b>1. Pasukan.</b> App memilih <b>3 kad terkuat</b> murid secara automatik. Lawannya <b>Penjaga Ilmuria</b> (komputer) dengan 3 kad yang kekuatannya setara.<br>' +
         '<b>2. Giliran.</b> Kad pertama setiap pasukan bertarung dahulu. Bila nyawanya habis, kad seterusnya masuk.<br>' +
         '<b>3. Setiap pusingan = 1 soalan</b> (dari bank soalan subjek / topik minggu ini):<br>' +
         '&nbsp;&nbsp;✅ Betul → kad kamu <b>menyerang</b> lawan.<br>&nbsp;&nbsp;⚡ Betul &amp; pantas (dalam 40% masa terawal) → <b>KRITIKAL ×1.4</b>.<br>&nbsp;&nbsp;❌ Salah / masa tamat → kad <b>lawan menyerang</b> kamu.<br>' +
@@ -6241,7 +6265,7 @@ function cardZoom(cid, sid){
 }
 
 /* ---------- DUEL KAD ----------
-   3 kad terkuat pelajar lawan 3 kad Penjaga Kad (kekuatan setara).
+   3 kad terkuat pelajar lawan 3 kad Penjaga Ilmuria (kekuatan setara).
    Setiap pusingan satu soalan: betul = kad kamu menyerang (pantas = kritikal),
    salah / tamat masa = kad lawan menyerang. Elemen yang menang ×1.5.     */
 const duelQ = () => clamp(+((S.config || {}).duelQ) || 15, 5, 90);      // masa menjawab (saat), dilaras guru
@@ -6310,7 +6334,7 @@ function pvpSetup(){
 const pvpRun = (p1, p2, mode) => battleRun(p1, p2, mode);
 /* ============ PAPAN PERLAWANAN DUEL KAD (gaya TCG) ============
    Satu enjin untuk semua mod:
-     ai    — kumpulan lawan Penjaga Kad (komputer); betul = serang, salah = diserang
+     ai    — kumpulan lawan Penjaga Ilmuria (komputer); betul = serang, salah = diserang
      gilir — 2 kumpulan, 1 peranti, bergilir; betul = serang, salah = diserang
      rebut — 2 kumpulan duduk bertentang; jawapan BETUL pertama menyerang
    Papan: separuh atas (lawan, merah) & bawah (kumpulan 1, biru), arena oktagon,
@@ -6434,14 +6458,14 @@ const BT_CSS = `
 `;
 function btStyle(){ if (!document.getElementById('btCss')){ const st = document.createElement('style'); st.id = 'btCss'; st.textContent = BT_CSS; document.head.appendChild(st); } }
 
-/* tA = id kumpulan bawah (biru). tB = id kumpulan atas (merah), atau null = Penjaga Kad (komputer). */
+/* tA = id kumpulan bawah (biru). tB = id kumpulan atas (merah), atau null = Penjaga Ilmuria (komputer). */
 function battleRun(tA, tB, mode){
   btStyle();
   const ai = !tB, klasik = mode === 'klasik';
   const dA = klasik ? klasikDeck(tA, 4) : pvpDeck(tA), dB = ai ? { deck: duelFoe(dA.deck), starter: false } : klasik ? klasikDeck(tB, 4) : pvpDeck(tB);
   const P = [
     { id: tA, name: teamName(tA), deck: dA.deck, starter: dA.starter, i: 0, ko: [], right: 0, asked: 0, col: '#3B82F6' },
-    { id: tB, name: ai ? 'Penjaga Kad' : teamName(tB), deck: dB.deck, starter: dB.starter, i: 0, ko: [], right: 0, asked: 0, col: '#EF4444' }
+    { id: tB, name: ai ? 'Penjaga Ilmuria' : teamName(tB), deck: dB.deck, starter: dB.starter, i: 0, ko: [], right: 0, asked: 0, col: '#EF4444' }
   ];
   P.forEach(p => p.deck.forEach(x => x.cur = x.hp));
   const rebut = mode === 'rebut';
@@ -6644,7 +6668,7 @@ function battleRun(tA, tB, mode){
     const box = $b('#btQ0'); if (!box) return;
     const p = P[turn]; box.style.setProperty('--qc', p.col);
     if (over){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt"></div>'; return; }
-    if (ai && turn === 1){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt">🤖 Penjaga Kad sedang berfikir…</div>'; return; }
+    if (ai && turn === 1){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt">🤖 Penjaga Ilmuria sedang berfikir…</div>'; return; }
     if (busy && round === 0){ box.className = 'bt-q idle'; box.innerHTML = '<div class="qt">Mengedarkan kad…</div>'; return; }
     const ax = act(p), dx = act(P[1 - turn]), adv = advOf(ax, dx), e = energy[turn], el = elemOf(cardSet(ax.c).el);
     const est = m => Math.max(3, Math.round(ax.atk * m * 1.3 * adv - dx.def * .6));
@@ -6665,7 +6689,7 @@ function battleRun(tA, tB, mode){
     turn = k; round++; energy[k] = Math.min(EMAX, energy[k] + 1);
     switched = false; swMode = false; busy = false;
     paintBoard(); kPanel();
-    banner(ai && k === 1 ? 'GILIRAN PENJAGA KAD' : 'GILIRAN ' + esc(P[k].name).toUpperCase(), '#fff', 1000);
+    banner(ai && k === 1 ? 'GILIRAN PENJAGA ILMURIA' : 'GILIRAN ' + esc(P[k].name).toUpperCase(), '#fff', 1000);
     if (ai && k === 1) setTimeout(aiTurn, 1300);
   }
   const endTurn = () => { if (over || !root.isConnected) return; if (!alive(P[0]) || !alive(P[1])) return finish(); beginTurn(1 - turn); };
@@ -6696,7 +6720,7 @@ function battleRun(tA, tB, mode){
     }
     if (energy[1] >= 3 && (adv >= 1 || Math.random() < .6)) return doAttack(1, 'jurus');
     if (!shield[1] && energy[1] >= 2 && ax.cur / ax.hp < .35 && Math.random() < .6){ doShield(1); return setTimeout(aiTurn, 1000); }
-    if (energy[1] === 2 && Math.random() < .35){ banner('Penjaga Kad menyimpan tenaga…', '#94A3B8', 1000); return setTimeout(endTurn, 1100); }
+    if (energy[1] === 2 && Math.random() < .35){ banner('Penjaga Ilmuria menyimpan tenaga…', '#94A3B8', 1000); return setTimeout(endTurn, 1100); }
     if (energy[1] >= 1) return doAttack(1, 'serang');
     setTimeout(endTurn, 900);
   }
@@ -6718,7 +6742,7 @@ function battleRun(tA, tB, mode){
       e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:420px">' +
         '<div style="display:flex;justify-content:center">' + teamIco(W).replace(/26px/g, '60px') + '</div>' +
         '<div class="font-bold tracking-widest text-[22px] mt-2" style="color:' + (lostAi ? '#EF4444' : '#FFD76A') + '">' + (ai ? (lostAi ? 'KALAH…' : 'MENANG!') : esc(W.name).toUpperCase() + ' MENANG!') + '</div>' +
-        '<div class="text-[12px] text-muted mt-1">Duel Klasik · ' + (ai ? 'lawan Penjaga Kad' : 'kumpulan lawan kumpulan') + ' · ' + round + ' giliran</div>' +
+        '<div class="text-[12px] text-muted mt-1">Duel Klasik · ' + (ai ? 'lawan Penjaga Ilmuria' : 'kumpulan lawan kumpulan') + ' · ' + round + ' giliran</div>' +
         '<div class="grid gap-2 mt-3 num" style="grid-template-columns:repeat(' + rowsK.length + ',1fr)">' + rowsK.map(p =>
           '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(p.name) + '</div><div class="text-[16px]" style="color:#4ADE80">' + alive(p) + ' kad hidup</div>' +
           '<div class="text-[11px] text-orange">+' + rpOf(p) + ' RP</div></div>').join('') + '</div>' +
@@ -6752,7 +6776,7 @@ function battleRun(tA, tB, mode){
     e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:420px">' +
       '<div style="display:flex;justify-content:center">' + teamIco(W).replace(/26px/g, '60px') + '</div>' +
       '<div class="font-bold tracking-widest text-[22px] mt-2" style="color:' + (ai && !won0 ? '#EF4444' : '#FFD76A') + '">' + (ai ? (won0 ? 'MENANG!' : 'KALAH…') : esc(W.name).toUpperCase() + ' MENANG!') + '</div>' +
-      '<div class="text-[12px] text-muted mt-1">' + (ai ? 'Lawan Penjaga Kad' : rebut ? 'Rebut Jawapan' : 'Bergilir') + ' · ' + round + ' pusingan</div>' +
+      '<div class="text-[12px] text-muted mt-1">' + (ai ? 'Lawan Penjaga Ilmuria' : rebut ? 'Rebut Jawapan' : 'Bergilir') + ' · ' + round + ' pusingan</div>' +
       '<div class="grid gap-2 mt-3 num" style="grid-template-columns:repeat(' + rows.length + ',1fr)">' + rows.map(([p, rp, tp]) =>
         '<div class="panel clip-s p-2"><div class="text-[12px] truncate">' + esc(p.name) + '</div><div class="text-[16px]" style="color:#4ADE80">' + p.right + '/' + p.asked + ' betul</div>' +
         '<div class="text-[11px] text-orange">+' + rp + ' RP' + (tp ? ' · <b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b>' : '') + '</div></div>').join('') + '</div>' +
@@ -6783,7 +6807,7 @@ function battleRun(tA, tB, mode){
   });
   paintBoard(); paintQ();
   audPlay('duel_mula');
-  banner(ai ? esc(P[0].name) + ' lawan PENJAGA KAD' : esc(P[0].name) + ' lawan ' + esc(P[1].name), '#FFE14D', 1500);
+  banner(ai ? esc(P[0].name) + ' lawan PENJAGA ILMURIA' : esc(P[0].name) + ' lawan ' + esc(P[1].name), '#FFE14D', 1500);
   setTimeout(klasik ? () => beginTurn(0) : ask, klasik ? 1900 : 1700);
 }
 function duelStart(){
@@ -9870,7 +9894,7 @@ function installGate(){
   dskpIndex().catch(() => {});
   purgeSpriteAssets().then(n => { if (n) console.info('Aset lama dibuang:', n); });
   if (S.ui.tab === 'arena' && !['escape','cards','run','stor'].includes(arenaUi().game)) arenaUi().game = 'cards';
-  bgmInit(); audProbe();
+  bgmInit(); audProbe(); kadProbe();
   hintInit();
   if (!S.ui.mtxClass) S.ui.mtxClass = S.ui.activeClassId || '';
   if (!S.ui.mtxSubject) S.ui.mtxSubject = S.ui.activeSubjectId || '';

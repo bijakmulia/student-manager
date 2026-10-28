@@ -168,3 +168,38 @@ if (Test-Path $sfxDir) {
         Write-Host "  [audio] senarai.json dikemas kini ($($ahave.Count) audio)"
     }
 }
+
+# assets\kad: Ilmon card art (k01..k96). Full illustrations (no transparency) -> JPG, max 512x512.
+$kadDir = Join-Path $PSScriptRoot 'assets\kad'
+if (Test-Path $kadDir) {
+    $kknown = @{}
+    $klist = Join-Path $kadDir 'PROMPT-KAD.txt'
+    if (Test-Path $klist) { Get-Content $klist -Encoding UTF8 | ForEach-Object { if ($_ -match '^###\s+([a-z0-9_]+)\.png') { $kknown[$Matches[1]] = $true } } }
+    Get-ChildItem $kadDir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g|webp)$' } | ForEach-Object {
+        $kid = ($_.BaseName.Trim().ToLower() -replace '[\s\-]+', '_')
+        if ($kid -match '^(k\d\d)_') { $kid = $Matches[1] }                    # "k01_kutu_huruf" -> k01
+        if ($kknown.Count -and -not $kknown.ContainsKey($kid)) { Write-Host "  [kad] $($_.Name): nama tidak dikenali (guna k01 ... k96)"; return }
+        $out = Join-Path $kadDir ($kid + '.jpg')
+        if ($_.Extension -eq '.webp') { Write-Host "  [kad] $($_.Name): simpan sebagai .png atau .jpg"; return }
+        $bytes = [System.IO.File]::ReadAllBytes($_.FullName)
+        $ms = New-Object System.IO.MemoryStream (, $bytes)
+        try { $src = [System.Drawing.Image]::FromStream($ms) } catch { $ms.Dispose(); return }
+        $k = [Math]::Min(1.0, 512.0 / [Math]::Max($src.Width, $src.Height))
+        if ($k -ge 1.0 -and $_.FullName -eq $out) { $src.Dispose(); $ms.Dispose(); return }
+        $w = [Math]::Max(1, [int][Math]::Round($src.Width * $k)); $h = [Math]::Max(1, [int][Math]::Round($src.Height * $k))
+        $dst = New-Object System.Drawing.Bitmap $w, $h
+        $g = [System.Drawing.Graphics]::FromImage($dst); $g.InterpolationMode = 'HighQualityBicubic'; $g.Clear([System.Drawing.Color]::Black)
+        $g.DrawImage($src, 0, 0, $w, $h); $g.Dispose(); $src.Dispose(); $ms.Dispose()
+        Save-Image $dst $out 'jpg'; $dst.Dispose()
+        if ($_.FullName -ne $out) { Remove-Item -LiteralPath $_.FullName }
+        Write-Host ("  [kad] {0}.jpg: {1}x{2}, {3:N0} KB" -f $kid, $w, $h, ((Get-Item $out).Length / 1KB))
+    }
+    $khave = [ordered]@{}
+    Get-ChildItem $kadDir -Filter *.jpg | Sort-Object Name | ForEach-Object { $khave[$_.BaseName] = $_.Name + '?v=' + $_.Length }
+    $kjson = '{' + (($khave.Keys | ForEach-Object { '"' + $_ + '":"' + $khave[$_] + '"' }) -join ',') + '}'
+    $kmf = Join-Path $kadDir 'senarai.json'
+    if (-not (Test-Path $kmf) -or [System.IO.File]::ReadAllText($kmf) -ne $kjson) {
+        [System.IO.File]::WriteAllText($kmf, $kjson, (New-Object System.Text.UTF8Encoding $false))
+        Write-Host "  [kad] senarai.json dikemas kini ($($khave.Count) gambar kad)"
+    }
+}
