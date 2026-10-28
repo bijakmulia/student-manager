@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EduRank — Jana Gambar Gemini
 // @namespace    https://bijakmulia.github.io/student-manager/
-// @version      1.0
+// @version      1.1
 // @description  Jana aset gambar EduRank di Gemini: muat senarai prompt, lampir templat secara automatik, jana satu-satu atau semua, simpan dengan nama fail yang betul.
 // @match        https://gemini.google.com/*
 // @grant        GM_xmlhttpRequest
@@ -104,34 +104,47 @@
   btn.onclick = () => { pan.classList.toggle('on'); paint(); };
 
   function tplNames() { return [...new Set(list.map(p => p.tpl).filter(Boolean))]; }
+  /* Gemini menyekat innerHTML (Trusted Types) — panel dibina dengan createElement sahaja */
+  function el(tag, attrs, ...kids){
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => { if (v === false || v == null) return; if (k === 'cls') e.className = v; else if (k === 'text') e.textContent = v; else if (k in e && typeof v !== 'string') e[k] = v; else e.setAttribute(k, v === true ? '' : v); });
+    kids.flat().forEach(k => { if (k != null && k !== false) e.append(k instanceof Node ? k : document.createTextNode(String(k))); });
+    return e;
+  }
+  let lastStatus = '';
   function paint() {
     const uploaded = get(K.tpl, {});
     const nDone = list.filter(p => done[doneKey(p.name)]).length;
-    pan.innerHTML =
-      '<div class="hd">🎨 EduRank · Jana Gambar<span>' + nDone + '/' + list.length + ' siap</span></div><div class="bd">' +
-      '<div class="row"><select id="erF">' + Object.keys(LISTS).map(k => '<option value="' + k + '"' + (k === folder ? ' selected' : '') + '>' + LISTS[k].n + '</option>').join('') + '</select>' +
-        '<button class="b" id="erLoad">⬇ Muat dari EduRank</button></div>' +
-      '<textarea id="erTxt" placeholder="…atau tampal prompt di sini (### nama.png + prompt), kemudian tekan Guna teks"></textarea>' +
-      '<div class="row"><button class="b" id="erUse">Guna teks</button><button class="b" id="erAll">Tanda semua</button><button class="b" id="erNone">Buang tanda</button><button class="b" id="erTodo">Tanda yang belum siap</button></div>' +
-      '<div class="lst">' + (list.length ? list.map((p, i) => {
-        const d = done[doneKey(p.name)];
-        return '<div class="it' + (running && running.cur === i ? ' now' : '') + '"><input type="checkbox" data-s="' + i + '"' + (sel[p.name] ? ' checked' : '') + '>' +
-          '<span>' + (d ? '✅' : running && running.cur === i ? '⏳' : '⬜') + '</span><span class="nm" title="' + esc(p.text) + '">' + p.name + '.png</span>' +
-          (p.tpl ? '<span class="tg" title="' + p.tpl + '">📎 templat</span>' : '') +
-          '<button class="go" data-g="' + i + '"' + (running ? ' disabled' : '') + '>▶</button></div>';
-      }).join('') : '<div class="it">Belum ada senarai — tekan Muat.</div>') + '</div>' +
-      (tplNames().length ? '<div><b>TEMPLAT</b> (diambil automatik dari laman EduRank; muat naik untuk ganti)<div class="tp">' +
-        tplNames().map(n => '<div class="' + (uploaded[n] || tplCache[n] ? 'ok' : '') + '">' + n + (uploaded[n] ? ' · fail sendiri' : '') + '</div>').join('') + '</div>' +
-        '<input type="file" id="erUp" accept="image/png" multiple style="margin-top:6px;font-size:11px"></div>' : '') +
-      '<div class="row"><label class="ck"><input type="checkbox" id="erO1"' + (opt.auto ? ' checked' : '') + '>Hantar & simpan automatik</label>' +
-        '<label class="ck"><input type="checkbox" id="erO2"' + (opt.newChat ? ' checked' : '') + '>Chat baharu setiap prompt</label>' +
-        '<label class="ck"><input type="checkbox" id="erO3"' + (opt.skipDone ? ' checked' : '') + '>Langkau yang siap</label></div>' +
-      '<div class="row"><button class="b o" id="erGo"' + (running ? ' disabled' : '') + '>▶▶ Jana yang ditanda (' + list.filter(p => sel[p.name]).length + ')</button>' +
-        '<button class="b r" id="erStop"' + (running ? '' : ' disabled') + '>■ Henti</button><button class="b" id="erReset">Set semula ✅</button></div>' +
-      '<div class="st" id="erSt"></div></div>';
+    const B = (id, txt, cls, dis) => el('button', { cls: 'b' + (cls ? ' ' + cls : ''), id, disabled: !!dis }, txt);
+    const CK = (id, on, txt) => el('label', { cls: 'ck' }, el('input', { type: 'checkbox', id, checked: !!on }), txt);
+    const rows = list.length ? list.map((p, i) => {
+      const d = done[doneKey(p.name)], now = running && running.cur === i;
+      return el('div', { cls: 'it' + (now ? ' now' : '') },
+        el('input', { type: 'checkbox', 'data-s': String(i), checked: !!sel[p.name] }),
+        el('span', { text: d ? '✅' : now ? '⏳' : '⬜' }),
+        el('span', { cls: 'nm', title: p.text, text: p.name + '.png' }),
+        p.tpl ? el('span', { cls: 'tg', title: p.tpl, text: '📎 templat' }) : null,
+        el('button', { cls: 'go', 'data-g': String(i), disabled: !!running }, '▶'));
+    }) : [el('div', { cls: 'it', text: 'Belum ada senarai — tekan Muat.' })];
+    const tn = tplNames();
+    pan.replaceChildren(
+      el('div', { cls: 'hd' }, '🎨 EduRank · Jana Gambar', el('span', { text: nDone + '/' + list.length + ' siap' })),
+      el('div', { cls: 'bd' },
+        el('div', { cls: 'row' },
+          el('select', { id: 'erF' }, Object.keys(LISTS).map(k => el('option', { value: k, selected: k === folder }, LISTS[k].n))),
+          B('erLoad', '⬇ Muat dari EduRank')),
+        el('textarea', { id: 'erTxt', placeholder: '…atau tampal prompt di sini (### nama.png + prompt), kemudian tekan Guna teks' }),
+        el('div', { cls: 'row' }, B('erUse', 'Guna teks'), B('erAll', 'Tanda semua'), B('erNone', 'Buang tanda'), B('erTodo', 'Tanda yang belum siap')),
+        el('div', { cls: 'lst' }, rows),
+        tn.length ? el('div', null, el('b', { text: 'TEMPLAT' }), ' (diambil automatik dari laman EduRank; muat naik untuk ganti)',
+          el('div', { cls: 'tp' }, tn.map(n => el('div', { cls: uploaded[n] || tplCache[n] ? 'ok' : '' }, n + (uploaded[n] ? ' · fail sendiri' : '')))),
+          el('input', { type: 'file', id: 'erUp', accept: 'image/png', multiple: true, style: 'margin-top:6px;font-size:11px' })) : null,
+        el('div', { cls: 'row' }, CK('erO1', opt.auto, 'Hantar & simpan automatik'), CK('erO2', opt.newChat, 'Chat baharu setiap prompt'), CK('erO3', opt.skipDone, 'Langkau yang siap')),
+        el('div', { cls: 'row' }, B('erGo', '▶▶ Jana yang ditanda (' + list.filter(p => sel[p.name]).length + ')', 'o', running), B('erStop', '■ Henti', 'r', !running), B('erReset', 'Set semula ✅')),
+        el('div', { cls: 'st', id: 'erSt', text: lastStatus })));
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const status = t => { const s = $('#erSt'); if (s) s.textContent = t; console.log('[EduRank]', t); };
+  const status = t => { lastStatus = t; const s = $('#erSt'); if (s) s.textContent = t; console.log('[EduRank]', t); };
 
   pan.addEventListener('change', e => {
     const t = e.target;
