@@ -87,7 +87,7 @@ Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' 
         $bmp.UnlockBits($bd)
         # picture pairs that swap in place (door, phone, stove/blender states) are cut tight too, so each
         # separately generated picture fills the same box and the swap lines up
-        $tight = ($base -like 'rak_*' -or $base -like 'kaunter_*' -or $base -like 'pintu_*' -or $base -like 'dulang*' -or $base -like 'dapur_*' -or $base -like 'blender_*' -or $base -like 'meja_telefon*')
+        $tight = ($base -like 'rak_*' -or $base -like 'kaunter_*' -or $base -like 'pintu_*' -or $base -like 'dulang*' -or $base -like 'dapur_*' -or $base -like 'blender_*' -or $base -like 'meja_telefon*' -or $base -like 'telefon*')
         $pad = if ($tight) { 0 } else { [int][Math]::Round([Math]::Max($bmp.Width, $bmp.Height) * 0.02) }
         if ($bb) {
             $x0 = [Math]::Max(0, $bb[0] - $pad); $y0 = [Math]::Max(0, $bb[1] - $pad)

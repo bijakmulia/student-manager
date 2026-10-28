@@ -5788,7 +5788,7 @@ const GAME_LOBBY = {
       p(1);
     },
     starts: [['🏪 BUKA KEDAI', () => storStart()]],
-    how: () => '<b>Kaunter Stor:</b> ketik atau seret peralatan sukan <b>terus kepada atlet</b>.<br><b>Kedai Sihat:</b> masukkan makanan ke <b>dulang</b> sehingga jumlah kalori hampir dengan sasaran 🎯 pelanggan, kemudian seret dulang kepada pelanggan (atau ketik pelanggan). Makin hampir kalori, makin tinggi ⭐ skor. Jangan beri makanan yang pelanggan alergik! Sesetengah makanan perlu dimasak di <b>dapur</b> atau dikisar di <b>blender</b>.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
+    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Kedai Sihat:</b> seret makanan dari rak ke <b>dulang</b> (atas kaunter) sehingga jumlah kalori hampir dengan sasaran 🎯 pelanggan, kemudian seret dulang kepada pelanggan. Makin hampir kalori, makin tinggi ⭐ skor. Jangan beri makanan yang pelanggan alergik! Makanan 🍳/🌀 terus ke <b>dapur</b> / <b>blender</b>; bila siap, seret ke dulang.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
   }
 };
 
@@ -7240,7 +7240,7 @@ const ST_ASSETS = [].concat(
   [...(() => {
     const fill = ' The object is centred and fills the ENTIRE image edge to edge, straight front view, nothing cut off. ' + ST_MAG;
     const DOOR = ST_STYLE + ', straight front view. A tall double door of a shop back room inside a thick dark wooden door frame; the door panels are grey metal with small square windows.';
-    const PHONE = ST_STYLE + ', straight front view with a slight top-down angle. A small square wooden side table about knee height with a red old-style rotary telephone and a small notepad on top.';
+    const PHONE = ST_STYLE + ', straight front view with a slight top-down angle. A red old-style rotary desk telephone standing on its own (NO table), with its coiled cord curled beside it; it will be placed on top of a shop counter.';
     const STOVE = ST_STYLE + ', straight front view with a slight top-down angle. A compact single-burner cafe stove on a small steel cabinet with ONE wide black frying pan on the burner.';
     const BLEND = ST_STYLE + ', straight front view with a slight top-down angle. A kitchen blender with a tall clear jug and black lid on a small wooden counter block.';
     const P = (id, g, ar, base, state, extra) => stA(id, g, ar, base + ' ' + state + fill + ' No text, no people' + (extra || '') + '.');
@@ -7248,8 +7248,8 @@ const ST_ASSETS = [].concat(
     return [
       P('pintu_stor', gD, 'tall', DOOR, 'Both door panels are CLOSED.'),
       P('pintu_buka', gD, 'tall', DOOR, 'Both door panels are swung fully OPEN against the sides of the frame, and the doorway shows a bright sunny outdoor school path with soft daylight (opaque, not magenta).'),
-      P('meja_telefon', gD, 'sqL', PHONE, 'The handset rests quietly on the cradle.'),
-      P('meja_telefon_dering', gD, 'sqL', PHONE, 'The telephone is RINGING: the handset is lifted slightly above the cradle and tilted, with small curved yellow vibration lines on both sides of the phone.'),
+      P('telefon', gD, 'sq', PHONE, 'The handset rests quietly on the cradle.'),
+      P('telefon_dering', gD, 'sq', PHONE, 'The telephone is RINGING: the handset is lifted slightly above the cradle and tilted, with small curved yellow vibration lines on both sides of the phone.'),
       P('dapur_kosong', gK, 'sqL', STOVE, 'The pan is EMPTY and the flame is OFF.'),
       ...ST_ITEMS.filter(x => x.prep && x.prep[0] === 'dapur').map(x => P('dapur_' + x.id, gK, 'sqL', STOVE, 'The blue flame is ON and the pan contains ' + x.d + ', cooking, with soft white steam rising and a few small sizzle sparkles.')),
       P('dapur_hangus', gK, 'sqL', STOVE, 'The pan contains black BURNT food with dark grey smoke rising and a small orange flame flaring from the pan.'),
@@ -7260,8 +7260,8 @@ const ST_ASSETS = [].concat(
   /* DULANG: rata dari atas (bukan senget) — 6 petak 3×2 di kedudukan tetap; game meletakkan makanan tepat dalam petak */
   [stA('dulang_rata', 'Perabot & Stesen', 'wide', ST_STYLE + '. PERFECTLY TOP-DOWN orthographic view, camera looking straight down — NOT tilted, NOT in perspective. An empty rectangular light-green plastic food tray with exactly 6 equal square compartments arranged in 3 columns and 2 rows, separated by thin raised dividers; the outer rim is about 6% of the tray width. The tray is perfectly straight and fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no food.')],
   /* kaunter: satu bahagian modular, diulang mendatar oleh game */
-  [['kaunter_stor','a sports store service counter, blue front panel with a light wooden top'],
-   ['kaunter_kafe','a cafe service counter, green front panel with a cream top']
+  [['kaunter_stor','a sports store service counter with a blue front panel and a THICK light wooden top; the top surface is clearly visible from slightly above as a flat empty shelf about one fifth of the height'],
+   ['kaunter_kafe','a cafe service counter with a mint-green front panel and a THICK cream top; the top surface is clearly visible from slightly above as a flat empty shelf about one fifth of the height']
   ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'wide', ST_STYLE + '. ONE modular section of ' + d + ', straight front view (not angled). The counter fills the whole image from the left edge to the right edge, with flat cut-off sides so several copies can be placed side by side seamlessly. Nothing on the counter top. ' + ST_MAG + ' No text, no people.')),
   [['pekerja_p','a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron'],
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
@@ -7510,7 +7510,7 @@ const ST_CSS = `
 .st-si .c{position:absolute;right:-4%;top:-6%;z-index:3;min-width:1.5cqw;height:1.5cqw;padding:0 .3cqw;border-radius:99px;background:#DC2626;color:#fff;font-size:.95cqw;font-weight:900;font-style:normal;display:flex;align-items:center;justify-content:center;box-shadow:0 .1cqw .3cqw rgba(0,0,0,.4)}
 .st-si .c.lo{background:#DC2626}
 .st-si.out{opacity:.22;filter:grayscale(1);pointer-events:none}
-.st-si.lift{z-index:6;transform:translateX(-50%) scale(1.35);filter:drop-shadow(0 .6cqw .6cqw rgba(0,0,0,.45))}
+.st-si.lift{z-index:6;transform:translateX(-50%) translateY(-6%) scale(1.08);filter:drop-shadow(0 .4cqw .4cqw rgba(0,0,0,.35))}
 .st-si .pr{position:absolute;left:-4%;top:-6%;z-index:3;font-size:1.1cqw;line-height:1}
 .st-lv{pointer-events:none}
 .st-shelf{cursor:default}.st-shelf:active{transform:none}
@@ -7529,21 +7529,21 @@ const ST_CSS = `
 .st-door .op{opacity:0}
 .st-door.open .op{opacity:1}.st-door.open .cl{opacity:0}
 .st-door.open:not(.img2){background:linear-gradient(180deg,#FDE68A,#BBF7D0 60%,#86EFAC);box-shadow:inset 1.6cqw 0 0 #475569,inset -1.6cqw 0 0 #475569}
-.st-phone{left:43.4%;width:6.6%;top:44%;height:13%;background:none;z-index:2;align-items:flex-end}
+.st-phone{left:36.5%;width:6.5%;top:47%;height:12%;background:none;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
 .st-phone>img{inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
 .st-phone .rg{opacity:0}
 .st-phone.alt .rg{opacity:1}.st-phone.alt .id{opacity:0}
 .st-phone .bb{top:-2.2cqw}
-.st-phone:not(:has(img)){background:linear-gradient(180deg,#A16207,#713F12);height:6%;top:51%;border-radius:.5cqw;align-items:center}
 .st-counter{top:58%;height:10%}
 .st-me{width:9%;height:24%;top:40%;z-index:2}
-.st-cu{top:68%;height:30%}
+.st-cu{top:68%;height:30%;width:10%}
 .st-walk{z-index:4;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;font-size:6cqw;line-height:1;
   transition:left .7s ease-in-out,top .7s ease-in-out,width .7s ease-in-out,height .7s ease-in-out,opacity .3s}
 .st-walk img{width:100%;height:100%;object-fit:contain;object-position:bottom}
 .st-walk.step{animation:stBob .3s infinite}
 .st-sup{left:45.5%;width:9%;top:27%;height:22.5%;z-index:3}
-.st-tray{left:42.5%;width:15%;top:70%;height:29%;padding:0}
+.st-tray{left:56%;width:11%;top:49.6%;height:auto;padding:0;z-index:4}
+.st-tray .t{font-size:.85cqw}
 .st-tray .pl{position:relative;width:100%;aspect-ratio:3/2;margin-top:.4cqw;border-radius:1cqw;background:linear-gradient(180deg,#B9DC8F,#9CCB6B);border:.25cqw solid #7FB04F;box-shadow:0 .5cqw 1cqw rgba(0,0,0,.25)}
 .st-tray .pl:not(.img) .g>div{background:#EEF7E2!important;border-radius:.6cqw;box-shadow:inset 0 .25cqw .4cqw rgba(60,100,30,.35)}
 .st-tray .pl.img{background:var(--tray) center/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 .5cqw .6cqw rgba(0,0,0,.3))}
@@ -7557,7 +7557,7 @@ function storRun(team){
   stStyle();
   const cfg = storCfg(), L = ST_LVL[cfg.lvl] || ST_LVL.mudah;
   const SABAR = +cfg.sabar || L.sabar, DUR = (+cfg.syif || 5) * 60, ME = cfg.watak === 'l' ? 'pekerja_l' : 'pekerja_p';
-  const SLOTX = { s: [3.5, 17.5, 31.5], k: [57.5, 71.5, 85.5] };
+  const SLOTX = { s: [2.5, 14, 25.5], k: [68, 78.5, 89] };     // telefon (atas kaunter stor) & dulang (atas kaunter kafe) di hujung dalam: laluan dari pintu lapang
   const root = document.createElement('div');
   root.className = 'st'; root.id = 'stRoot';
   /* rak berlapis: rak kosong (gambar/lukisan) → lapisan barang (#stL_<rak>) → label */
@@ -7583,7 +7583,7 @@ function storRun(team){
     '<div class="st-door' + (ST_HAVE.has('pintu_buka') ? ' img2' : '') + '" id="stDoor" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '', 'cl') : '') + (ST_HAVE.has('pintu_buka') ? stImg('pintu_buka', '', 'op') : '') + '</div>' +
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
-    '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('meja_telefon') ? stImg('meja_telefon', '', 'id') + (ST_HAVE.has('meja_telefon_dering') ? stImg('meja_telefon_dering', '', 'rg') : '') : '☎️') + '</div>' +
+    '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('telefon') ? stImg('telefon', '', 'id') + (ST_HAVE.has('telefon_dering') ? stImg('telefon_dering', '', 'rg') : '') : '<span class="st-emo">☎️</span>') + '</div>' +
     '<div class="st-counter s' + (ST_HAVE.has('kaunter_stor') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_stor') + ')' : '') + '">' + '<div class="nm">KAUNTER STOR</div></div>' +
     '<div class="st-counter k' + (ST_HAVE.has('kaunter_kafe') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_kafe') + ')' : '') + '">' + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
     '<div id="stCust"></div>' +
@@ -7675,7 +7675,7 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [50, 84], STN_AT = { dapur0: [94.25, 16], dapur1: [94.25, 29.5], blender0: [94.25, 43] };
+  const TRAY_AT = [61.5, 57], STN_AT = { dapur0: [94.25, 16], dapur1: [94.25, 29.5], blender0: [94.25, 43] };
   /* Stesen: logik GANTI gambar — dapur_<makanan> / dapur_hangus / blender_<minuman> menggantikan gambar stesen kosong.
      Tiada gambar khas = gambar kosong + ikon makanan dalam bulatan. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
@@ -7727,15 +7727,15 @@ function storRun(team){
     w.style.transition = 'none'; w.style.opacity = 0; at(46.7, 31.5, 6.6, 18, 2);
     $s('#stStage').appendChild(w); door(true, 1500);
     void w.offsetWidth; w.style.transition = ''; w.style.opacity = 1;
-    setTimeout(() => at(44.5, 68, 11, 30, 5), 380);
-    setTimeout(() => at(SLOTX[z][i], 68, 11, 30), 1120);
+    setTimeout(() => at(45, 68, 10, 30, 5), 380);
+    setTimeout(() => at(SLOTX[z][i], 68, 10, 30), 1120);
     setTimeout(() => { w.remove(); if (cust[z][i] === c){ c.arriving = false; paintCust(); } }, 1870);
   }
   /* skor & bayaran bila pelanggan selesai */
   function finishCust(z, i, pts, pay, note){
     const c = cust[z][i]; if (!c) return;
     c.leaving = true; score += pts; coins += pay;
-    fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5.5, 56);
+    fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5, 56);
     snd('stor_kaching', 'hi'); vibrate(20); paintTray();
     if (note) msg(note[0], note[1], 1800);
     setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
@@ -7747,7 +7747,7 @@ function storRun(team){
     const c = i >= 0 ? cust.s[i] : null;
     if (!c || c.leaving) return msg('Tiada pelanggan di Kaunter Stor yang perlukan ' + esc(it.n) + '.', '#FDE68A', 1400);
     if (!c.o.need.includes(id) || c.o.got.includes(id)){ shake('s', i); snd('stor_salah', 'low'); return msg('Bukan ini yang diminta!', '#FCA5A5', 1000); }
-    stock[id]--; c.o.got.push(id); snd('stor_serah', 'flip'); flyTo(id, shelfPos(id), [SLOTX.s[i] + 5.5, 72]); walk(SLOTX.s[i] + 1.5);
+    stock[id]--; c.o.got.push(id); snd('stor_serah', 'flip'); flyTo(id, shelfPos(id), [SLOTX.s[i] + 5, 72]); walk(SLOTX.s[i] + 1.5);
     paintShelves();
     if (c.o.got.length === c.o.need.length){
       const frac = Math.max(0, c.p / c.max);
@@ -7808,7 +7808,7 @@ function storRun(team){
   /* ---------- telefon & pembekal ---------- */
   function answerPhone(){
     if (!ring || call) return;
-    ring = null; walk(56.5); snd('ui_klik', 'flip');                // berdiri di sisi meja telefon, bukan di belakangnya
+    ring = null; walk(33); snd('ui_klik', 'flip');                  // berdiri di sebelah telefon atas kaunter
     const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
     call = { q }; paused = true;
     $s('#stPhone').classList.remove('ring');
@@ -7945,10 +7945,11 @@ function storRun(team){
     if (over) return;
     const an = t.closest('[data-ans]'); if (an){ callAnsText = call ? call.q.c[call.q.a] : ''; return callAnswer(+an.dataset.ans); }
     if (call) return;
-    const it = t.closest('[data-it]'); if (it) return takeItem(it.dataset.it);
-    const ss = t.closest('[data-ss]'); if (ss) return takeStation(ss.dataset.ss.slice(0, -1), +ss.dataset.ss.slice(-1));
-    const tr = t.closest('[data-tr]'); if (tr) return trayBack(+tr.dataset.tr);
-    const cu = t.closest('[data-cu]'); if (cu) return serve(cu.dataset.cu[0], +cu.dataset.cu[1]);
+    // SERET SAHAJA (menguji kecekapan): ketik barang/stesen/dulang/pelanggan hanya memberi petunjuk
+    const it = t.closest('[data-it]'); if (it) return msg(ST_IT[it.dataset.it].z === 's' ? 'Seret barang ini kepada atlet di Kaunter Stor' : 'Seret makanan ini ke dulang', '#FDE68A', 1100);
+    const ss = t.closest('[data-ss]'); if (ss){ const x = stn[ss.dataset.ss.slice(0, -1)][+ss.dataset.ss.slice(-1)]; return msg(!x ? 'Seret makanan dari rak ke dulang — yang perlu dimasak akan ke sini' : x.t >= x.need ? 'Seret makanan yang siap ke dulang' : 'Belum siap…', '#FDE68A', 1100); }
+    const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan ke rak untuk pulangkan, atau seret dulang kepada pelanggan', '#FDE68A', 1300);
+    const cu = t.closest('[data-cu]'); if (cu) return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret dulang kepada pelanggan ini', '#FDE68A', 1200);
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
     if (t.closest('[data-door]')) return msg(sup && sup.here ? 'Ketik pembekal untuk terima stok' : 'Tiada penghantaran sekarang.', '#94A3B8', 900);
