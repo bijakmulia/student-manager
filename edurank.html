@@ -7286,11 +7286,12 @@ const ST_ASSETS = [].concat(
   ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).concat(ST_ORG.map(o => [o.id, o.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. ' + ST_MAG + ' No text.')),
   ST_ITEMS.filter(x => !x.img && x.tg !== 'j').map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
   /* JUS BLEND: bahan = tin emoji (tiada aset), blender dilukis app; aset hanya gelas jus siap (jus_<id>). Tong sampah: 4 gambar GANTI ikut paras. */
-  [['tong_kosong', 'EMPTY — the inside is clean and dark, nothing inside'],
+  [stA('blender_meja', 'Jus Blend & Tong Sampah', 'sqL', ST_STYLE + ', straight front view. A kitchen blender with a yellow base and an orange dial, a tall clear glass jug with a black lid and black handle on the right. The jug is EMPTY and completely see-through: the inside of the jug shows the plain magenta background. Centred, filling most of the image. ' + ST_MAG.replace('Do NOT use any pink, magenta or purple on the object itself; ', 'Apart from the inside of the jug, do NOT use any pink, magenta or purple on the object; ') + ' No text, no people.')],
+  [['tong_kosong', 'EMPTY — the inside is clean, nothing inside'],
    ['tong_sikit', 'with a LITTLE rubbish: a few crumpled paper balls and one fruit peel visible at the bottom inside'],
    ['tong_separuh', 'HALF FULL of rubbish: crumpled paper, fruit peels and an empty juice cup filling the inside up to the middle'],
    ['tong_penuh', 'OVERFLOWING with rubbish: a messy heap of fruit peels, a banana peel hanging over the rim, crumpled paper and cups piled above the rim, with faint green smelly wavy lines']
-  ].map(([id, d]) => stA(id, 'Jus Blend & Tong Sampah', 'sq', 'LAMPIRKAN templat tools/template/templat_tong.png. ' + ST_STYLE + ', straight front view with a slight top-down angle so the inside of the open top is visible. Follow the attached sketch EXACTLY for the bin shape, size and position: a green plastic shop rubbish bin with an open top and a thick rim, a small recycle symbol on the front. The bin is ' + d + '. Keep the bin exactly where the sketch puts it; overflowing rubbish may only rise into the dashed box. Remove the dashed lines. ' + ST_MAG + ' No text, no people.')),
+  ].map(([id, d]) => stA(id, 'Jus Blend & Tong Sampah', 'sq', 'LAMPIRKAN templat tools/template/templat_tong.png. Use the attached picture as the template: draw EXACTLY the same green plastic rubbish bin (same shape, same size, same position, same camera angle, same recycle symbol, same art style, same magenta background). The ONLY change: the bin is ' + d + '. Square 1:1 image.')),
   ST_JUS.map(r => stA('jus_' + r.id, 'Jus Blend & Tong Sampah', 'sq', ST_STYLE + ', slight 3/4 view. Game item icon of a tall clear glass of ' + r.d + ', with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. ' + ST_MAG + ' No text.')),
   [['ui_syiling','a shiny gold coin with a simple embossed star'],
    ['ui_hati','a glossy red heart'],
@@ -7614,6 +7615,7 @@ const ST_CSS = `
 .st-bl.busy{animation:stShakeBl .12s linear infinite}
 @keyframes stShakeBl{25%{translate:-.12cqw 0}75%{translate:.12cqw 0}}
 .st-bl .bi{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:1;pointer-events:none}
+.st-bl.img .liq{left:32.7%;width:34.7%;top:20%;height:39.5%;clip-path:polygon(0 0,100% 0,86% 100%,17% 100%)}   /* kawasan dalam jag gambar blender_meja */
 .st-bl .jug{position:absolute;left:28%;width:44%;top:15%;height:53%;clip-path:polygon(0 0,100% 0,90% 100%,10% 100%);background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,.08) 30%,rgba(255,255,255,.08) 70%,rgba(255,255,255,.4));outline:.2cqw solid #334155;z-index:1}
 .st-bl .base{position:absolute;left:26%;width:48%;top:68%;height:26%;border-radius:.5cqw;background:linear-gradient(180deg,#64748B,#334155);z-index:1}
 .st-bl .bn{position:absolute;left:50%;bottom:-1.2cqw;transform:translateX(-50%);z-index:2;background:#1E293B;color:#fff;font-size:.8cqw;font-weight:800;padding:.1cqw .6cqw;border-radius:99px;white-space:nowrap}
