@@ -7663,6 +7663,7 @@ const ST_CSS = `
 .st-flyit .st-tin b,.st-ghost .st-tin b{font-size:26px}
 .st-tin b.tx{font-size:.85cqw;font-weight:900;letter-spacing:.02em;color:#1E293B;text-shadow:none;white-space:nowrap}
 .st-flyit .st-tin b.tx,.st-ghost .st-tin b.tx{font-size:11px}
+.st-tin b.tx.dk{color:#fff}
 .st-tray .g>div.jus{filter:drop-shadow(0 0 .5cqw #FDE68A)}
 .st-bub .jr .tx{margin-top:0;text-align:left;max-width:12cqw;font-size:.95cqw}
 .st-shelf .nm{margin-top:.5cqw}
@@ -7748,7 +7749,7 @@ function storRun(team){
   const walk = x => { const m = $s('#stMe'); m.style.left = x + '%'; m.classList.remove('walk'); void m.offsetWidth; m.classList.add('walk'); };
   const icon = (id, cls) => { const i = ST_IT[id];
     if (i.tg === 'j'){ const tx = { j_susu: 'SUSU', j_yogurt: 'YOGURT', chia: 'CHIA' }[id];      // bahan jus: tin berlabel emoji (atau nama), tanpa aset
-      return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b' + (tx ? ' class="tx">' + tx : '>' + i.e) + '</b></span>'; }
+      return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b' + (tx ? ' class="tx' + (id === 'chia' ? ' dk' : '') + '">' + tx : '>' + i.e) + '</b></span>'; }
     return stImg(i.img || id, i.e, cls); };
   const trayIcon = x => x.jus ? stImg('jus_' + x.jus, '🥤') : icon(x.id);
   const jusOf = id => ST_JUS.find(r => r.id === id);
