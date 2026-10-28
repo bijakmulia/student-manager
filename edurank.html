@@ -3923,8 +3923,13 @@ function tqBuild(opt){
       S.quiz = (S.quiz || []).concat(qs);
       save(true);
       closeModal(id);
-      if (opt.from === 'game'){ renderTab(); if (LOBBY) LOBBY.repaint(); }
-      else { closeTop(); quizManager(); }
+      // Bank Soalan dibuka semula pada penapis yang menunjukkan soalan baharu ini (bukan tersorok di bawah penapis "hari ini")
+      const sc = subjDskp(sj) ? S.ui.tqScope || '' : '', pm = /^p(\d+)_(\d+)$/.exec(sc), bk = subjBook(sj);
+      S.ui.qzSubject = sj;
+      S.ui.qzF = sc === 'now' ? 'today' : /^k\d+$/.test(sc) ? sc : pm ? 'k' + pm[1] : '';
+      S.ui.qzP = pm && bk && bk.sk[+pm[1]] ? skCode(bk.sk[+pm[1]].sp[+pm[2]]) : '';
+      renderTab(); if (LOBBY) LOBBY.repaint();
+      if (opt.from !== 'game'){ closeTop(); quizManager(); }
       toast(qs.length + ' soalan dibina · ' + qs.filter(tqHasExp).length + ' dengan huraian');
     }
   });
@@ -5678,13 +5683,16 @@ const LB_CSS = `
 function lbStyle(){ if (!document.getElementById('lbCss')){ const s = document.createElement('style'); s.id = 'lbCss'; s.textContent = LB_CSS; document.head.appendChild(s); } }
 
 /* "Adakah anda pasti?" — di atas semua lapisan game */
-function gameConfirm(q, sub){
+/* Keluar dari game. Jika soalan sudah dijawab (asked > 0), markah separuh jalan disimpan sebagai TP. */
+function gameConfirm(q, sub, asked, right){
   lbStyle();
+  const keep = asked > 0;
   return new Promise(res => {
     const el = document.createElement('div'); el.className = 'gc';
-    el.innerHTML = '<div class="gc-p"><div style="font-size:34px">🚪</div><div class="q">' + esc(q || 'Adakah anda pasti mahu keluar?') + '</div>' +
-      '<div class="s">' + (sub || 'Permainan akan ditamatkan dan kemajuan pusingan ini tidak disimpan.') + '</div>' +
-      '<div class="b"><button data-g="0">Tidak, sambung</button><button class="y" data-g="1">Ya, keluar</button></div></div>';
+    el.innerHTML = '<div class="gc-p"><div style="font-size:34px">' + (keep ? '🏁' : '🚪') + '</div><div class="q">' + esc(q || (keep ? 'Tamatkan permainan sekarang?' : 'Adakah anda pasti mahu keluar?')) + '</div>' +
+      '<div class="s">' + (sub || (keep ? 'Markah setakat ini (<b>' + right + '/' + asked + ' betul</b>) akan direkod sebagai TP untuk setiap ahli kumpulan yang bermain.'
+                                       : 'Belum ada soalan dijawab, jadi tiada markah untuk direkod.')) + '</div>' +
+      '<div class="b"><button data-g="0">Tidak, sambung</button><button class="y" data-g="1">' + (keep ? 'Ya, tamat &amp; simpan' : 'Ya, keluar') + '</button></div></div>';
     const done = v => { el.remove(); res(v); };
     el.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (b) done(b.dataset.g === '1'); else if (e.target === el) done(false); });
     document.body.appendChild(el);
@@ -6517,6 +6525,7 @@ const BT_CSS = `
 .bt-enter{animation:btEnter .55s cubic-bezier(.3,1.5,.5,1)}
 @keyframes btEnter{0%{opacity:0;transform:scale(.5) translateY(var(--from,0))}100%{opacity:1;transform:none}}
 .bt-q{flex:0 0 auto;padding:8px 10px calc(8px + var(--safe-b,0px));background:linear-gradient(180deg,#121A2B,#0A0F1A);border-top:3px solid var(--qc,#1D4ED8)}
+.bt.rb .s1 .cardface,.bt.rb .bt-act.s1 .bt-hp,.bt.rb .bt-pile.s1 .n,.bt.rb .bt-name.s1{rotate:180deg}
 .bt-q.top{transform:rotate(180deg);padding-bottom:8px;padding-top:calc(8px + var(--safe-t,0px))}
 .bt-q .who{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--qc,#60A5FA)}
 .bt-q .bar{height:5px;background:#1B2537;border-radius:4px;overflow:hidden;margin:6px 0}
@@ -6562,7 +6571,7 @@ function battleRun(tA, tB, mode){
   const energy = [0, 0], shield = [false, false];               // mod Klasik
   let swMode = false, switched = false, busy = klasik;
   const root = document.createElement('div');
-  root.className = 'bt'; root.id = 'btRoot';
+  root.className = 'bt' + (rebut ? ' rb' : ''); root.id = 'btRoot';
   root.innerHTML = (rebut ? '<div class="bt-q top" id="btQ1"></div>' : '') +
     '<div class="bt-board" id="btBoard">' +
       '<div class="bt-half t" id="btH1"></div><div class="bt-half b" id="btH0"></div>' +
@@ -6662,6 +6671,8 @@ function battleRun(tA, tB, mode){
     const a = P[k], d = P[1 - k], ax = act(a), dx = act(d);
     const adv = advOf(ax, dx);
     let dmg = Math.max(3, Math.round(ax.atk * o.mult * (0.9 + Math.random() * 0.2) * adv - dx.def * 0.6));
+    // Mod Kuiz: setiap jawapan betul membuang sekurang-kurangnya ~30% HP (kritikal/elemen lebih), jadi satu kad tumbang dalam 3–4 jawapan
+    if (!klasik) dmg = Math.max(dmg, Math.round(dx.hp * .3 * o.mult * adv));
     const blocked = shield[1 - k];
     if (blocked){ dmg = Math.max(1, Math.round(dmg * .5)); shield[1 - k] = false; }
     const ko = dx.cur - dmg <= 0;
@@ -6815,9 +6826,10 @@ function battleRun(tA, tB, mode){
   }
 
   /* ---------- tamat: ganjaran, TP & rekod ---------- */
-  function finish(){
+  function finish(early){                                // early = dihentikan guru: pendahulu (kad hidup, kemudian jumlah HP) dikira menang
     if (over) return; over = true; cancelAnimationFrame(raf); paintQ();
-    const wk = alive(P[0]) ? 0 : 1, W = P[wk], L = P[1 - wk];
+    const hpSum = p => p.deck.reduce((t, x) => t + Math.max(0, x.cur), 0);
+    const wk = early ? (alive(P[0]) !== alive(P[1]) ? (alive(P[0]) > alive(P[1]) ? 0 : 1) : hpSum(P[0]) >= hpSum(P[1]) ? 0 : 1) : alive(P[0]) ? 0 : 1, W = P[wk], L = P[1 - wk];
     S.duel = S.duel || {};
     if (klasik){                                          // tiada soalan: RP sahaja, tidak ke PBD
       S.duel.klasik = S.duel.klasik || {};
@@ -6891,7 +6903,7 @@ function battleRun(tA, tB, mode){
     const sw = e.target.closest('[data-sw]');
     if (sw){ if (!humanTurn()) return; const [k, j] = sw.dataset.sw.split(':').map(Number); if (k === turn) doSwitch(k, j); return; }
     const x = e.target.closest('[data-x]'); if (!x) return;
-    if (x.dataset.x === 'quit'){ if (over) return quit(); gameConfirm().then(ok => ok && quit()); return; }
+    if (x.dataset.x === 'quit'){ if (over) return quit(); const qa = P[0].asked + P[1].asked; gameConfirm(null, null, qa, P[0].right + P[1].right).then(ok => ok && (qa ? finish(true) : quit())); return; }
     if (x.dataset.x === 'again'){ quit(); setTimeout(() => battleRun(tA, tB, mode), 80); }
   });
   paintBoard(); paintQ();
@@ -7819,7 +7831,8 @@ function storRun(team){
       if (x.dataset.x === 'again'){ quit(); setTimeout(storStart, 80); return; }
       if (over) return quit();
       const was = paused; paused = true;
-      gameConfirm().then(ok => { if (ok) quit(); else { paused = was; lastTick = performance.now(); } });
+      const sa = good + poor + left + qAsked;
+      gameConfirm(null, null, sa, good + qRight).then(ok => { if (ok){ if (sa) finish(false); else quit(); } else { paused = was; lastTick = performance.now(); } });
       return;
     }
     if (over) return;
@@ -8235,7 +8248,7 @@ function runGame(THREE, sid, ac){
   $r('#rnQuit').onclick = () => {
     if (ended) return quit();
     const was = paused; paused = true;                // larian berhenti sementara soalan pengesahan dipapar
-    gameConfirm().then(ok => { if (ok) quit(); else { paused = was; last = performance.now(); } });
+    gameConfirm(null, null, asked, right).then(ok => { if (ok){ if (asked) gameOver(); else quit(); } else { paused = was; last = performance.now(); } });
   };
 
   /* ---------- logik ---------- */
@@ -8250,7 +8263,7 @@ function runGame(THREE, sid, ac){
     speed = Math.min(RL.vmax, RL.v0 + dist / RL.ramp);
     const dz = speed * dt;
     dist += dz;
-    roadTex.offset.y -= dz / (160 / 6);
+    roadTex.offset.y += dz / (160 / 6);                 // garisan bergerak ke arah pemain (ke belakang) = pemain maju
     // pemandangan berulang
     SCN.forEach(o => { o.position.z += dz; if (o.position.z > 12) o.position.z -= SPAN; });
     // pelari
@@ -9347,7 +9360,7 @@ function escRun(THREE, sid, ac){
   $e('#escQuit').onclick = () => {
     if (ended) return quit();
     const was = paused; paused = true;
-    gameConfirm().then(ok => { if (ok) quit(); else paused = was; });
+    gameConfirm(null, null, answered, correct).then(ok => { if (ok){ if (answered) stopEarly(); else quit(); } else paused = was; });
   };
   $e('#escAct').onclick = () => { if (!paused && near) interact(); };
   const stopInput = () => { joy.id = look.id = null; joy.x = joy.y = 0; $e('#escJoy').style.display = 'none'; Object.keys(kb).forEach(k => kb[k] = false); };
@@ -9605,6 +9618,14 @@ function escRun(THREE, sid, ac){
         '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+'+rp+'</div><div class="text-[10px] text-muted">RP</div></div></div>' +
       (first ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#E23B3B"><i class="fa-solid fa-certificate" style="color:#E23B3B"></i> Lencana baharu: <b>Pelarian Seram</b></div>' : ''));
   }
+  function stopEarly(){
+    const tp = gameToPBD(sid, 'esc', correct, answered, { win: 0, early: 1 });
+    save(true);
+    endScreen('<i class="fa-solid fa-flag-checkered text-4xl" style="color:#FFB347"></i>' +
+      '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#FFB347">PERMAINAN DIHENTIKAN</div>' +
+      '<div class="text-[13px] text-muted mt-1">Kunci: '+keys()+'/'+D.keys+' · Jawapan betul: '+correct+'/'+answered+'</div>' +
+      (tp ? '<div class="text-[12px] mt-2" style="color:#00F0FF"><b style="color:'+TP_COLOR[tp]+'">TP'+tp+'</b> direkod dalam PBD untuk setiap ahli '+esc(player ? player.name : '')+'.</div>' : ''));
+  }
   function lose(){
     const tp = gameToPBD(sid, 'esc', correct, answered, { win: 0 });
     endScreen('<i class="fa-solid fa-ghost text-4xl" style="color:#E23B3B"></i>' +
@@ -9833,7 +9854,7 @@ const ACTS = {
     if (!ok) return;
     const gone = new Set(list.map(q => q.id));
     S.quiz = (S.quiz || []).filter(q => !gone.has(q.id));
-    save(true); closeTop(); quizManager(); toast(list.length + ' soalan dipadam.');
+    save(true); renderTab(); closeTop(); quizManager(); toast(list.length + ' soalan dipadam.');
   },
   'qz-see': d => quizSee(d.id),
   'qz-del': async d => {
@@ -9841,7 +9862,7 @@ const ACTS = {
     const ok = await confirmBox({ danger:true, title:'Padam Soalan', okText:'Padam', message:'Padam soalan: <b>'+esc(q.q)+'</b>?' });
     if (!ok) return;
     S.quiz = S.quiz.filter(x => x.id !== d.id);
-    save(true); closeTop(); quizManager(); toast('Soalan dipadam.');
+    save(true); renderTab(); closeTop(); quizManager(); toast('Soalan dipadam.');
   },
   'chap-add': () => chapForm(null),
   'chap-edit': d => { const c = S.chapters.find(x=>x.id===d.id); if (c) chapForm(c); },
