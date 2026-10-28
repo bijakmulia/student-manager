@@ -89,7 +89,9 @@ Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' 
         # separately generated picture fills the same box and the swap lines up
         $tight = ($base -like 'rak_*' -or $base -like 'kaunter_*' -or $base -like 'pintu_*' -or $base -like 'dulang*' -or $base -like 'dapur_*' -or $base -like 'blender_*' -or $base -like 'meja_telefon*' -or $base -like 'telefon*')
         $pad = if ($tight) { 0 } else { [int][Math]::Round([Math]::Max($bmp.Width, $bmp.Height) * 0.02) }
-        if ($bb) {
+        # blender_meja & tong_*: kanvas penuh dikekalkan — game melukis lapisan jus ikut kedudukan templat
+        $keepCanvas = ($base -eq 'blender_meja' -or $base -like 'tong_*')
+        if ($bb -and -not $keepCanvas) {
             $x0 = [Math]::Max(0, $bb[0] - $pad); $y0 = [Math]::Max(0, $bb[1] - $pad)
             $x1 = [Math]::Min($bmp.Width - 1, $bb[2] + $pad); $y1 = [Math]::Min($bmp.Height - 1, $bb[3] + $pad)
             if ($x0 -gt 2 -or $y0 -gt 2 -or $x1 -lt $bmp.Width - 3 -or $y1 -lt $bmp.Height - 3) {

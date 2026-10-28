@@ -5776,7 +5776,7 @@ const GAME_LOBBY = {
     desc: 'Uruskan Stor Sukan dan Kedai Sihat. Sediakan peralatan dan makanan bernutrisi untuk atlet sebelum kesabaran mereka habis!',
     cfg: () => storCfg(),
     opts: () => [
-      lbSeg('lvl', 'TAHAP', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']], 'Mudah: kalori setiap makanan ditunjuk, tiada alahan. Sederhana: lebih ramai pelanggan, ada yang alergik. Pakar: kalori makanan disembunyikan — murid perlu menganggar.'),
+      lbSeg('lvl', 'TAHAP', [['mudah','Mudah'],['sederhana','Sederhana'],['pakar','Pakar']], 'Mudah: pelanggan datang perlahan dan lebih sabar. Sederhana: lebih ramai pelanggan. Pakar: pelanggan datang cepat dan kurang sabar'),
       lbSeg('sabar', 'MASA SABAR PELANGGAN', [[0,'Auto'],[40,'40s'],[60,'60s'],[90,'90s'],[120,'120s']]),
       lbSeg('syif', 'TEMPOH SYIF', [[3,'3 min'],[5,'5 min'],[8,'8 min']]),
       lbSeg('watak', 'WATAK PEKERJA', [['p','Perempuan'],['l','Lelaki']])],
@@ -5788,7 +5788,7 @@ const GAME_LOBBY = {
       p(1);
     },
     starts: [['🏪 BUKA KEDAI', () => storStart()]],
-    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Kedai Sihat:</b> seret makanan dari rak ke <b>atas kaunter</b> sehingga jumlah kalori hampir dengan sasaran 🎯 pelanggan, kemudian seret makanan di kaunter kepada pelanggan. Makin hampir kalori, makin tinggi ⭐ skor. Jangan beri makanan yang pelanggan alergik! Makanan 🍳/🌀 terus ke <b>dapur</b> / <b>blender</b>; bila siap, seret ke kaunter.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
+    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Jus Blend Sihat:</b> lihat bahan dalam gelembung pelanggan, seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
   }
 };
 
@@ -7046,15 +7046,14 @@ function viewGame(){
    assets/stor/<id>.webp (atau .png) wujud, gambar itu digunakan.        */
 let STOR = null;
 const ST_SHELVES = [
-  // id, nama, zon, kedudukan x (% pentas)
-  ['bola',   'Rak Bola',              's', 2],
-  ['raket',  'Rak Raket & Kayu',      's', 12.5],
-  ['pakai',  'Rak Pakaian & Kasut',   's', 23],
-  ['fit',    'Rak Kecergasan',        's', 33.5],
-  ['buah',   'Rak Buah & Sayur',      'k', 55.5],
-  ['sejuk',  'Peti Sejuk',            'k', 64],
-  ['bijirin','Rak Bijirin & Roti',    'k', 72.5],
-  ['snek',   'Rak Snek',              'k', 81]
+  // id, nama, zon, kedudukan x (% pentas), lebar (% pentas)
+  ['bola',   'Rak Bola',              's', 2,    10],
+  ['raket',  'Rak Raket & Kayu',      's', 12.5, 10],
+  ['pakai',  'Rak Pakaian & Kasut',   's', 23,   10],
+  ['fit',    'Rak Kecergasan',        's', 33.5, 10],
+  ['buah',   'Rak Buah & Sayur',      'k', 55.5, 8],
+  ['sejuk',  'Peti Sejuk',            'k', 64.3, 8],
+  ['jus',    'Rak Bahan Jus Blend',   'k', 73.1, 16]
 ];
 const ST_TAGS = { k:['🍚','Karbohidrat'], p:['🍗','Protein'], l:['🥑','Lemak sihat'], v:['🥦','Vitamin & serat'], h:['💧','Cecair'], x:['⚠️','Tidak sihat'] };
 /* id, nama, emoji, rak, tag nutrisi, harga RM, penyediaan [stesen, saat], huraian untuk prompt aset */
@@ -7103,8 +7102,6 @@ const ST_ITEMS = [
   ['brokoli','Brokoli','🥦','buah','v',3,null,'a fresh green broccoli floret'],
   ['salad','Salad Sayur','🥗','buah','v',6,null,'a bowl of fresh green salad with tomatoes and cucumber'],
   ['alpukat','Alpukat','🥑','buah','lv',4,null,'a halved avocado with the seed'],
-  ['jus_oren','Jus Oren','🍹','buah','vh',5,['blender',4],'a tall glass of fresh orange juice with a straw'],
-  ['smoothie','Smoothie Pisang','🥤','buah','kp',7,['blender',5],'a banana milk smoothie in a tall cup with a straw'],
   ['susu','Susu Rendah Lemak','🥛','sejuk','ph',3,null,'a glass of fresh milk next to a small milk carton'],
   ['yogurt','Yogurt','🫙','sejuk','p',4,null,'a cup of plain yogurt with a spoon'],
   ['air_kosong','Air Kosong','💧','sejuk','h',1,null,'a bottle of plain mineral water'],
@@ -7114,22 +7111,29 @@ const ST_ITEMS = [
   ['telur_rebus','Telur Rebus','🥚','sejuk','p',2,['dapur',5],'two boiled eggs, one halved showing the yolk'],
   ['ayam_panggang','Dada Ayam Panggang','🍗','sejuk','p',9,['dapur',7],'a grilled chicken breast with grill marks on a plate'],
   ['ikan_bakar','Ikan Bakar','🐟','sejuk','p',9,['dapur',7],'a grilled fish on a banana leaf with lime'],
-  ['nasi_perang','Nasi Perang','🍚','bijirin','k',3,null,'a bowl of brown rice'],
-  ['roti_gandum','Roti Gandum','🍞','bijirin','k',3,null,'slices of wholemeal bread'],
-  ['oat','Bubur Oat','🥣','bijirin','k',4,['dapur',5],'a warm bowl of oatmeal topped with banana slices'],
-  ['ubi_keledek','Ubi Keledek','🍠','bijirin','k',3,null,'a roasted sweet potato cut in half'],
-  ['pasta','Pasta Gandum','🍝','bijirin','k',6,['dapur',6],'a plate of wholemeal spaghetti with tomato sauce'],
-  ['granola','Bar Bijirin','🌾','bijirin','k',4,null,'a granola cereal bar with oats and nuts'],
-  ['kacang','Kacang Badam','🥜','bijirin','l',5,null,'a small bowl of almonds'],
-  ['kurma','Kurma','🌴','bijirin','k',4,null,'a small plate of brown dates'],
-  ['sandwic','Sandwic Tuna','🥪','bijirin','pk',6,null,'a wholemeal tuna sandwich cut diagonally'],
-  ['kentang_goreng','Kentang Goreng','🍟','snek','x',5,null,'a red carton of french fries'],
-  ['air_bergas','Minuman Bergas','🥫','snek','x',3,null,'a can of fizzy soda with bubbles'],
-  ['donat','Donat','🍩','snek','x',3,null,'a chocolate frosted donut with yellow sprinkles'],
-  ['gula_gula','Gula-gula','🍬','snek','x',2,null,'yellow, green and orange wrapped candies'],
-  ['burger','Burger','🍔','snek','x',8,null,'a big cheeseburger'],
-  ['kerepek','Kerepek','🍿','snek','x',3,null,'an open bag of potato chips']
-].map(([id, n, e, sh, tg, p, prep, d]) => ({ id, n, e, sh, tg, p, prep, d, z: ST_SHELVES.find(s => s[0] === sh)[2] }));
+  // ---- RAK BAHAN JUS BLEND (tg 'j'): img = guna gambar barang lain yang sama; col = warna lapisan dalam blender ----
+  ['j_susu','Susu','🥛','jus','j',2,null,'','susu','#F7F4EC'],
+  ['j_yogurt','Yogurt','🫙','jus','j',2,null,'','yogurt','#FFF3D6'],
+  ['j_kelapa','Air Kelapa','🥥','jus','j',2,null,'','air_kelapa','#E9F5D2'],
+  ['j_pisang','Pisang','🍌','jus','j',1,null,'','pisang','#F6DE6E'],
+  ['j_tembikai','Tembikai','🍉','jus','j',2,null,'','tembikai','#F0525C'],
+  ['j_oren','Oren','🍊','jus','j',1,null,'','oren','#FF9F2E'],
+  ['mangga','Mangga','🥭','jus','j',2,null,'a ripe yellow-orange mango with a green leaf, one cheek sliced to show juicy flesh'],
+  ['strawberi','Strawberi','🍓','jus','j',2,null,'three bright red strawberries with green tops'],
+  ['bayam','Bayam','🥬','jus','j',1,null,'a small bunch of fresh green spinach leaves'],
+  ['timun','Timun','🥒','jus','j',1,null,'a fresh green cucumber with a few round slices'],
+  ['chia','Biji Chia','⚫','jus','j',2,null,'a small glass jar of tiny black chia seeds with a wooden scoop'],
+  ['madu','Madu','🍯','jus','j',2,null,'a small honey jar with a wooden honey dipper dripping golden honey']
+].map(([id, n, e, sh, tg, p, prep, d, img, col]) => ({ id, n, e, sh, tg, p, prep, d, img, col, z: ST_SHELVES.find(s => s[0] === sh)[2] }));
+const ST_COL = { j_susu:'#F7F4EC', j_yogurt:'#FFF3D6', j_kelapa:'#E9F5D2', j_pisang:'#F6DE6E', j_tembikai:'#F0525C', j_oren:'#FF9F2E', mangga:'#FFC233', strawberi:'#E8384F', bayam:'#3F9D3F', timun:'#A6D86E', chia:'#5B5B5B', madu:'#E3A21A' };
+/* 5 resipi JUS BLEND SIHAT: bahan (tanpa mengira susunan), warna jus siap, huraian gelas (prompt aset jus_<id>) */
+const ST_JUS = [
+  ['tembikai_chia', 'Jus Tembikai Chia', ['j_susu', 'j_tembikai', 'chia', 'j_pisang'], '#F59AA2', 'a pink watermelon milk smoothie sprinkled with tiny black chia seeds, a watermelon wedge on the rim'],
+  ['hijau_segar', 'Jus Hijau Segar', ['bayam', 'timun', 'j_kelapa', 'madu'], '#8CC63F', 'a bright green spinach and cucumber juice with a cucumber slice on the rim'],
+  ['mangga_sunrise', 'Smoothie Mangga Sunrise', ['mangga', 'j_oren', 'j_yogurt', 'madu'], '#FFB13B', 'a golden mango orange smoothie with a mango cube and orange slice on the rim'],
+  ['strawberi_pisang', 'Smoothie Strawberi Pisang', ['strawberi', 'j_pisang', 'j_yogurt', 'j_susu'], '#F48FA6', 'a creamy pink strawberry banana smoothie with a strawberry on the rim'],
+  ['tropika_kelapa', 'Jus Tropika Kelapa', ['j_oren', 'mangga', 'j_kelapa', 'chia'], '#FFCB5C', 'a light orange tropical coconut juice with chia seeds and a small paper umbrella']
+].map(([id, n, ings, col, d]) => ({ id, n, ings, col, d }));
 /* kalori sehidang (anggaran, kcal) */
 const ST_KCAL = { pisang:105, epal:95, oren:60, tembikai:85, betik:120, brokoli:55, salad:150, alpukat:160, jus_oren:110, smoothie:250,
   susu:130, yogurt:100, air_kosong:0, air_kelapa:45, isotonik:80, tauhu:150, telur_rebus:140, ayam_panggang:230, ikan_bakar:200,
@@ -7190,6 +7194,24 @@ const ST_MEAL = [
   [['org_ibu'], 'Saya nak snek petang untuk anak saya.', 150, 260],
   [['org_remaja'], 'Saya lapar, tapi nak makan yang sihat sikit.', 400, 600]
 ].map(([who, t, lo, hi]) => ({ who, t, lo, hi }));
+/* dialog pelanggan Kedai Sihat: {j} = nama jus */
+const ST_JUS_TX = [
+  'Penatnya lepas latihan! Saya nak {j} yang sejuk, boleh?',
+  'Cuaca panas sangat hari ni. Satu {j}, please!',
+  'Jurulatih saya kata minum {j} bagus untuk pulihkan tenaga.',
+  'Sebelum perlawanan petang ni, saya nak {j} dulu.',
+  'Anak saya suka sangat {j}. Satu ya!',
+  'Saya nak cuba {j} yang semua orang cakap sedap tu.',
+  'Lepas berlari tadi tekak kering. Bagi saya {j}.'
+];
+const ST_FOOD_TX = [
+  'Saya nak buah sahaja hari ni, nak jaga makan.',
+  'Lepas latihan, saya perlukan makanan ini.',
+  'Nak bekal untuk rehat sekolah nanti.',
+  'Saya lapar! Tolong sediakan ini cepat ya.',
+  'Hari ni saya nak makan yang ringan sahaja.',
+  'Makcik pesan suruh beli ini untuk minum petang.'
+];
 const stPerson = id => { const a = ST_ATH.find(x => x.id === id); return a ? { id, n: a.n, e: a.e, img: 'atl_' + id } : ST_ORG.find(x => x.id === id); };
 const ST_NUT = {
   pre:   { t:'Sebelum latihan — perlu TENAGA', slots:['k','k?','h'] },
@@ -7232,8 +7254,7 @@ const ST_ASSETS = [].concat(
    ['rak_fit','an empty tall grey metal shelving unit with a blue header panel'],
    ['rak_buah','an empty tall wooden market display stand whose 4 shelves are shallow empty wicker trays'],
    ['rak_sejuk','an empty tall drinks refrigerator with a clear glass door, 4 empty wire shelves visible inside, cool white interior light'],
-   ['rak_bijirin','an empty tall cream-coloured cafe pantry shelf'],
-   ['rak_snek','an empty tall red snack rack with a small yellow caution sign on the header']
+   ['rak_jus','an empty tall wide pastel-yellow juice bar ingredient shelf with a small fruit-shaped sign area on the header']
   ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. ' + d[0].toUpperCase() + d.slice(1) + '. It has exactly 4 shelf boards; the TOP SURFACES of the boards are at about 27%, 49%, 71% and 93% of the image height, and the area above the first board is a plain header panel. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. ' + ST_MAG + ' No text, no people.')),
   /* PASANGAN GAMBAR (logik GANTI, bukan lapisan): setiap gambar dijana SENDIRI (tiada lampiran). Prompt dalam satu pasangan
      memakai huraian objek yang SAMA perkataan demi perkataan dan objek memenuhi gambar; auto-push memotong tepi rapat,
@@ -7243,7 +7264,6 @@ const ST_ASSETS = [].concat(
     const DOOR = ST_STYLE + ', straight front view. A tall double door of a shop back room inside a thick dark wooden door frame; the door panels are grey metal with small square windows.';
     const PHONE = ST_STYLE + ', straight front view with a slight top-down angle. A red old-style rotary desk telephone standing on its own (NO table), with its coiled cord curled beside it; it will be placed on top of a shop counter.';
     const STOVE = ST_STYLE + ', straight front view with a slight top-down angle. A compact single-burner cafe stove on a small steel cabinet with ONE wide black frying pan on the burner.';
-    const BLEND = ST_STYLE + ', straight front view with a slight top-down angle. A kitchen blender with a tall clear jug and black lid on a small wooden counter block.';
     const P = (id, g, ar, base, state, extra) => stA(id, g, ar, base + ' ' + state + fill + ' No text, no people' + (extra || '') + '.');
     const gD = 'Pintu & Telefon (pasangan)', gK = 'Dapur & Blender (ganti gambar)';
     return [
@@ -7254,8 +7274,6 @@ const ST_ASSETS = [].concat(
       P('dapur_kosong', gK, 'sqL', STOVE, 'The pan is EMPTY and the flame is OFF.'),
       ...ST_ITEMS.filter(x => x.prep && x.prep[0] === 'dapur').map(x => P('dapur_' + x.id, gK, 'sqL', STOVE, 'The blue flame is ON and the pan contains ' + x.d + ', cooking, with soft white steam rising and a few small sizzle sparkles.')),
       P('dapur_hangus', gK, 'sqL', STOVE, 'The pan contains black BURNT food with dark grey smoke rising and a small orange flame flaring from the pan.'),
-      P('blender_kosong', gK, 'sqL', BLEND, 'The jug is EMPTY.'),
-      ...ST_ITEMS.filter(x => x.prep && x.prep[0] === 'blender').map(x => P('blender_' + x.id, gK, 'sqL', BLEND, 'The jug is filled with ' + (x.id === 'jus_oren' ? 'bright orange juice with orange pieces' : 'a creamy pale-yellow banana milk smoothie') + ' swirling as it blends, with small motion lines around the jug.'))
     ];
   })()],
   /* kaunter: SATU meja panjang — game meregang bahagian tengah (hujung 15% kiri/kanan dikekalkan) */
@@ -7266,7 +7284,16 @@ const ST_ASSETS = [].concat(
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
    ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
   ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).concat(ST_ORG.map(o => [o.id, o.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. ' + ST_MAG + ' No text.')),
-  ST_ITEMS.map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
+  ST_ITEMS.filter(x => !x.img).map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
+  /* JUS BLEND (logik LAPISAN): blender_meja = jag LUTSINAR (bahagian dalam magenta → jadi lutsinar), game melukis lapisan warna
+     bahan di BELAKANG gambar ikut kawasan jag dalam templat. Tong sampah: 4 gambar GANTI ikut paras. */
+  [stA('blender_meja', 'Jus Blend & Tong Sampah', 'sqL', 'LAMPIRKAN templat tools/template/templat_blender.png. ' + ST_STYLE + ', straight front view. Follow the attached sketch EXACTLY for size, position and outline: a kitchen blender standing on a shop counter, sturdy rounded base with one big dial, a tall clear glass jug with a black lid and handle on the right. The jug is EMPTY and completely see-through: everything INSIDE the jug outline must stay the plain magenta colour exactly like the sketch (no liquid, no reflections filling the inside), only a thin dark outline and two thin white highlight streaks along the glass edges. Do not move or resize anything from the sketch. ' + ST_MAG.replace('Do NOT use any pink, magenta or purple on the object itself; ', 'Apart from the inside of the jug, do NOT use any pink, magenta or purple on the object; ') + ' No text, no people.')],
+  [['tong_kosong', 'EMPTY — the inside is clean and dark, nothing inside'],
+   ['tong_sikit', 'with a LITTLE rubbish: a few crumpled paper balls and one fruit peel visible at the bottom inside'],
+   ['tong_separuh', 'HALF FULL of rubbish: crumpled paper, fruit peels and an empty juice cup filling the inside up to the middle'],
+   ['tong_penuh', 'OVERFLOWING with rubbish: a messy heap of fruit peels, a banana peel hanging over the rim, crumpled paper and cups piled above the rim, with faint green smelly wavy lines']
+  ].map(([id, d]) => stA(id, 'Jus Blend & Tong Sampah', 'sq', 'LAMPIRKAN templat tools/template/templat_tong.png. ' + ST_STYLE + ', straight front view with a slight top-down angle so the inside of the open top is visible. Follow the attached sketch EXACTLY for the bin shape, size and position: a green plastic shop rubbish bin with an open top and a thick rim, a small recycle symbol on the front. The bin is ' + d + '. Keep the bin exactly where the sketch puts it; overflowing rubbish may only rise into the dashed box. Remove the dashed lines. ' + ST_MAG + ' No text, no people.')),
+  ST_JUS.map(r => stA('jus_' + r.id, 'Jus Blend & Tong Sampah', 'sq', ST_STYLE + ', slight 3/4 view. Game item icon of a tall clear glass of ' + r.d + ', with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. ' + ST_MAG + ' No text.')),
   [['ui_syiling','a shiny gold coin with a simple embossed star'],
    ['ui_hati','a glossy red heart'],
    ['ui_telefon','a red ringing telephone with motion lines'],
@@ -7568,6 +7595,62 @@ const ST_CSS = `
 .st-tray .g>div:nth-child(-n+3){transform:scale(.9) translateY(30%)}
 .st-tray.st-hot{outline:.3cqw dashed #FACC15;outline-offset:.2cqw;border-radius:.8cqw}
 .st-tray .k{position:absolute;left:50%;top:calc(100% + 1.4cqw);transform:translateX(-50%);white-space:nowrap;margin:0}
+/* ---- v4: jus blend, tong sampah, jam pintu, dapur boleh diseret ---- */
+.st [data-ss],.st [data-bl],.st [data-bin],.st .st-tray{touch-action:none}
+.st-sup .bb{animation:none}
+.st-stn{height:19%}
+.st-shelf .box.jus{--bd:#C9A24A;--bg1:#FFF4D6;--bg2:#F5DFA6}
+.st-tray{left:62.6%;width:5.4%;top:51.5%;height:8.6%}
+.st-tray .g{grid-template-columns:1fr 1fr!important}
+.st-tray .g>div:nth-child(-n+2){transform:scale(.9) translateY(30%)}
+.st-tray .g>div:nth-child(3){transform:none}
+.st-bl{left:55.9%;width:6.6%;top:48.6%;aspect-ratio:1;height:auto;z-index:4;cursor:grab}
+.st-bl .liq{position:absolute;left:29.3%;width:41.4%;top:16.6%;height:50.8%;clip-path:polygon(0 0,100% 0,90.6% 100%,9.4% 100%);display:flex;flex-direction:column-reverse;z-index:0;background:rgba(255,255,255,.18)}
+.st-bl .liq i{display:block;width:100%;flex:none;box-shadow:inset 0 .12cqw 0 rgba(255,255,255,.35)}
+.st-bl .liq i.seed{background-image:radial-gradient(circle,#1F1F1F 0 .12cqw,transparent .14cqw)!important;background-size:.6cqw .6cqw;background-color:#E9E4DA!important}
+.st-bl .liq i.pour{animation:stPour .45s ease-out}
+@keyframes stPour{0%{height:0}}
+.st-bl .liq i.mix{transition:height .3s}
+.st-bl .liq i.spin{animation:stSpin .25s linear infinite;background-image:repeating-linear-gradient(60deg,rgba(255,255,255,.25) 0 .4cqw,transparent .4cqw .9cqw)!important;background-size:2cqw 2cqw}
+@keyframes stSpin{to{background-position:2cqw 0}}
+.st-bl.busy{animation:stShakeBl .12s linear infinite}
+@keyframes stShakeBl{25%{translate:-.12cqw 0}75%{translate:.12cqw 0}}
+.st-bl .bi{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:1;pointer-events:none}
+.st-bl .jug{position:absolute;left:28%;width:44%;top:15%;height:53%;clip-path:polygon(0 0,100% 0,90% 100%,10% 100%);background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,.08) 30%,rgba(255,255,255,.08) 70%,rgba(255,255,255,.4));outline:.2cqw solid #334155;z-index:1}
+.st-bl .base{position:absolute;left:26%;width:48%;top:68%;height:26%;border-radius:.5cqw;background:linear-gradient(180deg,#64748B,#334155);z-index:1}
+.st-bl .bn{position:absolute;left:50%;bottom:-1.2cqw;transform:translateX(-50%);z-index:2;background:#1E293B;color:#fff;font-size:.8cqw;font-weight:800;padding:.1cqw .6cqw;border-radius:99px;white-space:nowrap}
+.st-bl.ready{filter:drop-shadow(0 0 .8cqw #4ADE80)}
+.st-bl.ready .bn{background:#16A34A}
+.st-bl.st-hot,.st-bin.st-hot{outline:.3cqw dashed #FACC15;outline-offset:.2cqw;border-radius:.8cqw}
+.st-bl.lifted,.st-bin.lifted{opacity:.25}
+.st-bin{left:51%;width:4.4%;top:60.5%;height:10.5%;z-index:4;cursor:grab;display:flex;align-items:flex-end;justify-content:center;font-size:3.2cqw}
+.st-bin>img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+.st-bin .lvl{position:absolute;right:-.4cqw;bottom:.3cqw;width:.6cqw;height:70%;border-radius:99px;background:rgba(0,0,0,.25);overflow:hidden;display:flex;align-items:flex-end}
+.st-bin .lvl i{display:block;width:100%;background:#84CC16}
+.st-bin.full .lvl i{background:#B45309}
+.st-bin .fl{position:absolute;left:50%;top:10%;width:0;height:0;pointer-events:none}
+.st-bin .fl i{position:absolute;width:.45cqw;height:.45cqw;border-radius:50%;background:#111;box-shadow:-.2cqw -.15cqw 0 -.05cqw rgba(200,220,255,.85),.2cqw -.15cqw 0 -.05cqw rgba(200,220,255,.85);animation:stFly1 1.4s linear infinite}
+.st-bin .fl i:nth-child(2){animation-duration:1.1s;animation-direction:reverse}
+.st-bin .fl i:nth-child(3){animation-duration:1.8s;animation-delay:-.6s}
+@keyframes stFly1{0%{transform:rotate(0) translateX(1.6cqw) rotate(0)}50%{transform:rotate(180deg) translateX(2.1cqw) translateY(-.6cqw) rotate(-180deg)}100%{transform:rotate(360deg) translateX(1.6cqw) rotate(-360deg)}}
+.st-ghost.multi{width:auto;height:auto;display:flex;gap:4px;font-size:34px}
+.st-ghost.multi span{width:52px;height:52px;display:flex;align-items:center;justify-content:center}
+.st-ghost.multi img{width:100%;height:100%;object-fit:contain}
+.st-ghost.big{transform:translate(-50%,-55%);font-size:inherit}
+.st-ghost.big>*{position:absolute}
+.st-ghost.big .liq{position:absolute;left:29.3%;width:41.4%;top:16.6%;height:50.8%;clip-path:polygon(0 0,100% 0,90.6% 100%,9.4% 100%);display:flex;flex-direction:column-reverse}
+.st-ghost.big .liq i{display:block;width:100%;flex:none}
+.st-ghost.big img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.st-ghost.big .bn,.st-ghost.big .lvl{display:none}
+.st-clock{left:47.6%;width:4.8%;aspect-ratio:1;top:13.5%;height:auto;border-radius:50%;background:radial-gradient(circle,#FFFDF5 58%,#E7DCC5 60%);border:.35cqw solid #7A5233;box-shadow:0 .3cqw .6cqw rgba(0,0,0,.25);z-index:3}
+.st-clock::before{content:'';position:absolute;inset:12%;border-radius:50%;background:conic-gradient(from 0deg,#334155 0 1.5deg,transparent 1.5deg 88.5deg,#334155 88.5deg 91.5deg,transparent 91.5deg 178.5deg,#334155 178.5deg 181.5deg,transparent 181.5deg 268.5deg,#334155 268.5deg 271.5deg,transparent 271.5deg);-webkit-mask:radial-gradient(circle,transparent 78%,#000 80%);mask:radial-gradient(circle,transparent 78%,#000 80%)}
+.st-clock i{position:absolute;left:calc(50% - .12cqw);top:16%;width:.24cqw;height:34%;background:#DC2626;border-radius:99px;transform-origin:50% 100%;transition:transform .2s linear}
+.st-clock::after{content:'';position:absolute;left:50%;top:50%;width:.6cqw;height:.6cqw;margin:-.3cqw;border-radius:50%;background:#334155}
+.st-clock b{position:absolute;left:50%;top:calc(100% + .2cqw);transform:translateX(-50%);font-size:.85cqw;font-weight:900;color:#fff;background:#1E293B;padding:0 .5cqw;border-radius:99px;white-space:nowrap}
+.st-clock.late b{background:#DC2626}
+.st-bub .it.jus{align-items:center;flex-wrap:wrap;max-width:15cqw}
+.st-bub .it.jus>span{width:2.6cqw;height:2.6cqw;font-size:1.8cqw}
+.st-bub .it.jus>span.gl{width:3.8cqw;height:3.8cqw;font-size:2.8cqw;background:#FEF3C7}
 `;
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
@@ -7576,29 +7659,30 @@ function storRun(team){
   stStyle();
   const cfg = storCfg(), L = ST_LVL[cfg.lvl] || ST_LVL.mudah;
   const SABAR = +cfg.sabar || L.sabar, DUR = (+cfg.syif || 5) * 60, ME = cfg.watak === 'l' ? 'pekerja_l' : 'pekerja_p';
-  const SLOTX = { s: [2.5, 14, 25.5], k: [68, 78.5, 89] };     // telefon (atas kaunter stor) & makanan (atas kaunter kafe) di hujung dalam: laluan dari pintu lapang
+  const SLOTX = { s: [2.5, 14, 25.5], k: [68, 78.5, 89] };     // telefon (atas kaunter stor), blender & makanan (atas kaunter kafe) di hujung dalam: laluan dari pintu lapang
   const root = document.createElement('div');
   root.className = 'st'; root.id = 'stRoot';
   /* rak berlapis: rak kosong (gambar/lukisan) → lapisan barang (#stL_<rak>) → label */
   const ST_BOARD = [27, 49, 71, 93];                    // paras atas papan rak (% tinggi rak) — sama dengan prompt aset
-  const shelfW = z => z === 's' ? 10 : 8;
+  const shelfOf = id => ST_SHELVES.find(s => s[0] === id);
   const shelfSlots = id => {                           // barang rak ini disusun ke 4 paras
     const its = ST_ITEMS.filter(i => i.sh === id), lvOf = j => Math.floor(j * 4 / its.length);
     return its.map((it, j) => { const lv = lvOf(j), row = its.filter((_, q) => lvOf(q) === lv), k = row.indexOf(it);
       return { it, lv, x: 7 + 86 * (k + .5) / row.length, w: Math.min(46, 86 / row.length * 1.22) }; });   // satu ikon sejenis, besar & sedikit bertindih
   };
-  const shelfHtml = ([id, nm, z, x]) => {
+  const shelfHtml = ([id, nm, z, x, w]) => {
     const img = 'rak_' + id;
-    return '<div class="st-shelf" data-sh="' + id + '" data-z="' + z + '" style="left:' + x + '%;width:' + shelfW(z) + '%">' +
-      (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : ' k') : '') + '"></div>') +
+    return '<div class="st-shelf" data-sh="' + id + '" data-z="' + z + '" style="left:' + x + '%;width:' + w + '%">' +
+      (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : id === 'jus' ? ' jus' : ' k') : '') + '"></div>') +
       '<div class="st-lv" id="stL_' + id + '"></div><div class="nm">' + nm + '</div></div>';
   };
-  const STN_LIST = [['dapur', 0, 'DAPUR 1'], ['dapur', 1, 'DAPUR 2'], ['blender', 0, 'BLENDER']];   // 2 dapur berasingan + blender
+  const STN_LIST = [['dapur', 0, 'DAPUR 1'], ['dapur', 1, 'DAPUR 2']];   // 2 dapur berasingan (blender kini atas kaunter)
   root.innerHTML = '<div class="st-stage" id="stStage">' +
     (ST_HAVE.has('bg_lantai') ? stImg('bg_lantai', '', 'st-bg') : '<div class="st-wallk"></div><div class="st-floor"></div>') +
     '<div class="st-zl" style="left:2%">🏬 STOR SUKAN</div><div class="st-zl" style="left:86%">🥗 KEDAI SIHAT</div>' +
     ST_SHELVES.map(shelfHtml).join('') +
-    STN_LIST.map(([k, i, nm], j) => '<div class="st-stn" style="top:' + (9.5 + j * 13.6) + '%" data-ss="' + k + i + '" id="stN_' + k + i + '"><img class="sb" alt="" draggable="false" style="display:none"><div class="nm">' + nm + '</div><div class="st-slot" id="stS_' + k + i + '"></div></div>').join('') +
+    STN_LIST.map(([k, i, nm], j) => '<div class="st-stn" style="top:' + (9.5 + j * 20.5) + '%;height:19%" data-ss="' + k + i + '" id="stN_' + k + i + '"><img class="sb" alt="" draggable="false" style="display:none"><div class="nm">' + nm + '</div><div class="st-slot" id="stS_' + k + i + '"></div></div>').join('') +
+    '<div class="st-clock" id="stClock"><i id="stClkH"></i><b id="stClkT"></b></div>' +
     '<div class="st-door' + (ST_HAVE.has('pintu_buka') ? ' img2' : '') + '" id="stDoor" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '', 'cl') : '') + (ST_HAVE.has('pintu_buka') ? stImg('pintu_buka', '', 'op') : '') + '</div>' +
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
@@ -7606,8 +7690,12 @@ function storRun(team){
     // kaunter = SATU meja panjang: hujung kiri/kanan gambar dikekalkan, bahagian tengah diregang (border-image), tiada segmen
     ['s', 'k'].map(z => { const im = ST_HAVE.get(z === 's' ? 'kaunter_stor' : 'kaunter_kafe');
       return '<div class="st-counter ' + z + (im ? ' long" style="border-image-source:url(' + im + ')' : '') + '"><div class="nm">' + (z === 's' ? 'KAUNTER STOR' : 'KAUNTER KEDAI SIHAT') + '</div></div>'; }).join('') +
+    // blender atas kaunter: lapisan bahan dilukis DI BELAKANG gambar (jag gambar lutsinar)
+    '<div class="st-bl' + (ST_HAVE.has('blender_meja') ? ' img' : '') + '" id="stBl" data-bl="1"><div class="liq" id="stBlL"></div>' +
+      (ST_HAVE.has('blender_meja') ? stImg('blender_meja', '', 'bi') : '<div class="jug"></div><div class="base"></div>') + '<div class="bn" id="stBlN">BLENDER</div></div>' +
+    '<div class="st-bin" id="stBin" data-bin="1"></div>' +
     '<div id="stCust"></div>' +
-    '<div class="st-tray" title="Atas kaunter"><div class="g" id="stTray"></div><div class="k" id="stTrayK">kosong</div></div>' +
+    '<div class="st-tray" title="Atas kaunter"><div class="g" id="stTray"></div></div>' +
     '<div class="st-hud" id="stHud"></div>' +
     '<div class="st-msg" id="stMsg"></div>' +
     '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
@@ -7617,9 +7705,12 @@ function storRun(team){
   const $s = q => root.querySelector(q);
 
   /* ---------- keadaan ---------- */
-  const stock = {}; ST_ITEMS.forEach(i => stock[i.id] = i.tg === 'x' ? 6 : 5);
-  const tray = [];                                       // { id, cooked }
-  const stn = { dapur: [null, null], blender: [null] };  // { id, t, need }
+  const stock = {}; ST_ITEMS.forEach(i => stock[i.id] = 5);
+  const tray = [];                                       // makanan atas kaunter: { id, cooked }
+  const stn = { dapur: [null, null] };                   // { id, t, need }
+  const bl = { ings: [], blending: false, r: null };     // blender: bahan dimasukkan → resipi siap (r)
+  let bin = 0;                                           // berapa kali dibuang ke tong sampah (paras gambar)
+  const BIN_MAX = 6;
   const cust = { s: [null, null, null], k: [null, null, null] };
   let T = 0, coins = 0, score = 0, hearts = 5, good = 0, poor = 0, left = 0, qRight = 0, qAsked = 0, over = false, paused = false, spawnT = 3;
   let ring = null, nextRing = 25 + Math.random() * 10, sup = null, call = null, lastTick = performance.now();
@@ -7631,63 +7722,72 @@ function storRun(team){
       '<span class="pill">' + [0, 1, 2, 3, 4].map(i => i < hearts ? stImg('ui_hati', '❤️') : '<span class="st-emo" style="opacity:.3">🖤</span>').join('') + '</span>' +
       '<span class="pill" style="color:#FDE68A">⭐ ' + score + '</span><span class="pill">😊 ' + (good + poor) + '</span><span class="pill" style="font-size:1.1cqw;max-width:20cqw;overflow:hidden;white-space:nowrap">' + esc(teamName(team)) + '</span>' +
       '<button data-x="quit"><i class="fa-solid fa-xmark"></i></button>';
+    // jam di atas pintu: jarum berpusing mengikut masa syif yang berlalu
+    $s('#stClkH').style.transform = 'rotate(' + Math.min(360, T / DUR * 360) + 'deg)';
+    $s('#stClkT').textContent = Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0');
+    $s('#stClock').classList.toggle('late', tl <= 30);
   };
   let msgT = 0;
   const msg = (t, c, ms) => { const m = $s('#stMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1300); };
   const fly = (t, x, y) => { const n = document.createElement('div'); n.className = 'st-fly'; n.textContent = t; n.style.left = x + '%'; n.style.top = y + '%'; $s('#stStage').appendChild(n); setTimeout(() => n.remove(), 1150); };
   const walk = x => { const m = $s('#stMe'); m.style.left = x + '%'; m.classList.remove('walk'); void m.offsetWidth; m.classList.add('walk'); };
-  const icon = (id, cls) => { const i = ST_IT[id]; return stImg(id, i.e, cls); };
+  const icon = (id, cls) => { const i = ST_IT[id]; return stImg(i.img || id, i.e, cls); };
+  const jusOf = id => ST_JUS.find(r => r.id === id);
 
   /* ---------- pesanan ---------- */
   const pick = a => a[Math.floor(Math.random() * a.length)];
-  const kcalOf = items => items.reduce((a, t) => a + ST_IT[t.id].kcal, 0);
+  const FOOD = ST_ITEMS.filter(i => i.z === 'k' && i.tg !== 'j');
   function makeOrder(z){
-    if (z === 's'){                                     // peralatan sukan: atlet, terus diserah (tanpa dulang)
+    if (z === 's'){                                     // peralatan sukan: atlet, terus diserah
       const a = pick(ST_ATH), n = 1 + Math.floor(Math.random() * L.max);
       const need = a.kit.slice().sort(() => Math.random() - .5).slice(0, Math.min(n, a.kit.length));
       return { who: stPerson(a.id), z, need, got: [], tx: pick(['Saya perlukan peralatan ini!', 'Ada stok ini?', 'Untuk latihan petang ini.', 'Perlawanan esok!']) };
     }
-    const m = pick(ST_MEAL), target = Math.round((m.lo + Math.random() * (m.hi - m.lo)) / 10) * 10;
-    return { who: stPerson(pick(m.who)), z, target, alg: Math.random() < L.alg ? pick(Object.keys(ST_ALG)) : null, tx: m.t };
+    const who = stPerson(pick(Math.random() < .6 ? ST_ATH.map(a => a.id) : ST_ORG.map(o => o.id)));
+    if (Math.random() < .65){                           // jus blend sihat
+      const r = pick(ST_JUS);
+      return { who, z, jus: r.id, need: [], got: [], tx: pick(ST_JUS_TX).replace('{j}', r.n) };
+    }
+    const need = FOOD.slice().sort(() => Math.random() - .5).slice(0, 1 + Math.floor(Math.random() * Math.min(2, L.max)));
+    return { who, z, need: need.map(i => i.id), got: [], tx: pick(ST_FOOD_TX) };
   }
   const shake = (z, i) => { const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); } };
   function custHtml(){
     return ['s', 'k'].map(z => cust[z].map((c, i) => {
       if (!c || c.arriving) return '';
-      const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o;
-      const body = z === 's'
-        ? '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx">' + esc(o.tx) + '</div>'
-        : '<div class="tx big">"' + esc(o.tx) + (o.alg ? ' Oh ya, saya alergik ' + ST_ALG[o.alg].n + '.' : '') + '"</div>' +
-          '<div class="kc">🎯 ' + o.target + ' kcal' + (o.alg ? ' <span class="al">' + ST_ALG[o.alg].ic + '✕</span>' : '') + '</div>';
+      const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o, r = o.jus && jusOf(o.jus);
+      const body = r
+        ? '<div class="tx big">"' + esc(o.tx) + '"</div><div class="it jus"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span>' +
+          r.ings.map(id => '<span class="' + (bl.ings.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div>'
+        : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
       return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
         '<div class="who">' + stImg(o.who.img, o.who.e) + '</div><div class="nm2">' + esc(o.who.n) + '</div></div>';
     }).join('')).join('');
   }
   const paintCust = () => { $s('#stCust').innerHTML = custHtml(); ['s', 'k'].forEach(z => cust[z].forEach(c => { if (c) c.fresh = false; })); };
-  const TRAY_MAX = 6;
+  const TRAY_MAX = 4;
   const paintTray = () => {
-    $s('#stTray').innerHTML = Array.from({ length: TRAY_MAX }, (_, i) => tray[i] ? '<div class="f' + (ST_IT[tray[i].id].tg === 'x' ? ' x' : '') + '" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join('');
-    $s('#stTrayK').textContent = tray.length ? kcalOf(tray) + ' kcal' : 'kosong';
+    $s('#stTray').innerHTML = Array.from({ length: TRAY_MAX }, (_, i) => tray[i] ? '<div class="f" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join('');
     paintCust();
   };
   const shown = {};
   const paintShelves = () => ST_SHELVES.forEach(([id]) => {
     const el = $s('[data-sh="' + id + '"]'); if (!el) return;
-    el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && i.tg !== 'x' && stock[i.id] <= 1));
+    el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && stock[i.id] <= 1));
     // satu ikon bagi setiap jenis barang (bukan timbunan salinan) + lencana stok; seret terus dari rak
     $s('#stL_' + id).innerHTML = shelfSlots(id).map(({ it, lv, x, w }) => {
       const n = stock[it.id], pop = n > (shown[it.id] == null ? n : shown[it.id]);
       shown[it.id] = n;
       return '<span class="st-si' + (n ? '' : ' out') + (pop ? ' pop' : '') + '" data-it="' + it.id + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
-        '<i>' + icon(it.id) + '</i>' + (it.prep ? '<b class="pr">' + (it.prep[0] === 'dapur' ? '🍳' : '🌀') + '</b>' : '') +
+        '<i>' + icon(it.id) + '</i>' + (it.prep ? '<b class="pr">🍳</b>' : '') +
         (n && n <= 2 ? '<b class="c">' + n + '</b>' : '') + '</span>';                // lencana hanya bila stok hampir habis
     }).join('');
   });
-  /* barang terbang dari rak ke dulang / stesen (kedudukan dalam % pentas — sama di tablet projektor) */
+  /* barang terbang (kedudukan dalam % pentas — sama di tablet projektor) */
   const shelfPos = id => {
-    const it = ST_IT[id], sh = ST_SHELVES.find(x => x[0] === it.sh), sl = shelfSlots(it.sh).find(x => x.it.id === id);
-    return [sh[3] + shelfW(sh[2]) * sl.x / 100, 9.5 + 40 * ST_BOARD[sl.lv] / 100 - 4];
+    const it = ST_IT[id], sh = shelfOf(it.sh), sl = shelfSlots(it.sh).find(x => x.it.id === id);
+    return [sh[3] + sh[4] * sl.x / 100, 9.5 + 40 * ST_BOARD[sl.lv] / 100 - 4];
   };
   const flyTo = (id, from, to) => {
     const n = document.createElement('div'); n.className = 'st-flyit'; n.innerHTML = icon(id);
@@ -7695,14 +7795,15 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [61.6, 54], STN_AT = { dapur0: [94.25, 16], dapur1: [94.25, 29.5], blender0: [94.25, 43] };
-  /* Stesen: logik GANTI gambar — dapur_<makanan> / dapur_hangus / blender_<minuman> menggantikan gambar stesen kosong.
-     Tiada gambar khas = gambar kosong + ikon makanan dalam bulatan. */
+  const TRAY_AT = [65.3, 55], BL_AT = [59.3, 52], BIN_AT = [52.8, 64], STN_AT = { dapur0: [94.25, 19], dapur1: [94.25, 39.5] };
+  const custAt = (z, i) => [SLOTX[z][i] + 5, 74];
+  /* Dapur: logik GANTI gambar — dapur_<makanan> / dapur_hangus menggantikan gambar dapur kosong. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
+  const burnt = x => x && x.t >= x.need + 14;
   function paintStn(){
     STN_LIST.forEach(([k, i]) => {
       const box = $s('#stN_' + k + i), slot = $s('#stS_' + k + i), im = box.querySelector('.sb'), x = stn[k][i];
-      const p = x ? Math.min(1, x.t / x.need) : 0, rd = x && x.t >= x.need, burn = x && k === 'dapur' && x.t >= x.need + 14;
+      const p = x ? Math.min(1, x.t / x.need) : 0, rd = x && x.t >= x.need, burn = burnt(x);
       const src = !x ? stnBase(k) : burn ? ST_HAVE.get('dapur_hangus') || stnBase(k) : ST_HAVE.get(k + '_' + x.id) || stnBase(k);
       const own = x && (burn ? ST_HAVE.has('dapur_hangus') : ST_HAVE.has(k + '_' + x.id));
       if (src){ if (im.getAttribute('src') !== src) im.setAttribute('src', src); im.style.display = ''; } else im.style.display = 'none';
@@ -7717,9 +7818,29 @@ function storRun(team){
         (rd ? '' : '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#FACC15" stroke-width="3" stroke-dasharray="' + (p * 100.5) + ' 100.5"/></svg>');
     });
   }
+  /* Blender (logik LAPISAN): setiap bahan = satu lapisan warna dari bawah; bila cukup resipi → dikisar jadi satu warna */
+  const BL_MAX = 5;
+  function paintBl(pour){
+    const L2 = $s('#stBlL'), r = bl.r;
+    if (r || bl.blending){
+      const col = r ? r.col : (jusOf(bl.blending) || {}).col;
+      L2.innerHTML = '<i class="mix' + (bl.blending ? ' spin' : '') + '" style="height:' + (bl.ings.length / BL_MAX * 100) + '%;background:' + col + '"></i>';
+    } else L2.innerHTML = bl.ings.map((id, j) => '<i class="' + (pour && j === bl.ings.length - 1 ? 'pour' : '') + (id === 'chia' ? ' seed' : '') + '" style="height:' + (100 / BL_MAX) + '%;background:' + ST_COL[id] + '"></i>').join('');
+    $s('#stBl').classList.toggle('ready', !!r);
+    $s('#stBl').classList.toggle('busy', !!bl.blending);
+    $s('#stBlN').textContent = r ? '✓ ' + r.n : bl.blending ? 'MENGISAR…' : bl.ings.length ? bl.ings.length + ' bahan' : 'BLENDER';
+    paintCust();
+  }
+  /* Tong sampah: 4 gambar GANTI ikut paras; penuh = lalat (UI) */
+  function paintBin(){
+    const lv = bin === 0 ? 'kosong' : bin <= 2 ? 'sikit' : bin <= 4 ? 'separuh' : 'penuh', b = $s('#stBin');
+    b.innerHTML = (ST_HAVE.has('tong_' + lv) ? stImg('tong_' + lv, '') : '<span class="st-emo">🗑️</span><span class="lvl"><i style="height:' + Math.min(100, bin / BIN_MAX * 100) + '%"></i></span>') +
+      (bin >= 5 ? '<span class="fl"><i></i><i></i><i></i></span>' : '');
+    b.classList.toggle('full', bin >= BIN_MAX);
+  }
 
   /* ---------- tindakan ---------- */
-  /* barang diangkat dari rak: besar sedikit + label nama (& kalori) — ganti panel pilihan lama */
+  /* barang diangkat dari rak: naik sedikit + label nama */
   let lifted = null;
   function liftOn(el){
     liftOff();
@@ -7727,8 +7848,7 @@ function storRun(team){
     el.classList.add('lift'); lifted = el;
     const p = shelfPos(it.id), tg = document.createElement('div');
     tg.className = 'st-tag'; tg.id = 'stTag'; tg.style.left = p[0] + '%'; tg.style.top = (p[1] - 6) + '%';
-    tg.innerHTML = esc(it.n) + (it.z === 'k' ? '<b>' + (L.kcal ? ST_IT[it.id].kcal + ' kcal' : '? kcal') + '</b>' + stAlgOf(it.id).map(k => ST_ALG[k].ic).join('') : '') +
-      (it.prep ? ' ' + (it.prep[0] === 'dapur' ? '🍳' : '🌀') : '');
+    tg.innerHTML = esc(it.n) + (it.tg === 'j' ? ' <b>→ blender</b>' : it.prep ? ' 🍳' : '');
     $s('#stStage').appendChild(tg);
   }
   function liftOff(){ if (lifted) lifted.classList.remove('lift'); lifted = null; const t = $s('#stTag'); if (t) t.remove(); }
@@ -7747,84 +7867,86 @@ function storRun(team){
     w.style.transition = 'none'; w.style.opacity = 0; at(46.7, 31.5, 6.6, 18, 2);
     $s('#stStage').appendChild(w); door(true, 1500);
     void w.offsetWidth; w.style.transition = ''; w.style.opacity = 1;
-    setTimeout(() => at(45, 68, 10, 30, 5), 380);
+    setTimeout(() => at(43.5, 68, 10, 30, 5), 380);
     setTimeout(() => at(SLOTX[z][i], 68, 10, 30), 1120);
     setTimeout(() => { w.remove(); if (cust[z][i] === c){ c.arriving = false; paintCust(); } }, 1870);
   }
   /* skor & bayaran bila pelanggan selesai */
   function finishCust(z, i, pts, pay, note){
     const c = cust[z][i]; if (!c) return;
-    c.leaving = true; score += pts; coins += pay;
+    c.leaving = true; score += pts; coins += pay; good++;
     fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5, 56);
     snd('stor_kaching', 'hi'); vibrate(20); paintTray();
     if (note) msg(note[0], note[1], 1800);
     setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
   }
-  /* peralatan sukan: terus kepada pelanggan (ketik = pelanggan pertama yang perlukan; seret = pelanggan itu) */
-  function giveEquip(id, at){
-    const it = ST_IT[id]; if (!it || stock[id] <= 0) return;
-    const i = at != null ? at : cust.s.findIndex(c => c && !c.leaving && c.o.need.includes(id) && !c.o.got.includes(id));
-    const c = i >= 0 ? cust.s[i] : null;
-    if (!c || c.leaving) return msg('Tiada pelanggan di Kaunter Stor yang perlukan ' + esc(it.n) + '.', '#FDE68A', 1400);
-    if (!c.o.need.includes(id) || c.o.got.includes(id)){ shake('s', i); snd('stor_salah', 'low'); return msg('Bukan ini yang diminta!', '#FCA5A5', 1000); }
-    stock[id]--; c.o.got.push(id); snd('stor_serah', 'flip'); flyTo(id, shelfPos(id), [SLOTX.s[i] + 5, 72]); walk(SLOTX.s[i] + 1.5);
-    paintShelves();
+  /* sumber barang yang diseret: rak / atas kaunter / dapur — keluarkan bila diserah */
+  const srcId = s => s.t === 'shelf' ? s.id : s.t === 'tray' ? (tray[s.i] || {}).id : s.t === 'stn' ? (stn.dapur[s.i] || {}).id : null;
+  const srcFrom = s => s.t === 'shelf' ? shelfPos(s.id) : s.t === 'tray' ? TRAY_AT : STN_AT['dapur' + s.i];
+  function takeSrc(s){
+    if (s.t === 'shelf'){ if (stock[s.id] <= 0) return false; stock[s.id]--; paintShelves(); return true; }
+    if (s.t === 'tray'){ if (!tray[s.i]) return false; tray.splice(s.i, 1); return true; }
+    if (s.t === 'stn'){ if (!stn.dapur[s.i]) return false; stn.dapur[s.i] = null; paintStn(); return true; }
+    return false;
+  }
+  /* serah satu barang kepada pelanggan (peralatan → atlet; makanan → pelanggan Kedai Sihat) */
+  function giveTo(z, i, s, quiet){
+    const id = srcId(s), it = ST_IT[id], c = cust[z][i];
+    if (!it || !c || c.leaving) return false;
+    if (c.o.jus){ if (!quiet){ shake(z, i); msg('Pelanggan ini mahu ' + esc(jusOf(c.o.jus).n) + ' — buat di blender', '#FDE68A', 1500); } return false; }
+    if (!c.o.need.includes(id) || c.o.got.includes(id)){ if (!quiet){ shake(z, i); snd('stor_salah', 'low'); msg('Bukan ini yang diminta!', '#FCA5A5', 1000); } return false; }
+    if (!takeSrc(s)) return false;
+    c.o.got.push(id); snd('stor_serah', 'flip'); flyTo(id, srcFrom(s), custAt(z, i)); walk(SLOTX[z][i] + 1.5);
     if (c.o.got.length === c.o.need.length){
       const frac = Math.max(0, c.p / c.max);
-      good++;
-      finishCust('s', i, 50 + Math.round(50 * frac), c.o.need.reduce((a, x) => a + ST_IT[x].p, 0) + Math.round(frac * 6), [frac > .6 ? 'Lengkap! 😄' : 'Terima kasih! 🙂', '#86EFAC']);
-    } else paintCust();
+      finishCust(z, i, 50 + Math.round(50 * frac), c.o.need.reduce((a, x) => a + ST_IT[x].p, 0) + Math.round(frac * 6), [frac > .6 ? 'Lengkap! 😄' : 'Terima kasih! 🙂', '#86EFAC']);
+    } else paintTray();
+    return true;
   }
-  function takeItem(id){
-    const it = ST_IT[id]; if (!it || stock[id] <= 0) return;
-    if (it.z === 's') return giveEquip(id);
-    if (it.prep){
-      const slots = stn[it.prep[0]], k = slots.findIndex(x => !x);
-      if (k < 0) return msg((it.prep[0] === 'dapur' ? 'Dapur' : 'Blender') + ' penuh!', '#FCA5A5');
-      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; snd(it.prep[0] === 'dapur' ? 'stor_masak' : 'stor_blender', 'flip'); flyTo(id, shelfPos(id), STN_AT[it.prep[0] + k]);
-      msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
-      walk(86); paintStn(); paintShelves(); return;
-    }
-    if (tray.length >= TRAY_MAX) return msg('Kaunter penuh (6)! Seret makanan dari kaunter ke rak untuk pulangkan.', '#FCA5A5', 1600);
-    stock[id]--; tray.push({ id }); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), TRAY_AT);
-    walk(clamp(shelfPos(id)[0] - 4, 2, 84)); paintTray(); paintShelves();
+  /* makanan yang perlu dimasak terus ke dapur (dapur yang dilepaskan, atau yang kosong) */
+  function cook(id, at){
+    const it = ST_IT[id], k = at != null && !stn.dapur[at] ? at : stn.dapur.findIndex(x => !x);
+    if (k < 0) return msg('Kedua-dua dapur penuh!', '#FCA5A5');
+    if (stock[id] <= 0) return;
+    stock[id]--; stn.dapur[k] = { id, t: 0, need: it.prep[1] }; snd('stor_masak', 'flip'); flyTo(id, shelfPos(id), STN_AT['dapur' + k]);
+    msg('🍳 Sedang dimasak di Dapur ' + (k + 1) + '…', '#FDE68A', 900); walk(84); paintStn(); paintShelves();
   }
-  function takeStation(k, i){
-    const x = stn[k][i]; if (!x) return;
-    if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); snd('stor_hangus', 'low'); return paintStn(); }
-    if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 700);
-    if (tray.length >= TRAY_MAX) return msg('Kaunter penuh (6)!', '#FCA5A5');
-    stn[k][i] = null; tray.push({ id: x.id, cooked: true }); snd('stor_ambil', 'flip'); walk(86); flyTo(x.id, STN_AT[k + i], TRAY_AT); paintStn(); paintTray();
+  function toCounter(s){
+    const id = srcId(s); if (!id) return;
+    if (tray.length >= TRAY_MAX) return msg('Kaunter penuh (' + TRAY_MAX + ')! Serah atau buang makanan dahulu.', '#FCA5A5', 1500);
+    const cooked = s.t === 'stn';
+    if (!takeSrc(s)) return;
+    tray.push({ id, cooked }); snd('stor_ambil', 'flip'); flyTo(id, srcFrom(s), TRAY_AT); walk(56); paintTray();
   }
-  function trayBack(i){
-    const x = tray[i]; if (!x) return;
-    tray.splice(i, 1);
-    if (!x.cooked){ stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); } else msg('Makanan dimasak dibuang', '#FDE68A', 900);
-    snd('ui_klik', 'low'); paintTray(); paintShelves();
+  function addIng(id){
+    const it = ST_IT[id];
+    if (bl.r || bl.blending) return msg('Jus sudah siap — seret blender kepada pelanggan (atau ke tong sampah).', '#FDE68A', 1600);
+    if (bl.ings.length >= BL_MAX) return msg('Blender penuh! Seret blender ke tong sampah.', '#FCA5A5', 1500);
+    if (stock[id] <= 0) return;
+    stock[id]--; bl.ings.push(id); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), BL_AT); walk(56); paintShelves(); paintBl(true);
+    const key = bl.ings.slice().sort().join(','), r = ST_JUS.find(j => j.ings.slice().sort().join(',') === key);
+    if (r){
+      bl.blending = r.id; paintBl(); snd('stor_blender', 'flip');
+      setTimeout(() => { if (over || !root.isConnected || bl.blending !== r.id) return; bl.blending = false; bl.r = r; paintBl(); msg('🥤 ' + esc(r.n) + ' siap! Seret blender kepada pelanggan.', '#86EFAC', 1800); }, 1500);
+    } else if (bl.ings.length >= 4) msg('Kombinasi ini bukan resipi jus — seret blender ke tong sampah.', '#FCA5A5', 1800);
   }
-  /* serah dulang kepada pelanggan Kedai Sihat: makin hampir kalori sasaran, makin tinggi skor */
-  function serve(z, i){
-    const c = cust[z][i]; if (!c || c.leaving) return;
-    walk(SLOTX[z][i] + 1.5);
-    if (z === 's') return msg('Seret peralatan dari rak terus kepada pelanggan ini.', '#FDE68A', 1400);
-    if (!tray.length){ shake(z, i); return msg('Kaunter kosong — letak makanan dahulu.', '#FDE68A', 1200); }
-    const o = c.o;
-    if (o.alg && tray.some(t => ST_ALG[o.alg].ids.includes(t.id))){
-      c.p -= c.max * .3; score = Math.max(0, score - 20); snd('stor_alahan', 'low'); vibrate(60); shake(z, i);
-      return msg('😨 "Saya alergik ' + ST_ALG[o.alg].n + '! Saya tak boleh makan itu." (−20⭐)', '#FCA5A5', 2400);
-    }
-    const kc = kcalOf(tray), diff = Math.abs(kc - o.target) / o.target, acc = Math.max(0, 1 - diff * 2.5);
-    const junk = tray.filter(t => ST_IT[t.id].tg === 'x').length, frac = Math.max(0, c.p / c.max);
-    const pts = Math.max(0, Math.round(100 * acc) + Math.round(20 * frac) - junk * 15);
-    const pay = tray.reduce((a, t) => a + ST_IT[t.id].p, 0) + Math.round(frac * 6);
-    if (acc >= .6) good++; else poor++;
-    const verdict = diff <= .05 ? ['🎯 Tepat! ' + kc + '/' + o.target + ' kcal', '#86EFAC'] :
-      kc < o.target ? ['Kurang kalori: ' + kc + '/' + o.target + ' kcal', acc >= .6 ? '#FDE68A' : '#FCA5A5'] :
-                      ['Terlebih kalori: ' + kc + '/' + o.target + ' kcal', acc >= .6 ? '#FDE68A' : '#FCA5A5'];
-    if (junk) verdict[0] += ' · makanan tidak sihat −' + junk * 15;
-    tray.length = 0;
-    finishCust(z, i, pts, pay, verdict);
+  function serveJus(i){
+    const c = cust.k[i]; if (!c || c.leaving) return;
+    if (!c.o.jus){ shake('k', i); return msg('Pelanggan ini tidak memesan jus.', '#FDE68A', 1200); }
+    if (bl.r.id !== c.o.jus){ shake('k', i); snd('stor_salah', 'low'); return msg('Salah jus! Dia mahu ' + esc(jusOf(c.o.jus).n) + '.', '#FCA5A5', 1500); }
+    const r = bl.r, frac = Math.max(0, c.p / c.max);
+    bl.ings = []; bl.r = null; paintBl();
+    walk(SLOTX.k[i] + 1.5);
+    finishCust('k', i, 80 + Math.round(60 * frac), r.ings.reduce((a, x) => a + ST_IT[x].p, 0) + 4 + Math.round(frac * 6), ['🥤 ' + r.n + ' — sedap! 😋', '#86EFAC']);
   }
+  function toBin(what){
+    if (bin >= BIN_MAX) return msg('Tong sampah penuh & busuk! Seret tong ke pintu untuk buang.', '#FCA5A5', 1800);
+    bin++; snd('stor_hangus', 'low'); paintBin();
+    if (bin >= BIN_MAX) msg('🪰 Tong penuh — seret tong ke pintu!', '#FDE68A', 1600);
+    return what && what();
+  }
+  function emptyBin(){ bin = 0; paintBin(); snd('stor_stok', 'flip'); msg('🗑️ Tong sampah dikosongkan!', '#86EFAC', 1200); walk(40); }
+
   /* ---------- telefon & pembekal ---------- */
   function answerPhone(){
     if (!ring || call) return;
@@ -7854,7 +7976,7 @@ function storRun(team){
   function receive(){
     if (!sup || !sup.here) return;
     walk(40);
-    const low = ST_ITEMS.filter(i => i.tg !== 'x').sort((a, b) => stock[a.id] - stock[b.id]).slice(0, sup.full ? 14 : 7);
+    const low = ST_ITEMS.slice().sort((a, b) => stock[a.id] - stock[b.id]).slice(0, sup.full ? 16 : 8);
     const add = sup.full ? 5 : 3;
     low.forEach(i => stock[i.id] += add);
     coins = Math.max(0, coins - (sup.full ? 20 : 10));
@@ -7874,7 +7996,7 @@ function storRun(team){
       const free = [];
       ['s', 'k'].forEach(z => cust[z].forEach((c, i) => { if (!c) free.push([z, i]); }));
       if (free.length){
-        const [z, i] = pick(free), o = makeOrder(z), n = o.need ? o.need.length : Math.max(1, Math.round(o.target / 250));
+        const [z, i] = pick(free), o = makeOrder(z), n = o.jus ? 3 : o.need.length;
         const max = SABAR * (1 + (n - 1) * .2);
         const c = cust[z][i] = { o, p: max, max, arriving: true };
         snd('stor_loceng', 'flip'); walkIn(z, i, c);
@@ -7892,8 +8014,8 @@ function storRun(team){
         setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
       }
     }));
-    // stesen masak
-    Object.values(stn).forEach(a => a.forEach(x => { if (x) x.t += dt; }));
+    // dapur
+    stn.dapur.forEach(x => { if (x) x.t += dt; });
     // telefon
     if (!ring && !call && !sup && T >= nextRing){ ring = { until: T + 12 }; $s('#stPhone').classList.add('ring'); }
     if (ring){
@@ -7902,7 +8024,7 @@ function storRun(team){
       if (T >= ring.until){ ring = null; $s('#stPhone').classList.remove('ring'); nextRing = T + 35 + Math.random() * 20; msg('📵 Panggilan pembekal terlepas…', '#FDE68A', 1600); }
     }
     const ph = $s('#stPhone'), bb = ph.querySelector('.bb');
-    ph.classList.toggle('alt', !!ring && !ph.classList.contains('alt'));     // telefon berdering: tukar gambar meja_telefon ↔ meja_telefon_dering
+    ph.classList.toggle('alt', !!ring && !ph.classList.contains('alt'));     // telefon berdering: tukar gambar telefon ↔ telefon_dering
     if (ring && !bb) ph.insertAdjacentHTML('beforeend', '<div class="bb">' + stImg('ui_telefon', '📞') + ' ANGKAT!</div>'); else if (!ring && bb) bb.remove();
     // pembekal
     if (sup){
@@ -7965,43 +8087,61 @@ function storRun(team){
     if (over) return;
     const an = t.closest('[data-ans]'); if (an){ callAnsText = call ? call.q.c[call.q.a] : ''; return callAnswer(+an.dataset.ans); }
     if (call) return;
-    // SERET SAHAJA (menguji kecekapan): ketik barang/stesen/dulang/pelanggan hanya memberi petunjuk
-    const it = t.closest('[data-it]'); if (it) return msg(ST_IT[it.dataset.it].z === 's' ? 'Seret barang ini kepada atlet di Kaunter Stor' : 'Seret makanan ini ke atas kaunter Kedai Sihat', '#FDE68A', 1100);
-    const ss = t.closest('[data-ss]'); if (ss){ const x = stn[ss.dataset.ss.slice(0, -1)][+ss.dataset.ss.slice(-1)]; return msg(!x ? 'Seret makanan dari rak ke kaunter — yang perlu dimasak akan ke sini' : x.t >= x.need ? 'Seret makanan yang siap ke kaunter' : 'Belum siap…', '#FDE68A', 1100); }
-    const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan ke rak untuk pulangkan, atau seret makanan di kaunter kepada pelanggan', '#FDE68A', 1300);
-    const cu = t.closest('[data-cu]'); if (cu) return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan di kaunter kepada pelanggan ini', '#FDE68A', 1200);
+    // SERET SAHAJA (menguji kecekapan): ketik hanya memberi petunjuk
+    const it = t.closest('[data-it]'); if (it){ const i2 = ST_IT[it.dataset.it];
+      return msg(i2.z === 's' ? 'Seret barang ini kepada atlet di Kaunter Stor' : i2.tg === 'j' ? 'Seret bahan ini ke dalam blender' : i2.prep ? 'Seret ke dapur untuk dimasak' : 'Seret terus kepada pelanggan, atau ke atas kaunter', '#FDE68A', 1200); }
+    if (t.closest('[data-ss]')) return msg('Seret makanan yang siap kepada pelanggan atau ke kaunter', '#FDE68A', 1100);
+    if (t.closest('[data-bl]')) return msg(bl.r ? 'Seret blender kepada pelanggan yang memesan jus ini' : 'Seret bahan dari Rak Bahan Jus ke dalam blender', '#FDE68A', 1300);
+    if (t.closest('[data-bin]')) return msg(bin ? 'Seret tong sampah ke pintu untuk dibuang' : 'Seret barang yang salah ke sini', '#FDE68A', 1200);
+    const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan kepada pelanggan, ke rak (pulang) atau ke tong sampah', '#FDE68A', 1300);
+    const cu = t.closest('[data-cu]'); if (cu) return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan atau blender jus kepada pelanggan ini', '#FDE68A', 1200);
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
     if (t.closest('[data-door]')) return msg(sup && sup.here ? 'Ketik pembekal untuk terima stok' : 'Tiada penghantaran sekarang.', '#94A3B8', 900);
   });
-  /* ---------- seret & lepas: rak → dulang/atlet, dulang → atlet, dapur/blender → dulang/atlet ---------- */
+  /* ---------- seret & lepas ----------
+     rak → atlet / pelanggan / kaunter / dapur / blender · kaunter → pelanggan / rak / tong · dapur → pelanggan / kaunter / tong
+     blender → pelanggan (jus siap) / tong · tong sampah → pintu (kosongkan) */
   let drag = null, dragEnd = 0;
+  // semua lapisan di titik itu (barang terbang / watak berjalan tidak menghalang sasaran)
   const dropAt = (x, y) => {
-    const el = document.elementFromPoint(x, y); if (!el || !root.contains(el)) return null;
-    return el.closest('[data-cu]') || el.closest('.st-tray') || (el.closest('.st-counter.k') && $s('.st-tray')) || el.closest('[data-sh]') || null;
+    for (const el of document.elementsFromPoint(x, y)){
+      if (!root.contains(el) || el.closest('.st-flyit,.st-walk,.st-ghost,.st-tag')) continue;
+      const t = el.closest('[data-cu]') || el.closest('[data-bl]') || el.closest('[data-bin]') || el.closest('[data-door]') || el.closest('[data-ss]') ||
+        el.closest('.st-tray') || (el.closest('.st-counter.k') && $s('.st-tray')) || el.closest('[data-sh]');
+      if (t) return t;
+    }
+    return null;
   };
   root.addEventListener('pointerdown', e => {
     if (over || call) return;
-    const src = e.target.closest('[data-it],[data-tr],[data-ss].ready,.st-tray'); if (!src) return;
-    if (src.dataset.it) liftOn(src);
-    drag = { src, x: e.clientX, y: e.clientY, on: false, hot: null,
-      kind: src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.classList.contains('st-tray') ? 'tray' : 'ss',
-      id: src.dataset.it || src.dataset.tr || src.dataset.ss };
+    const src = e.target.closest('[data-it],[data-tr],[data-ss],[data-bl],[data-bin],.st-tray'); if (!src) return;
+    let kind = src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.dataset.ss ? 'ss' : src.dataset.bl ? 'bl' : src.dataset.bin ? 'bin' : 'tray';
+    if (kind === 'it' && !stock[src.dataset.it]) return;
+    if (kind === 'ss' && !stn.dapur[+src.dataset.ss.slice(-1)]) return;
+    if (kind === 'bl' && !bl.ings.length) return;
+    if (kind === 'bin' && !bin) return;
+    if (kind === 'tray' && !tray.length) return;
+    if (kind === 'it') liftOn(src);
+    drag = { src, kind, x: e.clientX, y: e.clientY, on: false, hot: null, id: src.dataset.it || src.dataset.tr || src.dataset.ss };
   });
   window.addEventListener('pointermove', e => {
     if (!drag) return;
     if (!drag.on){
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 10) return;
       drag.on = true;
-      const itemId = drag.kind === 'it' ? drag.id : drag.kind === 'tr' ? (tray[+drag.id] || {}).id : drag.kind === 'tray' ? (tray[0] || {}).id :
-        ((stn[(drag.id || '').slice(0, -1)] || [])[+(drag.id || '').slice(-1)] || {}).id;
-      if (!itemId){ drag = null; return; }
-      drag.g = document.createElement('div'); drag.g.className = 'st-ghost'; drag.g.innerHTML = icon(itemId);
-      document.body.appendChild(drag.g);
+      const g = drag.g = document.createElement('div'); g.className = 'st-ghost';
+      if (drag.kind === 'it') g.innerHTML = icon(drag.id);
+      else if (drag.kind === 'tr') g.innerHTML = icon(tray[+drag.id].id);
+      else if (drag.kind === 'tray'){ g.classList.add('multi'); g.innerHTML = tray.map(x => '<span>' + icon(x.id) + '</span>').join(''); }   // semua makanan atas kaunter dibawa bersama
+      else if (drag.kind === 'ss'){ const x = stn.dapur[+drag.id.slice(-1)]; g.innerHTML = burnt(x) ? '<span class="st-emo">🔥</span>' : icon(x.id); }
+      else { g.classList.add('big'); const r = drag.src.getBoundingClientRect(); g.style.width = r.width + 'px'; g.style.height = r.height + 'px'; g.innerHTML = drag.src.innerHTML; drag.src.classList.add('lifted'); }
+      document.body.appendChild(g);
       snd('stor_ambil', 'flip');
     }
     drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
-    const hot = dropAt(e.clientX, e.clientY);
+    let hot = dropAt(e.clientX, e.clientY);
+    if (hot === drag.src || (hot && drag.src.contains(hot))) hot = null;
     if (hot !== drag.hot){ if (drag.hot) drag.hot.classList.remove('st-hot'); drag.hot = hot; if (hot) hot.classList.add('st-hot'); }
   });
   const endDrag = e => {
@@ -8010,29 +8150,64 @@ function storRun(team){
     const d = drag; drag = null;
     if (!d.on) return;                                  // hanya ketik: biar pengendali klik biasa
     dragEnd = performance.now();
-    d.g.remove(); if (d.hot) d.hot.classList.remove('st-hot');
-    const tgt = e.type === 'pointerup' ? d.hot : null;     // sasaran terakhir yang menyala (panel rak sudah dipapar semula)
-    const cu = tgt && tgt.dataset.cu, toTray = tgt && tgt.classList.contains('st-tray'), toShelf = tgt && tgt.dataset.sh;
-    if (d.kind === 'it'){
-      const it = ST_IT[d.id];
-      if (it.z === 's'){                               // peralatan: hanya kepada pelanggan Kaunter Stor
-        if (cu && cu[0] === 's') giveEquip(d.id, +cu[1]);
-        else if (cu || toTray) msg('Peralatan sukan diberi terus kepada pelanggan di Kaunter Stor.', '#FDE68A', 1600);
-      } else if (cu || toTray){                        // makanan: masuk dulang dahulu
-        if (cu && cu[0] === 's') msg('Makanan untuk pelanggan Kedai Sihat.', '#FDE68A', 1300);
-        else { takeItem(d.id); if (cu) msg('Diletak atas kaunter — cukupkan kalori, kemudian seret makanan di kaunter kepada pelanggan.', '#FDE68A', 1800); }
-      }
-    } else if (d.kind === 'tr' || d.kind === 'tray'){
-      if (cu) serve(cu[0], +cu[1]); else if (toShelf && d.kind === 'tr') trayBack(+d.id);
-    } else {
-      const k = d.id.slice(0, -1), i = +d.id.slice(-1);
-      if (cu || toTray) takeStation(k, i);
+    d.g.remove(); d.src.classList.remove('lifted'); if (d.hot) d.hot.classList.remove('st-hot');
+    const tgt = e.type === 'pointerup' ? d.hot : null;
+    if (!tgt) return;
+    const cu = tgt.dataset.cu, z = cu && cu[0], ci = cu && +cu[1];
+    const toTray = tgt.classList.contains('st-tray'), toShelf = tgt.dataset.sh, toBl = tgt.dataset.bl, toBinT = tgt.dataset.bin, toDoor = tgt.dataset.door, toStn = tgt.dataset.ss;
+    if (d.kind === 'bin'){ if (toDoor) emptyBin(); return; }
+    if (d.kind === 'bl'){
+      if (toBinT) return toBin(() => { bl.ings = []; bl.r = null; bl.blending = false; paintBl(); msg('Blender dikosongkan', '#FDE68A', 900); });
+      if (cu && z === 'k'){ if (bl.r) return serveJus(ci); return msg(bl.blending ? 'Sedang dikisar… tunggu sekejap' : 'Jus belum lengkap — tambah bahan ikut resipi', '#FDE68A', 1300); }
+      if (cu) return msg('Jus untuk pelanggan Kedai Sihat.', '#FDE68A', 1100);
+      return;
     }
+    if (d.kind === 'tray'){
+      if (toBinT) return toBin(() => { tray.length = 0; paintTray(); });
+      if (cu && z === 'k'){ let n = 0; for (let j = tray.length - 1; j >= 0; j--) if (giveTo('k', ci, { t: 'tray', i: j }, true)) n++; if (!n){ shake('k', ci); msg(cust.k[ci] && cust.k[ci].o.jus ? 'Pelanggan ini mahu jus blend' : 'Tiada makanan yang diminta di kaunter', '#FDE68A', 1300); } }
+      return;
+    }
+    if (d.kind === 'tr'){
+      const s = { t: 'tray', i: +d.id }, x = tray[+d.id]; if (!x) return;
+      if (cu && z === 'k') return giveTo('k', ci, s);
+      if (toBinT) return toBin(() => { tray.splice(+d.id, 1); paintTray(); });
+      if (toShelf && !x.cooked && ST_IT[x.id].sh === toShelf){ tray.splice(+d.id, 1); stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); paintTray(); paintShelves(); }
+      return;
+    }
+    if (d.kind === 'ss'){
+      const i = +d.id.slice(-1), x = stn.dapur[i]; if (!x) return;
+      if (burnt(x)){ if (toBinT) return toBin(() => { stn.dapur[i] = null; paintStn(); msg('Makanan hangus dibuang 🔥', '#FDE68A', 900); }); return msg('Hangus! Seret ke tong sampah.', '#FCA5A5', 1200); }
+      if (toBinT) return toBin(() => { stn.dapur[i] = null; paintStn(); });
+      if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 800);
+      if (cu && z === 'k') return giveTo('k', ci, { t: 'stn', i });
+      if (toTray) return toCounter({ t: 'stn', i });
+      return;
+    }
+    // dari rak
+    const it = ST_IT[d.id];
+    if (it.z === 's'){
+      if (cu && z === 's') return giveTo('s', ci, { t: 'shelf', id: d.id });
+      if (cu || toTray || toBl) msg('Peralatan sukan diberi terus kepada atlet di Kaunter Stor.', '#FDE68A', 1500);
+      return;
+    }
+    if (it.tg === 'j'){
+      if (toBl) return addIng(d.id);
+      if (cu || toTray) msg('Bahan jus — masukkan ke dalam blender.', '#FDE68A', 1300);
+      return;
+    }
+    if (toBl) return msg('Blender untuk bahan dari Rak Bahan Jus sahaja.', '#FDE68A', 1300);
+    if (it.prep){
+      if (cu || toTray || toStn) return cook(d.id, toStn ? +toStn.slice(-1) : null);
+      return;
+    }
+    if (cu && z === 'k') return giveTo('k', ci, { t: 'shelf', id: d.id });
+    if (cu) return msg('Makanan untuk pelanggan Kedai Sihat.', '#FDE68A', 1300);
+    if (toTray) return toCounter({ t: 'shelf', id: d.id });
   };
   window.addEventListener('pointerup', endDrag);
   window.addEventListener('pointercancel', endDrag);
   const unDrag = () => { window.removeEventListener('pointerup', endDrag); window.removeEventListener('pointercancel', endDrag); };
-  hud(); paintTray(); paintStn(); paintShelves();
+  hud(); paintTray(); paintStn(); paintShelves(); paintBl(); paintBin();
   msg('KEDAI DIBUKA! 🏪', '#FACC15', 1600);
 }
 
