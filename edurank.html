@@ -6364,6 +6364,9 @@ const KM_CSS = `
 .km-end .bt button.o{background:#F97316}
 .km-msg{left:50%;top:41%;transform:translate(-50%,-50%);z-index:35;pointer-events:none;font-weight:900;font-size:2.2cqw;white-space:nowrap;text-shadow:0 .3cqw .6cqw #000;opacity:0;transition:opacity .25s}
 #kmOv{inset:0;pointer-events:none;z-index:40}
+.km-st>.km-qz{transform:translateZ(0)}
+.km-qz .op button.on{border-color:#FACC15;background:#334155}
+.km-qz .op button *{pointer-events:none}
 #kmOv>*{pointer-events:auto;position:absolute}
 .km-turn{left:50%;top:41%;transform:translate(-50%,-50%);z-index:42;pointer-events:none;display:flex;align-items:center;gap:1.4cqw;padding:1.4cqw 3cqw;border-radius:99px;background:rgba(2,6,23,.88);border:.3cqw solid #F59E0B;box-shadow:0 1cqw 3cqw rgba(0,0,0,.6);animation:kmTurn 2s ease forwards}
 .km-turn .t{font-size:1.2cqw;letter-spacing:.3em;color:#F59E0B;font-weight:900}
@@ -6388,7 +6391,7 @@ const KM_CSS = `
 .km-pk .sb{font-size:1.15cqw;color:#CBD5E1;margin-top:.3cqw}
 .km-pk .row2{display:flex;gap:2cqw;overflow-x:auto;scroll-snap-type:x mandatory;touch-action:pan-x;padding:1.6cqh 3cqw;max-width:100%;scrollbar-width:none}
 .km-pk .row2::-webkit-scrollbar{display:none}
-.km-pk .pc{flex:none;height:36cqh;aspect-ratio:5/7;scroll-snap-align:center;position:relative;perspective:80cqw;touch-action:pan-x;cursor:grab}
+.km-pk .pc{flex:none;height:36cqh;aspect-ratio:5/7;scroll-snap-align:center;position:relative;perspective:80cqw;touch-action:none;cursor:grab}
 .km-pk .pc .in{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .55s ease;transform:rotateY(180deg)}
 .km-pk .pc.up .in{transform:none}
 .km-pk .pc img,.km-pk .pc .bk{position:absolute;inset:0;width:100%;height:100%;border-radius:1.2cqw;backface-visibility:hidden}
@@ -6499,25 +6502,28 @@ function kmPackCards(handIds){
   }
   return out;
 }
-/* Buka pek: kad terbalik satu-satu; leret kiri/kanan untuk lihat; SERET satu kad ke atas kad di tangan untuk tukar
+/* Buka pek: kad terbalik satu-satu; leret kiri/kanan untuk lihat; SERET kad ke atas kad di tangan untuk tukar (hingga 2 kad)
    (kad tangan itu hilang, bayangan kad baharu kelihatan pudar). Lepas = tukar sementara → Undo / SIAP / Langkau. */
+const KM_PACK_MAX = 2;
 function kmPack(stage, hand, pack, done){
   const ov = document.createElement('div'); ov.className = 'km-pk';
-  ov.innerHTML = '<div class="hd">🎁 PEK GANJARAN!</div><div class="sb">Leret kiri / kanan · seret satu kad ke atas kad di tangan untuk menukarnya (1 kad sahaja)</div>' +
+  ov.innerHTML = '<div class="hd">🎁 PEK GANJARAN!</div><div class="sb">Leret kiri / kanan · seret kad ke atas kad di tangan untuk menukarnya (hingga ' + KM_PACK_MAX + ' kad)</div>' +
     '<div class="row2">' + pack.map((id, i) => '<div class="pc" data-p="' + id + '"><div class="in">' + kmImg(id) + '<div class="bk">🎴</div></div></div>').join('') + '</div>' +
     '<div class="bt3"><button data-pk="undo" style="display:none">↩ Undo</button><button data-pk="skip">Langkau</button><button class="o" data-pk="ok" style="display:none">✔ SIAP</button></div>';
   stage.appendChild(ov); kmFill(ov);
   ov.querySelectorAll('.pc').forEach((c, i) => setTimeout(() => { c.classList.add('up'); kmSnd('kad_koyak', 'flip'); }, 350 + i * 420));
-  let tent = null, d = null, pv = null;
+  let tents = [], d = null, pv = null;
   const himg = id => hand.querySelector('img[data-id="' + id + '"]');
-  const show = () => { ov.querySelector('[data-pk=undo]').style.display = tent ? '' : 'none'; ov.querySelector('[data-pk=ok]').style.display = tent ? '' : 'none';
-    ov.querySelectorAll('.pc').forEach(c => c.classList.toggle('used', !!tent && c.dataset.p === tent.pick)); };
+  const show = () => { ov.querySelector('[data-pk=undo]').style.display = tents.length ? '' : 'none'; ov.querySelector('[data-pk=ok]').style.display = tents.length ? '' : 'none';
+    ov.querySelectorAll('.pc').forEach(c => c.classList.toggle('used', tents.some(t => t.pick === c.dataset.p))); };
   const setImg = (im, id) => { im.dataset.kc = id; im.removeAttribute('src'); kadBake(cardById(id)).then(u => { if (im.dataset.kc === id) im.src = u; }); };
+  const revert = t => { const im = himg(t.out); if (im){ setImg(im, t.out); im.classList.remove('tent'); } };
+  const shownAs = im => (tents.find(t => t.out === im.dataset.id) || {}).pick || im.dataset.id;
   const preview = im => {                                   // bayangan kad baharu di tempat kad tangan
-    if (pv && pv !== im){ setImg(pv, pv.dataset.id); pv.classList.remove('pv'); }
+    if (pv && pv !== im){ setImg(pv, shownAs(pv)); pv.classList.remove('pv'); }
     pv = im; if (im){ setImg(im, d.id); im.classList.add('pv'); }
   };
-  const undo = () => { if (!tent) return; const im = himg(tent.out); if (im){ setImg(im, tent.out); im.classList.remove('tent'); } tent = null; show(); };
+  const undo = () => { const t = tents.pop(); if (t) revert(t); show(); };
   ov.addEventListener('pointerdown', e => {
     const c = e.target.closest('.pc'); if (!c || !c.classList.contains('up')) return;
     d = { id: c.dataset.p, c, x: e.clientX, y: e.clientY, on: false, sl: ov.querySelector('.row2').scrollLeft, mouse: e.pointerType === 'mouse' };
@@ -6528,11 +6534,11 @@ function kmPack(stage, hand, pack, done){
     if (!d) return;
     const dx = e.clientX - d.x, dy = e.clientY - d.y;
     if (!d.on){
-      if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)){              // tarik ke bawah = ambil kad
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * .5){        // tarik ke bawah (boleh menyerong) = ambil kad
         d.on = true; const r = d.c.getBoundingClientRect();
         d.g = document.createElement('img'); d.g.className = 'km-gh'; d.g.src = d.c.querySelector('img').src; d.g.style.width = r.width * .8 + 'px';
         document.body.appendChild(d.g); kmSnd('stor_ambil', 'flip');
-      } else { if (d.mouse) ov.querySelector('.row2').scrollLeft = d.sl - dx; return; }
+      } else { ov.querySelector(".row2").scrollLeft = d.sl - dx; return; }   // leret kiri/kanan (sentuhan & tetikus)
     }
     d.g.style.left = e.clientX + 'px'; d.g.style.top = e.clientY + 'px';
     let hit = null; for (const el of document.elementsFromPoint(e.clientX, e.clientY)){ const im = el.closest && el.closest('img[data-id]'); if (im && hand.contains(im)){ hit = im; break; } }
@@ -6545,17 +6551,35 @@ function kmPack(stage, hand, pack, done){
     const im = pv; pv = null;
     if (!im) return;
     im.classList.remove('pv');
-    if (tent){ const old = himg(tent.out); if (old && old !== im){ setImg(old, tent.out); old.classList.remove('tent'); } }
-    tent = { pick: x.id, out: im.dataset.id }; im.classList.add('tent'); kmSnd('ui_betul', 'hi'); show();
+    tents.filter(t => t.pick === x.id || t.out === im.dataset.id).forEach(t => { tents.splice(tents.indexOf(t), 1); if (t.out !== im.dataset.id) revert(t); });
+    if (tents.length >= KM_PACK_MAX) revert(tents.shift());               // lebih had: tukaran paling awal dibatalkan
+    tents.push({ pick: x.id, out: im.dataset.id }); setImg(im, x.id); im.classList.add('tent'); kmSnd('ui_betul', 'hi'); show();
   }
   ov.addEventListener('click', e => {
     const b = e.target.closest('[data-pk]'); if (!b) return;
     if (b.dataset.pk === 'undo') return undo();
-    const res = b.dataset.pk === 'ok' && tent ? tent : null;
+    const res = b.dataset.pk === 'ok' ? tents.slice() : [];
     window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', upH); window.removeEventListener('pointercancel', upH);
     ov.remove(); hand.querySelectorAll('img.tent').forEach(i => i.classList.remove('tent'));
-    done(res ? res.pick : null, res ? res.out : null);
+    done(res);
   });
+}
+/* Kuiz bantuan: lapisan terus di pentas + beberapa laluan sentuhan (pointerdown, touchstart, klik, semakan kedudukan)
+   — sesetengah tablet tidak menghantar ketikan ke butang dalam lapisan bertindih */
+function kmQuiz(stage, html, pick){
+  stage.querySelectorAll('.km-qz').forEach(x => x.remove());
+  const ov = document.createElement('div'); ov.className = 'km-qz'; ov.innerHTML = html; stage.appendChild(ov);
+  void ov.offsetHeight;
+  let done = false;
+  const hit = (x, y) => [...ov.querySelectorAll('[data-ans]')].find(b => { const r = b.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
+  const go = b => {
+    if (done || !b) return; done = true; b.classList.add('on');
+    setTimeout(() => { ov.remove(); void stage.offsetHeight; pick(+b.dataset.ans); }, 150);
+  };
+  ov.addEventListener('pointerdown', e => go(e.target.closest && e.target.closest('[data-ans]') || hit(e.clientX, e.clientY)));
+  ov.addEventListener('touchstart', e => { const t = e.changedTouches[0]; if (t) go(hit(t.clientX, t.clientY)); }, { passive: true });
+  ov.addEventListener('click', e => go(e.target.closest && e.target.closest('[data-ans]') || hit(e.clientX, e.clientY)));
+  return ov;
 }
 function kmTurnBanner(stage, av, name, mine){
   const old = stage.querySelector('.km-turn'); if (old) old.remove();
@@ -6712,11 +6736,15 @@ function komboRun(ids, withAI, net){
     p.hand = p.hand.filter(c => !out.includes(c)); p.used.push(...out); sel.clear(); swapped = true;
     draw(p); kmSnd('kad_koyak', 'flip'); paintHand(); paintTop();
   }
-  /* pek ganjaran diterima: tukar satu kad tangan (atau langkau) */
-  function applyPick(p, pick, out){
-    const i = out ? p.hand.findIndex(c => c.id === out) : -1, c = pick && cardById(pick);
-    if (c && i >= 0 && !p.hand.some(x => x.id === pick)){ p.used.push(p.hand[i]); p.hand[i] = c; msg('🎁 ' + esc(p.name) + ' dapat ' + esc(c.name) + ' (' + cardNum(c) + elemOf(cardSet(c).el).ico + ')', '#86EFAC', 1800); }
-    else msg('🎁 Pek dilangkau', '#94A3B8', 1200);
+  /* pek ganjaran diterima: tukar hingga 2 kad tangan (atau langkau) */
+  function applyPick(p, picks, pack){
+    const got = [];
+    (picks || []).slice(0, KM_PACK_MAX).forEach(t => {
+      const i = t && t.out ? p.hand.findIndex(c => c.id === t.out) : -1, c = t && cardById(t.pick);
+      if (!c || i < 0 || (pack && !pack.includes(t.pick)) || p.hand.some(x => x.id === t.pick)) return;
+      p.used.push(p.hand[i]); p.hand[i] = c; got.push(esc(c.name) + ' (' + cardNum(c) + elemOf(cardSet(c).el).ico + ')');
+    });
+    msg(got.length ? '🎁 ' + esc(p.name) + ' dapat ' + got.join(' & ') : '🎁 Pek dilangkau', got.length ? '#86EFAC' : '#94A3B8', got.length ? 2000 : 1200);
     busy = false; packOpen = false; paintHand(); paintTop();
   }
   /* kuiz bantuan untuk kumpulan di peranti sendiri: soalan dihantar ke telefon mereka, hos menyemak jawapan */
@@ -6747,28 +6775,25 @@ function komboRun(ids, withAI, net){
     if (a.t === 'swap' && !busy) return doSwap(p, find(a.cards).slice(0, 2));
     if (a.t === 'quiz' && !busy) return lifelineRemote(i);
     if (a.t === 'ans' && rq && rq.i === i && rq.stage === 'ask') return answerRemote(+a.ans);
-    if (a.t === 'pick' && rq && rq.i === i && rq.stage === 'pack'){ const ok2 = !a.id || rq.pack.includes(a.id); rq = null; net.T.set('q' + i, null); return applyPick(p, ok2 ? a.id : null, a.out); }
+    if (a.t === 'pick' && rq && rq.i === i && rq.stage === 'pack'){ const pk = rq.pack; rq = null; net.T.set('q' + i, null); return applyPick(p, a.picks || [], pk); }
   }
   /* ---------- kuiz bantuan (lapisan atas — papan tidak berubah) → pek ganjaran ---------- */
   function lifeline(){
     const p = me(); if (p.life <= 0 || busy) return;
     p.life--; busy = true; paintHand();
     const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
-    $k('#kmOv').innerHTML = '<div class="km-qz"><div class="pn"><div class="lb">🧠 KUIZ BANTUAN · ' + esc(p.name) + '</div><div class="q">' + esc(q.q) + '</div>' +
+    const html = '<div class="pn"><div class="lb">🧠 KUIZ BANTUAN · ' + esc(p.name) + '</div><div class="q">' + esc(q.q) + '</div>' +
       '<div class="op">' + order.map((i, j) => '<button data-ans="' + i + '"><b>' + 'ABCD'[j] + '</b>' + esc(q.c[i]) + '</button>').join('') + '</div>' +
-      '<div style="font-size:1.1cqw;color:#94A3B8;margin-top:1cqw">Betul = buka PEK GANJARAN dan tukar satu kad · Salah = giliran tamat</div></div></div>';
-    let done = false;
-    const pickAns = b => {
-      if (done) return; done = true;
-      const ok = +b.dataset.ans === q.a; p.asked++; if (ok) p.right++;
+      '<div style="font-size:1.1cqw;color:#94A3B8;margin-top:1cqw">Betul = buka PEK GANJARAN dan tukar hingga 2 kad · Salah = giliran tamat</div></div>';
+    kmQuiz($k('#kmSt'), html, k => {
+      const ok = k === q.a; p.asked++; if (ok) p.right++;
       if (p.id) kmSafe(() => teamQuiz(p.id, ok));
       kmSnd(ok ? 'ui_betul' : 'ui_salah', ok ? 'hi' : 'low');
-      $k('#kmOv').innerHTML = '';
       if (!ok){ msg('❌ Salah! Jawapan: ' + esc(q.c[q.a]) + ' — giliran tamat', '#FCA5A5', 2200); setTimeout(nextTurn, 1800); return; }
       packOpen = true;
-      kmPack($k('#kmSt'), $k('#kmHand'), kmPackCards(p.hand.map(c => c.id)), (pick, out) => applyPick(p, pick, out));
-    };
-    $k('#kmOv').querySelectorAll('[data-ans]').forEach(b => { b.onclick = () => pickAns(b); b.onpointerup = () => pickAns(b); });
+      const pk = kmPackCards(p.hand.map(c => c.id));
+      kmPack($k('#kmSt'), $k('#kmHand'), pk, picks => applyPick(p, picks, pk));
+    });
   }
   /* ---------- tamat ---------- */
   function finish(){
@@ -6920,27 +6945,29 @@ function komboJoin(code, T){
     tap: id => { if (sel.has(id)) sel.delete(id); else if (sel.size < 5) sel.add(id); kmSnd('ui_klik', 'flip'); paintHand(); },
     order: ids => { hand = ids; paintHand(); }
   });
+  const qClear = () => $k('#kmSt').querySelectorAll('.km-qz').forEach(x => x.remove());
   function showQ(v){
-    if (!v){ if (q && !packOpen){ q = null; $k('#kmOv').innerHTML = ''; } return; }
+    if (!v){ if (q && !packOpen){ q = null; qClear(); } return; }
     if (v.res){                                          // keputusan dari hos
       if (qShown === v.id + v.res) return; qShown = v.id + v.res;
-      $k('#kmOv').innerHTML = ''; q = null;
+      qClear(); q = null;
       if (v.res === 'no'){ msg('❌ Salah! Jawapan: ' + esc(v.ans || '') + ' — giliran tamat', '#FCA5A5', 2400); kmSnd('ui_salah', 'low'); return; }
-      kmSnd('ui_betul', 'hi'); packOpen = true; sel.clear(); paintHand();
-      packOpen = true;
-      kmPack($k('#kmSt'), $k('#kmHand'), v.pack || [], (pick, out) => {
+      kmSnd('ui_betul', 'hi'); sel.clear(); paintHand(); packOpen = true;
+      kmPack($k('#kmSt'), $k('#kmHand'), v.pack || [], picks => {
         packOpen = false;
-        if (pick && out){ const i = hand.indexOf(out); if (i >= 0) hand[i] = pick; }   // kekal di tempat kad lama
-        send({ t: 'pick', id: pick, out }); paintHand();
+        picks.forEach(t => { const i = hand.indexOf(t.out); if (i >= 0) hand[i] = t.pick; });   // kekal di tempat kad lama
+        send({ t: 'pick', picks }); paintHand();
       });
       return;
     }
     if (qShown === v.id) return; qShown = v.id; q = v;
-    $k('#kmOv').innerHTML = '<div class="km-qz"><div class="pn"><div class="lb">🧠 KUIZ BANTUAN</div><div class="q">' + esc(v.q) + '</div>' +
+    const html = '<div class="pn"><div class="lb">🧠 KUIZ BANTUAN</div><div class="q">' + esc(v.q) + '</div>' +
       '<div class="op">' + v.c.map((t, j) => '<button data-ans="' + v.idx[j] + '"><b>' + 'ABCD'[j] + '</b>' + esc(t) + '</button>').join('') + '</div>' +
-      '<div style="font-size:1.1cqw;color:#94A3B8;margin-top:1cqw">Betul = buka PEK GANJARAN dan tukar satu kad · Salah = giliran tamat</div></div></div>';
-    const pickAns = b => { if (!q) return; q = null; send({ t: 'ans', ans: +b.dataset.ans }); $k('#kmOv').innerHTML = '<div class="km-qz"><div class="pn"><div class="q">Menyemak jawapan…</div></div></div>'; };
-    $k('#kmOv').querySelectorAll('[data-ans]').forEach(b => { b.onclick = () => pickAns(b); b.onpointerup = () => pickAns(b); });
+      '<div style="font-size:1.1cqw;color:#94A3B8;margin-top:1cqw">Betul = buka PEK GANJARAN dan tukar hingga 2 kad · Salah = giliran tamat</div></div>';
+    kmQuiz($k('#kmSt'), html, k => {
+      if (!q) return; q = null; send({ t: 'ans', ans: k });
+      kmQuiz($k('#kmSt'), '<div class="pn"><div class="q">Menyemak jawapan…</div></div>', () => {});
+    });
   }
   function showEnd(){
     const r = st.rank || [];
