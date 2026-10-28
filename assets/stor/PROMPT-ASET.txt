@@ -1,5 +1,5 @@
 PROMPT ASET — SIMULASI STOR SUKAN (EduRank)
-118 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini.
+111 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini.
 
 LATAR MAGENTA: semua prompt (kecuali bg_lantai & bg_menu) meminta latar magenta tulen #FF00FF.
 Letak sahaja gambar magenta dalam folder ini — auto-push membuang latar magenta secara automatik.
@@ -326,72 +326,51 @@ Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold
 97. ikan_bakar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a grilled fish on a banana leaf with lime. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-98. mangga.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a ripe yellow-orange mango with a green leaf, one cheek sliced to show juicy flesh. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
-
-99. strawberi.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of three bright red strawberries with green tops. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
-
-100. bayam.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small bunch of fresh green spinach leaves. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
-
-101. timun.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a fresh green cucumber with a few round slices. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
-
-102. chia.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small glass jar of tiny black chia seeds with a wooden scoop. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
-
-103. madu.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
-Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 top-down view. Game item icon of a small honey jar with a wooden honey dipper dripping golden honey. Single object centred, filling most of the image, whole object visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
-
 
 ==================== JUS BLEND & TONG SAMPAH ====================
 
-104. blender_meja.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
-LAMPIRKAN templat tools/template/templat_blender.png. Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, straight front view. Follow the attached sketch EXACTLY for size, position and outline: a kitchen blender standing on a shop counter, sturdy rounded base with one big dial, a tall clear glass jug with a black lid and handle on the right. The jug is EMPTY and completely see-through: everything INSIDE the jug outline must stay the plain magenta colour exactly like the sketch (no liquid, no reflections filling the inside), only a thin dark outline and two thin white highlight streaks along the glass edges. Do not move or resize anything from the sketch. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Apart from the inside of the jug, do NOT use any pink, magenta or purple on the object; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
-
-105. tong_kosong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+98. tong_kosong.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 LAMPIRKAN templat tools/template/templat_tong.png. Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, straight front view with a slight top-down angle so the inside of the open top is visible. Follow the attached sketch EXACTLY for the bin shape, size and position: a green plastic shop rubbish bin with an open top and a thick rim, a small recycle symbol on the front. The bin is EMPTY — the inside is clean and dark, nothing inside. Keep the bin exactly where the sketch puts it; overflowing rubbish may only rise into the dashed box. Remove the dashed lines. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
 
-106. tong_sikit.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+99. tong_sikit.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 LAMPIRKAN templat tools/template/templat_tong.png. Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, straight front view with a slight top-down angle so the inside of the open top is visible. Follow the attached sketch EXACTLY for the bin shape, size and position: a green plastic shop rubbish bin with an open top and a thick rim, a small recycle symbol on the front. The bin is with a LITTLE rubbish: a few crumpled paper balls and one fruit peel visible at the bottom inside. Keep the bin exactly where the sketch puts it; overflowing rubbish may only rise into the dashed box. Remove the dashed lines. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
 
-107. tong_separuh.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+100. tong_separuh.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 LAMPIRKAN templat tools/template/templat_tong.png. Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, straight front view with a slight top-down angle so the inside of the open top is visible. Follow the attached sketch EXACTLY for the bin shape, size and position: a green plastic shop rubbish bin with an open top and a thick rim, a small recycle symbol on the front. The bin is HALF FULL of rubbish: crumpled paper, fruit peels and an empty juice cup filling the inside up to the middle. Keep the bin exactly where the sketch puts it; overflowing rubbish may only rise into the dashed box. Remove the dashed lines. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
 
-108. tong_penuh.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+101. tong_penuh.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 LAMPIRKAN templat tools/template/templat_tong.png. Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, straight front view with a slight top-down angle so the inside of the open top is visible. Follow the attached sketch EXACTLY for the bin shape, size and position: a green plastic shop rubbish bin with an open top and a thick rim, a small recycle symbol on the front. The bin is OVERFLOWING with rubbish: a messy heap of fruit peels, a banana peel hanging over the rim, crumpled paper and cups piled above the rim, with faint green smelly wavy lines. Keep the bin exactly where the sketch puts it; overflowing rubbish may only rise into the dashed box. Remove the dashed lines. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text, no people. Square 1:1 image.
 
-109. jus_tembikai_chia.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+102. jus_tembikai_chia.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 view. Game item icon of a tall clear glass of a deep red watermelon milk smoothie (red, not pink) sprinkled with tiny black chia seeds, a watermelon wedge on the rim, with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-110. jus_hijau_segar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+103. jus_hijau_segar.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 view. Game item icon of a tall clear glass of a bright green spinach and cucumber juice with a cucumber slice on the rim, with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-111. jus_mangga_sunrise.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+104. jus_mangga_sunrise.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 view. Game item icon of a tall clear glass of a golden mango orange smoothie with a mango cube and orange slice on the rim, with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-112. jus_strawberi_pisang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+105. jus_strawberi_pisang.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 view. Game item icon of a tall clear glass of a creamy deep red strawberry banana smoothie (red, not pink) with a strawberry on the rim, with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-113. jus_tropika_kelapa.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+106. jus_tropika_kelapa.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours, slight 3/4 view. Game item icon of a tall clear glass of a light orange tropical coconut juice with chia seeds and a small paper umbrella, with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
 
 ==================== IKON UI ====================
 
-114. ui_syiling.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+107. ui_syiling.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a shiny gold coin with a simple embossed star. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-115. ui_hati.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+108. ui_hati.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a glossy red heart. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-116. ui_telefon.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+109. ui_telefon.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a red ringing telephone with motion lines. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-117. ui_kotak.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
+110. ui_kotak.png   [nisbah 1:1 (cth. 1024×1024 → simpan 256×256)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a closed cardboard delivery box with tape. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 
-118. logo_stor.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
+111. logo_stor.png   [nisbah 1:1 (cth. 1024×1024 → simpan 512×512)]
 Cute chibi cartoon mobile game asset, cozy Malaysian simulation game style, bold clean dark outlines, soft cel shading, bright cheerful colours. Game UI icon: a round game logo badge (no letters) combining a soccer ball, a dumbbell and an apple, blue and green. Centred, filling most of the image. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around the object. No text. Square 1:1 image.
 

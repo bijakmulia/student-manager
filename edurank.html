@@ -7284,10 +7284,8 @@ const ST_ASSETS = [].concat(
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
    ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
   ].concat(ST_ATH.map(a => ['atl_' + a.id, a.d])).concat(ST_ORG.map(o => [o.id, o.d])).map(([id, d]) => stA(id, 'Watak', 'tall', ST_STYLE + '. Full body chibi character, big head, small body (about 2.5 heads tall), standing and facing forward, ' + d + '. Friendly expression. The whole character from head to feet fills the image height, feet touching the bottom edge. ' + ST_MAG + ' No text.')),
-  ST_ITEMS.filter(x => !x.img).map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
-  /* JUS BLEND (logik LAPISAN): blender_meja = jag LUTSINAR (bahagian dalam magenta → jadi lutsinar), game melukis lapisan warna
-     bahan di BELAKANG gambar ikut kawasan jag dalam templat. Tong sampah: 4 gambar GANTI ikut paras. */
-  [stA('blender_meja', 'Jus Blend & Tong Sampah', 'sqL', 'LAMPIRKAN templat tools/template/templat_blender.png. ' + ST_STYLE + ', straight front view. Follow the attached sketch EXACTLY for size, position and outline: a kitchen blender standing on a shop counter, sturdy rounded base with one big dial, a tall clear glass jug with a black lid and handle on the right. The jug is EMPTY and completely see-through: everything INSIDE the jug outline must stay the plain magenta colour exactly like the sketch (no liquid, no reflections filling the inside), only a thin dark outline and two thin white highlight streaks along the glass edges. Do not move or resize anything from the sketch. ' + ST_MAG.replace('Do NOT use any pink, magenta or purple on the object itself; ', 'Apart from the inside of the jug, do NOT use any pink, magenta or purple on the object; ') + ' No text, no people.')],
+  ST_ITEMS.filter(x => !x.img && x.tg !== 'j').map(x => stA(x.id, x.z === 's' ? 'Barang Stor Sukan' : 'Makanan & Minuman', 'sq', ST_STYLE + ', slight 3/4 top-down view. Game item icon of ' + x.d + '. Single object centred, filling most of the image, whole object visible, no ground shadow. ' + ST_MAG + ' No text.')),
+  /* JUS BLEND: bahan = tin emoji (tiada aset), blender dilukis app; aset hanya gelas jus siap (jus_<id>). Tong sampah: 4 gambar GANTI ikut paras. */
   [['tong_kosong', 'EMPTY — the inside is clean and dark, nothing inside'],
    ['tong_sikit', 'with a LITTLE rubbish: a few crumpled paper balls and one fruit peel visible at the bottom inside'],
    ['tong_separuh', 'HALF FULL of rubbish: crumpled paper, fruit peels and an empty juice cup filling the inside up to the middle'],
@@ -7654,6 +7652,14 @@ const ST_CSS = `
 .st-bub .jr{display:flex;align-items:center;gap:.5cqw}
 .st-bub .jr .gl{flex:none;width:3.6cqw;height:3.6cqw;display:flex;align-items:center;justify-content:center;font-size:2.6cqw;border-radius:.6cqw;background:#FEF3C7}
 .st-bub .jr .gl img{width:100%;height:100%;object-fit:contain}
+.st-me{pointer-events:auto!important;cursor:grab;touch-action:none}
+.st-me.drag{transition:none;cursor:grabbing;filter:drop-shadow(0 .4cqw .5cqw rgba(0,0,0,.35))}
+.st-tin{position:relative;display:flex;align-items:center;justify-content:center;width:78%;height:92%;margin:auto;border-radius:18% / 9%;
+  background:linear-gradient(90deg,#8A949E,#E4E9EE 28%,#FFFFFF 42%,#C3CAD1 70%,#7D8791);box-shadow:inset 0 .25cqw 0 rgba(255,255,255,.5),inset 0 -.25cqw 0 rgba(0,0,0,.25),0 .2cqw .3cqw rgba(0,0,0,.3)}
+.st-tin::before{content:'';position:absolute;left:0;right:0;top:4%;height:6%;border-radius:50%;background:rgba(0,0,0,.18)}
+.st-tin b{display:flex;align-items:center;justify-content:center;width:100%;height:56%;background:var(--c);border-top:.15cqw solid rgba(0,0,0,.2);border-bottom:.15cqw solid rgba(0,0,0,.2);font-size:2.3cqw;line-height:1;text-shadow:0 0 .2cqw #fff}
+.st-flyit .st-tin b,.st-ghost .st-tin b{font-size:26px}
+.st-tray .g>div.jus{filter:drop-shadow(0 0 .5cqw #FDE68A)}
 .st-bub .jr .tx{margin-top:0;text-align:left;max-width:12cqw;font-size:.95cqw}
 .st-shelf .nm{margin-top:.5cqw}
 `;
@@ -7736,7 +7742,10 @@ function storRun(team){
   const msg = (t, c, ms) => { const m = $s('#stMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1300); };
   const fly = (t, x, y) => { const n = document.createElement('div'); n.className = 'st-fly'; n.textContent = t; n.style.left = x + '%'; n.style.top = y + '%'; $s('#stStage').appendChild(n); setTimeout(() => n.remove(), 1150); };
   const walk = x => { const m = $s('#stMe'); m.style.left = x + '%'; m.classList.remove('walk'); void m.offsetWidth; m.classList.add('walk'); };
-  const icon = (id, cls) => { const i = ST_IT[id]; return stImg(i.img || id, i.e, cls); };
+  const icon = (id, cls) => { const i = ST_IT[id];
+    if (i.tg === 'j') return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b>' + i.e + '</b></span>';   // bahan jus: tin berlabel emoji, tanpa aset
+    return stImg(i.img || id, i.e, cls); };
+  const trayIcon = x => x.jus ? stImg('jus_' + x.jus, '🥤') : icon(x.id);
   const jusOf = id => ST_JUS.find(r => r.id === id);
 
   /* ---------- pesanan ---------- */
@@ -7772,7 +7781,7 @@ function storRun(team){
   const paintCust = () => { $s('#stCust').innerHTML = custHtml(); ['s', 'k'].forEach(z => cust[z].forEach(c => { if (c) c.fresh = false; })); };
   const TRAY_MAX = 4;
   const paintTray = () => {
-    $s('#stTray').innerHTML = Array.from({ length: TRAY_MAX }, (_, i) => tray[i] ? '<div class="f" data-tr="' + i + '">' + icon(tray[i].id) + '</div>' : '<div></div>').join('');
+    $s('#stTray').innerHTML = Array.from({ length: TRAY_MAX }, (_, i) => tray[i] ? '<div class="f' + (tray[i].jus ? ' jus' : '') + '" data-tr="' + i + '">' + trayIcon(tray[i]) + '</div>' : '<div></div>').join('');
     paintCust();
   };
   const shown = {};
@@ -7895,6 +7904,7 @@ function storRun(team){
   }
   /* serah satu barang kepada pelanggan (peralatan → atlet; makanan → pelanggan Kedai Sihat) */
   function giveTo(z, i, s, quiet){
+    if (s.t === 'tray' && tray[s.i] && tray[s.i].jus) return giveJus(z, i, s.i, quiet);
     const id = srcId(s), it = ST_IT[id], c = cust[z][i];
     if (!it || !c || c.leaving) return false;
     if (c.o.jus){ if (!quiet){ shake(z, i); msg('Pelanggan ini mahu ' + esc(jusOf(c.o.jus).n) + ' — buat di blender', '#FDE68A', 1500); } return false; }
@@ -7931,8 +7941,23 @@ function storRun(team){
     const key = bl.ings.slice().sort().join(','), r = ST_JUS.find(j => j.ings.slice().sort().join(',') === key);
     if (r){
       bl.blending = r.id; paintBl(); snd('stor_blender', 'flip');
-      setTimeout(() => { if (over || !root.isConnected || bl.blending !== r.id) return; bl.blending = false; bl.r = r; paintBl(); msg('🥤 ' + esc(r.n) + ' siap! Seret blender kepada pelanggan.', '#86EFAC', 1800); }, 1500);
+      setTimeout(() => {
+        if (over || !root.isConnected || bl.blending !== r.id) return;
+        bl.blending = false;
+        if (tray.length < TRAY_MAX){                     // jus siap terus dituang ke gelas atas kaunter; blender kosong semula
+          bl.ings = []; tray.push({ jus: r.id }); paintBl(); paintTray();
+          msg('🥤 ' + esc(r.n) + ' siap atas kaunter! Seret jus kepada pelanggan.', '#86EFAC', 1800);
+        } else { bl.r = r; paintBl(); msg('🥤 ' + esc(r.n) + ' siap — kaunter penuh, jus kekal dalam blender.', '#FDE68A', 1800); }
+      }, 1500);
     } else if (bl.ings.length >= 4) msg('Kombinasi ini bukan resipi jus — seret blender ke tong sampah.', '#FCA5A5', 1800);
+  }
+  function giveJus(z, i, ti, quiet){
+    const x = tray[ti], c = cust[z][i]; if (!x || !c || c.leaving) return false;
+    if (z !== 'k' || c.o.jus !== x.jus){ if (!quiet){ shake(z, i); snd('stor_salah', 'low'); msg(c.o.jus ? 'Salah jus! Dia mahu ' + esc(jusOf(c.o.jus).n) + '.' : 'Pelanggan ini tidak memesan jus.', '#FCA5A5', 1500); } return false; }
+    const r = jusOf(x.jus), frac = Math.max(0, c.p / c.max);
+    tray.splice(ti, 1); walk(SLOTX.k[i] + 1.5);
+    finishCust('k', i, 80 + Math.round(60 * frac), r.ings.reduce((a, q) => a + ST_IT[q].p, 0) + 4 + Math.round(frac * 6), ['🥤 ' + r.n + ' — sedap! 😋', '#86EFAC']);
+    return true;
   }
   function serveJus(i){
     const c = cust.k[i]; if (!c || c.leaving) return;
@@ -8121,7 +8146,13 @@ function storRun(team){
   };
   root.addEventListener('pointerdown', e => {
     if (over || call) return;
-    const src = e.target.closest('[data-it],[data-tr],[data-ss],[data-bl],[data-bin],.st-tray'); if (!src) return;
+    const SEL = '[data-it],[data-tr],[data-ss],[data-bl],[data-bin],.st-tray';
+    let src = e.target.closest(SEL);
+    if (!src && e.target.closest('#stMe')){              // penjual menghalang? barang di belakangnya didahulukan, jika tiada → seret penjual
+      src = document.elementsFromPoint(e.clientX, e.clientY).map(x => !x.closest('#stMe') && x.closest(SEL)).find(Boolean) || null;
+      if (!src){ const me = $s('#stMe'); me.classList.add('drag'); drag = { kind: 'me', me, on: false, x: e.clientX, y: e.clientY }; return; }
+    }
+    if (!src) return;
     let kind = src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.dataset.ss ? 'ss' : src.dataset.bl ? 'bl' : src.dataset.bin ? 'bin' : 'tray';
     if (kind === 'it' && !stock[src.dataset.it]) return;
     if (kind === 'ss' && !stn.dapur[+src.dataset.ss.slice(-1)]) return;
@@ -8133,13 +8164,20 @@ function storRun(team){
   });
   window.addEventListener('pointermove', e => {
     if (!drag) return;
+    if (drag.kind === 'me'){                              // penjual ikut jari (kiri/kanan sahaja)
+      drag.on = true;
+      const r = $s('#stStage').getBoundingClientRect(), rot = r.height > r.width;
+      const f = rot ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width;
+      drag.me.style.left = clamp(f * 100 - 4.5, 0, 91) + '%';
+      return;
+    }
     if (!drag.on){
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 10) return;
       drag.on = true;
       const g = drag.g = document.createElement('div'); g.className = 'st-ghost';
       if (drag.kind === 'it') g.innerHTML = icon(drag.id);
-      else if (drag.kind === 'tr') g.innerHTML = icon(tray[+drag.id].id);
-      else if (drag.kind === 'tray'){ g.classList.add('multi'); g.innerHTML = tray.map(x => '<span>' + icon(x.id) + '</span>').join(''); }   // semua makanan atas kaunter dibawa bersama
+      else if (drag.kind === 'tr') g.innerHTML = trayIcon(tray[+drag.id]);
+      else if (drag.kind === 'tray'){ g.classList.add('multi'); g.innerHTML = tray.map(x => '<span>' + trayIcon(x) + '</span>').join(''); }   // semua makanan atas kaunter dibawa bersama
       else if (drag.kind === 'ss'){ const x = stn.dapur[+drag.id.slice(-1)]; g.innerHTML = burnt(x) ? '<span class="st-emo">🔥</span>' : icon(x.id); }
       else { g.classList.add('big'); const r = drag.src.getBoundingClientRect(); g.style.width = r.width + 'px'; g.style.height = r.height + 'px'; g.innerHTML = drag.src.innerHTML; drag.src.classList.add('lifted'); }
       document.body.appendChild(g);
@@ -8154,6 +8192,7 @@ function storRun(team){
     liftOff();
     if (!drag) return;
     const d = drag; drag = null;
+    if (d.kind === 'me'){ d.me.classList.remove('drag'); if (d.on) dragEnd = performance.now(); return; }
     if (!d.on) return;                                  // hanya ketik: biar pengendali klik biasa
     dragEnd = performance.now();
     d.g.remove(); d.src.classList.remove('lifted'); if (d.hot) d.hot.classList.remove('st-hot');
@@ -8170,14 +8209,14 @@ function storRun(team){
     }
     if (d.kind === 'tray'){
       if (toBinT) return toBin(() => { tray.length = 0; paintTray(); });
-      if (cu && z === 'k'){ let n = 0; for (let j = tray.length - 1; j >= 0; j--) if (giveTo('k', ci, { t: 'tray', i: j }, true)) n++; if (!n){ shake('k', ci); msg(cust.k[ci] && cust.k[ci].o.jus ? 'Pelanggan ini mahu jus blend' : 'Tiada makanan yang diminta di kaunter', '#FDE68A', 1300); } }
+      if (cu && z === 'k'){ let n = 0; for (let j = tray.length - 1; j >= 0; j--) if (giveTo('k', ci, { t: 'tray', i: j }, true)) n++; if (!n){ shake('k', ci); msg(cust.k[ci] && cust.k[ci].o.jus ? 'Jus yang dia mahu belum ada di kaunter' : 'Tiada makanan yang diminta di kaunter', '#FDE68A', 1300); } }
       return;
     }
     if (d.kind === 'tr'){
       const s = { t: 'tray', i: +d.id }, x = tray[+d.id]; if (!x) return;
       if (cu && z === 'k') return giveTo('k', ci, s);
       if (toBinT) return toBin(() => { tray.splice(+d.id, 1); paintTray(); });
-      if (toShelf && !x.cooked && ST_IT[x.id].sh === toShelf){ tray.splice(+d.id, 1); stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); paintTray(); paintShelves(); }
+      if (toShelf && !x.cooked && !x.jus && ST_IT[x.id].sh === toShelf){ tray.splice(+d.id, 1); stock[x.id]++; flyTo(x.id, TRAY_AT, shelfPos(x.id)); paintTray(); paintShelves(); }
       return;
     }
     if (d.kind === 'ss'){
