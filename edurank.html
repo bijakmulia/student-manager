@@ -5788,7 +5788,7 @@ const GAME_LOBBY = {
       p(1);
     },
     starts: [['🏪 BUKA KEDAI', () => storStart()]],
-    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Kedai Sihat:</b> seret makanan dari rak ke <b>dulang</b> (atas kaunter) sehingga jumlah kalori hampir dengan sasaran 🎯 pelanggan, kemudian seret dulang kepada pelanggan. Makin hampir kalori, makin tinggi ⭐ skor. Jangan beri makanan yang pelanggan alergik! Makanan 🍳/🌀 terus ke <b>dapur</b> / <b>blender</b>; bila siap, seret ke dulang.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
+    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Kedai Sihat:</b> seret makanan dari rak ke <b>atas kaunter</b> sehingga jumlah kalori hampir dengan sasaran 🎯 pelanggan, kemudian seret makanan di kaunter kepada pelanggan. Makin hampir kalori, makin tinggi ⭐ skor. Jangan beri makanan yang pelanggan alergik! Makanan 🍳/🌀 terus ke <b>dapur</b> / <b>blender</b>; bila siap, seret ke kaunter.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Telefon pintar: pegang melintang untuk paparan penuh.'
   }
 };
 
@@ -7217,11 +7217,12 @@ const ST_AR = {
   sqL:  ['1:1 (cth. 1024×1024 → simpan 512×512)', 'Square 1:1 image.'],
   tall: ['2:3 menegak (cth. 1024×1536 → simpan 512×768)', 'Tall portrait 2:3 image (1024x1536).'],
   wide: ['3:2 melintang (cth. 1536×1024 → simpan 768×512)', 'Wide landscape 3:2 image (1536x1024).'],
-  bg:   ['3:2 atau 16:9 melintang (cth. 1536×1024 → simpan 1600×1000)', 'Wide landscape 3:2 image (1536x1024).']
+  bg:   ['3:2 melintang (cth. 1536×1024 → simpan 1600×1000)', 'Wide landscape 3:2 image (1536x1024).'],
+  xw:   ['21:9 sangat lebar (cth. 2100×900 → simpan 768×329)', 'Ultra-wide 21:9 landscape image (2100x900).']
 };
 const stA = (id, g, ar, p) => ({ id, g, ar, sz: ST_AR[ar][0], p: p + ' ' + ST_AR[ar][1] });
 const ST_ASSETS = [].concat(
-  [stA('bg_lantai', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile simulation game: an EMPTY cozy shop interior, camera facing the back wall straight-on and slightly from above, perfectly symmetric. The back wall fills the TOP HALF of the image and the floor fills the BOTTOM HALF, with a wooden skirting board along the line where they meet. Left half of the wall: soft light blue with subtle wainscoting (school sports equipment store); right half: mint green and cream with a few hanging plants (healthy food cafe). Small windows high on the wall with warm afternoon sunlight. The floor is warm honey-coloured wooden planks running left to right, with soft sunlight patches and a large plain cosy woven rug in the lower centre. Warm, inviting, cosy lighting. NO doorway, NO furniture, NO shelves, NO counters, NO people, NO text.'),
+  [stA('bg_lantai', 'Latar', 'bg', 'LAMPIRKAN templat tools/template/templat_latar.png. ' + ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile shop simulation game. Use the attached layout sketch as the EXACT composition guide: the line where the back wall meets the floor must be at exactly the same height as the red line in the sketch (49.5% from the top), and the floor must follow the same one-point perspective grid, converging toward the centre. Redraw it as finished art and remove all sketch marks (no red line, no dashed boxes). BACK WALL (top half): ONE single colour scheme across the whole width (soft warm cream), covered with a subtle repeating wallpaper pattern of thin vertical stripes and small diamond motifs, a light wainscot panel band along the bottom of the wall, a slim chair rail and a dark wooden skirting board exactly on the wall/floor line. FLOOR (bottom half): small warm honey-coloured wooden floor tiles in perspective, each tile about the size of one foot of a person so the floor looks realistic next to chibi characters, soft warm light. Plain and uncluttered: NO plants, NO pots, NO windows, NO doors, NO furniture, NO shelves, NO counters, NO rugs, NO people, NO text.'),
    stA('bg_menu', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Keep the important details in the middle; leave empty space at the top centre for a logo. No text.')],
   /* rak = LAPISAN BAWAH yang KOSONG; barang dilukis oleh game di atas papan rak (paras tetap ST_BOARD)
      supaya rak kosong/penuh mengikut stok. Rak memenuhi seluruh gambar (dipaparkan penuh kotak). */
@@ -7257,12 +7258,10 @@ const ST_ASSETS = [].concat(
       ...ST_ITEMS.filter(x => x.prep && x.prep[0] === 'blender').map(x => P('blender_' + x.id, gK, 'sqL', BLEND, 'The jug is filled with ' + (x.id === 'jus_oren' ? 'bright orange juice with orange pieces' : 'a creamy pale-yellow banana milk smoothie') + ' swirling as it blends, with small motion lines around the jug.'))
     ];
   })()],
-  /* DULANG: rata dari atas (bukan senget) — 6 petak 3×2 di kedudukan tetap; game meletakkan makanan tepat dalam petak */
-  [stA('dulang_rata', 'Perabot & Stesen', 'wide', ST_STYLE + '. PERFECTLY TOP-DOWN orthographic view, camera looking straight down — NOT tilted, NOT in perspective. An empty rectangular light-green plastic food tray with exactly 6 equal square compartments arranged in 3 columns and 2 rows, separated by thin raised dividers; the outer rim is about 6% of the tray width. The tray is perfectly straight and fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no food.')],
-  /* kaunter: satu bahagian modular, diulang mendatar oleh game */
-  [['kaunter_stor','a sports store service counter with a blue front panel and a THICK light wooden top; the top surface is clearly visible from slightly above as a flat empty shelf about one fifth of the height'],
-   ['kaunter_kafe','a cafe service counter with a mint-green front panel and a THICK cream top; the top surface is clearly visible from slightly above as a flat empty shelf about one fifth of the height']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'wide', ST_STYLE + '. ONE modular section of ' + d + ', straight front view (not angled). The counter fills the whole image from the left edge to the right edge, with flat cut-off sides so several copies can be placed side by side seamlessly. Nothing on the counter top. ' + ST_MAG + ' No text, no people.')),
+  /* kaunter: SATU meja panjang — game meregang bahagian tengah (hujung 15% kiri/kanan dikekalkan) */
+  [['kaunter_stor', 'a light wooden top and a soft blue front panel'],
+   ['kaunter_kafe', 'a cream top and a soft mint-green front panel']
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'xw', 'LAMPIRKAN templat tools/template/templat_kaunter.png. ' + ST_STYLE + '. ONE single long shop service counter with ' + d + ', straight front view (not angled), following the attached sketch exactly: a thick top surface seen slightly from above occupying the top fifth, then the front panel. The middle part (between the two dashed lines of the sketch) must be completely PLAIN and uniform — no vertical seams, no doors, no drawers, no separate segments, no logos — so it can be stretched; any decoration only at the two ends (outside the dashed lines). Remove the dashed lines. Nothing on the counter top. ' + ST_MAG + ' No text, no people.')),
   [['pekerja_p','a young Malaysian female store worker wearing a hijab, glasses, a blue polo shirt with a name tag and an apron'],
    ['pekerja_l','a young Malaysian male store worker with neat hair, a blue polo shirt with a name tag and an apron'],
    ['pembekal','a friendly Malaysian delivery man in a brown courier uniform and cap, carrying a cardboard box']
@@ -7549,6 +7548,26 @@ const ST_CSS = `
 .st-tray .pl.img{background:var(--tray) center/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 .5cqw .6cqw rgba(0,0,0,.3))}
 .st-tray .g{position:absolute;left:6%;right:6%;top:9%;bottom:9%;margin:0;padding:0!important;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:4%;border:0!important;background:none!important;z-index:1}
 .st-tray .g>div{padding:8%!important}
+/* ---- v3: tanpa dulang (makanan atas kaunter), kaunter satu panjang, latar satu warna, lantai berskala, rak berpijak ---- */
+.st-stage{background:linear-gradient(180deg,#F3EDE2 0 49.5%,#D8B98E 49.5%),#D8B98E}
+.st-wallk{left:0;top:8%;height:41.5%;background:
+  repeating-linear-gradient(90deg,transparent 0 2.9cqw,rgba(150,120,90,.13) 2.9cqw 3.05cqw),
+  radial-gradient(circle at 1.5cqw 2cqw,rgba(150,120,90,.18) 0 .35cqw,transparent .4cqw) 0 0/3.05cqw 4cqw,
+  linear-gradient(180deg,#F6F0E6 0 84%,#E9DFCF 84% 85%,#EFE6D8 85% 97%,#7A5233 97%)}
+.st-floor{top:49.5%;background:
+  linear-gradient(180deg,rgba(60,35,15,.28),transparent 9%),
+  repeating-linear-gradient(90deg,transparent 0 3.9cqw,rgba(110,70,35,.22) 3.9cqw 4cqw),
+  repeating-linear-gradient(180deg,#DDBC90 0 2.4cqh,#D3B083 2.4cqh 2.5cqh,#D9B78A 2.5cqh 4.9cqh,#CFAB7E 4.9cqh 5cqh),#D8B98E}
+.st-shelf::after{content:'';position:absolute;left:4%;right:4%;bottom:-1.1cqh;height:2.2cqh;border-radius:50%;background:radial-gradient(ellipse at center,rgba(40,22,8,.45),transparent 70%);z-index:-1}
+.st-door::after{content:none}
+.st-counter.long{background:none!important;box-shadow:none;border-style:solid;border-color:transparent;border-width:0 2.4cqw;border-image-slice:0 15% fill;border-image-width:0 2.4cqw;border-image-repeat:stretch}
+.st-counter.long .nm{text-shadow:0 .1cqw .3cqw rgba(0,0,0,.5)}
+.st-tray{left:55.8%;width:11.6%;top:52.3%;height:8.6%;padding:0;z-index:4;display:block;background:none!important;border:0!important}
+.st-tray .g{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:0 4%;padding:0 3%!important}
+.st-tray .g>div{padding:4%!important;align-items:flex-end}
+.st-tray .g>div:nth-child(-n+3){transform:scale(.9) translateY(30%)}
+.st-tray.st-hot{outline:.3cqw dashed #FACC15;outline-offset:.2cqw;border-radius:.8cqw}
+.st-tray .k{position:absolute;left:50%;top:calc(100% + 1.4cqw);transform:translateX(-50%);white-space:nowrap;margin:0}
 `;
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
@@ -7557,7 +7576,7 @@ function storRun(team){
   stStyle();
   const cfg = storCfg(), L = ST_LVL[cfg.lvl] || ST_LVL.mudah;
   const SABAR = +cfg.sabar || L.sabar, DUR = (+cfg.syif || 5) * 60, ME = cfg.watak === 'l' ? 'pekerja_l' : 'pekerja_p';
-  const SLOTX = { s: [2.5, 14, 25.5], k: [68, 78.5, 89] };     // telefon (atas kaunter stor) & dulang (atas kaunter kafe) di hujung dalam: laluan dari pintu lapang
+  const SLOTX = { s: [2.5, 14, 25.5], k: [68, 78.5, 89] };     // telefon (atas kaunter stor) & makanan (atas kaunter kafe) di hujung dalam: laluan dari pintu lapang
   const root = document.createElement('div');
   root.className = 'st'; root.id = 'stRoot';
   /* rak berlapis: rak kosong (gambar/lukisan) → lapisan barang (#stL_<rak>) → label */
@@ -7584,10 +7603,11 @@ function storRun(team){
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
     '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('telefon') ? stImg('telefon', '', 'id') + (ST_HAVE.has('telefon_dering') ? stImg('telefon_dering', '', 'rg') : '') : '<span class="st-emo">☎️</span>') + '</div>' +
-    '<div class="st-counter s' + (ST_HAVE.has('kaunter_stor') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_stor') + ')' : '') + '">' + '<div class="nm">KAUNTER STOR</div></div>' +
-    '<div class="st-counter k' + (ST_HAVE.has('kaunter_kafe') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_kafe') + ')' : '') + '">' + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
+    // kaunter = SATU meja panjang: hujung kiri/kanan gambar dikekalkan, bahagian tengah diregang (border-image), tiada segmen
+    ['s', 'k'].map(z => { const im = ST_HAVE.get(z === 's' ? 'kaunter_stor' : 'kaunter_kafe');
+      return '<div class="st-counter ' + z + (im ? ' long" style="border-image-source:url(' + im + ')' : '') + '"><div class="nm">' + (z === 's' ? 'KAUNTER STOR' : 'KAUNTER KEDAI SIHAT') + '</div></div>'; }).join('') +
     '<div id="stCust"></div>' +
-    '<div class="st-tray"><div class="t">DULANG</div><div class="pl' + (ST_HAVE.has('dulang_rata') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang_rata') + ')' : '') + '"><div class="g" id="stTray"></div></div><div class="k" id="stTrayK">kosong</div></div>' +
+    '<div class="st-tray" title="Atas kaunter"><div class="g" id="stTray"></div><div class="k" id="stTrayK">kosong</div></div>' +
     '<div class="st-hud" id="stHud"></div>' +
     '<div class="st-msg" id="stMsg"></div>' +
     '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
@@ -7675,7 +7695,7 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [61.5, 57], STN_AT = { dapur0: [94.25, 16], dapur1: [94.25, 29.5], blender0: [94.25, 43] };
+  const TRAY_AT = [61.6, 54], STN_AT = { dapur0: [94.25, 16], dapur1: [94.25, 29.5], blender0: [94.25, 43] };
   /* Stesen: logik GANTI gambar — dapur_<makanan> / dapur_hangus / blender_<minuman> menggantikan gambar stesen kosong.
      Tiada gambar khas = gambar kosong + ikon makanan dalam bulatan. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
@@ -7765,7 +7785,7 @@ function storRun(team){
       msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
       walk(86); paintStn(); paintShelves(); return;
     }
-    if (tray.length >= TRAY_MAX) return msg('Dulang penuh! Seret makanan dari dulang ke rak untuk pulangkan.', '#FCA5A5', 1600);
+    if (tray.length >= TRAY_MAX) return msg('Kaunter penuh (6)! Seret makanan dari kaunter ke rak untuk pulangkan.', '#FCA5A5', 1600);
     stock[id]--; tray.push({ id }); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), TRAY_AT);
     walk(clamp(shelfPos(id)[0] - 4, 2, 84)); paintTray(); paintShelves();
   }
@@ -7773,7 +7793,7 @@ function storRun(team){
     const x = stn[k][i]; if (!x) return;
     if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); snd('stor_hangus', 'low'); return paintStn(); }
     if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 700);
-    if (tray.length >= TRAY_MAX) return msg('Dulang penuh!', '#FCA5A5');
+    if (tray.length >= TRAY_MAX) return msg('Kaunter penuh (6)!', '#FCA5A5');
     stn[k][i] = null; tray.push({ id: x.id, cooked: true }); snd('stor_ambil', 'flip'); walk(86); flyTo(x.id, STN_AT[k + i], TRAY_AT); paintStn(); paintTray();
   }
   function trayBack(i){
@@ -7787,7 +7807,7 @@ function storRun(team){
     const c = cust[z][i]; if (!c || c.leaving) return;
     walk(SLOTX[z][i] + 1.5);
     if (z === 's') return msg('Seret peralatan dari rak terus kepada pelanggan ini.', '#FDE68A', 1400);
-    if (!tray.length){ shake(z, i); return msg('Dulang kosong — isi makanan dahulu.', '#FDE68A', 1200); }
+    if (!tray.length){ shake(z, i); return msg('Kaunter kosong — letak makanan dahulu.', '#FDE68A', 1200); }
     const o = c.o;
     if (o.alg && tray.some(t => ST_ALG[o.alg].ids.includes(t.id))){
       c.p -= c.max * .3; score = Math.max(0, score - 20); snd('stor_alahan', 'low'); vibrate(60); shake(z, i);
@@ -7946,10 +7966,10 @@ function storRun(team){
     const an = t.closest('[data-ans]'); if (an){ callAnsText = call ? call.q.c[call.q.a] : ''; return callAnswer(+an.dataset.ans); }
     if (call) return;
     // SERET SAHAJA (menguji kecekapan): ketik barang/stesen/dulang/pelanggan hanya memberi petunjuk
-    const it = t.closest('[data-it]'); if (it) return msg(ST_IT[it.dataset.it].z === 's' ? 'Seret barang ini kepada atlet di Kaunter Stor' : 'Seret makanan ini ke dulang', '#FDE68A', 1100);
-    const ss = t.closest('[data-ss]'); if (ss){ const x = stn[ss.dataset.ss.slice(0, -1)][+ss.dataset.ss.slice(-1)]; return msg(!x ? 'Seret makanan dari rak ke dulang — yang perlu dimasak akan ke sini' : x.t >= x.need ? 'Seret makanan yang siap ke dulang' : 'Belum siap…', '#FDE68A', 1100); }
-    const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan ke rak untuk pulangkan, atau seret dulang kepada pelanggan', '#FDE68A', 1300);
-    const cu = t.closest('[data-cu]'); if (cu) return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret dulang kepada pelanggan ini', '#FDE68A', 1200);
+    const it = t.closest('[data-it]'); if (it) return msg(ST_IT[it.dataset.it].z === 's' ? 'Seret barang ini kepada atlet di Kaunter Stor' : 'Seret makanan ini ke atas kaunter Kedai Sihat', '#FDE68A', 1100);
+    const ss = t.closest('[data-ss]'); if (ss){ const x = stn[ss.dataset.ss.slice(0, -1)][+ss.dataset.ss.slice(-1)]; return msg(!x ? 'Seret makanan dari rak ke kaunter — yang perlu dimasak akan ke sini' : x.t >= x.need ? 'Seret makanan yang siap ke kaunter' : 'Belum siap…', '#FDE68A', 1100); }
+    const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan ke rak untuk pulangkan, atau seret makanan di kaunter kepada pelanggan', '#FDE68A', 1300);
+    const cu = t.closest('[data-cu]'); if (cu) return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan di kaunter kepada pelanggan ini', '#FDE68A', 1200);
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
     if (t.closest('[data-door]')) return msg(sup && sup.here ? 'Ketik pembekal untuk terima stok' : 'Tiada penghantaran sekarang.', '#94A3B8', 900);
@@ -7958,7 +7978,7 @@ function storRun(team){
   let drag = null, dragEnd = 0;
   const dropAt = (x, y) => {
     const el = document.elementFromPoint(x, y); if (!el || !root.contains(el)) return null;
-    return el.closest('[data-cu]') || el.closest('.st-tray') || el.closest('[data-sh]') || null;
+    return el.closest('[data-cu]') || el.closest('.st-tray') || (el.closest('.st-counter.k') && $s('.st-tray')) || el.closest('[data-sh]') || null;
   };
   root.addEventListener('pointerdown', e => {
     if (over || call) return;
@@ -8000,7 +8020,7 @@ function storRun(team){
         else if (cu || toTray) msg('Peralatan sukan diberi terus kepada pelanggan di Kaunter Stor.', '#FDE68A', 1600);
       } else if (cu || toTray){                        // makanan: masuk dulang dahulu
         if (cu && cu[0] === 's') msg('Makanan untuk pelanggan Kedai Sihat.', '#FDE68A', 1300);
-        else { takeItem(d.id); if (cu) msg('Masuk dulang — cukupkan kalori, kemudian seret dulang kepada pelanggan.', '#FDE68A', 1800); }
+        else { takeItem(d.id); if (cu) msg('Diletak atas kaunter — cukupkan kalori, kemudian seret makanan di kaunter kepada pelanggan.', '#FDE68A', 1800); }
       }
     } else if (d.kind === 'tr' || d.kind === 'tray'){
       if (cu) serve(cu[0], +cu[1]); else if (toShelf && d.kind === 'tr') trayBack(+d.id);
