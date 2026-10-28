@@ -5589,8 +5589,9 @@ function liveOpen(v){
     meta(n){
       M = n; el.classList.toggle('fit', !!n.fit); layout(); label();
       clearTimeout(dead);
-      if (n.end){ txt('TAMAT'); clearTimeout(fin); fin = setTimeout(V.close, 30000); return; }
-      dead = setTimeout(() => { txt('SAMBUNGAN TERPUTUS…'); fin = setTimeout(V.close, 30000); }, 15000);
+      // hos menutup game → tayangan di projektor ditutup sama (keputusan akhir dipapar selagi hos masih di skrin keputusan)
+      if (n.end){ txt('TAMAT'); clearTimeout(fin); fin = setTimeout(V.close, 1200); return; }
+      dead = setTimeout(() => { txt('SAMBUNGAN TERPUTUS…'); fin = setTimeout(V.close, 6000); }, 15000);
     },
     close(){
       if (closed) return; closed = true;
@@ -10400,7 +10401,8 @@ function isInstalled(){
   const hs = new URLSearchParams(location.search).get('src') === 'hs';
   if (hs) try { sessionStorage.setItem('rk_hs','1'); } catch(e){}
   let flag = false; try { flag = sessionStorage.getItem('rk_hs') === '1'; } catch(e){}
-  return hs || flag
+  let pc = false; try { pc = localStorage.getItem('rk_pc') === '1'; } catch(e){}   // dibuka di komputer (butang PC) — diingat pada pelayar ini
+  return hs || flag || pc
     || ['standalone','fullscreen','minimal-ui'].some(m => window.matchMedia('(display-mode: '+m+')').matches)
     || window.navigator.standalone === true;
 }
@@ -10421,6 +10423,11 @@ function installGate(){
     step(1,'fa-arrow-up-from-bracket','Buka dalam <b>Safari</b>, tekan butang <b>Kongsi</b> di bar bawah') +
     step(2,'fa-square-plus','Pilih <b>Tambah ke Skrin Utama</b> (Add to Home Screen)') +
     step(3,'fa-check','Tekan <b>Tambah</b>, kemudian buka <b>EduRank</b> dari skrin utama');
+  const desk = !window.matchMedia('(pointer:coarse)').matches;          // tetikus = komputer / laptop
+  const pcBox = '<div class="lbl text-left mb-2">KOMPUTER / LAPTOP</div>' +
+    '<button id="gatePC" class="btn btn-o clip-s w-full !py-3 text-[15px]"><i class="fa-solid fa-desktop"></i> BUKA DI KOMPUTER</button>' +
+    '<button id="gateInst" class="btn clip-s w-full !py-2 mt-2 text-[13px]" style="display:none"><i class="fa-solid fa-download text-cyan"></i> Pasang sebagai aplikasi komputer</button>' +
+    '<div class="text-[11px] text-muted mt-2 text-left leading-snug">Data disimpan dalam pelayar komputer ini. Untuk data yang sama dengan telefon, hidupkan <b>Penyegerakan Firebase</b> di Tetapan.</div>';
   document.body.insertAdjacentHTML('beforeend',
     '<div id="gate" style="position:fixed;inset:0;z-index:1000;overflow-y:auto;display:flex;align-items:center;justify-content:center;' +
       'padding:calc(24px + var(--safe-t)) 20px calc(24px + var(--safe-b));background:radial-gradient(circle at 50% 25%,rgba(255,107,0,.14),transparent 60%),#0C1118">' +
@@ -10428,11 +10435,18 @@ function installGate(){
         '<img src="'+APP_ICON+'" alt="EduRank" class="mx-auto" style="width:100px;height:100px;object-fit:contain;border-radius:24px;box-shadow:0 0 36px rgba(255,107,0,.35)" onerror="this.style.visibility=\'hidden\'">' +
         '<div class="font-bold tracking-[.25em] text-[28px] glow-o mt-4">EDURANK</div>' +
         '<div class="text-[13px] text-muted mt-2 mb-5">Pasang EduRank ke skrin utama untuk mula menggunakan.</div>' +
-        '<div class="lbl text-left mb-2">'+(ios ? 'IPHONE / IPAD' : 'ANDROID')+'</div>' +
+        (desk ? pcBox + '<div class="lbl text-left mb-2 mt-5">TELEFON / TABLET</div>' : '<div class="lbl text-left mb-2">'+(ios ? 'IPHONE / IPAD' : 'ANDROID')+'</div>') +
         (ios ? iphone : android) +
         '<details class="mt-3 text-left"><summary class="text-[11px] text-muted">Arahan untuk '+(ios ? 'Android' : 'iPhone / iPad')+'</summary><div class="mt-2">'+(ios ? android : iphone)+'</div></details>' +
+        (desk ? '' : '<div class="mt-5">' + pcBox + '</div>') +
         '<div class="text-[10px] text-muted mt-8 tracking-widest">DICIPTA OLEH ARIF AZIZ</div>' +
       '</div></div>');
+  $('#gatePC').onclick = () => { try { localStorage.setItem('rk_pc', '1'); } catch(e){} location.reload(); };
+  // Chrome / Edge komputer boleh pasang EduRank sebagai aplikasi (ikon di desktop)
+  const showInst = ev => { const b = $('#gateInst'); if (!b) return; b.style.display = '';
+    b.onclick = async () => { ev.prompt(); const r = await ev.userChoice.catch(() => null); if (r && r.outcome === 'accepted') toast('EduRank dipasang — buka dari ikon di desktop.'); }; };
+  if (window.__bip) showInst(window.__bip);
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); window.__bip = ev; showInst(ev); });
 }
 
 /* ============ INIT ============ */
