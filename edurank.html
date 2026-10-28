@@ -5788,7 +5788,7 @@ const GAME_LOBBY = {
       p(1);
     },
     starts: [['🏪 BUKA KEDAI', () => storStart()]],
-    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Jus Blend Sihat:</b> lihat bahan dalam gelembung pelanggan, seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
+    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Jus Blend Sihat:</b> gelembung pelanggan menunjukkan jus yang dipesan — <b>ketik pelanggan</b> untuk lihat resipinya, kemudian seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
   }
 };
 
@@ -7651,6 +7651,11 @@ const ST_CSS = `
 .st-bub .it.jus{align-items:center;flex-wrap:wrap;max-width:15cqw}
 .st-bub .it.jus>span{width:2.6cqw;height:2.6cqw;font-size:1.8cqw}
 .st-bub .it.jus>span.gl{width:3.8cqw;height:3.8cqw;font-size:2.8cqw;background:#FEF3C7}
+.st-bub .jr{display:flex;align-items:center;gap:.5cqw}
+.st-bub .jr .gl{flex:none;width:3.6cqw;height:3.6cqw;display:flex;align-items:center;justify-content:center;font-size:2.6cqw;border-radius:.6cqw;background:#FEF3C7}
+.st-bub .jr .gl img{width:100%;height:100%;object-fit:contain}
+.st-bub .jr .tx{margin-top:0;text-align:left;max-width:12cqw;font-size:.95cqw}
+.st-shelf .nm{margin-top:.5cqw}
 `;
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
@@ -7757,8 +7762,7 @@ function storRun(team){
       if (!c || c.arriving) return '';
       const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o, r = o.jus && jusOf(o.jus);
       const body = r
-        ? '<div class="tx big">"' + esc(o.tx) + '"</div><div class="it jus"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span>' +
-          r.ings.map(id => '<span class="' + (bl.ings.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div>'
+        ? '<div class="jr"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span><div class="tx big">"' + esc(o.tx) + '"</div></div>'   // satu gambar jus sahaja; resipi bila pelanggan diketik
         : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
       return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
@@ -8094,7 +8098,9 @@ function storRun(team){
     if (t.closest('[data-bl]')) return msg(bl.r ? 'Seret blender kepada pelanggan yang memesan jus ini' : 'Seret bahan dari Rak Bahan Jus ke dalam blender', '#FDE68A', 1300);
     if (t.closest('[data-bin]')) return msg(bin ? 'Seret tong sampah ke pintu untuk dibuang' : 'Seret barang yang salah ke sini', '#FDE68A', 1200);
     const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan kepada pelanggan, ke rak (pulang) atau ke tong sampah', '#FDE68A', 1300);
-    const cu = t.closest('[data-cu]'); if (cu) return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan atau blender jus kepada pelanggan ini', '#FDE68A', 1200);
+    const cu = t.closest('[data-cu]'); if (cu){ const c = cust[cu.dataset.cu[0]][+cu.dataset.cu[1]], r = c && c.o.jus && jusOf(c.o.jus);
+      if (r) return msg('📖 ' + esc(r.n) + ' = ' + r.ings.map(id => esc(ST_IT[id].n)).join(' + '), '#FDE68A', 3200);   // ketik pelanggan jus = lihat resipi
+      return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan kepada pelanggan ini', '#FDE68A', 1200); }
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
     if (t.closest('[data-door]')) return msg(sup && sup.here ? 'Ketik pembekal untuk terima stok' : 'Tiada penghantaran sekarang.', '#94A3B8', 900);
