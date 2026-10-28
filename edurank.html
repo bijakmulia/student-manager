@@ -7221,7 +7221,7 @@ const ST_AR = {
 };
 const stA = (id, g, ar, p) => ({ id, g, ar, sz: ST_AR[ar][0], p: p + ' ' + ST_AR[ar][1] });
 const ST_ASSETS = [].concat(
-  [stA('bg_lantai', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile simulation game: an EMPTY room interior, camera facing the back wall straight-on and slightly from above, perfectly symmetric. The back wall fills the TOP 40% of the image and the tiled floor fills the BOTTOM 60%. Left half of the wall: light blue (school sports equipment store); right half: mint green and cream (healthy food cafe). One wide doorway exactly in the centre of the back wall. Small windows high on the wall, soft daylight, clean light floor tiles. NO furniture, NO shelves, NO counters, NO people, NO text.'),
+  [stA('bg_lantai', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Background for a mobile simulation game: an EMPTY cozy shop interior, camera facing the back wall straight-on and slightly from above, perfectly symmetric. The back wall fills the TOP HALF of the image and the floor fills the BOTTOM HALF, with a wooden skirting board along the line where they meet. Left half of the wall: soft light blue with subtle wainscoting (school sports equipment store); right half: mint green and cream with a few hanging plants (healthy food cafe). Small windows high on the wall with warm afternoon sunlight. The floor is warm honey-coloured wooden planks running left to right, with soft sunlight patches and a large plain cosy woven rug in the lower centre. Warm, inviting, cosy lighting. NO doorway, NO furniture, NO shelves, NO counters, NO people, NO text.'),
    stA('bg_menu', 'Latar', 'bg', ST_STYLE.replace('mobile game asset, ', '') + '. Title screen illustration: a cheerful Malaysian school sports store and healthy cafe, shelves full of balls and rackets on the left, fruits and drinks on the right, chibi athletes waving, sunny day. Keep the important details in the middle; leave empty space at the top centre for a logo. No text.')],
   /* rak = LAPISAN BAWAH yang KOSONG; barang dilukis oleh game di atas papan rak (paras tetap ST_BOARD)
      supaya rak kosong/penuh mengikut stok. Rak memenuhi seluruh gambar (dipaparkan penuh kotak). */
@@ -7234,12 +7234,20 @@ const ST_ASSETS = [].concat(
    ['rak_bijirin','an empty tall cream-coloured cafe pantry shelf'],
    ['rak_snek','an empty tall red snack rack with a small yellow caution sign on the header']
   ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. ' + d[0].toUpperCase() + d.slice(1) + '. It has exactly 4 shelf boards; the TOP SURFACES of the boards are at about 27%, 49%, 71% and 93% of the image height, and the area above the first board is a plain header panel. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. ' + ST_MAG + ' No text, no people.')),
-  [stA('pintu_stor', 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. A tall closed double loading-bay door of a store room, grey metal with a small window. The door fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no people.')],
-  [['dapur','a small cafe stove with a pot and a grill pan'],
-   ['blender','a kitchen blender on a small counter'],
-   ['meja_telefon','a small round wooden side table about knee height with a red old-style rotary telephone and a small notepad on top'],
-   ['dulang','an empty plastic service tray seen from above']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'sqL', ST_STYLE + ', slight 3/4 top-down view. ' + d[0].toUpperCase() + d.slice(1) + '. Single object centred and filling most of the image. ' + ST_MAG + ' No text, no people.')),
+  /* PASANGAN GAMBAR (logik GANTI, bukan lapisan): setiap pasangan mesti sama saiz, sudut & kedudukan supaya
+     pertukaran gambar nampak lancar. Jana gambar PERTAMA, kemudian lampirkan gambar itu dan guna prompt "EDIT". */
+  [stA('pintu_stor', 'Pintu & Telefon (pasangan)', 'tall', ST_STYLE + ', straight front view. A tall CLOSED double door of a shop back room: grey metal door panels with small square windows, inside a thick dark wooden door frame. The door frame fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no people.'),
+   stA('pintu_buka', 'Pintu & Telefon (pasangan)', 'tall', 'EDIT the attached closed-door image (attach pintu_stor.png): keep EXACTLY the same door frame, same size, same position, same camera and same art style. Only change: both door panels are now swung fully OPEN outward against the sides of the frame, and the doorway shows a bright sunny outdoor school compound path with soft daylight (opaque, not magenta). ' + ST_MAG + ' No text, no people.'),
+   stA('meja_telefon', 'Pintu & Telefon (pasangan)', 'sqL', ST_STYLE + ', straight front view with a slight top-down angle. A small square wooden side table about knee height, with a red old-style rotary telephone (handset resting on the cradle) and a small notepad on top. The table is centred, its legs touching the bottom edge, and the whole object fills about 80% of the image width. ' + ST_MAG + ' No text, no people.'),
+   stA('meja_telefon_dering', 'Pintu & Telefon (pasangan)', 'sqL', 'EDIT the attached image (attach meja_telefon.png): keep EXACTLY the same table, same telephone, same size, same position, same camera and same art style. Only change: the telephone is RINGING — the handset is lifted a few millimetres above the cradle and tilted slightly, with small curved yellow vibration lines on both sides of the phone. Nothing else moves. ' + ST_MAG + ' No text, no people.')],
+  /* DAPUR (2 dapur berasingan) & BLENDER: gambar kosong + satu gambar penuh bagi setiap makanan (GANTI, bukan lapisan) */
+  [stA('dapur_kosong', 'Dapur & Blender (ganti gambar)', 'sqL', ST_STYLE + ', straight front view with a slight top-down angle. A compact single-burner cafe stove sitting on a small steel cabinet, with ONE wide black frying pan on the burner. The pan is EMPTY and the flame is OFF. The stove is centred, the cabinet touching the bottom edge, filling about 85% of the image width. ' + ST_MAG + ' No text, no people.')],
+  ST_ITEMS.filter(x => x.prep && x.prep[0] === 'dapur').map(x => stA('dapur_' + x.id, 'Dapur & Blender (ganti gambar)', 'sqL', 'EDIT the attached empty-stove image (attach dapur_kosong.png): keep EXACTLY the same stove, cabinet, pan, size, position, camera and art style. Only change: the blue flame is ON and the pan now contains ' + x.d + ', cooking, with soft white steam rising and a few small sizzle sparkles. ' + ST_MAG + ' No text, no people.')),
+  [stA('dapur_hangus', 'Dapur & Blender (ganti gambar)', 'sqL', 'EDIT the attached empty-stove image (attach dapur_kosong.png): keep EXACTLY the same stove, cabinet, pan, size, position, camera and art style. Only change: the pan contains black BURNT food with dark grey smoke rising and a small orange flame flaring from the pan. ' + ST_MAG + ' No text, no people.'),
+   stA('blender_kosong', 'Dapur & Blender (ganti gambar)', 'sqL', ST_STYLE + ', straight front view with a slight top-down angle. A kitchen blender with a tall clear jug and lid on a small wooden counter block. The jug is EMPTY. Centred, the counter block touching the bottom edge, filling about 70% of the image width. ' + ST_MAG + ' No text, no people.')],
+  ST_ITEMS.filter(x => x.prep && x.prep[0] === 'blender').map(x => stA('blender_' + x.id, 'Dapur & Blender (ganti gambar)', 'sqL', 'EDIT the attached empty-blender image (attach blender_kosong.png): keep EXACTLY the same blender, jug, counter block, size, position, camera and art style. Only change: the jug is filled with ' + (x.id === 'jus_oren' ? 'bright orange juice with orange pieces' : 'a creamy pale-yellow banana milk smoothie') + ' swirling as it blends, with small motion lines around the jug. ' + ST_MAG + ' No text, no people.')),
+  /* DULANG: rata dari atas (bukan senget) — 6 petak 3×2 di kedudukan tetap; game meletakkan makanan tepat dalam petak */
+  [stA('dulang_rata', 'Perabot & Stesen', 'wide', ST_STYLE + '. PERFECTLY TOP-DOWN orthographic view, camera looking straight down — NOT tilted, NOT in perspective. An empty rectangular light-green plastic food tray with exactly 6 equal square compartments arranged in 3 columns and 2 rows, separated by thin raised dividers; the outer rim is about 6% of the tray width. The tray is perfectly straight and fills the ENTIRE image edge to edge. ' + ST_MAG + ' No text, no food.')],
   /* kaunter: satu bahagian modular, diulang mendatar oleh game */
   [['kaunter_stor','a sports store service counter, blue front panel with a light wooden top'],
    ['kaunter_kafe','a cafe service counter, green front panel with a cream top']
@@ -7474,6 +7482,62 @@ const ST_CSS = `
 .st-cu.st-hot{outline:none}.st-cu.st-hot .who{filter:drop-shadow(0 0 1cqw #FACC15)}
 .bb img,.st-hud .pill img{width:1.6cqw;height:1.6cqw;object-fit:contain;vertical-align:middle}
 .st-tray.img{background:center/contain no-repeat var(--tray),rgba(15,23,42,.6)}
+/* ---- susun atur v2: rak tinggi, penjual di belakang kaunter, lantai kayu ---- */
+.st-stage{background:linear-gradient(180deg,#9CC9EE 0 8%,#BFE0F7 8% 50%,#C9915A 50%),#C9915A}
+.st-wallk{top:8%;height:42%}
+.st-floor{top:50%;background:
+  linear-gradient(180deg,#7A4A22 0 1.1%,#A8703F 1.1% 2%,transparent 2%),
+  radial-gradient(ellipse 34% 30% at 50% 82%,rgba(255,226,170,.35),transparent 70%),
+  repeating-linear-gradient(90deg,transparent 0 13.3cqw,rgba(70,38,12,.28) 13.3cqw 13.5cqw),
+  repeating-linear-gradient(180deg,#D9A266 0 4.6cqh,#CF9659 4.6cqh 9.2cqh,#D59D60 9.2cqh 13.8cqh),
+  #D59D60}
+.st-zl{top:51%}
+.st-shelf{top:9.5%;height:40%}
+.st-si{height:21%;cursor:grab;touch-action:none;pointer-events:auto}
+.st-si i{font-size:2.6cqw}
+.st-shelf[data-z="k"] .st-si i{font-size:2.3cqw}
+.st-si .c{position:absolute;right:-4%;top:-6%;z-index:3;min-width:1.5cqw;height:1.5cqw;padding:0 .3cqw;border-radius:99px;background:#DC2626;color:#fff;font-size:.95cqw;font-weight:900;font-style:normal;display:flex;align-items:center;justify-content:center;box-shadow:0 .1cqw .3cqw rgba(0,0,0,.4)}
+.st-si .c.lo{background:#DC2626}
+.st-si.out{opacity:.22;filter:grayscale(1);pointer-events:none}
+.st-si.lift{z-index:6;transform:translateX(-50%) scale(1.35);filter:drop-shadow(0 .6cqw .6cqw rgba(0,0,0,.45))}
+.st-si .pr{position:absolute;left:-4%;top:-6%;z-index:3;font-size:1.1cqw;line-height:1}
+.st-lv{pointer-events:none}
+.st-shelf{cursor:default}.st-shelf:active{transform:none}
+.st-tag{z-index:38;pointer-events:none;transform:translate(-50%,-100%);background:#0F172A;color:#fff;border:.15cqw solid #38BDF8;border-radius:99px;padding:.25cqw .9cqw;font-size:1.15cqw;font-weight:800;white-space:nowrap}
+.st-tag b{color:#7DD3FC;margin-left:.4cqw}
+.st-stn{left:90.5%;width:7.5%;height:12.6%;cursor:pointer;overflow:visible}
+.st-stn>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.st-stn .nm{bottom:auto;top:-.9cqw;font-size:.85cqw}
+.st-stn.has-img{background:none;border:0}
+.st-stn.ready{box-shadow:0 0 0 .3cqw #4ADE80,0 0 1.4cqw #4ADE80;animation:stPulse .8s infinite}
+.st-stn.burn{box-shadow:0 0 0 .3cqw #EF4444}
+.st-stn .st-slot{position:absolute;right:-.6cqw;bottom:-.6cqw;width:3.2cqw;height:3.2cqw}
+.st-stn.has-food .st-slot{width:2.4cqw;height:2.4cqw;font-size:1.3cqw}
+.st-door{left:45%;width:10%;top:25.5%;height:24%;overflow:hidden}
+.st-door>img{transition:opacity .15s}
+.st-door .op{opacity:0}
+.st-door.open .op{opacity:1}.st-door.open .cl{opacity:0}
+.st-door.open:not(.img2){background:linear-gradient(180deg,#FDE68A,#BBF7D0 60%,#86EFAC);box-shadow:inset 1.6cqw 0 0 #475569,inset -1.6cqw 0 0 #475569}
+.st-phone{left:43.4%;width:6.6%;top:44%;height:13%;background:none;z-index:2;align-items:flex-end}
+.st-phone>img{inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.st-phone .rg{opacity:0}
+.st-phone.alt .rg{opacity:1}.st-phone.alt .id{opacity:0}
+.st-phone .bb{top:-2.2cqw}
+.st-phone:not(:has(img)){background:linear-gradient(180deg,#A16207,#713F12);height:6%;top:51%;border-radius:.5cqw;align-items:center}
+.st-counter{top:58%;height:10%}
+.st-me{width:9%;height:24%;top:40%;z-index:2}
+.st-cu{top:68%;height:30%}
+.st-walk{z-index:4;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;font-size:6cqw;line-height:1;
+  transition:left .7s ease-in-out,top .7s ease-in-out,width .7s ease-in-out,height .7s ease-in-out,opacity .3s}
+.st-walk img{width:100%;height:100%;object-fit:contain;object-position:bottom}
+.st-walk.step{animation:stBob .3s infinite}
+.st-sup{left:45.5%;width:9%;top:27%;height:22.5%;z-index:3}
+.st-tray{left:42.5%;width:15%;top:70%;height:29%;padding:0}
+.st-tray .pl{position:relative;width:100%;aspect-ratio:3/2;margin-top:.4cqw;border-radius:1cqw;background:linear-gradient(180deg,#B9DC8F,#9CCB6B);border:.25cqw solid #7FB04F;box-shadow:0 .5cqw 1cqw rgba(0,0,0,.25)}
+.st-tray .pl:not(.img) .g>div{background:#EEF7E2!important;border-radius:.6cqw;box-shadow:inset 0 .25cqw .4cqw rgba(60,100,30,.35)}
+.st-tray .pl.img{background:var(--tray) center/100% 100% no-repeat;border:0;box-shadow:none;filter:drop-shadow(0 .5cqw .6cqw rgba(0,0,0,.3))}
+.st-tray .g{position:absolute;left:6%;right:6%;top:9%;bottom:9%;margin:0;padding:0!important;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:4%;border:0!important;background:none!important;z-index:1}
+.st-tray .g>div{padding:8%!important}
 `;
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
@@ -7491,7 +7555,7 @@ function storRun(team){
   const shelfSlots = id => {                           // barang rak ini disusun ke 4 paras
     const its = ST_ITEMS.filter(i => i.sh === id), lvOf = j => Math.floor(j * 4 / its.length);
     return its.map((it, j) => { const lv = lvOf(j), row = its.filter((_, q) => lvOf(q) === lv), k = row.indexOf(it);
-      return { it, lv, x: 8 + 84 * (k + .5) / row.length, w: Math.min(30, 84 / row.length * 1.1) }; });
+      return { it, lv, x: 7 + 86 * (k + .5) / row.length, w: Math.min(46, 86 / row.length * 1.22) }; });   // satu ikon sejenis, besar & sedikit bertindih
   };
   const shelfHtml = ([id, nm, z, x]) => {
     const img = 'rak_' + id;
@@ -7499,21 +7563,20 @@ function storRun(team){
       (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : ' k') : '') + '"></div>') +
       '<div class="st-lv" id="stL_' + id + '"></div><div class="nm">' + nm + '</div></div>';
   };
+  const STN_LIST = [['dapur', 0, 'DAPUR 1'], ['dapur', 1, 'DAPUR 2'], ['blender', 0, 'BLENDER']];   // 2 dapur berasingan + blender
   root.innerHTML = '<div class="st-stage" id="stStage">' +
     (ST_HAVE.has('bg_lantai') ? stImg('bg_lantai', '', 'st-bg') : '<div class="st-wallk"></div><div class="st-floor"></div>') +
-    '<div class="st-zl" style="left:2%;top:42%">🏬 STOR SUKAN</div><div class="st-zl" style="left:86%;top:42%">🥗 KEDAI SIHAT</div>' +
+    '<div class="st-zl" style="left:2%">🏬 STOR SUKAN</div><div class="st-zl" style="left:86%">🥗 KEDAI SIHAT</div>' +
     ST_SHELVES.map(shelfHtml).join('') +
-    '<div class="st-stn" style="top:10%" data-stn="dapur">' + (ST_HAVE.has('dapur') ? stImg('dapur', '') : '') + '<div class="nm">DAPUR</div><div id="stS_dapur" style="display:flex;gap:.4cqw;position:relative;z-index:2"></div></div>' +
-    '<div class="st-stn" style="top:26%" data-stn="blender">' + (ST_HAVE.has('blender') ? stImg('blender', '') : '') + '<div class="nm">BLENDER</div><div id="stS_blender" style="display:flex;gap:.4cqw;position:relative;z-index:2"></div></div>' +
-    '<div class="st-door" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '') : '') + '</div>' +
-    '<div class="st-zl" style="left:46%;top:39.5%;font-size:.9cqw">PINTU STOK</div>' +
+    STN_LIST.map(([k, i, nm], j) => '<div class="st-stn" style="top:' + (9.5 + j * 13.6) + '%" data-ss="' + k + i + '" id="stN_' + k + i + '"><img class="sb" alt="" draggable="false" style="display:none"><div class="nm">' + nm + '</div><div class="st-slot" id="stS_' + k + i + '"></div></div>').join('') +
+    '<div class="st-door' + (ST_HAVE.has('pintu_buka') ? ' img2' : '') + '" id="stDoor" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '', 'cl') : '') + (ST_HAVE.has('pintu_buka') ? stImg('pintu_buka', '', 'op') : '') + '</div>' +
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
-    '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('meja_telefon') ? stImg('meja_telefon', '') : '☎️') + '</div>' +
+    '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('meja_telefon') ? stImg('meja_telefon', '', 'id') + (ST_HAVE.has('meja_telefon_dering') ? stImg('meja_telefon_dering', '', 'rg') : '') : '☎️') + '</div>' +
     '<div class="st-counter s' + (ST_HAVE.has('kaunter_stor') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_stor') + ')' : '') + '">' + '<div class="nm">KAUNTER STOR</div></div>' +
     '<div class="st-counter k' + (ST_HAVE.has('kaunter_kafe') ? ' tile" style="background-image:url(' + ST_HAVE.get('kaunter_kafe') + ')' : '') + '">' + '<div class="nm">KAUNTER KEDAI SIHAT</div></div>' +
     '<div id="stCust"></div>' +
-    '<div class="st-tray' + (ST_HAVE.has('dulang') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang') + ')' : '') + '"><div class="t">DULANG</div><div class="g" id="stTray"></div><div class="k" id="stTrayK">kosong</div></div>' +
+    '<div class="st-tray"><div class="t">DULANG</div><div class="pl' + (ST_HAVE.has('dulang_rata') ? ' img" style="--tray:url(' + ST_HAVE.get('dulang_rata') + ')' : '') + '"><div class="g" id="stTray"></div></div><div class="k" id="stTrayK">kosong</div></div>' +
     '<div class="st-hud" id="stHud"></div>' +
     '<div class="st-msg" id="stMsg"></div>' +
     '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
@@ -7559,13 +7622,13 @@ function storRun(team){
   const shake = (z, i) => { const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); } };
   function custHtml(){
     return ['s', 'k'].map(z => cust[z].map((c, i) => {
-      if (!c) return '';
+      if (!c || c.arriving) return '';
       const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o;
       const body = z === 's'
         ? '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx">' + esc(o.tx) + '</div>'
         : '<div class="tx big">"' + esc(o.tx) + (o.alg ? ' Oh ya, saya alergik ' + ST_ALG[o.alg].n + '.' : '') + '"</div>' +
           '<div class="kc">🎯 ' + o.target + ' kcal' + (o.alg ? ' <span class="al">' + ST_ALG[o.alg].ic + '✕</span>' : '') + '</div>';
-      return '<div class="st-cu' + (c.fresh ? ' in' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
+      return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
         '<div class="who">' + stImg(o.who.img, o.who.e) + '</div><div class="nm2">' + esc(o.who.n) + '</div></div>';
     }).join('')).join('');
@@ -7581,18 +7644,19 @@ function storRun(team){
   const paintShelves = () => ST_SHELVES.forEach(([id]) => {
     const el = $s('[data-sh="' + id + '"]'); if (!el) return;
     el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && i.tg !== 'x' && stock[i.id] <= 1));
+    // satu ikon bagi setiap jenis barang (bukan timbunan salinan) + lencana stok; seret terus dari rak
     $s('#stL_' + id).innerHTML = shelfSlots(id).map(({ it, lv, x, w }) => {
-      const n = Math.min(3, stock[it.id]), pop = n > (shown[it.id] == null ? n : shown[it.id]);
+      const n = stock[it.id], pop = n > (shown[it.id] == null ? n : shown[it.id]);
       shown[it.id] = n;
-      if (!n) return '';
-      return '<span class="st-si' + (n === 1 ? ' lo' : '') + (pop ? ' pop' : '') + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
-        Array.from({ length: n }, (_, q) => '<i style="transform:translateX(' + ((q - (n - 1) / 2) * 28) + '%) scale(' + (q === (n - 1) / 2 || n === 1 ? 1 : .88) + ');z-index:' + (q === 1 ? 2 : 1) + '">' + icon(it.id) + '</i>').join('') + '</span>';
+      return '<span class="st-si' + (n ? '' : ' out') + (pop ? ' pop' : '') + '" data-it="' + it.id + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
+        '<i>' + icon(it.id) + '</i>' + (it.prep ? '<b class="pr">' + (it.prep[0] === 'dapur' ? '🍳' : '🌀') + '</b>' : '') +
+        (n && n <= 2 ? '<b class="c">' + n + '</b>' : '') + '</span>';                // lencana hanya bila stok hampir habis
     }).join('');
   });
   /* barang terbang dari rak ke dulang / stesen (kedudukan dalam % pentas — sama di tablet projektor) */
   const shelfPos = id => {
     const it = ST_IT[id], sh = ST_SHELVES.find(x => x[0] === it.sh), sl = shelfSlots(it.sh).find(x => x.it.id === id);
-    return [sh[3] + shelfW(sh[2]) * sl.x / 100, 10 + 29 * ST_BOARD[sl.lv] / 100 - 3];
+    return [sh[3] + shelfW(sh[2]) * sl.x / 100, 9.5 + 40 * ST_BOARD[sl.lv] / 100 - 4];
   };
   const flyTo = (id, from, to) => {
     const n = document.createElement('div'); n.className = 'st-flyit'; n.innerHTML = icon(id);
@@ -7600,29 +7664,61 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [50, 84], STN_AT = { dapur: [94.25, 17], blender: [94.25, 33] };
+  const TRAY_AT = [50, 84], STN_AT = { dapur0: [94.25, 16], dapur1: [94.25, 29.5], blender0: [94.25, 43] };
+  /* Stesen: logik GANTI gambar — dapur_<makanan> / dapur_hangus / blender_<minuman> menggantikan gambar stesen kosong.
+     Tiada gambar khas = gambar kosong + ikon makanan dalam bulatan. */
+  const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
   function paintStn(){
-    Object.keys(stn).forEach(k => {
-      $s('#stS_' + k).innerHTML = stn[k].map((x, i) => {
-        if (!x) return '<div class="st-slot" data-ss="' + k + i + '"></div>';
-        const p = Math.min(1, x.t / x.need), rd = x.t >= x.need, burn = k === 'dapur' && x.t >= x.need + 14;
-        return '<div class="st-slot' + (burn ? ' burn' : rd ? ' ready' : '') + '" data-ss="' + k + i + '">' + (burn ? '<span class="st-emo">🔥</span>' : icon(x.id)) +
-          (rd ? '' : '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#FACC15" stroke-width="3" stroke-dasharray="' + (p * 100.5) + ' 100.5"/></svg>') + '</div>';
-      }).join('');
+    STN_LIST.forEach(([k, i]) => {
+      const box = $s('#stN_' + k + i), slot = $s('#stS_' + k + i), im = box.querySelector('.sb'), x = stn[k][i];
+      const p = x ? Math.min(1, x.t / x.need) : 0, rd = x && x.t >= x.need, burn = x && k === 'dapur' && x.t >= x.need + 14;
+      const src = !x ? stnBase(k) : burn ? ST_HAVE.get('dapur_hangus') || stnBase(k) : ST_HAVE.get(k + '_' + x.id) || stnBase(k);
+      const own = x && (burn ? ST_HAVE.has('dapur_hangus') : ST_HAVE.has(k + '_' + x.id));
+      if (src){ if (im.getAttribute('src') !== src) im.setAttribute('src', src); im.style.display = ''; } else im.style.display = 'none';
+      box.classList.toggle('has-img', !!src); box.classList.toggle('has-food', !!own);
+      box.classList.toggle('ready', !!rd && !burn); box.classList.toggle('burn', !!burn);
+      const key = x ? x.id + (burn ? 'b' : rd ? 'r' : Math.round(p * 20)) : '';
+      if (slot.dataset.k === key) return;
+      slot.dataset.k = key;
+      slot.className = 'st-slot' + (burn ? ' burn' : rd ? ' ready' : '');
+      slot.style.display = x ? '' : 'none';
+      slot.innerHTML = !x ? '' : (burn ? '<span class="st-emo">🔥</span>' : own ? (rd ? '✓' : '') : icon(x.id)) +
+        (rd ? '' : '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="none" stroke="#FACC15" stroke-width="3" stroke-dasharray="' + (p * 100.5) + ' 100.5"/></svg>');
     });
   }
 
   /* ---------- tindakan ---------- */
-  function openShelf(id){
-    const sh = ST_SHELVES.find(s => s[0] === id), its = ST_ITEMS.filter(i => i.sh === id), store = sh[2] === 's';
-    walk(sh[3] + 2); snd('ui_klik', 'flip');
-    $s('#stPop').innerHTML = '<div class="st-pop" data-pc="1"><div class="pn">' +
-      '<div class="hd">' + esc(sh[1]).toUpperCase() + '<span>' + (store ? 'Ketik / seret terus kepada pelanggan di Kaunter Stor' : 'Ketik / seret ke dulang · makanan 🍳🌀 perlu dimasak') + '</span></div>' +
-      '<div class="gr">' + its.map(i => '<button data-it="' + i.id + '"' + (stock[i.id] <= 0 ? ' disabled' : '') + '>' +
-        '<div class="ic">' + icon(i.id) + '</div><div class="n">' + esc(i.n) + '</div>' +
-        (store ? '' : '<div class="kc">' + (L.kcal ? i.kcal + ' kcal' : '? kcal') + ' ' + stAlgOf(i.id).map(k => ST_ALG[k].ic).join('') + '</div>') +
-        (i.prep ? '<span class="pr">' + (i.prep[0] === 'dapur' ? '🍳' : '🌀') + '</span>' : '') +
-        '<span class="q' + (stock[i.id] <= 1 ? ' lo' : '') + '">' + stock[i.id] + '</span></button>').join('') + '</div></div></div>';
+  /* barang diangkat dari rak: besar sedikit + label nama (& kalori) — ganti panel pilihan lama */
+  let lifted = null;
+  function liftOn(el){
+    liftOff();
+    const it = ST_IT[el.dataset.it]; if (!it || !stock[it.id]) return;
+    el.classList.add('lift'); lifted = el;
+    const p = shelfPos(it.id), tg = document.createElement('div');
+    tg.className = 'st-tag'; tg.id = 'stTag'; tg.style.left = p[0] + '%'; tg.style.top = (p[1] - 6) + '%';
+    tg.innerHTML = esc(it.n) + (it.z === 'k' ? '<b>' + (L.kcal ? ST_IT[it.id].kcal + ' kcal' : '? kcal') + '</b>' + stAlgOf(it.id).map(k => ST_ALG[k].ic).join('') : '') +
+      (it.prep ? ' ' + (it.prep[0] === 'dapur' ? '🍳' : '🌀') : '');
+    $s('#stStage').appendChild(tg);
+  }
+  function liftOff(){ if (lifted) lifted.classList.remove('lift'); lifted = null; const t = $s('#stTag'); if (t) t.remove(); }
+  /* Pelanggan masuk melalui PINTU: pintu dibuka (gambar pintu_buka), watak muncul kecil di ambang pintu (jauh),
+     turun melalui laluan antara dua kaunter ke hadapan, kemudian ke tempatnya. Kesabaran bermula bila sampai. */
+  let doorT = 0;
+  const door = (open, ms) => {
+    const d = $s('#stDoor'); clearTimeout(doorT);
+    d.classList.toggle('open', open || !!(sup && sup.here));
+    if (open && ms) doorT = setTimeout(() => d.classList.toggle('open', !!(sup && sup.here)), ms);
+  };
+  function walkIn(z, i, c){
+    const w = document.createElement('div'); w.className = 'st-walk step';
+    w.innerHTML = stImg(c.o.who.img, c.o.who.e);
+    const at = (x, y, wd, ht, zi) => { w.style.left = x + '%'; w.style.top = y + '%'; w.style.width = wd + '%'; w.style.height = ht + '%'; if (zi) w.style.zIndex = zi; };
+    w.style.transition = 'none'; w.style.opacity = 0; at(46.7, 31.5, 6.6, 18, 2);
+    $s('#stStage').appendChild(w); door(true, 1500);
+    void w.offsetWidth; w.style.transition = ''; w.style.opacity = 1;
+    setTimeout(() => at(44.5, 68, 11, 30, 5), 380);
+    setTimeout(() => at(SLOTX[z][i], 68, 11, 30), 1120);
+    setTimeout(() => { w.remove(); if (cust[z][i] === c){ c.arriving = false; paintCust(); } }, 1870);
   }
   /* skor & bayaran bila pelanggan selesai */
   function finishCust(z, i, pts, pay, note){
@@ -7647,7 +7743,6 @@ function storRun(team){
       good++;
       finishCust('s', i, 50 + Math.round(50 * frac), c.o.need.reduce((a, x) => a + ST_IT[x].p, 0) + Math.round(frac * 6), [frac > .6 ? 'Lengkap! 😄' : 'Terima kasih! 🙂', '#86EFAC']);
     } else paintCust();
-    if ($s('.st-pop')) openShelf(it.sh);
   }
   function takeItem(id){
     const it = ST_IT[id]; if (!it || stock[id] <= 0) return;
@@ -7655,20 +7750,20 @@ function storRun(team){
     if (it.prep){
       const slots = stn[it.prep[0]], k = slots.findIndex(x => !x);
       if (k < 0) return msg((it.prep[0] === 'dapur' ? 'Dapur' : 'Blender') + ' penuh!', '#FCA5A5');
-      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; snd(it.prep[0] === 'dapur' ? 'stor_masak' : 'stor_blender', 'flip'); flyTo(id, shelfPos(id), STN_AT[it.prep[0]]);
+      stock[id]--; slots[k] = { id, t: 0, need: it.prep[1] }; snd(it.prep[0] === 'dapur' ? 'stor_masak' : 'stor_blender', 'flip'); flyTo(id, shelfPos(id), STN_AT[it.prep[0] + k]);
       msg(it.prep[0] === 'dapur' ? '🍳 Sedang dimasak…' : '🌀 Sedang dikisar…', '#FDE68A', 900);
-      $s('#stPop').innerHTML = ''; walk(91); paintStn(); paintShelves(); return;
+      walk(86); paintStn(); paintShelves(); return;
     }
     if (tray.length >= TRAY_MAX) return msg('Dulang penuh! Seret makanan dari dulang ke rak untuk pulangkan.', '#FCA5A5', 1600);
     stock[id]--; tray.push({ id }); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), TRAY_AT);
-    openShelf(it.sh); paintTray(); paintShelves();
+    walk(clamp(shelfPos(id)[0] - 4, 2, 84)); paintTray(); paintShelves();
   }
   function takeStation(k, i){
     const x = stn[k][i]; if (!x) return;
     if (k === 'dapur' && x.t >= x.need + 14){ stn[k][i] = null; msg('Hangus! Dibuang 🔥', '#FCA5A5'); snd('stor_hangus', 'low'); return paintStn(); }
     if (x.t < x.need) return msg('Belum siap…', '#FDE68A', 700);
     if (tray.length >= TRAY_MAX) return msg('Dulang penuh!', '#FCA5A5');
-    stn[k][i] = null; tray.push({ id: x.id, cooked: true }); snd('stor_ambil', 'flip'); walk(91); paintStn(); paintTray();
+    stn[k][i] = null; tray.push({ id: x.id, cooked: true }); snd('stor_ambil', 'flip'); walk(86); flyTo(x.id, STN_AT[k + i], TRAY_AT); paintStn(); paintTray();
   }
   function trayBack(i){
     const x = tray[i]; if (!x) return;
@@ -7732,7 +7827,7 @@ function storRun(team){
     const add = sup.full ? 5 : 3;
     low.forEach(i => stock[i.id] += add);
     coins = Math.max(0, coins - (sup.full ? 20 : 10));
-    sup = null; $s('#stSup').innerHTML = ''; snd('stor_stok', 'myth'); paintShelves();
+    sup = null; door(false); $s('#stSup').innerHTML = ''; snd('stor_stok', 'myth'); paintShelves();
     msg('📦 ' + low.length + ' jenis barang ditambah +' + add + ' (bayaran RM' + (add === 5 ? 20 : 10) + ')', '#7DD3FC', 2200);
   }
 
@@ -7750,15 +7845,15 @@ function storRun(team){
       if (free.length){
         const [z, i] = pick(free), o = makeOrder(z), n = o.need ? o.need.length : Math.max(1, Math.round(o.target / 250));
         const max = SABAR * (1 + (n - 1) * .2);
-        cust[z][i] = { o, p: max, max, fresh: true };
-        snd('stor_loceng', 'flip'); paintCust();
+        const c = cust[z][i] = { o, p: max, max, arriving: true };
+        snd('stor_loceng', 'flip'); walkIn(z, i, c);
       }
       spawnT = L.spawn * (1 - Math.min(.35, T / DUR * .35)) * (.8 + Math.random() * .4);
     }
     // kesabaran
     let changed = false;
     ['s', 'k'].forEach(z => cust[z].forEach((c, i) => {
-      if (!c || c.leaving) return;
+      if (!c || c.leaving || c.arriving) return;
       c.p -= dt;
       if (c.p <= 0){
         c.leaving = true; left++; hearts--; changed = true; snd('stor_marah', 'low'); vibrate(60);
@@ -7776,11 +7871,12 @@ function storRun(team){
       if (T >= ring.until){ ring = null; $s('#stPhone').classList.remove('ring'); nextRing = T + 35 + Math.random() * 20; msg('📵 Panggilan pembekal terlepas…', '#FDE68A', 1600); }
     }
     const ph = $s('#stPhone'), bb = ph.querySelector('.bb');
+    ph.classList.toggle('alt', !!ring && !ph.classList.contains('alt'));     // telefon berdering: tukar gambar meja_telefon ↔ meja_telefon_dering
     if (ring && !bb) ph.insertAdjacentHTML('beforeend', '<div class="bb">' + stImg('ui_telefon', '📞') + ' ANGKAT!</div>'); else if (!ring && bb) bb.remove();
     // pembekal
     if (sup){
-      if (!sup.here && T >= sup.arrive){ sup.here = true; sup.until = T + sup.wait; snd('stor_lori', 'hi'); msg('🚚 Pembekal sampai di pintu stok!', '#7DD3FC', 1600); }
-      if (sup.here && T >= sup.until){ sup = null; nextRing = T + 30 + Math.random() * 20; msg('🚚 Pembekal pergi — stok tidak diterima', '#FDE68A', 1600); }
+      if (!sup.here && T >= sup.arrive){ sup.here = true; sup.until = T + sup.wait; door(true); snd('stor_lori', 'hi'); msg('🚚 Pembekal sampai di pintu stok!', '#7DD3FC', 1600); }
+      if (sup.here && T >= sup.until){ sup = null; door(false); nextRing = T + 30 + Math.random() * 20; msg('🚚 Pembekal pergi — stok tidak diterima', '#FDE68A', 1600); }
       else if (sup && sup.here) nextRing = T + 40;
     }
     $s('#stSup').innerHTML = supHtml();
@@ -7839,9 +7935,6 @@ function storRun(team){
     const an = t.closest('[data-ans]'); if (an){ callAnsText = call ? call.q.c[call.q.a] : ''; return callAnswer(+an.dataset.ans); }
     if (call) return;
     const it = t.closest('[data-it]'); if (it) return takeItem(it.dataset.it);
-    if (!t.closest('.st-pop') && $s('#stPop').innerHTML) $s('#stPop').innerHTML = '';   // ketik di luar panel rak = tutup panel, tindakan diteruskan
-    if (t.closest('.st-pop')) return;
-    const sh = t.closest('[data-sh]'); if (sh) return openShelf(sh.dataset.sh);
     const ss = t.closest('[data-ss]'); if (ss) return takeStation(ss.dataset.ss.slice(0, -1), +ss.dataset.ss.slice(-1));
     const tr = t.closest('[data-tr]'); if (tr) return trayBack(+tr.dataset.tr);
     const cu = t.closest('[data-cu]'); if (cu) return serve(cu.dataset.cu[0], +cu.dataset.cu[1]);
@@ -7857,7 +7950,8 @@ function storRun(team){
   };
   root.addEventListener('pointerdown', e => {
     if (over || call) return;
-    const src = e.target.closest('[data-it],[data-tr],.st-slot.ready,.st-tray'); if (!src) return;
+    const src = e.target.closest('[data-it],[data-tr],[data-ss].ready,.st-tray'); if (!src) return;
+    if (src.dataset.it) liftOn(src);
     drag = { src, x: e.clientX, y: e.clientY, on: false, hot: null,
       kind: src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.classList.contains('st-tray') ? 'tray' : 'ss',
       id: src.dataset.it || src.dataset.tr || src.dataset.ss };
@@ -7872,7 +7966,6 @@ function storRun(team){
       if (!itemId){ drag = null; return; }
       drag.g = document.createElement('div'); drag.g.className = 'st-ghost'; drag.g.innerHTML = icon(itemId);
       document.body.appendChild(drag.g);
-      if (drag.kind === 'it'){ const p = $s('#stPop'); p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }   // nampak atlet di bawah
       snd('stor_ambil', 'flip');
     }
     drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
@@ -7880,12 +7973,12 @@ function storRun(team){
     if (hot !== drag.hot){ if (drag.hot) drag.hot.classList.remove('st-hot'); drag.hot = hot; if (hot) hot.classList.add('st-hot'); }
   });
   const endDrag = e => {
+    liftOff();
     if (!drag) return;
     const d = drag; drag = null;
     if (!d.on) return;                                  // hanya ketik: biar pengendali klik biasa
     dragEnd = performance.now();
     d.g.remove(); if (d.hot) d.hot.classList.remove('st-hot');
-    const p = $s('#stPop'); p.style.visibility = ''; p.style.pointerEvents = '';
     const tgt = e.type === 'pointerup' ? d.hot : null;     // sasaran terakhir yang menyala (panel rak sudah dipapar semula)
     const cu = tgt && tgt.dataset.cu, toTray = tgt && tgt.classList.contains('st-tray'), toShelf = tgt && tgt.dataset.sh;
     if (d.kind === 'it'){

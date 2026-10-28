@@ -25,9 +25,9 @@ if (Test-Path $list) {
 
 function Get-MaxSize([string]$id) {
     if ($id -like 'bg_*') { return @(1600, 1000) }
-    if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -in @('pintu_stor', 'pembekal')) { return @(512, 768) }
+    if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -like 'pintu_*' -or $id -eq 'pembekal') { return @(512, 768) }
     if ($id -like 'kaunter_*') { return @(768, 512) }
-    if ($id -in @('dapur', 'blender', 'meja_telefon', 'dulang', 'logo_stor')) { return @(512, 512) }
+    if ($id -like 'dapur*' -or $id -like 'blender*' -or $id -like 'meja_telefon*' -or $id -like 'dulang*' -or $id -eq 'logo_stor') { return @(512, 512) }
     return @(256, 256)
 }
 
@@ -85,9 +85,11 @@ Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' 
         # by side) are cut tight; items and characters keep a 2% margin
         $bb = [BmKey]::Bounds($buf, $bmp.Width, $bmp.Height, 8)
         $bmp.UnlockBits($bd)
-        $tight = ($base -like 'rak_*' -or $base -like 'kaunter_*' -or $base -eq 'pintu_stor')
+        # picture pairs that swap in place (stove/blender states, ringing phone) keep their full canvas so they stay aligned
+        $tight = ($base -like 'rak_*' -or $base -like 'kaunter_*' -or $base -like 'pintu_*' -or $base -like 'dulang*')
+        $keepCanvas = ($base -like 'dapur*' -or $base -like 'blender*' -or $base -like 'meja_telefon*')
         $pad = if ($tight) { 0 } else { [int][Math]::Round([Math]::Max($bmp.Width, $bmp.Height) * 0.02) }
-        if ($bb) {
+        if ($bb -and -not $keepCanvas) {
             $x0 = [Math]::Max(0, $bb[0] - $pad); $y0 = [Math]::Max(0, $bb[1] - $pad)
             $x1 = [Math]::Min($bmp.Width - 1, $bb[2] + $pad); $y1 = [Math]::Min($bmp.Height - 1, $bb[3] + $pad)
             if ($x0 -gt 2 -or $y0 -gt 2 -or $x1 -lt $bmp.Width - 3 -or $y1 -lt $bmp.Height - 3) {
