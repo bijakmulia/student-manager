@@ -2,6 +2,7 @@
 <html lang="ms">
 <head>
 <meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0C1118">
 <title>EduRank</title>
@@ -5654,7 +5655,7 @@ const GAME_LOBBY = {
     opts: () => [
       lbSeg('lvl', 'KELAJUAN', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']], 'Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.'),
       lbSeg('qt', 'MASA MEMBACA SOALAN', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']], 'Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.')],
-    preload: async p => { p(.3); await import(ESC_THREE); p(1); },
+    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await knFetch(knPick(arenaUi().team)); } catch(e){} p(1); },
     starts: [['▶ MULA LARI', () => runStart()]],
     how: () => 'Seorang mengawal, ahli lain membantu memilih gerbang jawapan.<br><b>Telefon:</b> leret kiri/kanan tukar lorong, leret atas untuk lompat.<br><b>Komputer:</b> ← → atau A D, lompat ↑ / W / Space.<br>Skor ÷ 120 = RP (2 hingga 25 RP).'
   },
@@ -7987,6 +7988,21 @@ function runGame(THREE, sid, ac){
   [legL, legR].forEach(l => { const s = new THREE.Mesh(new THREE.BoxGeometry(.22, .12, .34), shoe); s.position.set(0, -.82, -.06); l.add(s); });
   runner.rotation.y = Math.PI;                                       // membelakangkan kamera, lari ke -z
   scene.add(runner);
+  // Watak beranimasi menggantikan model kotak bila fail GLB berjaya dimuat (kotak kekal sebagai sandaran)
+  let mixer = null, ACT = {}, actNow = null;
+  const play = (n, fade = .15) => { const a = ACT[n]; if (!a || actNow === a) return; a.reset().fadeIn(fade).play(); if (actNow) actNow.fadeOut(fade); actNow = a; };
+  knModel(knPick(sid)).then(gl => {
+    if (!alive) return;
+    const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1;
+    const k = 1.8 / h; m.scale.setScalar(k); m.position.y = -box.min.y * k;
+    m.traverse(o => { if (o.isMesh){ o.frustumCulled = false; const mt = o.material; if (mt){ mt.roughness = .8; mt.emissiveMap = mt.map; mt.emissive = new THREE.Color(0x4a4a4a); mt.needsUpdate = true; } } });
+    runner.children.forEach(c => c.visible = false);
+    runner.add(m);
+    mixer = new THREE.AnimationMixer(m);
+    gl.animations.forEach(c => { ACT[c.name] = mixer.clipAction(c); });
+    ['jump', 'die', 'emote-yes'].forEach(n => { if (ACT[n]){ ACT[n].setLoop(THREE.LoopOnce); ACT[n].clampWhenFinished = true; } });
+    play(ended ? 'die' : 'sprint', 0);
+  }).catch(e => console.warn('watak 3D', e));
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(.45, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .3 }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = .02; scene.add(shadow);
 
@@ -8153,9 +8169,16 @@ function runGame(THREE, sid, ac){
     P.x += (LANES[P.lane] - P.x) * Math.min(1, dt * 14);
     P.vy -= 26 * dt; P.y = Math.max(0, P.y + P.vy * dt); if (P.y === 0) P.vy = Math.max(0, P.vy);
     P.phase += dt * (8 + speed * .35);
-    const sw2 = P.y > 0 ? .6 : Math.sin(P.phase) * .9;
-    legL.rotation.x = sw2; legR.rotation.x = -sw2; armL.rotation.x = -sw2 * .8; armR.rotation.x = sw2 * .8;
-    runner.position.set(P.x, P.y + (P.y > 0 ? 0 : Math.abs(Math.sin(P.phase)) * .08), 0);
+    if (mixer){
+      if (P.y > 0) play(P.vy > 0 ? 'jump' : 'fall', .1); else play('sprint', .12);
+      ACT.sprint && (ACT.sprint.timeScale = .9 + speed * .03);
+      mixer.update(dt);
+      runner.position.set(P.x, P.y, 0);
+    } else {
+      const sw2 = P.y > 0 ? .6 : Math.sin(P.phase) * .9;
+      legL.rotation.x = sw2; legR.rotation.x = -sw2; armL.rotation.x = -sw2 * .8; armR.rotation.x = sw2 * .8;
+      runner.position.set(P.x, P.y + (P.y > 0 ? 0 : Math.abs(Math.sin(P.phase)) * .08), 0);
+    }
     runner.rotation.z = (LANES[P.lane] - P.x) * -.08;
     runner.visible = P.inv <= 0 || Math.floor(P.inv * 12) % 2 === 0;
     shadow.position.set(P.x, .02, 0); shadow.scale.setScalar(1 - Math.min(.5, P.y / 4));
@@ -8203,7 +8226,7 @@ function runGame(THREE, sid, ac){
   }
   function gameOver(){
     if (ended) return;
-    ended = true; sfxR('over');
+    ended = true; sfxR('over'); play('die', .2);
     const sc = score(), rp = runRP(sc), d = runData();
     d.gbest = d.gbest || {};
     const prev = d.gbest[sid] || 0;
@@ -8245,6 +8268,7 @@ function runGame(THREE, sid, ac){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!ended && !paused) update(dt);
+    else if (ended && mixer) mixer.update(dt);
     R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
   }
@@ -8465,6 +8489,20 @@ function tpdHtml(){
    sembunyi. Soalan dari bank soalan subjek aktif; jika kosong → matematik.
    Three.js dimuat hanya bila permainan dibuka (tidak membebankan app).   */
 const ESC_THREE = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+// Watak 3D beranimasi: Kenney "Mini Characters 1" (CC0, kenney.nl) dalam assets/3d. GLTFLoader import 'three' melalui importmap (contoh yang sama).
+const KN_CHARS = ['male-a','male-b','male-c','male-d','male-e','male-f','female-a','female-b','female-c','female-d','female-e','female-f'];
+const KN_BUF = {};
+let KN_LOADER = null;
+function knFetch(name){
+  return KN_BUF[name] || (KN_BUF[name] = fetch('assets/3d/character-' + name + '.glb').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .catch(e => { delete KN_BUF[name]; throw e; }));
+}
+async function knModel(name){
+  if (!KN_LOADER) KN_LOADER = import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js').then(m => new m.GLTFLoader());
+  const [L, buf] = await Promise.all([KN_LOADER, knFetch(name)]);
+  return L.parseAsync(buf, 'assets/3d/');
+}
+const knPick = id => KN_CHARS[hashStr(String(id || '')) % KN_CHARS.length];
 const ESC_DIFF = {
   mudah:     { name:'MUDAH',     keys:3, lives:5, qtime:40, hunt:1.8,  sight:8,  match:90, rpx:.8 },
   sederhana: { name:'SEDERHANA', keys:4, lives:3, qtime:25, hunt:2.15, sight:9,  match:70, rpx:1 },
