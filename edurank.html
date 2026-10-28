@@ -5730,6 +5730,10 @@ const GAME_LOBBY = {
           '<div class="lb-sec">KUMPULAN BERMAIN (MAKS 4)</div><div class="lb-scroll" style="max-height:34vh">' + all.map(g => '<button class="lb-team' + (K.ids.includes(g.id) ? ' on' : '') + '" data-lb="kmt:' + g.id + '">' + teamAvatar(g.id, 30) +
             '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">' + esc(g.name) + '</div><div class="m">' + collectionStats(g.id).have + ' kad dalam koleksi</div></div>' + (K.ids.includes(g.id) ? '<span style="color:var(--c);font-weight:800">✓ ' + (K.ids.indexOf(g.id) + 1) + '</span>' : '') + '</button>').join('') + '</div>' +
           '<div class="lb-seg" style="margin-top:8px"><button class="' + (K.ai ? 'on' : '') + '" data-lb="kmai">🤖 Tambah Penjaga Ilmuria (komputer)</button></div>' +
+          '<div class="lb-sec">PERANTI</div><div class="lb-seg"><button class="' + (!K.multi ? 'on' : '') + '" data-lb="kmm:0">📺 Satu peranti (bergilir)</button><button class="' + (K.multi ? 'on' : '') + '" data-lb="kmm:1">📱 Setiap kumpulan peranti sendiri</button></div>' +
+          (K.multi ? '<div class="lb-note">Peranti ini membuka <b>bilik</b> dengan kod & kod QR. Kumpulan lain sertai dari telefon/tablet masing-masing' + (FB.on ? '.' : ' — <b style="color:#FCA5A5">perlu Firebase aktif</b> (Tetapan → Penyegerakan Firebase).') + '</div>' +
+            '<div class="lb-sec">PERANTI INI</div><div class="lb-seg" style="flex-wrap:wrap"><button class="' + (K.host < 0 ? 'on' : '') + '" data-lb="kmh:-1">📺 Papan / projektor sahaja</button>' +
+            K.ids.map((id, i) => '<button class="' + (K.host === i ? 'on' : '') + '" data-lb="kmh:' + i + '">' + esc(teamName(id)) + '</button>').join('') + '</div>' : '') +
           '<button class="lb-btn go" data-lb="kmgo" style="margin-top:12px">▶ MULA KOMBO ILMON (' + (K.ids.length + (K.ai || K.ids.length < 2 ? 1 : 0)) + ' pemain)</button>';
       }
       return '<div class="lb-sec">JENIS PERMAINAN</div><div class="lb-seg">' + seg('jenis', 'kombo', '🎴 Kombo') + seg('jenis', 'kuiz', '🧠 Kuiz') + seg('jenis', 'klasik', '🃏 Klasik') + '</div>' +
@@ -5745,7 +5749,9 @@ const GAME_LOBBY = {
       if (a.indexOf('opp:') === 0){ d.opp = a.slice(4); save(); x.setView('main'); return true; }
       if (a.indexOf('kmt:') === 0){ const K = komboLb(), id = a.slice(4), i = K.ids.indexOf(id); if (i >= 0) K.ids.splice(i, 1); else if (K.ids.length < 4) K.ids.push(id); else toast('Maksimum 4 kumpulan.', null, true); save(); x.paint(); return true; }
       if (a === 'kmai'){ const K = komboLb(); K.ai = !K.ai; save(); x.paint(); return true; }
-      if (a === 'kmgo'){ const K = komboLb(); if (!K.ids.length){ toast('Pilih sekurang-kurangnya satu kumpulan.', null, true); return true; } x.close(); komboStart(K.ids.slice(), K.ai || K.ids.length < 2); return true; }
+      if (a.indexOf('kmm:') === 0){ const K = komboLb(); K.multi = a.slice(4) === '1'; save(); x.paint(); return true; }
+      if (a.indexOf('kmh:') === 0){ const K = komboLb(); K.host = +a.slice(4); save(); x.paint(); return true; }
+      if (a === 'kmgo'){ const K = komboLb(); if (!K.ids.length){ toast('Pilih sekurang-kurangnya satu kumpulan.', null, true); return true; } x.close(); komboStart(K.ids.slice(), K.ai || K.ids.length < 2, !!K.multi, K.multi && K.host < K.ids.length ? K.host : -1); return true; }
       if (a === 'duelgo'){
         const t = arenaUi().team, opp = duelOpp();
         if (d.lawan === 'kump' && !opp){ toast('Perlu sekurang-kurangnya 2 kumpulan dalam kelas.', null, true); return true; }
@@ -6298,7 +6304,7 @@ function komboEval(cards){
   return { name: b[0], mult: b[1], ok: true, el: sameEl ? els[0] : null };
 }
 const komboDmg = (cards, ev, tgtEl) => Math.round(cards.reduce((a, c) => a + c.atk, 0) * ev.mult * .5 * (ev.el && tgtEl && elemBeats(ev.el, tgtEl) ? 1.5 : 1));
-function komboLb(){ const o = arenaUi(); o.kombo = Object.assign({ ids: [], ai: true }, o.kombo || {}); return o.kombo; }
+function komboLb(){ const o = arenaUi(); o.kombo = Object.assign({ ids: [], ai: true, multi: false, host: -1 }, o.kombo || {}); return o.kombo; }
 
 const KM_CSS = `
 .km{position:fixed;inset:0;z-index:956;background:#060A14;container-type:size;user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden;color:#fff;font-family:inherit}
@@ -6361,15 +6367,47 @@ const KM_CSS = `
 `;
 function kmStyle(){ if (!document.getElementById('kmCss')){ const s = document.createElement('style'); s.id = 'kmCss'; s.textContent = KM_CSS; document.head.appendChild(s); } }
 
-async function komboStart(ids, withAI){
+async function komboStart(ids, withAI, multi, hostSeat){
   ids = ids.filter(id => teamOf(id)).slice(0, 4);
   if (!ids.length) return toast('Pilih sekurang-kurangnya satu kumpulan.', null, true);
   if (ids.length === 1 && !withAI) withAI = true;
   toast('Menyusun kad…');
   await kadProbe();
-  komboRun(ids, withAI && ids.length < 4);
+  let net = null;
+  if (multi){                                            // bilik berbilang peranti: kod 4 digit
+    const code = String(1000 + Math.floor(Math.random() * 9000));
+    const T = await kmNet(code); if (!T) return toast('Berbilang peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+    net = { T, code, hostSeat: hostSeat == null ? -1 : hostSeat };
+  }
+  komboRun(ids, withAI && ids.length < 4, net);
 }
-function komboRun(ids, withAI){
+/* Saluran bilik Kombo: Firebase (ipbd_share/__kombo_<kod>) — atau BroadcastChannel (tab pada peranti sama, untuk ujian).
+   cfg = konfigurasi Firebase dari pautan sertai (telefon murid tanpa tetapan). */
+const KM_APP = {};
+async function kmNet(code, cfg){
+  let d = null, db = null;
+  if (FB.on && FB.mod.d){ d = FB.mod.d; db = FB.db; }
+  else if (cfg && cfg.databaseURL){
+    try {
+      if (!KM_APP.db){
+        const [a, dd, au] = await Promise.all([import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js'), import('https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js'), import('https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js')]);
+        const app = a.initializeApp(cfg, 'kombo'); await au.signInAnonymously(au.getAuth(app));
+        KM_APP.d = dd; KM_APP.db = dd.getDatabase(app);
+      }
+      d = KM_APP.d; db = KM_APP.db;
+    } catch(e){ console.warn('kombo firebase', e); }
+  }
+  if (d){
+    const ref = k => d.ref(db, 'ipbd_share/__kombo_' + code + '/' + k);
+    return { kind: 'fb', set: (k, v) => { try { d.set(ref(k), v === undefined ? null : v).catch(() => {}); } catch(e){} }, on: (k, cb) => d.onValue(ref(k), sn => cb(sn.val())) };
+  }
+  if (!('BroadcastChannel' in window)) return null;
+  const ch = new BroadcastChannel('edurank-kombo-' + code), subs = {}, last = {};
+  ch.onmessage = e => { last[e.data.k] = e.data.v; (subs[e.data.k] || []).slice().forEach(cb => cb(e.data.v)); };
+  return { kind: 'bc', set: (k, v) => { last[k] = v; ch.postMessage({ k, v }); },
+    on: (k, cb) => { (subs[k] = subs[k] || []).push(cb); if (k in last) cb(last[k]); return () => { subs[k] = (subs[k] || []).filter(f => f !== cb); }; } };
+}
+function komboRun(ids, withAI, net){
   kmStyle();
   const HP = 120, HAND = 6, MAXR = 12, LIFE = 3;
   const deckFor = sid => {                              // koleksi kumpulan + kad rawak sehingga 24 (setiap kad sekali)
@@ -6381,6 +6419,8 @@ function komboRun(ids, withAI){
   const P = ids.map(id => ({ id, name: teamName(id), ai: false })).concat(withAI ? [{ id: null, name: 'Penjaga Ilmuria', ai: true }] : []);
   P.forEach(p => { p.deck = deckFor(p.id); p.used = []; p.hand = []; p.hp = HP; p.life = LIFE; p.asked = 0; p.right = 0; p.last = null; p.dealt = 0; });
   const humans = P.filter(p => !p.ai).length;
+  if (net) P.forEach((p, i) => { p.remote = !p.ai && i !== net.hostSeat; });   // kumpulan bermain di peranti sendiri
+  const joined = {}, offs = []; let rq = null, finalRank = null, pubT = 0;
   const draw = p => { while (p.hand.length < HAND){ if (!p.deck.length){ if (!p.used.length) break; p.deck = p.used.sort(() => Math.random() - .5); p.used = []; } p.hand.push(p.deck.pop()); } };
   P.forEach(draw);
   let cur = 0, round = 1, sel = new Set(), swapped = false, busy = false, over = false, target = null, played = null, fresh = new Set();
@@ -6390,7 +6430,7 @@ function komboRun(ids, withAI){
     '<div class="km-ar" id="kmAr"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
     '<div class="km-btn" id="kmBtn"></div><div class="km-msg" id="kmMsg"></div><div id="kmOv"></div></div>';
   document.body.appendChild(root); lockBody();
-  const live = liveHost('kombo', root, { title: 'Kombo Ilmon' });
+  const live = liveHost('kombo', root, { title: 'Kombo Ilmon' + (net ? ' · Bilik ' + net.code : '') });
   const $k = s => root.querySelector(s);
   let msgT = 0;
   const msg = (t, c, ms) => { const m = $k('#kmMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1400); };
@@ -6409,6 +6449,7 @@ function komboRun(ids, withAI){
         '<div style="flex:1;min-width:0"><div class="nm">' + esc(p.name) + '</div><div class="km-hp"><i style="width:' + Math.max(0, p.hp / HP * 100) + '%;background:' + hpCol(p) + '"></i></div>' +
         '<div class="sub">' + Math.max(0, p.hp) + ' HP · ' + p.hand.length + ' kad' + (p.last ? ' · terakhir ' + elemOf(p.last).ico : '') + '</div></div>' +
         (p === target ? '<span class="tg">🎯 SASARAN</span>' : '') + '</div>'; }).join('');
+    pub();
   }
   function paintMe(){
     const p = me();
@@ -6418,6 +6459,10 @@ function komboRun(ids, withAI){
   }
   function paintHand(){
     const p = me(), hide = p.ai;
+    if (p.remote){                                       // kumpulan ini bermain di telefon sendiri
+      $k('#kmHand').innerHTML = '<div style="width:100%;height:85%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;border:.3cqw dashed #475569;border-radius:1.4cqw;font-size:1.8cqw;font-weight:800;color:#CBD5E1">📱 ' + esc(p.name) + ' sedang bermain di peranti sendiri…<span style="font-size:1.2cqw;color:#94A3B8;font-weight:600">' + (busy ? 'Menjawab kuiz bantuan…' : 'Menunggu kombo') + '</span></div>';
+      $k('#kmPv').innerHTML = ''; $k('#kmBtn').innerHTML = ''; pub(); return;
+    }
     $k('#kmHand').innerHTML = p.hand.map((c, i) => hide ? '<img alt="" style="background:repeating-linear-gradient(45deg,#1E293B 0 1cqw,#0F172A 1cqw 2cqw);border:.3cqw solid #475569">' :
       img(c, ' data-h="' + i + '" class="' + (sel.has(i) ? 'sel' : '') + (fresh.has(c.id) ? ' new' : '') + '"')).join('');
     const n = p.hand.length; $k('#kmHand').style.setProperty('--ov', Math.max(.7, (n * 11.4 - 62) / Math.max(1, n - 1) / 2).toFixed(2) + 'cqw');   // kad bertindih lebih bila tangan > 6
@@ -6426,18 +6471,29 @@ function komboRun(ids, withAI){
     $k('#kmPv').innerHTML = !cs.length ? '<span style="color:#94A3B8;font-weight:600">Pilih 1–5 kad untuk kombo · ketik lawan di atas untuk tukar sasaran</span>' :
       ev.ok ? '<span style="color:#FDE68A">' + ev.name + ' ×' + ev.mult + (ev.el && target && target.last && elemBeats(ev.el, target.last) ? ' · ELEMEN MENANG ×1.5' : '') + '</span> <span style="color:#F87171;margin-left:1cqw">⚔ ' + komboDmg(cs, ev, target && target.last) + '</span>' :
       '<span style="color:#FCA5A5">' + ev.name + '</span>';
-    const human = !p.ai && !busy && !over;
+    const human = !p.ai && !p.remote && !busy && !over;
     $k('#kmBtn').innerHTML = '<button class="go" data-k="go"' + (human && ev && ev.ok ? '' : ' disabled') + '>⚔ SERANG</button>' +
       '<button data-k="swap"' + (human && !swapped && sel.size >= 1 && sel.size <= 2 ? '' : ' disabled') + '>🔄 TUKAR ' + (swapped ? '(sudah)' : '≤2') + '</button>' +
       '<button class="q" data-k="quiz"' + (human && p.life > 0 ? '' : ' disabled') + '>🧠 KUIZ BANTUAN (' + p.life + ')</button>';
+    pub();
   }
   function paintArena(extra){
     $k('#kmAr').innerHTML = played ? '<div class="ban">' + esc(played.by) + ' · ' + played.name + (played.bonus ? ' · ELEMEN MENANG!' : '') + '</div><div class="pl">' + played.cards.map(c => img(c)).join('') + '</div>' :
       '<div class="hint">🃏 Pasangan / trio elemen sama · turutan nombor · satu alam<br>Kombo lebih besar = kerosakan lebih besar!</div>';
     fill($k('#kmAr'));
     if (extra) extra();
+    pub();
   }
   const paint = () => { paintTop(); paintMe(); paintHand(); };
+  /* bilik berbilang peranti: keadaan awam + tangan setiap kumpulan jauh diterbitkan (hos memegang permainan) */
+  const pub = () => { if (!net) return; clearTimeout(pubT); pubT = setTimeout(() => {
+    net.T.set('st', { v: Date.now(), code: net.code, cur, round, max: MAXR, hpMax: HP, over, started: !!started, target: target ? P.indexOf(target) : -1,
+      played: played ? { by: played.by, name: played.name, bonus: played.bonus, cards: played.cards.map(c => c.id) } : null,
+      seats: P.map((p, i) => ({ name: p.name, ai: p.ai, remote: !!p.remote, hp: p.hp, n: p.hand.length, last: p.last, life: p.life, av: av(p, 40), joined: !!joined[i] })),
+      rank: finalRank, busy });
+    P.forEach((p, i) => { if (p.remote) net.T.set('h' + i, { cards: p.hand.map(c => c.id), sw: i === cur && swapped }); });
+  }, 60); };
+  let started = !net;
 
   /* ---------- giliran ---------- */
   function startTurn(){
@@ -6445,7 +6501,7 @@ function komboRun(ids, withAI){
     sel.clear(); swapped = false; busy = false;
     const p = me(); draw(p); paint();
     if (p.ai){ busy = true; paint(); setTimeout(aiTurn, 1300); return; }
-    if (humans > 1) cover(p);
+    if (P.filter(x => !x.ai && !x.remote).length > 1) cover(p);    // >1 kumpulan berkongsi peranti ini: tutup tangan antara giliran
   }
   function cover(p){
     $k('#kmOv').innerHTML = '<div class="km-cov" data-k="uncover"><div class="t">GILIRAN</div>' + av(p, 90) + '<div class="n">' + esc(p.name) + '</div><div class="s">Kumpulan lain jangan lihat kad! Ketik untuk mula</div></div>';
@@ -6496,6 +6552,47 @@ function komboRun(ids, withAI){
     const best = all[Math.floor(Math.random() * Math.min(3, all.length))];
     if (best) attack(best.cs); else nextTurn();
   }
+  function doSwap(p, out){
+    if (swapped || !out.length || out.length > 2) return;
+    p.hand = p.hand.filter(c => !out.includes(c)); p.used.push(...out); sel.clear(); swapped = true;
+    const before = new Set(p.hand.map(c => c.id)); draw(p); p.hand.forEach(c => { if (!before.has(c.id)) fresh.add(c.id); });
+    snd('kad_koyak', 'flip'); paintHand(); paintTop();
+  }
+  function giveEl(p, el){
+    const have = new Set(p.hand.map(c => c.id)), pool = CARDS.filter(c => cardSet(c).el === el && !have.has(c.id));
+    const c = pool[Math.floor(Math.random() * pool.length)];
+    if (c){ p.hand.push(c); fresh.add(c.id); }
+    busy = false; paintHand(); paintTop();
+    msg('🎴 ' + esc(p.name) + ' dapat ' + esc(c ? c.name + ' (' + cardNum(c) + elemOf(cardSet(c).el).ico + ')' : 'kad'), '#86EFAC', 1600);
+  }
+  /* kuiz bantuan untuk kumpulan di peranti sendiri: soalan dihantar ke telefon mereka, hos menyemak jawapan */
+  function lifelineRemote(i){
+    const p = P[i]; if (p.life <= 0 || busy) return;
+    p.life--; busy = true;
+    const q = escQuestion(), order = q.c.map((_, k) => k).sort(() => Math.random() - .5);
+    rq = { i, q, stage: 'ask', id: Date.now() };
+    net.T.set('q' + i, { id: rq.id, q: q.q, c: order.map(k => q.c[k]), idx: order });
+    paintHand(); msg('🧠 ' + esc(p.name) + ' sedang menjawab kuiz bantuan…', '#7DD3FC', 2000);
+  }
+  function answerRemote(k){
+    const p = P[rq.i], q = rq.q, ok = k === q.a; p.asked++; if (ok) p.right++;
+    if (p.id) teamQuiz(p.id, ok);
+    snd(ok ? 'ui_betul' : 'ui_salah', ok ? 'hi' : 'low');
+    net.T.set('q' + rq.i, { id: rq.id, res: ok ? 'ok' : 'no', ans: q.c[q.a] });
+    if (!ok){ msg('❌ ' + esc(p.name) + ' salah — giliran tamat', '#FCA5A5', 2000); rq = null; setTimeout(nextTurn, 1800); return; }
+    rq.stage = 'el'; msg('✅ ' + esc(p.name) + ' betul! Memilih kad…', '#86EFAC', 1600);
+  }
+  function remoteAct(i, a){
+    if (over || !started || cur !== i) return;
+    const p = P[i], find = ids2 => (ids2 || []).map(id => p.hand.find(c => c.id === id)).filter(Boolean);
+    if (a.target != null && P[a.target] && P[a.target] !== p && P[a.target].hp > 0) target = P[a.target];
+    if (a.t === 'tgt'){ paintTop(); return; }
+    if (a.t === 'atk' && !busy){ const cs = find(a.cards); if (cs.length && cs.length === (a.cards || []).length) attack(cs); return; }
+    if (a.t === 'swap' && !busy) return doSwap(p, find(a.cards).slice(0, 2));
+    if (a.t === 'quiz' && !busy) return lifelineRemote(i);
+    if (a.t === 'ans' && rq && rq.i === i && rq.stage === 'ask') return answerRemote(+a.ans);
+    if (a.t === 'el' && rq && rq.i === i && rq.stage === 'el'){ rq = null; net.T.set('q' + i, null); return giveEl(p, a.el); }
+  }
   /* ---------- kuiz bantuan (lapisan atas — papan tidak berubah) ---------- */
   function lifeline(){
     const p = me(); if (p.life <= 0 || busy) return;
@@ -6514,11 +6611,7 @@ function komboRun(ids, withAI){
         ELEMENTS.map(el => '<button class="el" data-el="' + el.k + '" style="border-color:' + el.color + '">' + el.ico + ' ' + el.name + '</button>').join('') + '</div></div></div>';
       $k('#kmOv').onclick = e2 => {
         const b2 = e2.target.closest('[data-el]'); if (!b2) return;
-        const have = new Set(p.hand.map(c => c.id)), pool = CARDS.filter(c => cardSet(c).el === b2.dataset.el && !have.has(c.id));
-        const c = pool[Math.floor(Math.random() * pool.length)];
-        if (c){ p.hand.push(c); fresh.add(c.id); }
-        $k('#kmOv').innerHTML = ''; $k('#kmOv').onclick = null; busy = false; paintHand();
-        msg('🎴 Dapat ' + esc(c ? c.name + ' (' + cardNum(c) + elemOf(cardSet(c).el).ico + ')' : 'kad'), '#86EFAC', 1600);
+        $k('#kmOv').innerHTML = ''; $k('#kmOv').onclick = null; giveEl(p, b2.dataset.el);
       };
     };
   }
@@ -6526,6 +6619,7 @@ function komboRun(ids, withAI){
   function finish(){
     if (over) return; over = true;
     const rank = P.slice().sort((a, b) => b.hp - a.hp), win = rank[0];
+    finalRank = rank.map(p => ({ name: p.name, hp: p.hp }));
     S.arena = S.arena || { points:{}, wins:{}, losses:{}, history:[] };
     const rows = rank.map((p, i) => {
       const rp = p.id ? (i === 0 ? 12 : i === 1 ? 6 : 3) : 0;
@@ -6539,8 +6633,13 @@ function komboRun(ids, withAI){
     $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn"><div style="display:flex;justify-content:center">' + av(win, 70) + '</div><div class="big">' + esc(win.name).toUpperCase() + ' MENANG!</div>' + rows +
       '<div class="bt"><button data-k="quit">Tutup</button><button class="o" data-k="again">↻ Main Lagi</button></div></div></div>';
     if (!win.ai) confettiBurst($k('.km-end'), 70);
+    pub();
   }
-  function quit(){ over = true; liveEnd(live); root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab(); }
+  function quit(){
+    over = true; liveEnd(live);
+    if (net){ clearTimeout(pubT); offs.forEach(f => { try { f(); } catch(e){} }); net.T.set('st', { closed: true, v: Date.now() }); }
+    root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab();
+  }
 
   root.addEventListener('click', e => {
     const k = e.target.closest('[data-k]'), a = k && k.dataset.k;
@@ -6550,25 +6649,181 @@ function komboRun(ids, withAI){
       gameConfirm(null, null, asked, P.reduce((s, p) => s + p.right, 0)).then(ok => { if (ok){ if (asked) finish(); else quit(); } });
       return;
     }
-    if (a === 'again'){ quit(); setTimeout(() => komboRun(ids, withAI), 60); return; }
+    if (a === 'again'){ quit(); setTimeout(() => komboRun(ids, withAI, net), 60); return; }
     if (a === 'uncover'){ $k('#kmOv').innerHTML = ''; return; }
+    if (a === 'begin'){                               // kumpulan yang belum sertai bermain di peranti ini (bergilir)
+      P.forEach((p, i) => { if (p.remote && !joined[i]){ p.remote = false; msg('📺 ' + esc(p.name) + ' bermain di peranti ini', '#FDE68A', 1600); } });
+      started = true; $k('#kmOv').innerHTML = ''; startTurn(); return; }
+    if (a === 'copylink'){ copyText(joinUrl(), 'Pautan sertai disalin.'); return; }
+    if (!started) return;
     if (over || busy || me().ai) return;
     const h = e.target.closest('[data-h]');
     if (h){ const i = +h.dataset.h; if (sel.has(i)) sel.delete(i); else if (sel.size < 5) sel.add(i); snd('ui_klik', 'flip'); return paintHand(); }
     const t = e.target.closest('[data-t]');
     if (t){ const p = P[+t.dataset.t]; if (p.hp > 0){ target = p; paintTop(); paintHand(); } return; }
     if (a === 'go') return attack([...sel].sort((x, y) => x - y).map(i => me().hand[i]));
-    if (a === 'swap'){
-      if (swapped || !sel.size || sel.size > 2) return;
-      const p = me(), out = [...sel].map(i => p.hand[i]);
-      p.hand = p.hand.filter(c => !out.includes(c)); p.used.push(...out); sel.clear(); swapped = true;
-      const before = new Set(p.hand.map(c => c.id)); draw(p); p.hand.forEach(c => { if (!before.has(c.id)) fresh.add(c.id); });
-      snd('kad_koyak', 'flip'); return paintHand();
-    }
+    if (a === 'swap'){ const p = me(); return doSwap(p, [...sel].map(i => p.hand[i])); }
     if (a === 'quiz') return lifeline();
   });
-  paintArena(); startTurn();
+  /* bilik menunggu: kod besar + kod QR + status setiap kumpulan */
+  const joinUrl = () => location.origin + location.pathname + '?km=' + b64urlEnc(JSON.stringify({ c: net.code, f: FB.cfg || fbCfgGet() || null }));
+  function lobbyRoom(){
+    const list = P.map((p, i) => '<div class="row" style="justify-content:space-between">' + av(p, 26) + '<span style="flex:1;text-align:left">' + esc(p.name) + '</span><b style="color:' +
+      (p.ai ? '#94A3B8">🤖 komputer' : !p.remote ? '#FACC15">📺 peranti ini' : joined[i] ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</b></div>').join('');
+    $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn" style="width:62%;display:flex;gap:2cqw;text-align:left">' +
+      '<div style="flex:1"><div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900">BILIK KOMBO ILMON</div>' +
+      '<div style="font-size:6cqw;font-weight:900;letter-spacing:.2em;line-height:1.1">' + net.code + '</div>' +
+      '<div style="font-size:1.2cqw;color:#94A3B8;line-height:1.5">Di telefon kumpulan: imbas kod QR, atau buka EduRank → Game → KAD → <b>📱 Sertai Kombo</b> dan masukkan kod ini.</div>' + list +
+      '<div class="bt"><button data-k="copylink">🔗 Salin pautan</button><button class="o" data-k="begin">▶ MULA</button></div></div>' +
+      '<div id="kmQr" style="width:18cqw;height:18cqw;background:#fff;border-radius:1cqw;padding:.8cqw;flex:none"></div></div></div>';
+    const q = $k('#kmQr');
+    kmQr().then(QR => { if (!QR || !q.isConnected) return; q.innerHTML = ''; new QR(q, { text: joinUrl(), width: 512, height: 512, correctLevel: QR.CorrectLevel.L }); const im = q.querySelector('img,canvas'); if (im){ im.style.width = '100%'; im.style.height = '100%'; } });
+  }
+  if (net){
+    P.forEach((p, i) => {
+      if (!p.remote) return;
+      offs.push(net.T.on('j' + i, v => { if (v && !joined[i]){ joined[i] = true; msg('📱 ' + esc(p.name) + ' sudah sertai', '#86EFAC', 1400); if (!started) lobbyRoom(); pub(); } }));
+      let lastN = 0;
+      offs.push(net.T.on('a' + i, a => { if (!a || !(a.n > lastN)) return; lastN = a.n; remoteAct(i, a); }));
+    });
+    const hb = setInterval(() => { if (!root.isConnected) return clearInterval(hb); pub(); }, 3000);   // penyegar: peranti yang baru sertai dapat keadaan semasa
+  }
+  paintArena();
+  if (net){ paint(); lobbyRoom(); } else startTurn();
 }
+const KM_QRLIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+let KM_QRP = null;
+const kmQr = () => KM_QRP || (KM_QRP = new Promise(r => { if (window.QRCode) return r(window.QRCode); const s = document.createElement('script'); s.src = KM_QRLIB; s.onload = () => r(window.QRCode); s.onerror = () => r(null); document.head.appendChild(s); }));
+/* ---------- PERANTI KUMPULAN: sertai bilik Kombo (tangan sendiri sahaja; hos memegang permainan) ---------- */
+async function komboJoinAsk(){
+  const code = await promptBox({ title: 'Sertai Kombo Ilmon', label: 'Kod bilik (4 digit) di skrin hos', placeholder: '1234' });
+  if (!code) return;
+  const c = String(code).replace(/\D/g, '').slice(0, 4);
+  if (c.length !== 4) return toast('Kod bilik ialah 4 digit.', null, true);
+  const T = await kmNet(c); if (!T) return toast('Sertai perlukan Firebase (Tetapan → Penyegerakan Firebase), atau imbas kod QR di skrin hos.', null, true);
+  await kadProbe(); komboJoin(c, T);
+}
+function komboJoin(code, T){
+  kmStyle();
+  let st = null, seat = -1, hand = [], sel = new Set(), target = -1, q = null, qShown = 0, offs = [], dead = false, n0 = Date.now(), swapUsed = false;
+  const root = document.createElement('div'); root.className = 'km'; root.id = 'kmJoin';
+  root.innerHTML = '<div class="km-st" id="kmSt"><div class="km-top" id="kmTop"></div><button class="km-x" data-k="quit"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="km-ar" id="kmAr"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
+    '<div class="km-btn" id="kmBtn"></div><div class="km-msg" id="kmMsg"></div><div id="kmOv"></div></div>';
+  document.body.appendChild(root); try { lockBody(); } catch(e){}
+  const $k = s => root.querySelector(s);
+  let msgT = 0;
+  const msg = (t, c, ms) => { const m = $k('#kmMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1400); };
+  const img = (c, attrs) => '<img data-kc="' + c.id + '" alt="" draggable="false"' + (attrs || '') + '>';
+  const fill = box => box.querySelectorAll('img[data-kc]').forEach(im => { if (!im.getAttribute('src')) kadBake(cardById(im.dataset.kc)).then(u => { if (!im.getAttribute('src')) im.src = u; }); });
+  const send = a => T.set('a' + seat, Object.assign({ n: ++n0 }, a));
+  const hpCol = (s, m) => s.hp / m > .5 ? '#4ADE80' : s.hp / m > .25 ? '#FACC15' : '#EF4444';
+  const myTurn = () => st && st.started && !st.over && st.cur === seat && !st.busy;
+
+  function pickSeat(){
+    const free = (st.seats || []).map((s, i) => [s, i]).filter(([s]) => s.remote);
+    $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn"><div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900">BILIK ' + esc(code) + '</div>' +
+      '<div class="big" style="font-size:2.4cqw;margin:.6cqw 0 1cqw">PILIH KUMPULAN KAMU</div>' +
+      (free.length ? free.map(([s, i]) => '<button class="row" style="width:100%;cursor:pointer;border:.2cqw solid ' + (s.joined ? '#475569' : '#F59E0B') + '" data-seat="' + i + '">' + (s.av || '') +
+        '<span style="flex:1;text-align:left;font-weight:800">' + esc(s.name) + '</span><span style="color:' + (s.joined ? '#94A3B8">sudah ada peranti' : '#4ADE80">pilih ›') + '</span></button>').join('') :
+        '<div class="row">Tiada tempat untuk peranti dalam bilik ini.</div>') +
+      '<div class="bt"><button data-k="quit">Keluar</button></div></div></div>';
+  }
+  function paint(){
+    if (!st || seat < 0) return;
+    const S2 = st.seats, m = st.hpMax || 120, mine = S2[seat];
+    if (target < 0 || !S2[target] || target === seat || S2[target].hp <= 0) target = st.target >= 0 && st.target !== seat && S2[st.target] && S2[st.target].hp > 0 ? st.target : S2.findIndex((s, i) => i !== seat && s.hp > 0);
+    $k('#kmTop').innerHTML = S2.map((s, i) => i === seat ? '' : '<div class="km-op' + (i === target ? ' tgt' : '') + (s.hp <= 0 ? ' dead' : '') + (i === st.cur ? '" style="border-color:#F59E0B' : '') + '" data-t="' + i + '">' + (s.av || '') +
+      '<div style="flex:1;min-width:0"><div class="nm">' + esc(s.name) + (i === st.cur ? ' · ⏳ GILIRAN' : '') + '</div><div class="km-hp"><i style="width:' + Math.max(0, s.hp / m * 100) + '%;background:' + hpCol(s, m) + '"></i></div>' +
+      '<div class="sub">' + Math.max(0, s.hp) + ' HP · ' + s.n + ' kad' + (s.last ? ' · terakhir ' + elemOf(s.last).ico : '') + '</div></div>' + (i === target ? '<span class="tg">🎯 SASARAN</span>' : '') + '</div>').join('');
+    const pl = st.played, arKey = JSON.stringify(pl) + st.started;
+    if (arKey !== paint.ar){ paint.ar = arKey;                // kemas arena hanya bila kombo baharu (animasi tidak berulang)
+    $k('#kmAr').innerHTML = pl ? '<div class="ban">' + esc(pl.by) + ' · ' + esc(pl.name) + (pl.bonus ? ' · ELEMEN MENANG!' : '') + '</div><div class="pl">' + pl.cards.map(id => img(cardById(id))).join('') + '</div>' :
+      '<div class="hint">' + (st.started ? '🃏 Pasangan / trio elemen sama · turutan nombor · satu alam' : '⏳ Menunggu hos menekan MULA…') + '</div>';
+    fill($k('#kmAr')); }
+    $k('#kmMe').innerHTML = (mine.av || '') + '<div class="gl">' + (myTurn() ? 'GILIRAN KAMU!' : st.cur === seat && st.busy ? 'SEDANG DIPROSES…' : 'TUNGGU GILIRAN') + '</div><div class="nm">' + esc(mine.name) + '</div>' +
+      '<div style="width:100%"><div class="km-hp"><i style="width:' + Math.max(0, mine.hp / m * 100) + '%;background:' + hpCol(mine, m) + '"></i></div></div>' +
+      '<div style="font-size:1.1cqw;color:#94A3B8">' + mine.hp + ' HP · Pusingan ' + st.round + '/' + st.max + '</div>';
+    $k('#kmMe').style.borderColor = myTurn() ? '#4ADE80' : '#475569';
+    const cards = hand.map(cardById).filter(Boolean);
+    $k('#kmHand').innerHTML = cards.map((c, i) => img(c, ' data-h="' + i + '" class="' + (sel.has(i) ? 'sel' : '') + '"')).join('');
+    const n = cards.length; $k('#kmHand').style.setProperty('--ov', Math.max(.7, (n * 11.4 - 62) / Math.max(1, n - 1) / 2).toFixed(2) + 'cqw');
+    fill($k('#kmHand'));
+    const cs = [...sel].map(i => cards[i]).filter(Boolean), ev = komboEval(cs), tl = S2[target] && S2[target].last;
+    $k('#kmPv').innerHTML = !cs.length ? '<span style="color:#94A3B8;font-weight:600">' + (myTurn() ? 'Pilih 1–5 kad untuk kombo · ketik lawan untuk tukar sasaran' : 'Susun strategi sementara menunggu giliran') + '</span>' :
+      ev.ok ? '<span style="color:#FDE68A">' + ev.name + ' ×' + ev.mult + (ev.el && tl && elemBeats(ev.el, tl) ? ' · ELEMEN MENANG ×1.5' : '') + '</span> <span style="color:#F87171;margin-left:1cqw">⚔ ' + komboDmg(cs, ev, tl) + '</span>' :
+      '<span style="color:#FCA5A5">' + ev.name + '</span>';
+    const go = myTurn();
+    $k('#kmBtn').innerHTML = '<button class="go" data-k="go"' + (go && ev && ev.ok ? '' : ' disabled') + '>⚔ SERANG</button>' +
+      '<button data-k="swap"' + (go && !swapUsed && sel.size >= 1 && sel.size <= 2 ? '' : ' disabled') + '>🔄 TUKAR ' + (swapUsed ? '(sudah)' : '≤2') + '</button>' +
+      '<button class="q" data-k="quiz"' + (go && mine.life > 0 ? '' : ' disabled') + '>🧠 KUIZ BANTUAN (' + mine.life + ')</button>';
+  }
+  function showQ(v){
+    if (!v){ if (q) { q = null; $k('#kmOv').innerHTML = ''; } return; }
+    if (v.res){                                          // keputusan dari hos
+      if (v.res === 'no'){ $k('#kmOv').innerHTML = ''; q = null; msg('❌ Salah! Jawapan: ' + esc(v.ans || '') + ' — giliran tamat', '#FCA5A5', 2400); snd('ui_salah', 'low'); return; }
+      if (qShown === v.id + 'ok') return; qShown = v.id + 'ok'; snd('ui_betul', 'hi');
+      $k('#kmOv').innerHTML = '<div class="km-qz"><div class="pn"><div class="lb">✅ BETUL! PILIH ELEMEN KAD BAHARU</div><div class="q">Kad elemen mana yang kamu perlukan?</div><div class="op">' +
+        ELEMENTS.map(el => '<button class="el" data-el="' + el.k + '" style="border-color:' + el.color + '">' + el.ico + ' ' + el.name + '</button>').join('') + '</div></div></div>';
+      return;
+    }
+    if (qShown === v.id) return; qShown = v.id; q = v;
+    $k('#kmOv').innerHTML = '<div class="km-qz"><div class="pn"><div class="lb">🧠 KUIZ BANTUAN</div><div class="q">' + esc(v.q) + '</div>' +
+      '<div class="op">' + v.c.map((t, j) => '<button data-ans="' + v.idx[j] + '"><b>' + 'ABCD'[j] + '</b>' + esc(t) + '</button>').join('') + '</div>' +
+      '<div style="font-size:1.1cqw;color:#94A3B8;margin-top:1cqw">Betul = pilih satu kad elemen yang kamu perlukan · Salah = giliran tamat</div></div></div>';
+  }
+  function showEnd(){
+    const r = st.rank || [];
+    $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn"><div class="big">' + esc((r[0] || {}).name || '').toUpperCase() + ' MENANG!</div>' +
+      r.map((x, i) => '<div class="row"><b style="width:2cqw;color:#F59E0B">' + (i + 1) + '</b><span style="flex:1;text-align:left">' + esc(x.name) + '</span><span>' + x.hp + ' HP</span></div>').join('') +
+      '<div class="bt"><button data-k="quit">Tutup</button></div></div></div>';
+  }
+  function close(){ if (dead) return; dead = true; offs.forEach(f => { try { f(); } catch(e){} }); root.remove(); try { unlockBody(); } catch(e){} if (window.S && S.ui && S.ui.tab === 'arena') renderTab(); }
+  let prevCur = -1, ended = false;
+  offs.push(T.on('st', v => {
+    if (dead) return;
+    if (v && v.closed){ msg('Bilik ditutup oleh hos', '#FCA5A5', 2500); setTimeout(close, 2600); return; }
+    if (!v) { $k('#kmAr').innerHTML = '<div class="hint">Mencari bilik ' + esc(code) + '…</div>'; return; }
+    st = v;
+    if (seat < 0){ pickSeat(); return; }
+    if (st.cur !== prevCur){ if (st.cur === seat && prevCur !== -1){ swapUsed = false; sel.clear(); vibrate([60, 40, 60]); msg('🎯 GILIRAN KAMU!', '#4ADE80', 1600); snd('ui_betul', 'hi'); } prevCur = st.cur; }
+    if (st.over && !ended){ ended = true; showEnd(); }
+    paint();
+  }));
+  root.addEventListener('click', e => {
+    const k = e.target.closest('[data-k]'), a = k && k.dataset.k;
+    if (a === 'quit') return close();
+    const sb = e.target.closest('[data-seat]');
+    if (sb && seat < 0){
+      seat = +sb.dataset.seat; T.set('j' + seat, { t: Date.now() });
+      $k('#kmOv').innerHTML = ''; msg('✅ Kamu ' + esc(st.seats[seat].name), '#86EFAC', 1500);
+      offs.push(T.on('h' + seat, v => { const nh = (v && v.cards) || []; if (nh.join() !== hand.join()){ sel.clear(); hand = nh; } if (v && v.sw) swapUsed = true; paint(); }));
+      offs.push(T.on('q' + seat, showQ));
+      return paint();
+    }
+    const an = e.target.closest('[data-ans]'); if (an && q){ send({ t: 'ans', ans: +an.dataset.ans }); $k('#kmOv').innerHTML = '<div class="km-qz"><div class="pn"><div class="q">Menyemak jawapan…</div></div></div>'; return; }
+    const el = e.target.closest('[data-el]'); if (el){ send({ t: 'el', el: el.dataset.el }); $k('#kmOv').innerHTML = ''; q = null; return; }
+    if (seat < 0) return;
+    const h = e.target.closest('[data-h]');
+    if (h){ const i = +h.dataset.h; if (sel.has(i)) sel.delete(i); else if (sel.size < 5) sel.add(i); snd('ui_klik', 'flip'); return paint(); }
+    const t = e.target.closest('[data-t]');
+    if (t){ const i = +t.dataset.t; if (st.seats[i] && st.seats[i].hp > 0){ target = i; if (myTurn()) send({ t: 'tgt', target }); paint(); } return; }
+    if (!myTurn()) return;
+    if (a === 'go'){ const ids = [...sel].sort((x, y) => x - y).map(i => hand[i]); sel.clear(); send({ t: 'atk', cards: ids, target }); return paint(); }
+    if (a === 'swap'){ const ids = [...sel].map(i => hand[i]); sel.clear(); swapUsed = true; send({ t: 'swap', cards: ids, target }); return paint(); }
+    if (a === 'quiz'){ send({ t: 'quiz', target }); msg('🧠 Meminta soalan…', '#7DD3FC', 1200); return; }
+  });
+}
+/* pautan sertai (?km=…): telefon kumpulan tanpa tetapan — tiada pemasangan, tiada data kelas */
+async function komboJoinBoot(param){
+  ['header','nav','#main'].forEach(sel => { const el = $(sel); if (el) el.style.display = 'none'; });
+  let p = null; try { p = JSON.parse(b64urlDec(param)); } catch(e){}
+  if (!p || !/^\d{4}$/.test(String(p.c || ''))){ document.body.insertAdjacentHTML('beforeend', '<div style="padding:40px;text-align:center;color:#fff">Pautan Kombo rosak.</div>'); return; }
+  const T = await kmNet(String(p.c), p.f || null);
+  if (!T){ document.body.insertAdjacentHTML('beforeend', '<div style="padding:40px;text-align:center;color:#fff">Tidak dapat menyambung ke bilik.</div>'); return; }
+  await kadProbe(); komboJoin(String(p.c), T);
+}
+
 
 /* ---------- TAB GAME: KAD ---------- */
 function viewCards(){
@@ -6577,7 +6832,8 @@ function viewCards(){
     '<div style="font-size:40px;line-height:1">⚔️</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FF8A3D;text-shadow:0 0 12px rgba(255,138,61,.6)">DUEL KAD</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kumpul <b>Ilmon</b> — makhluk ajaib Alam Ilmuria — bina pasukan dan bertarung dalam mod <b>Kuiz</b> atau <b>Klasik</b>.</div></div>' +
-    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN</button>';
+    '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN</button>' +
+    '<button class="btn clip-s w-full mt-2 !py-2 text-[13px]" data-act="km-join"><i class="fa-solid fa-mobile-screen-button text-cyan"></i> Sertai Kombo dengan kod bilik</button>';
 }
 /* Koleksi, TPC, pack & set kumpulan — dipaparkan dalam menu Duel Kad */
 function cardsHubHtml(){
@@ -10573,6 +10829,7 @@ const ACTS = {
   'rpm': rpmModal,
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
   'lobby': d => gameLobby(d.id),
+  'km-join': () => komboJoinAsk(),
   'live-tog': d => { const k = d.k === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(k, localStorage.getItem(k) === '0' ? '1' : '0'); renderTab(); },
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
@@ -10805,6 +11062,8 @@ function installGate(){
   // Mod paparan awam: ?s=... → showcase sahaja, tiada state tempatan, tiada Firebase SDK
   const vp = new URLSearchParams(location.search).get('s');
   if (vp){ S = blank(); viewerBoot(vp); return; }      // pautan showcase murid: tidak perlu pasang
+  const kmp = new URLSearchParams(location.search).get('km');
+  if (kmp){ S = blank(); komboJoinBoot(kmp); return; }  // pautan / kod QR sertai Kombo Ilmon: telefon kumpulan, tidak perlu pasang
   initPWA();
   if (!isInstalled()){ installGate(); return; }         // dalam pelayar: tutup app, papar arahan pasang sahaja
   IDB = await idbOpen();
