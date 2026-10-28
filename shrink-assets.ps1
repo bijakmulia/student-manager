@@ -169,31 +169,31 @@ if (Test-Path $sfxDir) {
     }
 }
 
-# assets\kad: Ilmon card art (k01..k96). Full illustrations (no transparency) -> JPG, max 512x512.
-$kadDir = Join-Path $PSScriptRoot 'assets\kad'
-if (Test-Path $kadDir) {
-    $kknown = @{}
-    $klist = Join-Path $kadDir 'PROMPT-KAD.txt'
-    if (Test-Path $klist) { Get-Content $klist -Encoding UTF8 | ForEach-Object { if ($_ -match '^###\s+([a-z0-9_]+)\.png') { $kknown[$Matches[1]] = $true } } }
-    # Gemini/Tampermonkey downloads land in Downloads (a userscript cannot pick the folder): pull finished kNN.png in.
+# Full illustrations (no transparency) -> JPG + senarai.json. Names come from "### name.png" lines in the folder's PROMPT file.
+# Gemini/Tampermonkey downloads land in Downloads (a userscript cannot pick the folder), so finished files matching $dlRx are pulled in.
+function Shrink-Art($dir, $tag, $promptFile, $max, $dlRx, $hint) {
+    if (-not (Test-Path $dir)) { return }
+    $known = @{}
+    $plist = Join-Path $dir $promptFile
+    if (Test-Path $plist) { Get-Content $plist -Encoding UTF8 | ForEach-Object { if ($_ -match '^###\s+([a-z0-9_]+)\.png') { $known[$Matches[1]] = $true } } }
     $dl = Join-Path $env:USERPROFILE 'Downloads'
     if (Test-Path $dl) {
-        Get-ChildItem $dl -File | Where-Object { $_.Name -match '^k\d\d( \(\d+\))?\.(png|jpe?g)$' -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | Sort-Object LastWriteTime | ForEach-Object {
-            $dest = Join-Path $kadDir (($_.BaseName -replace ' \(\d+\)$', '') + $_.Extension.ToLower())
+        Get-ChildItem $dl -File | Where-Object { $_.Name -match $dlRx -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | Sort-Object LastWriteTime | ForEach-Object {
+            $dest = Join-Path $dir (($_.BaseName -replace ' \(\d+\)$', '') + $_.Extension.ToLower())
             Move-Item -LiteralPath $_.FullName -Destination $dest -Force
-            Write-Host "  [kad] $($_.Name) dipindah dari Downloads"
+            Write-Host "  [$tag] $($_.Name) dipindah dari Downloads"
         }
     }
-    Get-ChildItem $kadDir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g|webp)$' } | ForEach-Object {
-        $kid = ($_.BaseName.Trim().ToLower() -replace '[\s\-]+', '_')
-        if ($kid -match '^(k\d\d)_') { $kid = $Matches[1] }                    # "k01_kutu_huruf" -> k01
-        if ($kknown.Count -and -not $kknown.ContainsKey($kid)) { Write-Host "  [kad] $($_.Name): nama tidak dikenali (guna k01 ... k96)"; return }
-        $out = Join-Path $kadDir ($kid + '.jpg')
-        if ($_.Extension -eq '.webp') { Write-Host "  [kad] $($_.Name): simpan sebagai .png atau .jpg"; return }
+    Get-ChildItem $dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g|webp)$' } | ForEach-Object {
+        $id = ($_.BaseName.Trim().ToLower() -replace '[\s\-]+', '_')
+        if ($id -match '^(k\d\d)_') { $id = $Matches[1] }                      # "k01_kutu_huruf" -> k01
+        if ($known.Count -and -not $known.ContainsKey($id)) { Write-Host "  [$tag] $($_.Name): nama tidak dikenali ($hint)"; return }
+        $out = Join-Path $dir ($id + '.jpg')
+        if ($_.Extension -eq '.webp') { Write-Host "  [$tag] $($_.Name): simpan sebagai .png atau .jpg"; return }
         $bytes = [System.IO.File]::ReadAllBytes($_.FullName)
         $ms = New-Object System.IO.MemoryStream (, $bytes)
         try { $src = [System.Drawing.Image]::FromStream($ms) } catch { $ms.Dispose(); return }
-        $k = [Math]::Min(1.0, 512.0 / [Math]::Max($src.Width, $src.Height))
+        $k = [Math]::Min(1.0, $max / [Math]::Max($src.Width, $src.Height))
         if ($k -ge 1.0 -and $_.FullName -eq $out) { $src.Dispose(); $ms.Dispose(); return }
         $w = [Math]::Max(1, [int][Math]::Round($src.Width * $k)); $h = [Math]::Max(1, [int][Math]::Round($src.Height * $k))
         $dst = New-Object System.Drawing.Bitmap $w, $h
@@ -201,14 +201,18 @@ if (Test-Path $kadDir) {
         $g.DrawImage($src, 0, 0, $w, $h); $g.Dispose(); $src.Dispose(); $ms.Dispose()
         Save-Image $dst $out 'jpg'; $dst.Dispose()
         if ($_.FullName -ne $out) { Remove-Item -LiteralPath $_.FullName }
-        Write-Host ("  [kad] {0}.jpg: {1}x{2}, {3:N0} KB" -f $kid, $w, $h, ((Get-Item $out).Length / 1KB))
+        Write-Host ("  [$tag] {0}.jpg: {1}x{2}, {3:N0} KB" -f $id, $w, $h, ((Get-Item $out).Length / 1KB))
     }
-    $khave = [ordered]@{}
-    Get-ChildItem $kadDir -Filter *.jpg | Sort-Object Name | ForEach-Object { $khave[$_.BaseName] = $_.Name + '?v=' + $_.Length }
-    $kjson = '{' + (($khave.Keys | ForEach-Object { '"' + $_ + '":"' + $khave[$_] + '"' }) -join ',') + '}'
-    $kmf = Join-Path $kadDir 'senarai.json'
-    if (-not (Test-Path $kmf) -or [System.IO.File]::ReadAllText($kmf) -ne $kjson) {
-        [System.IO.File]::WriteAllText($kmf, $kjson, (New-Object System.Text.UTF8Encoding $false))
-        Write-Host "  [kad] senarai.json dikemas kini ($($khave.Count) gambar kad)"
+    $have = [ordered]@{}
+    Get-ChildItem $dir -Filter *.jpg | Sort-Object Name | ForEach-Object { $have[$_.BaseName] = $_.Name + '?v=' + $_.Length }
+    $json = '{' + (($have.Keys | ForEach-Object { '"' + $_ + '":"' + $have[$_] + '"' }) -join ',') + '}'
+    $mf = Join-Path $dir 'senarai.json'
+    if (-not (Test-Path $mf) -or [System.IO.File]::ReadAllText($mf) -ne $json) {
+        [System.IO.File]::WriteAllText($mf, $json, (New-Object System.Text.UTF8Encoding $false))
+        Write-Host "  [$tag] senarai.json dikemas kini ($($have.Count) gambar)"
     }
 }
+# assets\kad: Ilmon card art (k01..k96), 512px.
+Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^k\d\d( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96'
+# assets\seram: jumpscare faces for Sekolah Berhantu (muka_putih, muka_pontianak, muka_toyol + "2" variants), 900px.
+Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 900.0 '^muka_(putih|pontianak|toyol)2?( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-SERAM.txt'
