@@ -921,7 +921,7 @@ function confirmBox(opt){
       center:true, icon:opt.danger?'fa-triangle-exclamation':'fa-circle-question',
       title: opt.title || 'Pengesahan',
       body: '<div class="text-[14px] leading-relaxed">'+opt.message+'</div>',
-      footer: '<button class="btn clip-s flex-1" data-x="no">Batal</button>' +
+      footer: '<button class="btn clip-s flex-1" data-x="no">'+esc(opt.noText||'Batal')+'</button>' +
               '<button class="btn '+(opt.danger?'btn-d':'btn-o')+' clip-s flex-1" data-x="yes">'+esc(opt.okText||'Teruskan')+'</button>',
       onClose: () => { if(!done) res(false); }
     });
@@ -3832,8 +3832,9 @@ function tqParse(raw, sj, bab){
 const tqHasExp = q => !!(q && ((q.ejek || []).some(Boolean) || q.huraian));
 
 /* Dua langkah, satu modal: jana prompt di atas, tampal hasil di bawah. */
-function tqBuild(){
-  const sj = S.ui.qzSubject || S.ui.activeSubjectId || ((S.subjects[0] || {}).id || '');
+function tqBuild(opt){
+  opt = opt || {};
+  const sj = opt.sj || S.ui.qzSubject || S.ui.activeSubjectId || ((S.subjects[0] || {}).id || '');
   if (!sj) return toast('Pilih subjek di bahagian atas dahulu.', null, true);
   const sjn = subjName(sj);
   S.ui.tqInfo = S.ui.tqInfo || '';
@@ -3859,11 +3860,15 @@ function tqBuild(){
             (+S.ui.tqN === v ? ' selected' : '') + '>' + v + ' soalan</option>').join('') + '</select>' +
         '<button class="btn btn-o clip-s w-full mt-2 !py-2 text-[13px]" data-tq="copy">' +
           '<i class="fa-solid fa-clipboard"></i> SALIN PROMPT</button>' +
-        '<div class="text-[10px] text-muted leading-snug mt-1">Tampal prompt itu ke mana-mana model AI (ChatGPT, ' +
-          'Gemini, Claude). Ia akan memulangkan JSON.</div>' +
+        '<div class="flex gap-2 mt-2">' +
+          '<button class="btn clip-s flex-1 !py-2 text-[12px]" data-tq="ai" data-u="https://gemini.google.com/app"><i class="fa-solid fa-copy text-cyan"></i> Salin &amp; buka Gemini</button>' +
+          '<button class="btn clip-s flex-1 !py-2 text-[12px]" data-tq="ai" data-u="https://chatgpt.com/"><i class="fa-solid fa-copy text-cyan"></i> Salin &amp; buka ChatGPT</button></div>' +
+        '<div class="text-[10px] text-muted leading-snug mt-1">Tampal prompt itu ke model AI (Gemini, ChatGPT, Claude). Bila siap, salin jawapan JSON penuhnya ' +
+          'dan kembali ke sini — tekan <b>TAMPAL DARI PAPAN KLIP</b>.</div>' +
       '</div>' +
       '<div class="panel clip-s p-2 mt-2" style="border-color:#00F0FF">' +
         '<div class="text-[12px] font-bold text-cyan"><span class="num">LANGKAH 2</span> · TAMPAL HASIL</div>' +
+        '<button class="btn clip-s w-full mt-2 !py-2 text-[13px]" data-tq="paste" style="border-color:#00F0FF"><i class="fa-solid fa-paste text-cyan"></i> TAMPAL DARI PAPAN KLIP</button>' +
         '<label class="lbl mt-2 block">BAB / TAJUK (PILIHAN)</label>' +
         '<input id="tqBab" class="fld clip-s mt-1 text-[13px]" placeholder="dikosongkan = ikut tajuk dalam JSON">' +
         '<textarea id="tqJson" rows="7" class="fld clip-s num !text-[11px] mt-2" placeholder=\'{ "tajuk": "...", "soalan": [ ... ] }\'></textarea>' +
@@ -3897,16 +3902,29 @@ function tqBuild(){
   bd.addEventListener('click', e => {
     const b = e.target.closest('[data-tq]'); if (!b) return;
     keep();
+    const prompt = () => tqPrompt(sj, S.ui.tqInfo, S.ui.tqN, subjDskp(sj) ? S.ui.tqScope : '');
     if (b.dataset.tq === 'copy')
-      return copyText(tqPrompt(sj, S.ui.tqInfo, S.ui.tqN, subjDskp(sj) ? S.ui.tqScope : ''),
-        'Prompt ' + S.ui.tqN + ' soalan (' + sjn + ') disalin.');
+      return copyText(prompt(), 'Prompt ' + S.ui.tqN + ' soalan (' + sjn + ') disalin.');
+    if (b.dataset.tq === 'ai'){
+      copyText(prompt(), 'Prompt disalin — tampal (Ctrl+V / tekan lama) dalam AI yang dibuka.');
+      return window.open(b.dataset.u, '_blank', 'noopener');
+    }
+    if (b.dataset.tq === 'paste'){
+      if (!navigator.clipboard || !navigator.clipboard.readText) return toast('Pelayar ini tidak benarkan tampal automatik — tekan lama dalam kotak di bawah dan pilih Tampal.', null, true);
+      return navigator.clipboard.readText().then(t => {
+        const ta = $('#tqJson', bd); if (!ta) return;
+        ta.value = t || ''; ta.dispatchEvent(new Event('input', { bubbles:true }));
+      }).catch(() => toast('Tampal disekat — tekan lama dalam kotak di bawah dan pilih Tampal.', null, true));
+    }
     if (b.dataset.tq === 'go'){
       let qs;
       try { qs = tqParse(($('#tqJson', bd) || {}).value, sj, ($('#tqBab', bd) || {}).value); }
       catch (err){ return toast(err.message || 'JSON tidak sah.', null, true); }
       S.quiz = (S.quiz || []).concat(qs);
       save(true);
-      closeModal(id); closeTop(); quizManager();
+      closeModal(id);
+      if (opt.from === 'game'){ renderTab(); if (LOBBY) LOBBY.repaint(); }
+      else { closeTop(); quizManager(); }
       toast(qs.length + ' soalan dibina · ' + qs.filter(tqHasExp).length + ' dengan huraian');
     }
   });
@@ -3914,19 +3932,49 @@ function tqBuild(){
 }
 
 /* ---------- SENARAI SOALAN (papar & padam sahaja) ---------- */
+/* Penapis Bank Soalan ikut DSKP: S.ui.qzF = '' (semua) | 'today' | 'k<SK>' | 'none' ; S.ui.qzP = kod SP */
+function qzFilter(sj){
+  const all = qBank(sj), b = subjDskp(sj) ? subjBook(sj) : null, I = todayQInfo(sj) || { codes:[] };
+  let f = S.ui.qzF == null ? (I.codes.length ? 'today' : '') : S.ui.qzF;
+  let list = all, label = 'semua soalan ' + subjName(sj), scope = '', sks = [];
+  const t = I.codes.length && b ? lessonTopic(S.ui.activeClassId, sj, recDate()) : null;
+  if (f === 'today' && t){ sks = t.sks; list = all.filter(q => q.sk && I.codes.indexOf(q.sk) >= 0); label = 'tajuk hari ini (SK ' + I.codes.join(', ') + ')'; scope = 'now'; }
+  else if (/^k\d+$/.test(f) && b && b.sk[+f.slice(1)]){ const k = b.sk[+f.slice(1)], c = skCode(k.sk); sks = [k]; list = all.filter(q => q.sk === c); label = 'SK ' + c; scope = f; }
+  else if (f === 'none'){ list = all.filter(q => !q.sk); label = 'soalan tanpa SK/SP'; }
+  else f = '';
+  const spOpts = [];
+  sks.forEach(k => k.sp.forEach((p, j) => { const c = skCode(p); if (c) spOpts.push({ c, txt:p, scope:'p' + k.i + '_' + j }); }));
+  const sp = spOpts.find(o => o.c === S.ui.qzP);
+  const base = list;
+  if (sp){ list = list.filter(q => q.sp === sp.c); label = 'SP ' + sp.c; scope = sp.scope; }
+  return { all, b, I, f, sp, spOpts, base, list, label, scope };
+}
 function quizManager(){
   const sj = S.ui.qzSubject || S.ui.activeSubjectId || ((S.subjects[0]||{}).id || '');
-  const list = (S.quiz || []).filter(q => q.subjectId === sj);
+  const F = qzFilter(sj), list = F.list, cnt = fn => F.all.filter(fn).length;
   const nexp = list.filter(tqHasExp).length;
+  const opt = (v, l, on) => '<option value="' + v + '"' + (on ? ' selected' : '') + '>' + esc(l) + '</option>';
+  const filt = !subjDskp(sj) ? '' : !F.b ? '<div class="text-[11px] text-muted mt-2"><i class="fa-solid fa-spinner fa-spin"></i> Memuat DSKP…</div>' :
+    '<label class="lbl mt-3 block">TAPIS IKUT DSKP (SK)</label><select id="qzF" class="fld clip-s mt-1 !text-[12px]">' +
+      opt('', 'Semua soalan (' + F.all.length + ')', F.f === '') +
+      (F.I.codes.length ? opt('today', '📅 Hari ini: SK ' + F.I.codes.join(', ') + ' (' + F.I.n + ')', F.f === 'today') : '') +
+      F.b.u.map((u, ui) => '<optgroup label="' + esc(shortTxt(u[1] || u[0] || 'Tajuk ' + (ui + 1), 60)) + '">' +
+        F.b.sk.filter(k => k.ui === ui).map(k => { const c = skCode(k.sk); return opt('k' + k.i, 'SK ' + (c || '?') + ' · ' + shortTxt(k.sk.replace(/^[\d.\s]+/, ''), 40) + ' (' + cnt(q => q.sk === c) + ')', F.f === 'k' + k.i); }).join('') + '</optgroup>').join('') +
+      (cnt(q => !q.sk) ? opt('none', 'Tanpa SK/SP (' + cnt(q => !q.sk) + ')', F.f === 'none') : '') + '</select>' +
+    (F.spOpts.length ? '<label class="lbl mt-2 block">STANDARD PEMBELAJARAN (SP)</label><select id="qzP" class="fld clip-s mt-1 !text-[12px]">' +
+      opt('', 'Semua SP (' + F.base.length + ')', !F.sp) +
+      F.spOpts.map(o => opt(o.c, 'SP ' + shortTxt(o.txt, 60) + ' (' + F.base.filter(q => q.sp === o.c).length + ')', F.sp && F.sp.c === o.c)).join('') + '</select>' : '');
   const id = openModal({ icon:'fa-brain', title:'Bank Soalan',
     body:
       (S.subjects.length ? '<label class="lbl">SUBJEK</label><select id="qzSubj" class="fld clip-s mt-1">' +
         S.subjects.map(x=>'<option value="'+x.id+'"'+(x.id===sj?' selected':'')+'>'+esc(x.name)+'</option>').join('') + '</select>'
         : '<div class="text-[12px] text-muted">Cipta subjek dahulu.</div>') +
-      '<button class="btn btn-o clip-s w-full mt-3 !py-2 text-[13px]" data-act="tq-build">' +
-        '<i class="fa-solid fa-wand-magic-sparkles"></i> JANA SOALAN DENGAN AI</button>' +
-      '<div class="num text-[11px] mt-2" style="color:' + (list.length ? '#4ADE80' : '#7E93A8') + '">' +
+      filt +
+      '<button class="btn btn-o clip-s w-full mt-3 !py-2 text-[13px]" data-act="tq-build"' + (F.scope ? ' data-scope="' + F.scope + '"' : '') + '>' +
+        '<i class="fa-solid fa-wand-magic-sparkles"></i> JANA SOALAN ' + (F.scope ? 'UNTUK ' + esc(F.label.toUpperCase()) : 'DENGAN AI') + '</button>' +
+      '<div class="flex items-center gap-2 mt-2"><div class="num text-[11px] flex-1" style="color:' + (list.length ? '#4ADE80' : '#7E93A8') + '">' +
         list.length + ' soalan · ' + nexp + ' dengan ejekan + huraian</div>' +
+        (list.length ? '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="qz-delall" style="border-color:#E23B3B"><i class="fa-solid fa-trash text-[#E23B3B]"></i> Padam semua (' + list.length + ')</button>' : '') + '</div>' +
       (list.length && nexp < list.length
         ? '<div class="text-[10px] text-muted leading-snug mt-1">Soalan tanpa huraian masih boleh dimainkan, ' +
           'tetapi lawan hanya menyebut jawapan betul tanpa menerangkannya.</div>' : '') +
@@ -3937,12 +3985,13 @@ function quizManager(){
           '<div class="flex items-center gap-2 mt-0.5">' +
             (tqHasExp(q) ? '<span class="num text-[9px]" style="color:#A78BFA"><i class="fa-solid fa-comment-dots"></i> HURAIAN</span>'
                          : '<span class="num text-[9px] text-muted"><i class="fa-solid fa-circle-minus"></i> TIADA HURAIAN</span>') +
+            (q.sp || q.sk ? '<span class="num text-[9px] px-1" style="color:#00F0FF;border:1px solid rgba(0,240,255,.4);border-radius:3px">' + (q.sp ? 'SP ' + esc(q.sp) : 'SK ' + esc(q.sk)) + '</span>' : '') +
             (q.chapterId ? '<span class="text-[9px] text-muted truncate">'+esc((S.chapters.find(c=>c.id===q.chapterId)||{}).name||q.chapterId)+'</span>' : '') +
           '</div></div>' +
           (tqHasExp(q) ? '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="qz-see" data-id="'+q.id+'"><i class="fa-solid fa-eye text-cyan"></i></button>' : '') +
           '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="qz-del" data-id="'+q.id+'"><i class="fa-solid fa-trash text-[#E23B3B]"></i></button></div>').join('')
-        : '<div class="text-[12px] text-muted">Belum ada soalan. Tekan <b>JANA SOALAN DENGAN AI</b> di atas — ' +
-          'tiada lagi perlu menaip soalan satu-satu.</div>') + '</div>' });
+        : '<div class="text-[12px] text-muted">' + (F.all.length ? 'Tiada soalan bagi ' + esc(F.label) + '. ' : 'Belum ada soalan. ') +
+          'Tekan butang <b>JANA SOALAN</b> di atas — tiada lagi perlu menaip soalan satu-satu.</div>') + '</div>' });
   return id;
 }
 
@@ -5273,11 +5322,22 @@ function dskpScopeOpts(sj){
   const out = [];
   if (t && t.sks.length) out.push({ v:'now', label:'Minggu ini: ' + t.sks.map(k => skCode(k.sk) || shortTxt(k.sk, 20)).join(', '), sks: t.sks });
   b.u.forEach((u, ui) => out.push({ v:'u' + ui, label: shortTxt((u[1] || u[0] || 'Tajuk ' + (ui + 1)), 60), sks: b.sk.filter(k => k.ui === ui) }));
+  const one = /^[kp]/.test(S.ui.tqScope || '') && dskpScope(sj, S.ui.tqScope);   // skop satu SK / satu SP (dari Bank Soalan)
+  if (one) out.unshift(one);
   return out;
+}
+/* Skop tepat: 'now' | 'u<tajuk>' | 'k<SK>' | 'p<SK>_<SP>' (indeks dalam b.sk) */
+function dskpScope(sj, v){
+  const b = subjBook(sj); if (!b || !v) return null;
+  let m = /^k(\d+)$/.exec(v);
+  if (m){ const k = b.sk[+m[1]]; return k ? { v, label:'SK ' + (skCode(k.sk) || shortTxt(k.sk, 30)) + ' · ' + shortTxt(k.sk, 50), sks:[k] } : null; }
+  m = /^p(\d+)_(\d+)$/.exec(v);
+  if (m){ const k = b.sk[+m[1]], p = k && k.sp[+m[2]]; return p ? { v, label:'SP ' + (skCode(p) || '') + ' · ' + shortTxt(p, 50), sks:[Object.assign({}, k, { sp:[p] })] } : null; }
+  return dskpScopeOpts(sj).find(z => z.v === v) || null;
 }
 function dskpPromptBlock(sj, scope){
   const b = subjBook(sj), x = subj(sj);
-  const o = dskpScopeOpts(sj).find(z => z.v === scope); if (!b || !o) return '';
+  const o = dskpScope(sj, scope); if (!b || !o) return '';
   const lines = ['DSKP: ' + (x.dskpS || '') + ' — ' + formName(x.dskpF || ''), 'TEMA: ' + (o.sks[0].tema || '-'), 'TAJUK: ' + (o.sks[0].tajuk || '-'), 'STANDARD KANDUNGAN & STANDARD PEMBELAJARAN:'];
   o.sks.forEach(k => { lines.push('  SK ' + k.sk); k.sp.forEach(p => lines.push('    SP ' + p)); });
   return lines.join('\n');
@@ -5300,6 +5360,34 @@ function topicalBank(sj){
   if (top.length >= 4) return top;                     // cukup soalan SK/SP hari ini: guna itu sahaja
   bank.prefer = new Set(top.map(q => q.id));           // sedikit: didahulukan, kemudian soalan lain
   return bank;
+}
+/* Status soalan bagi topik DSKP hari ini (untuk notis di tab & menu game) */
+const TODAY_QMIN = 4;
+function todayQInfo(sj){
+  if (!sj) return null;
+  const total = qBank(sj).length;
+  const t = subjDskp(sj) ? lessonTopic(S.ui.activeClassId, sj, recDate()) : null;
+  if (!t || !t.sks.length) return { total, codes:[], n:0 };
+  const codes = t.sks.map(k => skCode(k.sk)).filter(Boolean);
+  return { total, codes, tajuk: t.sks[0].tajuk, n: qBank(sj).filter(q => q.sk && codes.indexOf(q.sk) >= 0).length };
+}
+function todayQNotice(){
+  const sj = S.ui.activeSubjectId, I = todayQInfo(sj); if (!I) return '';
+  const btn = '<button class="btn btn-o clip-s w-full mt-2 !py-2 text-[13px]" data-act="tq-today"><i class="fa-solid fa-wand-magic-sparkles"></i> JANA SOALAN ' +
+    (I.codes.length ? 'TAJUK HARI INI' : 'SEKARANG') + '</button>';
+  if (I.codes.length && I.n >= TODAY_QMIN)
+    return '<div data-nohint="1" class="panel clip-s p-2 mt-3 text-[11px] text-left" style="border-left:3px solid #4ADE80"><i class="fa-solid fa-circle-check" style="color:#4ADE80"></i> ' +
+      '<b>' + I.n + ' soalan</b> untuk tajuk hari ini (SK ' + esc(I.codes.join(', ')) + ') — semua game guna soalan ini.</div>';
+  if (I.codes.length)
+    return '<div data-nohint="1" class="panel clip-s p-3 mt-3 text-left" style="border-color:#FFB347;background:rgba(255,179,71,.08)">' +
+      '<div class="text-[12px] font-bold" style="color:#FFB347"><i class="fa-solid fa-triangle-exclamation"></i> Soalan kuiz untuk tajuk hari ini ' + (I.n ? 'belum cukup (' + I.n + ')' : 'belum ada') + '</div>' +
+      '<div class="text-[11px] text-muted mt-1 leading-snug">' + esc(I.tajuk || '') + ' · SK ' + esc(I.codes.join(', ')) + '. ' +
+        (I.total ? 'Buat masa ini game guna soalan lain dari bank (' + I.total + ').' : 'Bank soalan kosong — game guna soalan matematik rawak.') + '</div>' + btn + '</div>';
+  if (!I.total)
+    return '<div data-nohint="1" class="panel clip-s p-3 mt-3 text-left" style="border-color:#FFB347;background:rgba(255,179,71,.08)">' +
+      '<div class="text-[12px] font-bold" style="color:#FFB347"><i class="fa-solid fa-triangle-exclamation"></i> Bank soalan ' + esc(subjName(sj)) + ' kosong</div>' +
+      '<div class="text-[11px] text-muted mt-1">Game guna soalan matematik rawak sehingga soalan dijana.</div>' + btn + '</div>';
+  return '';
 }
 
 /* ============ TAYANG LANGSUNG (game telefon → tablet/projektor) ============
@@ -5728,7 +5816,7 @@ function gameLobby(k){
     const t = teamOf(o.team);
     let h = '';
     if (view === 'main'){
-      h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() + (def.main ? def.main() : '') +
+      h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() + todayQNotice() + (def.main ? def.main() : '') +
         def.starts.map(([label], i) => '<button class="lb-btn go" data-lb="go' + i + '"' + (ready ? '' : ' disabled') + '>' + label + '</button>').join('') +
         '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>' +
         (def.menu || []).map(([v, label, r]) => '<button class="lb-btn" data-lb="' + v + '">' + label + '<span class="r">' + r + '</span></button>').join('') +
@@ -6929,7 +7017,7 @@ function viewGame(){
   const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
-  return tabs +                                                     // kumpulan & tetapan dipilih dalam menu game
+  return tabs + todayQNotice() +                                    // kumpulan & tetapan dipilih dalam menu game
     (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
@@ -9730,8 +9818,23 @@ const ACTS = {
   'mtx-add': mtxAdd, 'mtx-edit': d=>mtxEdit(d.id), 'mtx-del': d=>mtxDel(d.id), 'mtx-copy': mtxCopy,
   'bdg-add': ()=>bdgForm(null), 'bdg-edit': d=>bdgForm(S.badges.find(b=>b.id===d.id)), 'bdg-del': d=>bdgDel(d.id),
   'frames': frameManager,
-  'quiz': () => quizManager(),
-  'tq-build': () => tqBuild(),
+  'quiz': () => { S.ui.qzF = null; S.ui.qzP = ''; quizManager(); },
+  'tq-build': d => { if (d.scope) S.ui.tqScope = d.scope; tqBuild(); },
+  'tq-today': () => {
+    const sj = S.ui.activeSubjectId; if (!sj) return toast('Pilih subjek dahulu.', null, true);
+    S.ui.qzSubject = sj; if (todayQInfo(sj).codes.length) S.ui.tqScope = 'now';
+    tqBuild({ sj, from:'game' });
+  },
+  'qz-delall': async () => {
+    const sj = S.ui.qzSubject || S.ui.activeSubjectId, F = qzFilter(sj), list = F.list;
+    if (!list.length) return;
+    const ok = await confirmBox({ danger:true, title:'Padam Semua Soalan', okText:'Ya, padam', noText:'Tidak',
+      message:'Adakah anda pasti mahu memadam <b>' + list.length + ' soalan</b> bagi <b>' + esc(F.label) + '</b>?<br><span class="text-[12px] text-muted">Tindakan ini tidak boleh dibatalkan.</span>' });
+    if (!ok) return;
+    const gone = new Set(list.map(q => q.id));
+    S.quiz = (S.quiz || []).filter(q => !gone.has(q.id));
+    save(true); closeTop(); quizManager(); toast(list.length + ' soalan dipadam.');
+  },
   'qz-see': d => quizSee(d.id),
   'qz-del': async d => {
     const q = (S.quiz||[]).find(x => x.id === d.id); if (!q) return;
@@ -9782,7 +9885,7 @@ const ACTS = {
   'card-guide': () => cardGuide(),
   'run-stu': runStuPick,
   'run-start': runStart,
-  'qbank': () => quizManager(),
+  'qbank': () => { S.ui.qzSubject = S.ui.activeSubjectId; S.ui.qzF = null; S.ui.qzP = ''; quizManager(); },
   'att-day': d => { attMove(+d.id); },
   'att-today': () => { S.ui.attDate = todayKey(); save(); renderTab(); },
   'att-set': d => attSet(d.id, d.v),
@@ -9856,7 +9959,9 @@ document.addEventListener('change', e => {
   if (t.id === 'ctxClass'){ S.ui.activeClassId = t.value; selReset(); STU_Q = ''; REC_DATE = null; save(); renderAll(); autoSubject(); }
   if (t.id === 'ctxSubject'){ S.ui.activeSubjectId = t.value; REC_DATE = null; save(); renderAll(); }
   if (t.id === 'mtxClass'){ S.ui.mtxClass = t.value; save(); renderTab(); }
-  if (t.id === 'qzSubj'){ S.ui.qzSubject = t.value; save(); closeTop(); quizManager(); }
+  if (t.id === 'qzSubj'){ S.ui.qzSubject = t.value; S.ui.qzF = null; S.ui.qzP = ''; save(); closeTop(); quizManager(); }
+  if (t.id === 'qzF'){ S.ui.qzF = t.value; S.ui.qzP = ''; closeTop(); quizManager(); }
+  if (t.id === 'qzP'){ S.ui.qzP = t.value; closeTop(); quizManager(); }
   if (t.id === 'ttClass'){ S.ui.ttClass = t.value; save(); renderTab(); }
   if (t.id === 'ttSubject'){ S.ui.ttSubject = t.value; save(); renderTab(); }
   if (t.id === 'mtxSubject'){ S.ui.mtxSubject = t.value; save(); renderTab(); }
