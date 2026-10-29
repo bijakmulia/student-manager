@@ -5778,7 +5778,7 @@ const GAME_LOBBY = {
       return false;
     },
     how: () => '<b>🪜 Tangga Ilmon</b> — 4 kumpulan, 13 kad setiap satu. <b>Habiskan kad dahulu untuk menang.</b><br><br>' +
-      '<b>Kombo:</b> Tunggal · Pasangan (2 nombor sama) · Trio (3 sama) · Turutan 3–5 nombor berturut · <b>Turutan Elemen</b> (semua elemen sama, menang turutan biasa) · <b>💣 BOM</b> (4 nombor sama, atau Turutan Elemen 5 kad) memecahkan apa-apa kombo.<br><br>' +
+      '<b>Kombo:</b> Tunggal · Pasangan (2 nombor sama) · Trio (3 sama) · Turutan 3–5 nombor berturut · <b>Turutan Elemen</b> (semua elemen sama, menang turutan biasa) · <b>Trio + Pasangan</b> (5 kad, juga kalahkan Turutan 5 biasa) · <b>💣 BOM</b> (4 nombor sama, atau Turutan Elemen 5 kad) memecahkan apa-apa kombo · <b>👑 Tangga Diraja</b> 1-2-3-4-5 elemen sama = paling kuat.<br>Tunggal nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡.<br><br>' +
       '<b>Cara main:</b> pembuka meja letak apa-apa kombo. Kumpulan seterusnya mesti letak kombo <b>jenis & bilangan kad sama tetapi lebih tinggi</b> — atau <b>LEPAS</b> (keluar dari meja itu). Bila semua lain lepas, kombo terakhir menang meja dan pemenang membuka meja baharu.<br><br>' +
       '<b>🧠 Kuiz:</b> setiap meja baharu ada kuiz (banyak peranti: semua kumpulan serentak; 1 peranti: bergilir). Betul = +1⭐, terpantas / dalam 8 saat = +2⭐. Pada giliran sendiri: <b>⭐ Tukar</b> 1 kad lemah dengan kad baharu, atau <b>⭐⭐ Buang</b> 1 kad terus.<br><br>' +
       '<b>📺 1 peranti</b> — bergilir, tangan disembunyikan (tekan LIHAT KAD). <b>📱 Banyak peranti</b> — peranti ini papan projektor; setiap kumpulan masuk kod bilik di telefon.' +
@@ -6305,6 +6305,7 @@ function kadBake(c){
 /* ---------- TANGGA ILMON: kombo menaik ----------
    Tunggal (nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡) · Pasangan · Trio · Trio + Pasangan (5 kad)
    Turutan 3–5 (nombor berturut) · Turutan Elemen (semua elemen sama — menang mana-mana turutan biasa yang sama panjang)
+   5 kad: Turutan biasa < Trio + Pasangan < 💣 Turutan Elemen 5 < 👑 Tangga Diraja (1–2–3–4–5 elemen sama, paling kuat)
    💣 BOM: 4 nombor sama, atau Turutan Elemen 5 kad — memecahkan apa-apa kombo. Lawan = jenis & bilangan kad sama, nilai lebih tinggi. */
 const TG_NEXT = { air: 'alam', alam: 'api', api: 'kilat', kilat: 'air' };   // elemen yang mengalahkan (Tunggal nombor sama)
 function tgEval(cards){
@@ -6325,18 +6326,20 @@ function tgEval(cards){
   }
   if (n >= 3 && nums.every((x, i) => !i || x === nums[i - 1] + 1)){
     const lo = nums[0], hi = nums[n - 1];
-    if (n === 5 && oneEl) return { t: 'bom', len: 5, r: hi, bomb: 2, el: true, name: '💣 BOM Turutan Elemen ' + lo + '–' + hi };
+    if (n === 5 && oneEl) return lo === 1 ? { t: 'bom', len: 5, r: hi, bomb: 3, el: true, name: '👑 TANGGA DIRAJA 1–5' } :   // kombo paling kuat
+      { t: 'bom', len: 5, r: hi, bomb: 2, el: true, name: '💣 BOM Turutan Elemen ' + lo + '–' + hi };
     return { t: 'turutan', len: n, r: hi + (oneEl ? 100 : 0), el: oneEl, name: (oneEl ? 'Turutan Elemen ' : 'Turutan ') + lo + '–' + hi };
   }
   return null;
 }
 const tgBeats = (a, b) => !a ? false : !b ? true : a.bomb ? (!b.bomb || a.bomb > b.bomb || (a.bomb === b.bomb && a.r > b.r)) :
-  (!b.bomb && a.t === b.t && a.len === b.len && (a.r > b.r || (a.t === 'tunggal' && a.r === b.r && TG_NEXT[b.e] === a.e)));
+  (!b.bomb && ((a.t === 'penuh' && b.t === 'turutan' && b.len === 5 && !b.el) ||        // Trio + Pasangan kalahkan Turutan 5 biasa
+    (a.t === b.t && a.len === b.len && (a.r > b.r || (a.t === 'tunggal' && a.r === b.r && TG_NEXT[b.e] === a.e)))));
 const TG_T = { pasangan: 'Pasangan', trio: 'Trio' };
-const tgNeed = b => !b ? 'Buka meja: letak apa-apa kombo' : b.bomb ? 'Hanya 💣 BOM lebih kuat boleh lawan' :
+const tgNeed = b => !b ? 'Buka meja: letak apa-apa kombo' : b.bomb === 3 ? '👑 Tangga Diraja tidak boleh dikalahkan — LEPAS' : b.bomb ? 'Hanya 💣 BOM lebih kuat boleh lawan' :
   b.t === 'tunggal' ? 'Perlu Tunggal > ' + b.r + ', atau ' + b.r + elemOf(TG_NEXT[b.e]).ico + ' — atau 💣 BOM' :
   b.t === 'penuh' ? 'Perlu Trio + Pasangan dengan trio > ' + b.r + ' — atau 💣 BOM' :
-  'Perlu ' + (TG_T[b.t] || 'Turutan ' + b.len + ' kad' + (b.el ? ' elemen sama' : '')) + ' lebih tinggi daripada ' + (b.r % 100) + (b.t === 'turutan' && !b.el ? ' (atau Turutan Elemen ' + b.len + ' kad)' : '') + ' — atau 💣 BOM';
+  'Perlu ' + (TG_T[b.t] || 'Turutan ' + b.len + ' kad' + (b.el ? ' elemen sama' : '')) + ' lebih tinggi daripada ' + (b.r % 100) + (b.t === 'turutan' && !b.el ? ' (atau Turutan Elemen ' + b.len + ' kad' + (b.len === 5 ? ', atau Trio + Pasangan' : '') + ')' : '') + ' — atau 💣 BOM';
 /* semakan kad di Zon Kombo: { ok, label, bomb } */
 function tgCheck(cards, top, turn){
   const ev = cards.length ? tgEval(cards) : null;
