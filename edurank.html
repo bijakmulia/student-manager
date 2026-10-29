@@ -866,6 +866,19 @@ function setSyncIcon(mode){
 /* ---------- MODAL MANAGER ---------- */
 const MODALS = [];
 function lockBody(){ document.body.style.overflow='hidden'; }
+/* Orientasi: menu app kekal potret (manifest), tetapi semasa game telefon boleh dipusing ke landskap.
+   Hanya untuk app dipasang pada peranti sentuh; jika kunci 'any' ditolak, cuba skrin penuh dahulu. */
+let ORIENT_FS = false;
+function orientFree(){
+  const so = screen.orientation, app = ['standalone','fullscreen','minimal-ui'].some(m => matchMedia('(display-mode: ' + m + ')').matches);
+  if (!so || !so.lock || !app || !matchMedia('(pointer: coarse)').matches) return;
+  so.lock('any').catch(() => { const de = document.documentElement; if (document.fullscreenElement || !de.requestFullscreen) return;
+    de.requestFullscreen({ navigationUI: 'hide' }).then(() => { ORIENT_FS = true; return so.lock('any'); }).catch(() => {}); });
+}
+function orientBack(){
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e){}
+  if (ORIENT_FS && document.fullscreenElement && document.exitFullscreen){ ORIENT_FS = false; document.exitFullscreen().catch(() => {}); }
+}
 function unlockBody(){ if(!MODALS.length) document.body.style.overflow=''; }
 
 function openModal(opt){
@@ -6579,6 +6592,7 @@ function kmStyle(){ if (!document.getElementById('kmCss')){ const s = document.c
 /* seats: [{ id, bot }] 4 tempat · opt: { multi (peranti ini = papan projektor, setiap kumpulan sertai dengan kod 4 angka), lvl } */
 async function komboStart(seats, opt){
   opt = opt || {};
+  orientFree();
   seats = (seats || []).filter(t => t && teamOf(t.id)).slice(0, 4);
   if (seats.length < 2) return toast('Perlu sekurang-kurangnya 2 kumpulan.', null, true);
   toast('Menyusun kad…');
@@ -7071,7 +7085,7 @@ function komboRun(ids, opt, net){
     pub();
   }
   function quit(){
-    over = true; clearTimeout(rto); liveEnd(live);
+    over = true; clearTimeout(rto); liveEnd(live); orientBack();
     if (net){ clearTimeout(pubT); offs.forEach(f => { try { f(); } catch(e){} }); net.T.set('st', { closed: true, v: Date.now() }); }
     root.remove(); unlockBody(); if (S.ui.tab === 'arena') renderTab();
   }
@@ -7225,7 +7239,8 @@ function komboJoin(code, T){
       r.map((x, i) => '<div class="row"><b style="width:2cqw;color:#F59E0B">' + (i + 1) + '</b><span style="flex:1;text-align:left">' + esc(x.name) + '</span><span>' + (x.n ? '🂠 ' + x.n + ' kad' : '🏆 habis!') + '</span></div>').join('') +
       '<div class="bt"><button data-k="quit">Tutup</button></div></div></div>';
   }
-  function close(){ if (dead) return; dead = true; offs.forEach(f => { try { f(); } catch(e){} }); root.remove(); kmSafe(unlockBody); if (window.S && S.ui && S.ui.tab === 'arena') renderTab(); }
+  orientFree();
+  function close(){ if (dead) return; dead = true; orientBack(); offs.forEach(f => { try { f(); } catch(e){} }); root.remove(); kmSafe(unlockBody); if (window.S && S.ui && S.ui.tab === 'arena') renderTab(); }
   let prevCur = -1, ended = false;
   offs.push(T.on('st', v => {
     if (dead) return;
@@ -8765,7 +8780,7 @@ function storRun(team){
     '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
   '</div>';
   document.body.appendChild(root); lockBody();
-  const live = liveHost('stor', root, { title: 'Stor Sukan' });
+  const live = liveHost('stor', root, { title: 'Stor Sukan' }); orientFree();
   const $s = q => root.querySelector(q);
 
   /* ---------- keadaan ---------- */
@@ -9153,7 +9168,7 @@ function storRun(team){
     if (STOR && STOR.closed) return;
     if (!over && (good || poor || left)){ over = true; clearInterval(loop); save(); }
     over = true; clearInterval(loop); STOR = null;
-    liveEnd(live); unDrag(); root.remove(); unlockBody();
+    liveEnd(live); unDrag(); root.remove(); unlockBody(); orientBack();
     if (S.ui.tab === 'arena') renderTab();
   }
   root.addEventListener('click', e => {
@@ -9364,6 +9379,7 @@ async function runStart(){
   const o = arenaUi();
   if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
   if (RUN || ESC) return;
+  orientFree();
   let ac = null;
   try { ac = (typeof audCtx === 'function' && audCtx()) || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch(e){}
   RUN = { loading:true };
@@ -9760,7 +9776,7 @@ function runGame(THREE, sid, ac){
     window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
     if (A) A.stop();
     scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); });
-    liveEnd(live); R.dispose(); root.remove(); unlockBody();
+    liveEnd(live); R.dispose(); root.remove(); unlockBody(); orientBack();
     if (S.ui.tab === 'arena') renderTab();
   }
   let last = performance.now();
@@ -10117,6 +10133,7 @@ async function escStart(){
   const o = arenaUi();
   if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
   if (ESC || RUN) return;
+  orientFree();                                    // telefon: benarkan landskap semasa bermain
   /* AudioContext mesti dicipta semasa sentuhan pengguna, sebelum await */
   let ac = null;
   try { ac = (typeof audCtx === 'function' && audCtx()) || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch(e){}
@@ -10124,9 +10141,9 @@ async function escStart(){
   toast('Memuatkan sekolah…');
   let THREE;
   try { THREE = await import(ESC_THREE); }
-  catch(e){ ESC = null; return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
+  catch(e){ ESC = null; orientBack(); return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
   try { escRun(THREE, o.team, ac); }
-  catch(e){ ESC = null; const r = $('#escRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
+  catch(e){ ESC = null; orientBack(); const r = $('#escRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
 function escRun(THREE, sid, ac){
@@ -10142,7 +10159,7 @@ function escRun(THREE, sid, ac){
   const root = document.createElement('div');
   root.id = 'escRoot';
   root.style.cssText = 'position:fixed;inset:0;z-index:950;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit';
-  const ovl = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;';
+  const ovl = 'position:absolute;inset:0;display:none;align-items:safe center;justify-content:center;padding:16px;overflow-y:auto;';   // skrin rendah (telefon landskap): boleh skrol, tidak terpotong
   root.innerHTML =
     '<canvas id="escCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
     '<div id="escSlit" style="position:absolute;inset:0;pointer-events:none;display:none;background:repeating-linear-gradient(180deg,#040507 0 30px,transparent 30px 38px),linear-gradient(90deg,#040507 0 12%,transparent 12% 88%,#040507 88%)"></div>' +
@@ -11045,7 +11062,7 @@ function escRun(THREE, sid, ac){
       if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); if (m.emissiveMap) m.emissiveMap.dispose(); m.dispose(); });
     });
     R.dispose(); liveEnd(live);
-    root.remove(); unlockBody();
+    root.remove(); unlockBody(); orientBack();
     if (answered) save();                            // statistik kuiz pelajar
     if (S.ui.tab === 'arena') renderTab();
   }
