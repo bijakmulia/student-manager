@@ -974,7 +974,8 @@ function restore(snap){ Object.assign(S, JSON.parse(JSON.stringify(snap))); save
 /* ---------- RENDER SHELL ---------- */
 function renderAll(){ renderContext(); renderTab(); }
 function setTab(t){ if (t !== S.ui.tab) selReset(); S.ui.tab = t;
-  $$('.navbtn').forEach(b=>b.classList.toggle('on', b.dataset.nav===t)); renderTab(); $('#main').scrollTo&&window.scrollTo(0,0); save(); }
+  $$('.navbtn').forEach(b=>b.classList.toggle('on', b.dataset.nav===t)); renderTab(); $('#main').scrollTo&&window.scrollTo(0,0); save();
+  if (t === 'arena' && KM_BACK){ KM_BACK = false; arenaUi().game = 'cards'; renderTab(); setTimeout(() => gameLobby('cards'), 250); } }
 function renderTab(){
   const m = $('#main');
   const t = S.ui.tab;
@@ -5717,36 +5718,48 @@ const GAME_LOBBY = {
     starts: [],
     menu: [],
     views: {},
+    noTeam: true,
     main: () => {
-      const K = komboLb(), all = classTeams(); K.ids = K.ids.filter(id => all.some(g => g.id === id)); if (!K.ids.length && arenaUi().team) K.ids = [arenaUi().team];
+      const K = komboLb(), all = classTeams(), seats = kmSeats(K, all);
       const b = (on, a, label) => '<button class="' + (on ? 'on' : '') + '" data-lb="' + a + '">' + label + '</button>';
-      const tot = Math.min(4, Math.max(K.total || 2, K.ids.length, 2)), bots = tot - K.ids.length;
-      return '<div class="lb-note">🎴 <b>Kombo Ilmon</b> — setiap giliran jawab <b>kuiz</b> untuk dapat kad, bina kombo, kemudian <b>serang satu lawan</b> atau <b>bertahan</b>. Kad di tangan = perisai.</div>' +
-        '<div class="lb-sec">MOD</div><div class="lb-seg">' + b(!K.multi, 'kmm:0', '👤 Single (satu peranti)') + b(K.multi, 'kmm:1', '📱 Multiplayer') + '</div>' +
-        '<div class="lb-note">' + (K.multi ? 'Peranti ini membuka <b>bilik</b> dengan kod & kod QR. Kumpulan dipilih sertai dari telefon/tablet sendiri; yang belum sertai bila MULA dikawal robot' + (FB.on ? '.' : ' — <b style="color:#FCA5A5">perlu Firebase aktif</b> (Tetapan → Penyegerakan Firebase).') :
-          'Kumpulan dipilih bergilir di peranti ini. Tempat kosong dimainkan <b>robot</b> (kumpulan lain dalam kelas).') + '</div>' +
-        '<div class="lb-sec">KUMPULAN ' + (K.multi ? 'DENGAN PERANTI' : 'DIKAWAL MURID') + ' (MAKS 4)</div><div class="lb-scroll" style="max-height:30vh">' + all.map(g => '<button class="lb-team' + (K.ids.includes(g.id) ? ' on' : '') + '" data-lb="kmt:' + g.id + '">' + teamAvatar(g.id, 30) +
-          '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">' + esc(g.name) + '</div><div class="m">' + collectionStats(g.id).have + ' kad dalam koleksi</div></div>' + (K.ids.includes(g.id) ? '<span style="color:var(--c);font-weight:800">✓ ' + (K.ids.indexOf(g.id) + 1) + '</span>' : '') + '</button>').join('') + '</div>' +
-        '<div class="lb-sec">JUMLAH PEMAIN (TERMASUK ROBOT)</div><div class="lb-seg">' + [2, 3, 4].map(n => b(tot === n, 'kmn:' + n, n + ' pemain')).join('') + '</div>' +
-        '<div class="lb-sec">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>' +
-        (K.multi ? '<div class="lb-sec">PERANTI INI</div><div class="lb-seg" style="flex-wrap:wrap">' + b(K.host < 0, 'kmh:-1', '📺 Papan / projektor sahaja') +
-          K.ids.map((id, i) => b(K.host === i, 'kmh:' + i, esc(teamName(id)))).join('') + '</div>' : '') +
-        '<button class="lb-btn go" data-lb="kmgo" style="margin-top:12px">▶ MULA KOMBO ILMON (' + tot + ' pemain' + (bots > 0 ? ' · ' + bots + ' robot' : '') + ')</button>';
+      let h = '<div class="lb-sec">CARA MAIN</div><div class="lb-seg">' + b(!K.multi, 'kmm:0', '📺 1 peranti') + b(K.multi, 'kmm:1', '📱 Banyak peranti') + '</div>' +
+        '<div class="lb-note">' + (K.multi ? 'Peranti ini jadi <b>papan projektor</b>. Setiap kumpulan imbas <b>kod QR</b> dengan telefon sendiri dan masuk <b>bilik</b> kumpulannya. Bilik yang masih kosong bila MULA dimainkan robot.' +
+          (FB.on ? '' : ' <b style="color:#FCA5A5">Perlu Firebase aktif (Tetapan → Penyegerakan Firebase).</b>') :
+          'Semua bermain <b>bergilir di peranti ini</b>. Tetapkan setiap tempat sebagai <b>murid</b> atau <b>robot</b>.') + '</div>';
+      if (all.length < 4) return h + '<div class="lb-note" style="color:#FCA5A5;margin-top:10px">⚠️ Kombo Ilmon perlukan <b>4 kumpulan</b> (yang ada ahli) dalam kelas ini — sekarang ada <b>' + all.length + '</b>.</div>' +
+        '<button class="lb-btn go" data-lb="kmgrp" style="margin-top:10px">➕ Cipta kumpulan di tab KUMPULAN</button>' +
+        '<div class="lb-note">Selepas mencipta kumpulan, tekan <b>GAME</b> — skrin ini dibuka semula dengan senarai terkini.</div>';
+      const nb = K.multi ? 0 : seats.filter(x => x.bot).length;
+      h += '<div class="lb-sec">' + (K.multi ? '4 BILIK' : '4 PEMAIN') + '</div>' + seats.map((x, i) =>
+        '<div class="lb-team" style="cursor:default">' + teamAvatar(x.id, 30) +
+        '<button data-lb="kms:' + i + '" style="flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;padding:0"><div style="font-weight:800;font-size:14px">' + (i + 1) + '. ' + esc(teamName(x.id)) + '</div>' +
+          '<div class="m">' + (K.multi ? 'Bilik ' + (i + 1) : x.bot ? 'dimainkan robot' : 'dimainkan murid') + (all.length > 4 ? ' · ketik nama untuk tukar kumpulan' : '') + '</div></button>' +
+        (K.multi ? '<span style="font-size:12px;font-weight:800;color:#7DD3FC">📱 imbas QR</span>' :
+          '<div class="lb-seg" style="margin:0;flex:none">' + b(!x.bot, 'kmb:' + i + ':0', '👤 Murid') + b(x.bot, 'kmb:' + i + ':1', '🤖 Robot') + '</div>') + '</div>').join('');
+      if (!K.multi) h += '<div class="lb-sec">PILIHAN CEPAT</div><div class="lb-seg" style="flex-wrap:wrap">' +
+        [[4, '4 murid'], [2, '2 murid + 2 robot'], [1, '1 murid + 3 robot'], [0, 'Semua robot']].map(([n, l]) => b(seats.every((x, i) => x.bot === (i >= n)), 'kmp:' + n, l)).join('') + '</div>';
+      if (K.multi || nb) h += '<div class="lb-sec">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>';
+      return h + '<button class="lb-btn go" data-lb="kmgo" style="margin-top:12px">' + (K.multi ? '▶ BUKA 4 BILIK (papan projektor)' : '▶ MULA (' + (4 - nb) + ' murid · ' + nb + ' robot)') + '</button>';
     },
     act: (a, b, x) => {
-      const K = komboLb();
-      if (a.indexOf('kmt:') === 0){ const id = a.slice(4), i = K.ids.indexOf(id); if (i >= 0) K.ids.splice(i, 1); else if (K.ids.length < 4){ K.ids.push(id); K.total = Math.max(K.total || 2, K.ids.length); } else toast('Maksimum 4 kumpulan.', null, true); save(); x.paint(); return true; }
+      const K = komboLb(), all = classTeams(), seats = kmSeats(K, all);
       if (a.indexOf('kmm:') === 0){ K.multi = a.slice(4) === '1'; save(); x.paint(); return true; }
-      if (a.indexOf('kmh:') === 0){ K.host = +a.slice(4); save(); x.paint(); return true; }
-      if (a.indexOf('kmn:') === 0){ const n = +a.slice(4); if (n < K.ids.length) return toast('Kurangkan kumpulan dipilih dahulu.', null, true), true; K.total = n; save(); x.paint(); return true; }
+      if (a.indexOf('kms:') === 0){                     // tukar kumpulan bagi tempat ini (kumpulan yang belum dipakai)
+        const i = +a.slice(4), used = seats.map(t => t.id), free = all.filter(g => !used.includes(g.id));
+        if (!free.length) return true;
+        const k = all.findIndex(g => g.id === seats[i].id), nx = all.slice(k + 1).concat(all.slice(0, k)).find(g => !used.includes(g.id));
+        seats[i].id = nx.id; save(); x.paint(); return true; }
+      if (a.indexOf('kmb:') === 0){ const [, i, v] = a.split(':'); seats[+i].bot = v === '1'; save(); x.paint(); return true; }
+      if (a.indexOf('kmp:') === 0){ const n = +a.slice(4); seats.forEach((t, i) => t.bot = i >= n); save(); x.paint(); return true; }
       if (a.indexOf('kml:') === 0){ K.lvl = a.slice(4); save(); x.paint(); return true; }
+      if (a === 'kmgrp'){ x.close(); KM_BACK = true; setTab('groups'); setTimeout(() => toast('Cipta 4 kumpulan & masukkan ahli, kemudian tekan GAME untuk kembali ke Kombo Ilmon.'), 300); return true; }
       if (a === 'kmgo'){
-        if (!K.ids.length){ toast('Pilih sekurang-kurangnya satu kumpulan.', null, true); return true; }
-        x.close(); komboStart(K.ids.slice(), { multi: !!K.multi, host: K.multi && K.host < K.ids.length ? K.host : -1, total: Math.max(K.total || 2, K.ids.length, 2), lvl: K.lvl }); return true;
+        if (all.length < 4){ toast('Perlu 4 kumpulan dalam kelas ini.', null, true); return true; }
+        x.close(); komboStart(seats.map(t => ({ id: t.id, bot: !!t.bot })), { multi: !!K.multi, lvl: K.lvl }); return true;
       }
       return false;
     },
-    how: () => '<b>🎴 Kombo Ilmon</b> — 2 hingga 4 pemain (kumpulan atau robot). Setiap giliran:<br>' +
+    how: () => '<b>🎴 Kombo Ilmon</b> — 4 pemain — <b>📺 1 peranti</b> (setiap tempat murid atau robot, bergilir) atau <b>📱 banyak peranti</b> (peranti ini papan projektor, setiap kumpulan masuk biliknya dengan kod QR). Setiap giliran:<br>' +
       '1️⃣ <b>KUIZ +KAD</b> (30 saat): betul = buka pek 4 kad, pilih <b>2</b> (jawab dalam 10 saat = pilih <b>3</b>), maksimum 8 kad di tangan. Salah = tiada kad (tangan kosong dapat 1 kad simpati).<br>' +
       '2️⃣ <b>SERANG</b> satu lawan dengan kombo: <b>Pasangan</b> ×1.5, <b>Trio</b> ×2, <b>Turutan</b> nombor ×2, <b>Satu Alam</b> ×2.5, <b>Turutan Elemen</b> ×3, <b>Kombo Raja</b> ×4 — atau <b>BERTAHAN</b> (perisai ×1.5, selang satu pusingan) — atau <b>LANGKAU</b>.<br><br>' +
       '<b>🛡 Perisai</b> = kad yang tinggal di tangan (DEF × 2%, maks 60%). Kad yang dihantar hilang — dapatkan kad baharu hanya melalui kuiz!<br>' +
@@ -5836,7 +5849,7 @@ function gameLobby(k){
     if (view === 'main'){
       h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() + todayQNotice() + (def.main ? def.main() : '') +
         def.starts.map(([label], i) => '<button class="lb-btn go" data-lb="go' + i + '"' + (ready ? '' : ' disabled') + '>' + label + '</button>').join('') +
-        '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>' +
+        (def.noTeam ? '' : '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>') +
         (def.menu || []).map(([v, label, r]) => '<button class="lb-btn" data-lb="' + v + '">' + label + '<span class="r">' + r + '</span></button>').join('') +
         '<button class="lb-btn" data-lb="set">⚙️ Tetapan<span class="r">tahap & masa ›</span></button>' +
         '<button class="lb-btn" data-lb="how">📖 Cara Main<span class="r">›</span></button>' +
@@ -6289,7 +6302,18 @@ function komboEval(cards){
   return { name: b[0], mult: b[1], ok: true, el: sameEl ? els[0] : null };
 }
 const komboDmg = (cards, ev, tgtEl) => Math.round(cards.reduce((a, c) => a + c.atk, 0) * ev.mult * .5 * (ev.el && tgtEl && elemBeats(ev.el, tgtEl) ? 1.5 : 1));
-function komboLb(){ const o = arenaUi(); o.kombo = Object.assign({ ids: [], multi: false, host: -1, total: 4, lvl: 'sederhana' }, o.kombo || {}); return o.kombo; }
+function komboLb(){ const o = arenaUi(); o.kombo = Object.assign({ multi: false, seats: [], lvl: 'sederhana' }, o.kombo || {}); return o.kombo; }
+/* 4 tempat tetap: kumpulan 1–4 kelas ini (boleh ditukar jika kelas ada lebih 4 kumpulan); kumpulan dipadam diganti automatik */
+function kmSeats(K, all){
+  const S4 = K.seats = (K.seats || []).slice(0, 4), used = [];
+  for (let i = 0; i < 4; i++){
+    const t = S4[i] = S4[i] || { id: '', bot: false };
+    if (!all.some(g => g.id === t.id) || used.includes(t.id)){ const g = all.find(g => !used.includes(g.id) && !S4.slice(i + 1).some(u => u && u.id === g.id)) || all.find(g => !used.includes(g.id)); t.id = g ? g.id : ''; }
+    used.push(t.id);
+  }
+  return S4.filter(t => t.id);
+}
+let KM_BACK = false;                                   // kembali ke lobi Kombo selepas mencipta kumpulan
 
 const KM_CSS = `
 .km{position:fixed;inset:0;z-index:956;background:#060A14;container-type:size;user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden;color:#fff;font-family:inherit}
@@ -6425,23 +6449,20 @@ const KM_CSS = `
 `;
 function kmStyle(){ if (!document.getElementById('kmCss')){ const s = document.createElement('style'); s.id = 'kmCss'; s.textContent = KM_CSS; document.head.appendChild(s); } }
 
-/* opt: { multi, host, total (2–4, tempat kosong = robot dari kumpulan lain), lvl } */
-async function komboStart(ids, opt){
+/* seats: [{ id, bot }] 4 tempat · opt: { multi (peranti ini = papan projektor, setiap kumpulan sertai dengan kod QR), lvl } */
+async function komboStart(seats, opt){
   opt = opt || {};
-  ids = ids.filter(id => teamOf(id)).slice(0, 4);
-  if (!ids.length) return toast('Pilih sekurang-kurangnya satu kumpulan.', null, true);
-  const total = Math.min(4, Math.max(2, opt.total || 2, ids.length)), names = ['Penjaga Ilmuria', 'Penjaga Bayu', 'Penjaga Nyala'];
-  const bots = classTeams().filter(g => !ids.includes(g.id)).slice(0, total - ids.length).map(g => ({ id: g.id, name: g.name }));
-  while (ids.length + bots.length < total) bots.push({ id: null, name: names[bots.length % 3] });
+  seats = (seats || []).filter(t => t && teamOf(t.id)).slice(0, 4);
+  if (seats.length < 2) return toast('Perlu sekurang-kurangnya 2 kumpulan.', null, true);
   toast('Menyusun kad…');
   await kadProbe();
   let net = null;
   if (opt.multi){                                        // bilik berbilang peranti: kod 4 digit
     const code = String(1000 + Math.floor(Math.random() * 9000));
     const T = await kmNet(code); if (!T) return toast('Berbilang peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
-    net = { T, code, hostSeat: opt.host == null ? -1 : opt.host };
+    net = { T, code, hostSeat: -1 };
   }
-  komboRun(ids, { bots, lvl: opt.lvl }, net);
+  komboRun(seats.map(t => t.id), { seats: seats.map(t => ({ id: t.id, bot: !opt.multi && !!t.bot })), lvl: opt.lvl }, net);
 }
 /* Saluran bilik Kombo: Firebase (ipbd_share/__kombo_<kod>) — atau BroadcastChannel (tab pada peranti sama, untuk ujian).
    cfg = konfigurasi Firebase dari pautan sertai (telefon murid tanpa tetapan). */
@@ -6700,7 +6721,7 @@ function kmTurnBanner(stage, av, name, mine){
   stage.appendChild(b); setTimeout(() => b.remove(), 2100);
 }
 /* Kombo Ilmon (hos): setiap giliran = kuiz (dapat kad) → serang satu sasaran / bertahan / langkau.
-   opt: { bots: [{id, name}] robot, lvl: mudah|sederhana|sukar, hp, allBots (ujian) } */
+   opt: { seats: [{id, bot}] susunan tempat, bots: [{id, name}] robot tambahan, lvl: mudah|sederhana|sukar, hp, allBots (ujian) } */
 function komboRun(ids, opt, net){
   kmStyle();
   opt = opt || {};
@@ -6712,7 +6733,8 @@ function komboRun(ids, opt, net){
     const low = CARDS.filter(c => !own.includes(c) && tierRank(c.tier) <= 2).sort(() => Math.random() - .5);
     return own.concat(low).slice(0, HAND0);
   };
-  const P = ids.map(id => ({ id, name: teamName(id), ai: !!opt.allBots })).concat((opt.bots || []).map(b => ({ id: b.id || null, name: b.name, ai: true })));
+  const P = opt.seats ? opt.seats.map(t => ({ id: t.id, name: teamName(t.id), ai: !!t.bot })) :
+    ids.map(id => ({ id, name: teamName(id), ai: !!opt.allBots })).concat((opt.bots || []).map(b => ({ id: b.id || null, name: b.name, ai: true })));
   const HP = opt.hp || [0, 160, 160, 140, 130][P.length] || 130;          // simulasi robot: semua saiz tamat sekitar pusingan 9–10
   P.forEach(p => { p.hand = startHand(p.id); p.hp = HP; p.asked = 0; p.right = 0; p.last = null; p.lp = null; p.chg = 0; p.fd = false; p.fdR = -9; p.wb = 0; });
   if (net) P.forEach((p, i) => { p.remote = !p.ai && i !== net.hostSeat; });   // kumpulan bermain di peranti sendiri
