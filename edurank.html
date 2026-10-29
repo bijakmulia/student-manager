@@ -5404,9 +5404,12 @@ function todayQNotice(){
      sekolah menyekat sambungan terus, gambar JPEG kecil dihantar melalui awan.
    Saluran: Firebase (ipbd_share/__live, tiada perubahan rules) bila aktif;
    jika tidak, hanya antara tab pada peranti sama (BroadcastChannel).        */
-const LV_ON_CAST = 'ipbd_live_cast', LV_ON_VIEW = 'ipbd_live_view';
-const lvCastOn = () => localStorage.getItem(LV_ON_CAST) !== '0';
-const lvViewOn = () => localStorage.getItem(LV_ON_VIEW) !== '0';
+/* Automatik: peranti yang menekan MULA = pemain (menyiarkan); peranti lain yang membuka EduRank = paparan.
+   (Togol lama 'Siarkan' / 'Papar' dibuang — nilai tersimpan diabaikan.) */
+const lvCastOn = () => true;
+const lvViewOn = () => true;
+const lvNote = () => '<div class="lb-note" style="margin-top:8px">📺 <b>Tayangan projektor automatik:</b> peranti yang tekan MULA = pemain; peranti lain yang membuka EduRank (Firebase sama) memaparkan game ini. ' +
+  (FB.on ? '<span style="color:#4ADE80">Firebase aktif ✓</span>' : '<b style="color:#FCA5A5">Firebase belum aktif di peranti ini — Tetapan → Penyegerakan Firebase.</b>') + '</div>';
 const LV_ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] };
 const LIVE = { frame: null, host: null };
 let LV_BC = null;
@@ -5837,7 +5840,7 @@ function gameLobby(k){
         (def.menu || []).map(([v, label, r]) => '<button class="lb-btn" data-lb="' + v + '">' + label + '<span class="r">' + r + '</span></button>').join('') +
         '<button class="lb-btn" data-lb="set">⚙️ Tetapan<span class="r">tahap & masa ›</span></button>' +
         '<button class="lb-btn" data-lb="how">📖 Cara Main<span class="r">›</span></button>' +
-        '<button class="lb-btn x" data-lb="exit">✕ Keluar</button>';
+        '<button class="lb-btn x" data-lb="exit">✕ Keluar</button>' + lvNote();
     } else if (view === 'team'){
       h = '<div class="lb-h"><button data-lb="back">‹</button>PILIH KUMPULAN</div><div class="lb-scroll">' + classTeams().map(g =>
         '<button class="lb-team' + (g.id === o.team ? ' on' : '') + '" data-lt="' + g.id + '">' + teamAvatar(g.id, 34) +
@@ -5851,9 +5854,7 @@ function gameLobby(k){
           '<button class="' + (String(cfg[op.k] == null && op.k === 'duelQ' ? duelQ() : cfg[op.k]) === String(v) ? 'on' : '') + '" data-ls="' + op.k + '" data-lv="' + v + '" data-ln="' + (typeof v === 'number' ? 1 : 0) + '">' + l + '</button>').join('') + '</div>' +
         (op.note ? '<div class="lb-note">' + op.note + '</div>' : '')).join('') +
         (def.extra ? def.extra() : '') +
-        '<div class="lb-sec">TAYANG LANGSUNG KE PROJEKTOR</div>' +
-        '<div class="lb-seg"><button class="' + (lvCastOn() ? 'on' : '') + '" data-lc="cast">📡 Siarkan peranti ini</button><button class="' + (lvViewOn() ? 'on' : '') + '" data-lc="view">📺 Papar dari peranti lain</button></div>' +
-        '<div class="lb-note">' + (FB.on ? 'Firebase aktif — berfungsi antara telefon & tablet.' : 'Perlu Firebase (Tetapan → Penyegerakan Firebase) untuk dua peranti.') + '</div></div>';
+        '<div class="lb-sec">TAYANG LANGSUNG KE PROJEKTOR</div>' + lvNote() + '</div>';
     } else if (def.views && def.views[view]){
       h = '<div class="lb-h"><button data-lb="back">‹</button>' + def.views[view].t + '</div><div class="lb-scroll">' + def.views[view].h() + '</div>';
     } else if (view === 'how'){
@@ -5871,11 +5872,10 @@ function gameLobby(k){
   const ctx = { paint: () => paint(), close: () => close(), setView: v => { view = v; paint(); } };
   el.addEventListener('click', e => {
     if (e.target.closest('[data-act]')) return;                    // butang app (pack, album, panduan) dikendali oleh app
-    const b = e.target.closest('[data-lb],[data-lt],[data-ls],[data-lc]'); if (!b) return;
+    const b = e.target.closest('[data-lb],[data-lt],[data-ls]'); if (!b) return;
     sfx('flip');
     if (b.dataset.lt){ o.team = b.dataset.lt; save(); view = 'main'; paint(); if (S.ui.tab === 'arena') renderTab(); return; }
     if (b.dataset.ls){ const cfg = def.cfg(); cfg[b.dataset.ls] = b.dataset.ln === '1' ? +b.dataset.lv : b.dataset.lv; save(); paint(); return; }
-    if (b.dataset.lc){ const key = b.dataset.lc === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(key, localStorage.getItem(key) === '0' ? '1' : '0'); paint(); return; }
     const a = b.dataset.lb;
     if (a === 'back'){ view = 'main'; return paint(); }
     if (def.views && def.views[a]){ view = a; return paint(); }
@@ -8009,17 +8009,6 @@ const gameLine = g => (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' be
 /* ============ TAB GAME ============
    Tiga permainan, semuanya tanpa aset untuk dimuat naik: Kad Koleksi
    (dilukis oleh app), Larian Ilmu (3D) dan Sekolah Berhantu (3D).     */
-function liveSetHtml(){
-  const sw = (k, on, t, d) => '<button class="btn clip-s w-full flex items-center gap-3 !py-2 text-left mt-2' + (on ? ' btn-c' : '') + '" data-act="live-tog" data-k="' + k + '">' +
-    '<i class="fa-solid ' + (on ? 'fa-toggle-on' : 'fa-toggle-off') + ' text-[20px]"></i><div class="flex-1 min-w-0"><div class="text-[12px] font-bold">' + t + '</div><div class="text-[10px] leading-snug" style="opacity:.8">' + d + '</div></div></button>';
-  return '<details class="panel clip p-3 mt-3"><summary class="lbl" style="cursor:pointer"><i class="fa-solid fa-tv text-cyan"></i> TAYANG LANGSUNG KE PROJEKTOR · ' +
-      (FB.on ? '<span class="text-cyan">semua peranti</span>' : '<span class="text-muted">Firebase belum aktif</span>') + '</summary>' +
-    '<div class="text-[11px] text-muted mt-2 leading-relaxed">Murid main di telefon, tablet di projektor memaparkan game yang sama serta-merta (papan Duel, soalan, skor dan gambar game 3D). ' +
-      'Buka EduRank di tablet dan biarkan — tayangan muncul sendiri bila game bermula.' +
-      (FB.on ? '' : ' <b style="color:#FFB347">Perlu Firebase (Tetapan → Penyegerakan Firebase) supaya berfungsi antara dua peranti.</b>') + '</div>' +
-    sw('cast', lvCastOn(), 'Siarkan game dari peranti ini', 'Hidupkan pada telefon yang dipegang murid.') +
-    sw('view', lvViewOn(), 'Papar game dari peranti lain', 'Hidupkan pada tablet yang disambung ke projektor.') + '</details>';
-}
 function viewGame(){
   const g = ['cards','run','escape','stor'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[12px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
@@ -11219,7 +11208,6 @@ const ACTS = {
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
   'lobby': d => gameLobby(d.id),
   'km-join': () => komboJoinAsk(),
-  'live-tog': d => { const k = d.k === 'cast' ? LV_ON_CAST : LV_ON_VIEW; localStorage.setItem(k, localStorage.getItem(k) === '0' ? '1' : '0'); renderTab(); },
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
   'rpt-open': () => rptModal(),
