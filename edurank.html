@@ -8110,13 +8110,13 @@ function viewGame(){
 let STOR = null;
 const ST_SHELVES = [
   // id, nama, zon, kedudukan x (% pentas), lebar (% pentas)
-  ['bola',   'Rak Bola',              's', 2,    10],
-  ['raket',  'Rak Raket & Kayu',      's', 12.5, 10],
-  ['pakai',  'Rak Pakaian & Kasut',   's', 23,   10],
-  ['fit',    'Rak Kecergasan',        's', 33.5, 10],
+  ['bola',   'Rak Bola',              's', 8.3,  9.3],      // 1–8%: telefon dinding
+  ['raket',  'Raket & Kayu',          's', 18,   6.8],
+  ['pakai',  'Rak Pakaian & Kasut',   's', 25.2, 9.4],
+  ['fit',    'Rak Kecergasan',        's', 35.1, 9.4],
   ['buah',   'Rak Buah & Sayur',      'k', 55.5, 8],
   ['sejuk',  'Peti Sejuk',            'k', 64.3, 8],
-  ['jus',    'Rak Bahan Jus Blend',   'k', 73.1, 16]
+  ['jus',    'Rak Bahan Jus Blend',   'k', 73.1, 10]       // tin kecil → rak sempit; blender di tempat dapur 2
 ];
 const ST_TAGS = { k:['🍚','Karbohidrat'], p:['🍗','Protein'], l:['🥑','Lemak sihat'], v:['🥦','Vitamin & serat'], h:['💧','Cecair'], x:['⚠️','Tidak sihat'] };
 /* id, nama, emoji, rak, tag nutrisi, harga RM, penyediaan [stesen, saat], huraian untuk prompt aset */
@@ -8258,15 +8258,7 @@ const ST_MEAL = [
   [['org_remaja'], 'Saya lapar, tapi nak makan yang sihat sikit.', 400, 600]
 ].map(([who, t, lo, hi]) => ({ who, t, lo, hi }));
 /* dialog pelanggan Kedai Sihat: {j} = nama jus */
-const ST_JUS_TX = [
-  'Penatnya lepas latihan! Saya nak {j} yang sejuk, boleh?',
-  'Cuaca panas sangat hari ni. Satu {j}, please!',
-  'Jurulatih saya kata minum {j} bagus untuk pulihkan tenaga.',
-  'Sebelum perlawanan petang ni, saya nak {j} dulu.',
-  'Anak saya suka sangat {j}. Satu ya!',
-  'Saya nak cuba {j} yang semua orang cakap sedap tu.',
-  'Lepas berlari tadi tekak kering. Bagi saya {j}.'
-];
+const ST_JUS_TX = ['Satu {j}, please!', 'Nak {j} sejuk!', 'Bagi saya {j}.', 'Penat! Nak {j}.', '{j} satu ya!'];
 const ST_FOOD_TX = [
   'Saya nak buah sahaja hari ni, nak jaga makan.',
   'Lepas latihan, saya perlukan makanan ini.',
@@ -8325,15 +8317,15 @@ const ST_ASSETS = [].concat(
   [...(() => {
     const fill = ' The object is centred and fills the ENTIRE image edge to edge, straight front view, nothing cut off. ' + ST_MAG;
     const DOOR = ST_STYLE + ', straight front view. A tall double door of a shop back room inside a thick dark wooden door frame; the door panels are grey metal with small square windows.';
-    const PHONE = ST_STYLE + ', straight front view with a slight top-down angle. A red old-style rotary desk telephone standing on its own (NO table), with its coiled cord curled beside it; it will be placed on top of a shop counter.';
+    const PHONE = ST_STYLE + ', straight front view. A red WALL-MOUNTED telephone: a tall slim phone body screwed onto a small wooden wall plate, a push-button keypad on the front, the handset hanging on a hook on the side and a coiled cord hanging down below; it will be stuck on a shop wall.';
     const STOVE = ST_STYLE + ', straight front view with a slight top-down angle. A compact single-burner cafe stove on a small steel cabinet with ONE wide black frying pan on the burner.';
     const P = (id, g, ar, base, state, extra) => stA(id, g, ar, base + ' ' + state + fill + ' No text, no people' + (extra || '') + '.');
     const gD = 'Pintu & Telefon (pasangan)', gK = 'Dapur & Blender (ganti gambar)';
     return [
       P('pintu_stor', gD, 'tall', DOOR, 'Both door panels are CLOSED.'),
       P('pintu_buka', gD, 'tall', DOOR, 'Both door panels are swung fully OPEN against the sides of the frame, and the doorway shows a bright sunny outdoor school path with soft daylight (opaque, not magenta).'),
-      P('telefon', gD, 'sq', PHONE, 'The handset rests quietly on the cradle.'),
-      P('telefon_dering', gD, 'sq', PHONE, 'The telephone is RINGING: the handset is lifted slightly above the cradle and tilted, with small curved yellow vibration lines on both sides of the phone.'),
+      P('telefon_dinding', gD, 'tall', PHONE, 'The handset hangs quietly on its hook.'),
+      P('telefon_dinding_dering', gD, 'tall', PHONE, 'The telephone is RINGING: the handset jumps slightly off its hook and tilts, with small curved yellow vibration lines on both sides of the phone.'),
       P('dapur_kosong', gK, 'sqL', STOVE, 'The pan is EMPTY and the flame is OFF.'),
       ...ST_ITEMS.filter(x => x.prep && x.prep[0] === 'dapur').map(x => P('dapur_' + x.id, gK, 'sqL', STOVE, 'The blue flame is ON and the pan contains ' + x.d + ', cooking, with soft white steam rising and a few small sizzle sparkles.')),
       P('dapur_hangus', gK, 'sqL', STOVE, 'The pan contains black BURNT food with dark grey smoke rising and a small orange flame flaring from the pan.'),
@@ -8730,6 +8722,29 @@ const ST_CSS = `
 .st-tray .g>div.jus{filter:drop-shadow(0 0 .5cqw #FDE68A)}
 .st-bub .jr .tx{margin-top:0;text-align:left;max-width:12cqw;font-size:.95cqw}
 .st-shelf .nm{margin-top:.5cqw}
+.st-phone.wall{left:1.2%;width:6.2%;top:11%;height:25%;background:none;border-radius:0;align-items:flex-end;justify-content:center}
+.st-phone.wall>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center}
+.st-phone.wall .wp{position:absolute;left:18%;right:18%;top:18%;bottom:18%;border-radius:.8cqw;background:linear-gradient(180deg,#EF4444,#991B1B);border:.3cqw solid #78350F;box-shadow:0 .4cqw .8cqw rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:2.6cqw}
+.st-phone.wall .bb{top:-2.6cqw}
+.st-bl{left:89.2%;width:8.6%;top:31%}
+.st-bl .bn{font-size:.9cqw}
+.st-bin{left:50.35%;width:5.7%;top:57.4%;height:13.6%;font-size:4.2cqw}
+.st-tin{width:50%;height:74%}
+.st-tin b{font-size:1.5cqw}
+.st-tin b.tx{font-size:.6cqw}
+.st-ghost{width:45px;height:45px;font-size:31px}
+.st-ghost.multi{font-size:24px}
+.st-ghost.multi span{width:36px;height:36px}
+.st-flyit .st-tin b,.st-ghost .st-tin b{font-size:18px}
+.st-flyit .st-tin b.tx,.st-ghost .st-tin b.tx{font-size:8px}
+.st-bub{width:13cqw;min-width:0}
+.st-bub .tx,.st-bub .tx.big{max-width:100%}
+.st-bub .jv{display:flex;flex-direction:column;align-items:center;gap:.2cqw}
+.st-bub .jv .gl{width:5.4cqw;height:5.4cqw;display:flex;align-items:center;justify-content:center;font-size:3.6cqw;border-radius:.6cqw;background:#FEF3C7}
+.st-bub .jv .gl img{width:100%;height:100%;object-fit:contain}
+.st-bub .jv .tx{margin-top:0;font-style:italic;font-size:.95cqw}
+.st-cu[data-cu="s0"] .st-bub{transform:translateX(-30%)}.st-cu[data-cu="s0"] .st-bub::after{left:30%}      /* dialog di hujung pentas tidak terkeluar */
+.st-cu[data-cu="k2"] .st-bub{transform:translateX(-72%)}.st-cu[data-cu="k2"] .st-bub::after{left:72%}
 `;
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
@@ -8755,7 +8770,7 @@ function storRun(team){
       (ST_HAVE.has(img) ? stImg(img, '') : '<div class="box' + (z === 'k' ? (id === 'sejuk' ? ' cold' : id === 'jus' ? ' jus' : ' k') : '') + '"></div>') +
       '<div class="st-lv" id="stL_' + id + '"></div><div class="nm">' + nm + '</div></div>';
   };
-  const STN_LIST = [['dapur', 0, 'DAPUR 1'], ['dapur', 1, 'DAPUR 2']];   // 2 dapur berasingan (blender kini atas kaunter)
+  const STN_LIST = [['dapur', 0, 'DAPUR']];                         // satu dapur; blender di bawahnya (tempat dapur 2 dahulu)
   root.innerHTML = '<div class="st-stage" id="stStage">' +
     (ST_HAVE.has('bg_lantai') ? stImg('bg_lantai', '', 'st-bg') : '<div class="st-wallk"></div><div class="st-floor"></div>') +
     '<div class="st-zl" style="left:2%">🏬 STOR SUKAN</div><div class="st-zl" style="left:86%">🥗 KEDAI SIHAT</div>' +
@@ -8765,7 +8780,7 @@ function storRun(team){
     '<div class="st-door' + (ST_HAVE.has('pintu_buka') ? ' img2' : '') + '" id="stDoor" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '', 'cl') : '') + (ST_HAVE.has('pintu_buka') ? stImg('pintu_buka', '', 'op') : '') + '</div>' +
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
-    '<div class="st-phone" id="stPhone" data-ph="1">' + (ST_HAVE.has('telefon') ? stImg('telefon', '', 'id') + (ST_HAVE.has('telefon_dering') ? stImg('telefon_dering', '', 'rg') : '') : '<span class="st-emo">☎️</span>') + '</div>' +
+    '<div class="st-phone wall" id="stPhone" data-ph="1">' + (ST_HAVE.has('telefon_dinding') ? stImg('telefon_dinding', '', 'id') + (ST_HAVE.has('telefon_dinding_dering') ? stImg('telefon_dinding_dering', '', 'rg') : '') : '<span class="wp">☎️</span>') + '</div>' +
     // kaunter = SATU meja panjang: hujung kiri/kanan gambar dikekalkan, bahagian tengah diregang (border-image), tiada segmen
     ['s', 'k'].map(z => { const im = ST_HAVE.get(z === 's' ? 'kaunter_stor' : 'kaunter_kafe');
       return '<div class="st-counter ' + z + (im ? ' long" style="border-image-source:url(' + im + ')' : '') + '"><div class="nm">' + (z === 's' ? 'KAUNTER STOR' : 'KAUNTER KEDAI SIHAT') + '</div></div>'; }).join('') +
@@ -8786,7 +8801,7 @@ function storRun(team){
   /* ---------- keadaan ---------- */
   const stock = {}; ST_ITEMS.forEach(i => stock[i.id] = 5);
   const tray = [];                                       // makanan atas kaunter: { id, cooked }
-  const stn = { dapur: [null, null] };                   // { id, t, need }
+  const stn = { dapur: [null] };                         // { id, t, need }
   const bl = { ings: [], blending: false, r: null };     // blender: bahan dimasukkan → resipi siap (r)
   let bin = 0;                                           // berapa kali dibuang ke tong sampah (paras gambar)
   const BIN_MAX = 6;
@@ -8840,7 +8855,7 @@ function storRun(team){
       if (!c || c.arriving) return '';
       const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o, r = o.jus && jusOf(o.jus);
       const body = r
-        ? '<div class="jr"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span><div class="tx big">"' + esc(o.tx) + '"</div></div>'   // satu gambar jus sahaja; resipi bila pelanggan diketik
+        ? '<div class="jv"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span><div class="tx">"' + esc(o.tx) + '"</div></div>'   // gambar jus di atas, ayat pendek di bawah; resipi bila diketik
         : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
       return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
@@ -8877,7 +8892,7 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [65.3, 55], BL_AT = [59.3, 52], BIN_AT = [52.8, 64], STN_AT = { dapur0: [94.25, 19], dapur1: [94.25, 39.5] };
+  const TRAY_AT = [65.3, 55], BL_AT = [93.5, 38], BIN_AT = [53.2, 64], STN_AT = { dapur0: [94.25, 19] };
   const custAt = (z, i) => [SLOTX[z][i] + 5, 74];
   /* Dapur: logik GANTI gambar — dapur_<makanan> / dapur_hangus menggantikan gambar dapur kosong. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
@@ -8992,7 +9007,7 @@ function storRun(team){
     if (k < 0) return msg('Kedua-dua dapur penuh!', '#FCA5A5');
     if (stock[id] <= 0) return;
     stock[id]--; stn.dapur[k] = { id, t: 0, need: it.prep[1] }; snd('stor_masak', 'flip'); flyTo(id, shelfPos(id), STN_AT['dapur' + k]);
-    msg('🍳 Sedang dimasak di Dapur ' + (k + 1) + '…', '#FDE68A', 900); walk(84); paintStn(); paintShelves();
+    msg('🍳 Sedang dimasak di dapur…', '#FDE68A', 900); walk(84); paintStn(); paintShelves();
   }
   function toCounter(s){
     const id = srcId(s); if (!id) return;
@@ -9006,7 +9021,7 @@ function storRun(team){
     if (bl.r || bl.blending) return msg('Jus sudah siap — seret blender kepada pelanggan (atau ke tong sampah).', '#FDE68A', 1600);
     if (bl.ings.length >= BL_MAX) return msg('Blender penuh! Seret blender ke tong sampah.', '#FCA5A5', 1500);
     if (stock[id] <= 0) return;
-    stock[id]--; bl.ings.push(id); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), BL_AT); walk(56); paintShelves(); paintBl(true);
+    stock[id]--; bl.ings.push(id); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), BL_AT); walk(84); paintShelves(); paintBl(true);
     const key = bl.ings.slice().sort().join(','), r = ST_JUS.find(j => j.ings.slice().sort().join(',') === key);
     if (r){
       bl.blending = r.id; paintBl(); snd('stor_blender', 'flip');
@@ -9048,7 +9063,7 @@ function storRun(team){
   /* ---------- telefon & pembekal ---------- */
   function answerPhone(){
     if (!ring || call) return;
-    ring = null; walk(33); snd('ui_klik', 'flip');                  // berdiri di sebelah telefon atas kaunter
+    ring = null; walk(5); snd('ui_klik', 'flip');                   // berdiri di sebelah telefon dinding (hujung kiri)
     const q = escQuestion(), order = q.c.map((_, i) => i).sort(() => Math.random() - .5);
     call = { q }; paused = true;
     $s('#stPhone').classList.remove('ring');
@@ -9193,7 +9208,7 @@ function storRun(team){
     if (t.closest('[data-bin]')) return msg(bin ? 'Seret tong sampah ke pintu untuk dibuang' : 'Seret barang yang salah ke sini', '#FDE68A', 1200);
     const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan kepada pelanggan, ke rak (pulang) atau ke tong sampah', '#FDE68A', 1300);
     const cu = t.closest('[data-cu]'); if (cu){ const c = cust[cu.dataset.cu[0]][+cu.dataset.cu[1]], r = c && c.o.jus && jusOf(c.o.jus);
-      if (r) return msg('📖 ' + esc(r.n) + ' = ' + r.ings.map(id => esc(ST_IT[id].n)).join(' + '), '#FDE68A', 3200);   // ketik pelanggan jus = lihat resipi
+      if (r) return msg(r.ings.map(id => ST_IT[id].e).join(' ➕ ') + ' 🟰 🥤', '#FDE68A', 3200);   // ketik pelanggan jus = resipi dalam emoji
       return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan kepada pelanggan ini', '#FDE68A', 1200); }
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
