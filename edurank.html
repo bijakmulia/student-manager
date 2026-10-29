@@ -8743,8 +8743,18 @@ const ST_CSS = `
 .st-bub .jv .gl{width:5.4cqw;height:5.4cqw;display:flex;align-items:center;justify-content:center;font-size:3.6cqw;border-radius:.6cqw;background:#FEF3C7}
 .st-bub .jv .gl img{width:100%;height:100%;object-fit:contain}
 .st-bub .jv .tx{margin-top:0;font-style:italic;font-size:.95cqw}
-.st-cu[data-cu="s0"] .st-bub{transform:translateX(-30%)}.st-cu[data-cu="s0"] .st-bub::after{left:30%}      /* dialog di hujung pentas tidak terkeluar */
-.st-cu[data-cu="k2"] .st-bub{transform:translateX(-72%)}.st-cu[data-cu="k2"] .st-bub::after{left:72%}
+.st-bub{transform:translateX(var(--bx,-50%)) scale(var(--bs,1));transform-origin:50% 100%;transition:transform .38s cubic-bezier(.3,1.5,.5,1),opacity .28s ease}
+.st-cu[data-cu="s0"] .st-bub{--bx:-30%;transform-origin:30% 100%}.st-cu[data-cu="s0"] .st-bub::after{left:30%}      /* dialog di hujung pentas tidak terkeluar */
+.st-cu[data-cu="k2"] .st-bub{--bx:-72%;transform-origin:72% 100%}.st-cu[data-cu="k2"] .st-bub::after{left:72%}
+.st-cu.bh .st-bub{--bs:.15;opacity:0;pointer-events:none;transition:transform .32s ease-in,opacity .3s ease-in}
+.st-cu .pm{position:absolute;left:50%;bottom:100%;transform:translate(-50%,.4cqw) scale(.6);opacity:0;pointer-events:none;display:flex;align-items:center;gap:.3cqw;background:#fff;border-radius:99px;padding:.15cqw .5cqw;font-size:1.3cqw;box-shadow:0 .3cqw .6cqw rgba(0,0,0,.3);transition:opacity .25s,transform .3s;z-index:6}
+.st-cu .pm b{display:block;width:3.6cqw;height:.55cqw;border-radius:99px;background:#E2E8F0;overflow:hidden}
+.st-cu .pm i{display:block;height:100%;border-radius:99px}
+.st-cu.bh .pm{opacity:1;transform:translate(-50%,0) scale(1);transition-delay:.15s;animation:stPm 1.6s ease-in-out .5s infinite}
+@keyframes stPm{0%,100%{margin-bottom:0}50%{margin-bottom:.35cqw}}
+.st-msg .st-rcp{display:inline-flex;gap:.15cqw;background:#fff;border-radius:99px;padding:.35cqw 1.1cqw;box-shadow:0 .4cqw 1cqw rgba(0,0,0,.35),0 0 0 .25cqw #FDE68A;text-shadow:none;animation:stRcp .4s cubic-bezier(.3,1.6,.5,1)}
+.st-msg .st-rcp i{font-style:normal;font-size:3cqw;line-height:1.1}
+@keyframes stRcp{from{transform:scale(.4);opacity:0}}
 `;
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
@@ -8849,16 +8859,21 @@ function storRun(team){
     const need = FOOD.slice().sort(() => Math.random() - .5).slice(0, 1 + Math.floor(Math.random() * Math.min(2, L.max)));
     return { who, z, need: need.map(i => i.id), got: [], tx: pick(ST_FOOD_TX) };
   }
+  const BUB_T = 5;                                        // saat dialog dipapar sebelum sembunyi
+  const bubHid = c => c.bubTo != null && T > c.bubTo;
+  const showBub = c => { c.bubTo = T + BUB_T; ['s', 'k'].forEach(z => cust[z].forEach((x, i) => { if (x === c){ const e = $s('#stC_' + z + i); if (e) e.classList.remove('bh'); } })); };
   const shake = (z, i) => { const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); } };
   function custHtml(){
     return ['s', 'k'].map(z => cust[z].map((c, i) => {
       if (!c || c.arriving) return '';
       const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444', o = c.o, r = o.jus && jusOf(o.jus);
+      if (c.bubTo == null) c.bubTo = T + BUB_T;
       const body = r
         ? '<div class="jv"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span><div class="tx">"' + esc(o.tx) + '"</div></div>'   // gambar jus di atas, ayat pendek di bawah; resipi bila diketik
         : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
-      return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
+      return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + (bubHid(c) ? ' bh' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
+        '<div class="pm">💬<b><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></b></div>' +
         '<div class="who">' + stImg(o.who.img, o.who.e) + '</div><div class="nm2">' + esc(o.who.n) + '</div></div>';
     }).join('')).join('');
   }
@@ -9149,9 +9164,10 @@ function storRun(team){
     // kemas kini ringan
     ['s', 'k'].forEach(z => cust[z].forEach((c, i) => {
       if (!c) return; const e = $s('#stC_' + z + i); if (!e) return;
-      const frac = Math.max(0, c.p / c.max), bar = e.querySelector('.pt i');
-      if (bar){ bar.style.width = (frac * 100) + '%'; bar.style.background = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444'; }
+      const frac = Math.max(0, c.p / c.max), col = frac > .5 ? '#22C55E' : frac > .25 ? '#EAB308' : '#EF4444';
+      e.querySelectorAll('.pt i,.pm i').forEach(b => { b.style.width = (frac * 100) + '%'; b.style.background = col; });
       e.classList.toggle('mad', frac < .25);
+      e.classList.toggle('bh', bubHid(c));                // dialog sembunyi selepas 5 saat (animasi CSS)
     }));
     if (changed) paintCust();
     paintStn(); hud();
@@ -9208,7 +9224,8 @@ function storRun(team){
     if (t.closest('[data-bin]')) return msg(bin ? 'Seret tong sampah ke pintu untuk dibuang' : 'Seret barang yang salah ke sini', '#FDE68A', 1200);
     const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan kepada pelanggan, ke rak (pulang) atau ke tong sampah', '#FDE68A', 1300);
     const cu = t.closest('[data-cu]'); if (cu){ const c = cust[cu.dataset.cu[0]][+cu.dataset.cu[1]], r = c && c.o.jus && jusOf(c.o.jus);
-      if (r) return msg(r.ings.map(id => ST_IT[id].e).join(' ➕ ') + ' 🟰 🥤', '#FDE68A', 3200);   // ketik pelanggan jus = resipi dalam emoji
+      if (c) showBub(c);                                   // ketik pelanggan = dialog muncul semula
+      if (r) return msg('<span class="st-rcp">' + r.ings.map(id => '<i>' + ST_IT[id].e + '</i>').join('') + '</span>', '#0F172A', 3400);   // ketik pelanggan jus = resipi emoji
       return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan kepada pelanggan ini', '#FDE68A', 1200); }
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
