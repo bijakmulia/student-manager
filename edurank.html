@@ -7042,8 +7042,9 @@ function komboRun(ids, opt, net){
       return;
     }
     if (a === 'again'){ quit(); setTimeout(() => komboRun(ids, opt, net), 60); return; }
-    if (a === 'begin'){                               // kumpulan yang belum sertai dikawal robot
-      P.forEach(p => { if (p.remote && !joined[P.indexOf(p)]){ p.remote = false; p.ai = true; msg('🤖 ' + esc(p.name) + ' dikawal robot', '#FDE68A', 1600); } });
+    if (a === 'begin'){                               // hanya hos; semua bilik 📱 QR mesti sudah disertai
+      const wait = P.filter((p, i) => p.remote && !joined[i]);
+      if (wait.length){ msg('⏳ Tunggu ' + wait.map(p => esc(p.name)).join(', ') + ' imbas QR', '#FDE68A', 2000); return; }
       started = true; $k('#kmOv').innerHTML = ''; startTurn(); return; }
     if (a === 'copylink'){ copyText(joinUrl(), 'Pautan sertai disalin.'); return; }
     if (!started || over || busy || me().ai || me().remote) return;
@@ -7057,13 +7058,14 @@ function komboRun(ids, opt, net){
   /* bilik menunggu: kod besar + kod QR + status setiap kumpulan */
   const joinUrl = () => location.origin + location.pathname + '?km=' + b64urlEnc(JSON.stringify({ c: net.code, f: FB.cfg || fbCfgGet() || null }));
   function lobbyRoom(){
+    const nRem = P.filter(p => p.remote).length, nWait = P.filter((p, i) => p.remote && !joined[i]).length;   // MULA dikunci hingga semua telefon masuk
     const list = P.map((p, i) => '<div class="row" style="justify-content:space-between">' + av(p, 26) + '<span style="flex:1;text-align:left">' + esc(p.name) + '</span><b style="color:' +
       (p.ai ? '#94A3B8">🤖 robot' : !p.remote ? '#FACC15">📺 peranti ini' : joined[i] ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</b></div>').join('');
     $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn" style="width:62%;display:flex;gap:2cqw;text-align:left">' +
       '<div style="flex:1"><div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900">BILIK KOMBO ILMON</div>' +
       '<div style="font-size:6cqw;font-weight:900;letter-spacing:.2em;line-height:1.1">' + net.code + '</div>' +
-      '<div style="font-size:1.2cqw;color:#94A3B8;line-height:1.5">Di telefon kumpulan: buka EduRank → GAME → KAD → <b>📷 IMBAS QR</b> (atau <b>Taip kod bilik</b>). Bilik yang belum disertai bila MULA = robot.</div>' + list +
-      '<div class="bt"><button data-k="copylink">🔗 Salin pautan</button><button class="o" data-k="begin">▶ MULA</button></div></div>' +
+      '<div style="font-size:1.2cqw;color:#94A3B8;line-height:1.5">Di telefon kumpulan: buka EduRank → GAME → KAD → <b>📷 IMBAS QR</b> (atau <b>Taip kod bilik</b>). MULA hanya boleh ditekan bila semua bilik 📱 sudah disertai.</div>' + list +
+      '<div class="bt"><button data-k="copylink">🔗 Salin pautan</button><button class="o" data-k="begin"' + (nWait ? ' disabled style="opacity:.45"' : '') + '>' + (nWait ? '⏳ Menunggu ' + (nRem - nWait) + '/' + nRem + ' telefon' : '▶ MULA') + '</button></div></div>' +
       '<div id="kmQr" style="width:18cqw;height:18cqw;background:#fff;border-radius:1cqw;padding:.8cqw;flex:none"></div></div></div>';
     const q = $k('#kmQr');
     kmQr().then(QR => { if (!QR || !q.isConnected) return; q.innerHTML = ''; new QR(q, { text: joinUrl(), width: 512, height: 512, correctLevel: QR.CorrectLevel.L }); const im = q.querySelector('img,canvas'); if (im){ im.style.width = '100%'; im.style.height = '100%'; } });
@@ -11537,9 +11539,9 @@ function installGate(){
   if (kmp){ S = blank(); komboJoinBoot(kmp); return; }  // pautan / kod QR sertai Kombo Ilmon: telefon kumpulan, tidak perlu pasang
   initPWA();
   if (!isInstalled()){ installGate(); return; }         // dalam pelayar: tutup app, papar arahan pasang sahaja
-  { let pc = false; try { pc = localStorage.getItem('rk_pc') === '1'; } catch(e){}   // butang refresh di app komputer (tiada butang refresh pelayar)
+  { let pc = false; try { pc = localStorage.getItem('rk_pc') === '1'; } catch(e){}   // butang refresh dalam app dipasang / mod PC (tiada butang refresh pelayar)
     const app = ['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m => matchMedia('(display-mode: ' + m + ')').matches);
-    if (pc || (app && !matchMedia('(pointer: coarse)').matches)) $('#hdrRefresh').style.display = ''; }
+    if (pc || app) $('#hdrRefresh').style.display = ''; }
   IDB = await idbOpen();
   Object.assign(PHOTOS, await idbAll());
   S = load();
