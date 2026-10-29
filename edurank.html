@@ -6518,6 +6518,16 @@ const KM_CSS = `
 .tg-burst{z-index:7;width:30cqh;height:30cqh;margin:-15cqh 0 0 -15cqh;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0,var(--c) 28%,transparent 68%);animation:tgBurst .7s ease-out forwards}
 .tg-burst.big{width:60cqh;height:60cqh;margin:-30cqh 0 0 -30cqh}
 @keyframes tgBurst{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.2);opacity:0}}
+#kmSt .km-ar{--w:12.86cqh;gap:0;justify-content:center;align-items:flex-start;padding-top:3.4cqh}
+#kmSt .km-pile{height:20.6cqh;width:calc(var(--w) * (1 + (var(--n) - 1) * .1));transition:transform .25s ease}
+#kmSt .km-pile img{top:2.4cqh;height:18cqh}
+#kmSt .km-pile::before{top:2.4cqh;height:18cqh}
+#kmSt .km-pile .tab{top:-.6cqh}
+#kmSt .km-pile .lab{top:-.6cqh}
+#kmSt .tg-top{left:50%;right:auto;transform:translateX(-50%);top:.3cqh;max-width:80%;font-size:1.2cqw}
+#kmSt .tg-zone{top:47%;height:17.5%;padding-top:2.4cqh}
+#kmSt .tg-zone.empty{padding-top:0}
+#kmSt .tg-zone img{height:12.5cqh}
 .tg-chip{display:inline-block;margin:0 .4cqw .2cqw 0;padding:.05cqw .6cqw;border-radius:99px;font-size:.95cqw;font-weight:900;background:#334155;color:#E2E8F0}
 .tg-chip.ps{background:#7F1D1D;color:#FCA5A5}.tg-chip.ld{background:#854D0E;color:#FDE68A}
 .km-qz .qs-st{margin-top:1cqw;font-size:1.3cqw;color:#CBD5E1;text-align:center;line-height:1.6}
@@ -6613,18 +6623,23 @@ const kmFill = box => box.querySelectorAll('img[data-kc]').forEach(im => { if (!
 const TG_PC = ['#F97316', '#22D3EE', '#A78BFA', '#4ADE80'];
 function kmPilesHtml(piles, lastI, newI){
   if (!piles.length) return '';
-  const w = 10.7, avail = 146, gap = 2.4, ws = piles.map(p => w * (1 + (p.cards.length - 1) * .1)), k = piles.length;
-  const M = k > 1 ? Math.max(0, (ws.reduce((a, b) => a + b, 0) + gap * (k - 1) - avail) / (k - 1)) : 0;   // bertindih hanya bila meja penuh
+  // susunan pintar: lebar sebenar setiap longgokan (cqh); muat = jarak ideal & di tengah, penuh = tindih sama rata supaya sentiasa dalam meja
+  const w = 12.86, avail = 146, ideal = 3.5, ws = piles.map(p => w * (1 + (p.cards.length - 1) * .1)), k = piles.length, sum = ws.reduce((a, b) => a + b, 0);
+  const mg = k > 1 ? Math.min(ideal, (avail - sum) / (k - 1)) : 0;
   const L = piles[lastI];
   return piles.map((p, x) => '<div class="km-pile' + (x === lastI ? ' last' : '') + (x === newI ? ' new' : '') + '" data-pile="' + x + '" style="--n:' + p.cards.length + ';--pc:' + TG_PC[(p.s || 0) % 4] +
-    (x ? ';margin-left:' + (gap - M).toFixed(2) + 'cqh' : '') + '"><div class="tab">' + ((p.s || 0) + 1) + '</div><div class="lab">' + esc(p.name) + ' · <b>' + esc(p.combo) + '</b></div>' +
+    (x ? ';margin-left:' + mg.toFixed(2) + 'cqh' : '') + '"><div class="tab">' + ((p.s || 0) + 1) + '</div><div class="lab">' + esc(p.name) + ' · <b>' + esc(p.combo) + '</b></div>' +
     p.cards.map((id, j) => kmImg(id, ' style="--j:' + j + '"')).join('') + '</div>').join('') +
     (L ? '<div class="tg-top">🎯 Kalahkan: <b>' + esc(L.combo) + '</b> · ' + esc(L.name) + '</div>' : '');
 }
 function kmPileWire(ar){
   let held = false, open = null;
   const at = (x, y) => { for (const el of document.elementsFromPoint(x, y)){ const p = el.closest && el.closest('.km-pile'); if (p && ar.contains(p)) return p; } return null; };
-  const set = p => { if (p === open) return; if (open) open.classList.remove('open'); open = p; if (p) p.classList.add('open'); };
+  const set = p => { if (p === open) return; if (open){ open.classList.remove('open'); open.style.transform = ''; } open = p;
+    if (p){ p.classList.add('open');                       // kad dibuka 80% — anjak ke kiri jika terkeluar dari meja
+      const im = p.querySelector('img'), n = p.querySelectorAll('img').length, r = p.getBoundingClientRect(), a = ar.getBoundingClientRect();
+      const ex = im ? im.getBoundingClientRect().width * (1 + (n - 1) * .8) : 0, over = r.left + ex - (a.right - 8);
+      if (over > 0) p.style.transform = 'translateX(' + (-Math.min(over, r.left - a.left - 8)) + 'px)'; } };
   ar.addEventListener('pointerdown', e => { const p = at(e.clientX, e.clientY); if (!p) return; held = true; set(p); try { ar.setPointerCapture(e.pointerId); } catch(er){} });
   ar.addEventListener('pointermove', e => { if (held){ const p = at(e.clientX, e.clientY); if (p) set(p); } });
   const up = () => { held = false; set(null); };
