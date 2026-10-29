@@ -6303,18 +6303,25 @@ function kadBake(c){
   }));
 }
 /* ---------- TANGGA ILMON: kombo menaik ----------
-   Tunggal · Pasangan · Trio · Turutan 3–5 (nombor berturut) · Turutan Elemen (semua elemen sama — menang turutan biasa yang sama panjang)
+   Tunggal (nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡) · Pasangan · Trio · Trio + Pasangan (5 kad)
+   Turutan 3–5 (nombor berturut) · Turutan Elemen (semua elemen sama — menang mana-mana turutan biasa yang sama panjang)
    💣 BOM: 4 nombor sama, atau Turutan Elemen 5 kad — memecahkan apa-apa kombo. Lawan = jenis & bilangan kad sama, nilai lebih tinggi. */
+const TG_NEXT = { air: 'alam', alam: 'api', api: 'kilat', kilat: 'air' };   // elemen yang mengalahkan (Tunggal nombor sama)
 function tgEval(cards){
   const n = cards.length; if (!n || n > 5) return null;
   const nums = cards.map(cardNum).sort((a, b) => a - b), same = nums.every(x => x === nums[0]);
   const els = cards.map(c => cardSet(c).el), oneEl = els.every(e => e === els[0]);
   if (same){
-    if (n === 1) return { t: 'tunggal', len: 1, r: nums[0], name: 'Tunggal ' + nums[0] };
+    if (n === 1) return { t: 'tunggal', len: 1, r: nums[0], e: els[0], name: 'Tunggal ' + nums[0] + elemOf(els[0]).ico };
     if (n === 2) return { t: 'pasangan', len: 2, r: nums[0], name: 'Pasangan ' + nums[0] };
     if (n === 3) return { t: 'trio', len: 3, r: nums[0], name: 'Trio ' + nums[0] };
     if (n === 4) return { t: 'bom', len: 4, r: nums[0], bomb: 1, name: '💣 BOM ' + nums[0] + ' ×4' };
     return null;
+  }
+  if (n === 5){                                          // Trio + Pasangan
+    const cnt = {}; nums.forEach(x => cnt[x] = (cnt[x] || 0) + 1); const k = Object.keys(cnt);
+    if (k.length === 2 && Object.values(cnt).sort().join() === '2,3'){ const t = +k.find(x => cnt[x] === 3), p = +k.find(x => cnt[x] === 2);
+      return { t: 'penuh', len: 5, r: t, name: 'Trio ' + t + ' + Pasangan ' + p }; }
   }
   if (n >= 3 && nums.every((x, i) => !i || x === nums[i - 1] + 1)){
     const lo = nums[0], hi = nums[n - 1];
@@ -6323,10 +6330,20 @@ function tgEval(cards){
   }
   return null;
 }
-const tgBeats = (a, b) => !a ? false : !b ? true : a.bomb ? (!b.bomb || a.bomb > b.bomb || (a.bomb === b.bomb && a.r > b.r)) : (!b.bomb && a.t === b.t && a.len === b.len && a.r > b.r);
-const TG_T = { tunggal: 'Tunggal', pasangan: 'Pasangan', trio: 'Trio' };
+const tgBeats = (a, b) => !a ? false : !b ? true : a.bomb ? (!b.bomb || a.bomb > b.bomb || (a.bomb === b.bomb && a.r > b.r)) :
+  (!b.bomb && a.t === b.t && a.len === b.len && (a.r > b.r || (a.t === 'tunggal' && a.r === b.r && TG_NEXT[b.e] === a.e)));
+const TG_T = { pasangan: 'Pasangan', trio: 'Trio' };
 const tgNeed = b => !b ? 'Buka meja: letak apa-apa kombo' : b.bomb ? 'Hanya 💣 BOM lebih kuat boleh lawan' :
-  'Perlu ' + (TG_T[b.t] || 'Turutan ' + b.len + ' kad' + (b.el ? ' (elemen sama)' : '')) + ' lebih tinggi daripada ' + (b.r % 100) + ' — atau 💣 BOM';
+  b.t === 'tunggal' ? 'Perlu Tunggal > ' + b.r + ', atau ' + b.r + elemOf(TG_NEXT[b.e]).ico + ' — atau 💣 BOM' :
+  b.t === 'penuh' ? 'Perlu Trio + Pasangan dengan trio > ' + b.r + ' — atau 💣 BOM' :
+  'Perlu ' + (TG_T[b.t] || 'Turutan ' + b.len + ' kad' + (b.el ? ' elemen sama' : '')) + ' lebih tinggi daripada ' + (b.r % 100) + (b.t === 'turutan' && !b.el ? ' (atau Turutan Elemen ' + b.len + ' kad)' : '') + ' — atau 💣 BOM';
+/* semakan kad di Zon Kombo: { ok, label, bomb } */
+function tgCheck(cards, top, turn){
+  const ev = cards.length ? tgEval(cards) : null;
+  if (!ev) return { ok: false, label: '✘ Bukan kombo' };
+  const ok = tgBeats(ev, top);
+  return { ok, ev, bomb: !!ev.bomb, label: ok ? '✔ ' + ev.name + (turn ? ' — lempar ke meja ⬆' : ' (tunggu giliran)') : '✘ ' + ev.name + ' — ' + tgNeed(top) };
+}
 const tgSort = hand => hand.slice().sort((a, b) => cardNum(a) - cardNum(b) || cardSet(a).el.localeCompare(cardSet(b).el));
 /* semua kombo yang boleh dibina dari tangan */
 function tgCands(hand){
@@ -6334,6 +6351,7 @@ function tgCands(hand){
   hand.forEach(c => (by[cardNum(c)] = by[cardNum(c)] || []).push(c));
   hand.forEach(c => out.push([c]));
   Object.values(by).forEach(l => { for (let k = 2; k <= Math.min(4, l.length); k++) out.push(l.slice(0, k)); });
+  Object.values(by).filter(l => l.length >= 3).forEach(t => Object.values(by).filter(l => l !== t && l.length >= 2).forEach(p => out.push(t.slice(0, 3).concat(p.slice(0, 2)))));   // trio + pasangan
   for (let L = 3; L <= 5; L++) for (let s = 1; s + L - 1 <= 12; s++){
     const seq = []; for (let v = s; v < s + L; v++){ if (!by[v]) break; seq.push(by[v]); }
     if (seq.length < L) continue;
@@ -6472,6 +6490,34 @@ const KM_CSS = `
 .km-qt i{display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#22D3EE,#FACC15);transition:width .2s linear}
 .km-qt b{position:absolute;right:0;top:-2.3cqw;font-size:1.6cqw;color:#FACC15;font-weight:900}
 .km-qt.lo i{background:#EF4444}.km-qt.lo b{color:#F87171}
+.km-pv{display:none}
+.km-ar{--w:10.7cqh;align-items:flex-start;padding-top:.8cqh}
+.km-ar .hint{margin-top:5cqh}
+.km-ar .km-pile{height:19cqh}
+.km-ar .km-pile img{top:3.4cqh;height:15cqh}
+.km-pile::before{content:'';position:absolute;left:-.55cqh;top:3.4cqh;height:15cqh;width:.5cqh;border-radius:99px;background:var(--pc)}
+.km-pile .tab{position:absolute;left:-.6cqh;top:.2cqh;min-width:2.8cqh;height:2.8cqh;padding:0 .5cqh;border-radius:99px;background:var(--pc);color:#0B1220;font-size:1.9cqh;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:2}
+.km-ar .km-pile .lab{display:none;left:2.6cqh;top:.2cqh;width:auto;min-width:0;white-space:nowrap;font-size:1.9cqh;background:rgba(2,6,23,.85);padding:0 .8cqh;border-radius:.6cqh;z-index:3}
+.km-ar .km-pile.open .lab{display:block}
+.km-pile.last{z-index:2}
+.km-ar .km-pile.last img{box-shadow:0 0 0 .3cqh #FACC15,0 0 2.4cqh rgba(250,204,21,.6)}
+.tg-top{position:absolute;right:1.2cqw;top:.6cqh;max-width:46%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:900;font-size:1.3cqw;color:#FDE68A;background:rgba(2,6,23,.75);padding:.2cqh 1cqw;border-radius:99px;border:.15cqw solid rgba(250,204,21,.5)}
+.tg-zone{left:18%;width:63%;top:41.5%;height:23.5%;border:.3cqw dashed rgba(255,255,255,.3);border-radius:1.4cqw;background:rgba(2,6,23,.4);display:flex;align-items:center;justify-content:center;gap:.8cqw;padding-top:2.8cqh;touch-action:none;z-index:6;transition:border-color .2s,box-shadow .2s,background .2s}
+.tg-zone img{height:16cqh;aspect-ratio:5/7;border-radius:.8cqw;box-shadow:0 .5cqw 1cqw rgba(0,0,0,.6);touch-action:none;cursor:grab;transition:transform .35s ease,opacity .35s ease;animation:kmIn .3s ease both}
+.tg-zone .zl{position:absolute;left:1cqw;right:1cqw;top:.4cqh;text-align:center;font-weight:900;font-size:1.3cqw;color:#CBD5E1;text-shadow:0 .2cqw .4cqw #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.tg-zone.empty{padding-top:0}.tg-zone.empty .zl{position:static;font-weight:700;color:#94A3B8}
+.tg-zone.ok{border:.3cqw solid #4ADE80;box-shadow:0 0 2cqw rgba(74,222,128,.45),inset 0 0 2cqw rgba(74,222,128,.15)}.tg-zone.ok .zl{color:#86EFAC}
+.tg-zone.bad{border-color:#F87171}.tg-zone.bad .zl{color:#FCA5A5}
+.tg-zone.hov{border-color:#FACC15;background:rgba(250,204,21,.14)}
+.tg-zone.aim{box-shadow:0 -2.5cqw 3cqw rgba(250,204,21,.55)}
+.tg-zone img.fly{transform:translateY(-24cqh) scale(.55) rotate(-6deg);opacity:0}
+.tg-zone.deny{animation:tgShake .5s}
+.tg-zone.deny::after{content:'🛡';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9cqw;background:radial-gradient(circle,rgba(239,68,68,.5),transparent 70%);border-radius:1.4cqw;animation:tgDeny .65s ease-out forwards;pointer-events:none}
+@keyframes tgShake{0%,100%{transform:none}20%{transform:translateX(-1.2cqw)}40%{transform:translateX(1.2cqw)}60%{transform:translateX(-.8cqw)}80%{transform:translateX(.8cqw)}}
+@keyframes tgDeny{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:scale(1)}}
+.tg-burst{z-index:7;width:30cqh;height:30cqh;margin:-15cqh 0 0 -15cqh;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0,var(--c) 28%,transparent 68%);animation:tgBurst .7s ease-out forwards}
+.tg-burst.big{width:60cqh;height:60cqh;margin:-30cqh 0 0 -30cqh}
+@keyframes tgBurst{0%{transform:scale(.2);opacity:1}100%{transform:scale(2.2);opacity:0}}
 .tg-chip{display:inline-block;margin:0 .4cqw .2cqw 0;padding:.05cqw .6cqw;border-radius:99px;font-size:.95cqw;font-weight:900;background:#334155;color:#E2E8F0}
 .tg-chip.ps{background:#7F1D1D;color:#FCA5A5}.tg-chip.ld{background:#854D0E;color:#FDE68A}
 .km-qz .qs-st{margin-top:1cqw;font-size:1.3cqw;color:#CBD5E1;text-align:center;line-height:1.6}
@@ -6564,10 +6610,16 @@ const kmSnd = (id, fb) => kmSafe(() => snd(id, fb));
 const kmImg = (id, attrs) => '<img data-kc="' + id + '" alt="" draggable="false"' + (attrs || '') + '>';
 const kmFill = box => box.querySelectorAll('img[data-kc]').forEach(im => { if (!im.getAttribute('src')) kadBake(cardById(im.dataset.kc)).then(u => { if (im.dataset.kc && !im.getAttribute('src')) im.src = u; }); });
 /* Meja: kad terakhir setiap kumpulan sebagai longgokan bertindih (10%); tekan-tahan = buka 80%, seret ke longgokan lain = buka yang itu */
+const TG_PC = ['#F97316', '#22D3EE', '#A78BFA', '#4ADE80'];
 function kmPilesHtml(piles, lastI, newI){
-  if (!piles.length) return '<div class="hint">🧠 Jawab kuiz untuk dapat kad · ⚔ serang satu lawan · kad di tangan = perisai 🛡<br>🔥 serang balas · 🌿 pulih · 💧 perisai · ⚡ cas (ikut elemen majoriti di tangan lawan)</div>';
-  return piles.map(p => '<div class="km-pile' + (p.i === lastI ? ' last' : '') + (p.i === newI ? ' new' : '') + '" data-pile="' + p.i + '" style="--n:' + p.cards.length + '">' +
-    '<div class="lab"><div>' + esc(p.name) + '</div><div><b>' + esc(p.combo) + '</b></div>' + (p.to ? '<div style="color:#FCA5A5">→ ' + esc(p.to) + '</div>' : '') + '</div>' + p.cards.map((id, j) => kmImg(id, ' style="--j:' + j + '"')).join('') + '</div>').join('');
+  if (!piles.length) return '';
+  const w = 10.7, avail = 146, gap = 2.4, ws = piles.map(p => w * (1 + (p.cards.length - 1) * .1)), k = piles.length;
+  const M = k > 1 ? Math.max(0, (ws.reduce((a, b) => a + b, 0) + gap * (k - 1) - avail) / (k - 1)) : 0;   // bertindih hanya bila meja penuh
+  const L = piles[lastI];
+  return piles.map((p, x) => '<div class="km-pile' + (x === lastI ? ' last' : '') + (x === newI ? ' new' : '') + '" data-pile="' + x + '" style="--n:' + p.cards.length + ';--pc:' + TG_PC[(p.s || 0) % 4] +
+    (x ? ';margin-left:' + (gap - M).toFixed(2) + 'cqh' : '') + '"><div class="tab">' + ((p.s || 0) + 1) + '</div><div class="lab">' + esc(p.name) + ' · <b>' + esc(p.combo) + '</b></div>' +
+    p.cards.map((id, j) => kmImg(id, ' style="--j:' + j + '"')).join('') + '</div>').join('') +
+    (L ? '<div class="tg-top">🎯 Kalahkan: <b>' + esc(L.combo) + '</b> · ' + esc(L.name) + '</div>' : '');
 }
 function kmPileWire(ar){
   let held = false, open = null;
@@ -6577,6 +6629,99 @@ function kmPileWire(ar){
   ar.addEventListener('pointermove', e => { if (held){ const p = at(e.clientX, e.clientY); if (p) set(p); } });
   const up = () => { held = false; set(null); };
   ar.addEventListener('pointerup', up); ar.addEventListener('pointercancel', up); ar.addEventListener('lostpointercapture', up);
+}
+/* Zon Kombo (Tangga Ilmon): seret kad dari tangan KE ATAS ke zon · seret kad zon KE ATAS lagi (ke meja) = letak kombo ·
+   seret kad zon KE BAWAH = pulang ke tangan · seret mendatar di tangan = susun · ketik = masuk / keluar zon.
+   Kombo tidak sah → zon bergegar + perisai merah. api: { ids, hidden, can, canPlay, check, hint, play, order, msg, changed } */
+function tgBurst(stage, el, x, y, big){
+  const col = { api: '#FF6B3C', alam: '#4ADE80', kilat: '#FACC15', air: '#38BDF8' }[el] || '#F59E0B', sr = stage.getBoundingClientRect();
+  const b = document.createElement('div'); b.className = 'tg-burst' + (big ? ' big' : '');
+  b.style.cssText = 'left:' + ((x - sr.left) / sr.width * 100) + '%;top:' + ((y - sr.top) / sr.height * 100) + '%;--c:' + col;
+  stage.appendChild(b); setTimeout(() => b.remove(), 900);
+}
+function tgPick(root, api){
+  const hand = root.querySelector('#kmHand'), zone = root.querySelector('#tgZone'), stage = root.querySelector('#kmSt');
+  let staged = [], d = null;
+  function render(){
+    const all = api.ids(); staged = staged.filter(id => all.includes(id));
+    if (api.hidden()){ zone.style.display = 'none'; return false; }
+    zone.style.display = '';
+    hand.innerHTML = all.filter(id => !staged.includes(id)).map(id => kmImg(id, ' data-id="' + id + '"')).join('');
+    kmHandOv(hand); kmFill(hand);
+    const r = staged.length ? api.check(staged) : null;
+    zone.className = 'tg-zone' + (r ? (r.ok ? ' ok' : ' bad') : ' empty');
+    zone.innerHTML = staged.map(id => kmImg(id, ' data-z="' + id + '"')).join('') +
+      '<div class="zl">' + (r ? r.label : '⬆ Seret kad ke sini untuk bina kombo · ' + api.hint()) + '</div>';
+    kmFill(zone); return true;
+  }
+  const changed = () => { render(); if (api.changed) api.changed(); };
+  function down(e, src){
+    const im = e.target.closest(src === 'hand' ? 'img[data-id]' : 'img[data-z]'); if (!im || !api.can()) return;
+    d = { src, im, id: im.dataset.id || im.dataset.z, x: e.clientX, y: e.clientY, mode: null };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  }
+  hand.addEventListener('pointerdown', e => down(e, 'hand'));
+  zone.addEventListener('pointerdown', e => down(e, 'zone'));
+  const lift = () => { const r = d.im.getBoundingClientRect(); d.g = document.createElement('img'); d.g.className = 'km-gh'; d.g.src = d.im.src; d.g.style.width = r.width + 'px'; document.body.appendChild(d.g); d.im.style.opacity = '.25'; };
+  function mv(e){
+    if (!d) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y;
+    if (!d.mode){
+      if (Math.hypot(dx, dy) < 10) return;
+      d.mode = d.src === 'hand' && Math.abs(dy) < Math.abs(dx) * .5 ? 'sort' : 'lift';   // mendatar = susun; naik / menyerong = angkat ke zon
+      if (d.mode === 'lift') lift(); else d.im.classList.add('drag');
+    }
+    if (d.mode === 'sort' && e.clientY < hand.getBoundingClientRect().top - 20){ d.im.classList.remove('drag'); d.im.style.transform = ''; d.mode = 'lift'; lift(); }
+    if (d.mode === 'lift'){
+      d.g.style.left = e.clientX + 'px'; d.g.style.top = e.clientY + 'px';
+      const zr = zone.getBoundingClientRect(), hr = hand.getBoundingClientRect();
+      zone.classList.toggle('hov', d.src === 'hand' && e.clientY < hr.top + 10);
+      zone.classList.toggle('aim', d.src === 'zone' && e.clientY < zr.top);
+      return;
+    }
+    d.im.style.transform = 'translateX(' + dx + 'px) translateY(-2cqh)';      // susun semula di tangan
+    const sibs = [...hand.querySelectorAll('img[data-id]')].filter(x => x !== d.im);
+    const after = sibs.find(x => { const r = x.getBoundingClientRect(); return e.clientX < r.left + r.width / 2; });
+    const before = d.im.getBoundingClientRect();
+    if (after && after.previousElementSibling !== d.im) hand.insertBefore(d.im, after);
+    else if (!after && hand.lastElementChild !== d.im) hand.appendChild(d.im);
+    const now = d.im.getBoundingClientRect();
+    if (now.left !== before.left){ d.x += now.left - before.left; d.im.style.transform = 'translateX(' + (e.clientX - d.x) + 'px) translateY(-2cqh)'; }
+  }
+  function up(e){
+    window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+    const x = d; d = null; if (!x) return;
+    zone.classList.remove('hov', 'aim');
+    if (x.g) x.g.remove(); x.im.style.opacity = '';
+    if (!x.mode){ kmSnd('ui_klik', 'flip'); if (x.src === 'hand') staged.push(x.id); else staged = staged.filter(i => i !== x.id); return changed(); }
+    if (x.mode === 'sort'){ x.im.classList.remove('drag'); x.im.style.transform = ''; api.order([...hand.querySelectorAll('img[data-id]')].map(i => i.dataset.id).concat(staged)); return; }
+    const hr = hand.getBoundingClientRect(), zr = zone.getBoundingClientRect(), y = e.clientY;
+    if (x.src === 'hand'){
+      if (y < hr.top + 10){ const after = [...zone.querySelectorAll('img[data-z]')].findIndex(z => { const r = z.getBoundingClientRect(); return e.clientX < r.left + r.width / 2; });
+        if (after < 0) staged.push(x.id); else staged.splice(after, 0, x.id); kmSnd('stor_ambil', 'flip'); }
+      return changed();
+    }
+    if (y > zr.bottom - 4){ staged = staged.filter(i => i !== x.id); kmSnd('ui_klik', 'flip'); return changed(); }
+    if (y < zr.top) return throwIt();
+    render();
+  }
+  function deny(t){
+    zone.classList.remove('deny'); void zone.offsetWidth; zone.classList.add('deny');
+    kmSnd('ui_salah', 'low'); kmSafe(() => vibrate([40, 30, 40])); if (api.msg) api.msg('🛡 ' + t, '#FCA5A5');
+    setTimeout(() => zone.classList.remove('deny'), 700);
+  }
+  function throwIt(){
+    if (!staged.length) return;
+    const r = api.check(staged);
+    if (!r.ok) return deny(r.label.replace(/^✘ /, ''));
+    if (!api.canPlay()) return deny('Belum giliran kamu');
+    const ids = staged.slice(), zr = zone.getBoundingClientRect();
+    zone.querySelectorAll('img').forEach((im, k) => { im.style.transitionDelay = k * 45 + 'ms'; im.classList.add('fly'); });
+    tgBurst(stage, cardSet(cardById(ids[0])).el, zr.left + zr.width / 2, zr.top + zr.height * .4, r.bomb);
+    kmSnd(r.bomb ? 'duel_kritikal' : 'duel_serang', r.bomb ? 'myth' : 'flip');
+    setTimeout(() => { staged = []; api.play(ids); }, 340);
+  }
+  return { render, clear(){ staged = []; }, get: () => staged.slice(), throwIt };
 }
 /* Tangan: ketik = pilih/nyahpilih; seret mendatar = susun semula kad (susunan disimpan) */
 function kmHandWire(box, api){
@@ -6671,7 +6816,7 @@ function komboRun(ids, opt, net){
   const T0 = Date.now();
   const root = document.createElement('div'); root.className = 'km'; root.id = 'kmRoot';
   root.innerHTML = '<div class="km-st" id="kmSt"><div class="km-top" id="kmTop"></div><button class="km-x" data-k="quit"><i class="fa-solid fa-xmark"></i></button>' +
-    '<div class="km-ar" id="kmAr"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
+    '<div class="km-ar" id="kmAr"></div><div class="tg-zone" id="tgZone"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
     '<div class="km-btn" id="kmBtn"></div><div class="km-msg" id="kmMsg"></div><div id="kmOv"></div></div>';
   document.body.appendChild(root); lockBody();
   const liveGo = () => liveHost('kombo', root, { title: 'Tangga Ilmon' + (net ? ' · Bilik ' + net.code : '') });
@@ -6686,9 +6831,9 @@ function komboRun(ids, opt, net){
   const top = () => table.length ? table[table.length - 1].ev : null;
   const owner = () => table.length ? table[table.length - 1].i : -1;
   const human = () => { const p = me(); return started && phase === 'play' && !p.ai && !p.remote && !busy && !over; };
-  const selCards = () => me().hand.filter(c => sel.has(c.id));
+  const selCards = () => pick.get().map(id => me().hand.find(c => c.id === id)).filter(Boolean);
   const chips = (p, i) => (p.pass ? '<span class="tg-chip ps">LEPAS</span>' : '') + (phase === 'play' && i === owner() ? '<span class="tg-chip ld">👑 MEJA</span>' : '');
-  const piles = () => table.map((t, k) => ({ i: k, name: P[t.i].name, combo: t.ev.name, cards: t.cards }));
+  const piles = () => table.map((t, k) => ({ i: k, s: t.i, name: P[t.i].name, combo: t.ev.name, cards: t.cards }));
 
   function paintTop(){
     $k('#kmTop').innerHTML = P.map((p, i) => i === cur ? '' :
@@ -6708,7 +6853,7 @@ function komboRun(ids, opt, net){
   function paintHand(){
     const p = me();
     const hidden = p.remote || p.ai || (locals > 1 && !peek);
-    if (hidden){                                         // tangan pemain lain: terbalik
+    if (hidden){ $k('#tgZone').style.display = 'none';                                         // tangan pemain lain: terbalik
       $k('#kmHand').innerHTML = '<div class="km-wait">' + kmFanHtml(p.hand.length, 7, 46) + '<div class="lbw">' +
         (p.remote ? '📱 ' + esc(p.name) + ' bermain di telefon…' : p.ai ? '🤖 ' + esc(p.name) + ' sedang berfikir…' : '') + '</div></div>';
       $k('#kmHand').style.removeProperty('--ov');
@@ -6716,13 +6861,12 @@ function komboRun(ids, opt, net){
       $k('#kmBtn').innerHTML = !p.ai && !p.remote && phase === 'play' && !over ? '<button class="go" data-k="peek" style="flex:1">👁 LIHAT KAD<br><span style="font-size:1.1cqw">' + esc(p.name) + '</span></button>' : '';
       pub(); return;
     }
-    $k('#kmHand').innerHTML = p.hand.map(c => kmImg(c.id, ' data-id="' + c.id + '" class="' + (sel.has(c.id) ? 'sel' : '') + '"')).join('');
-    kmHandOv($k('#kmHand')); kmFill($k('#kmHand'));
-    const cs = selCards(), ev = cs.length ? tgEval(cs) : null, hum = human(), t = top(), ok = ev && tgBeats(ev, t);
-    $k('#kmPv').innerHTML = !cs.length ? '<span style="color:#94A3B8;font-weight:600">' + tgNeed(t) + '</span>' :
-      !ev ? '<span style="color:#FCA5A5">Bukan kombo</span>' :
-      ok ? '<span style="color:#86EFAC">✔ ' + ev.name + '</span>' : '<span style="color:#FCA5A5">✘ ' + ev.name + ' — ' + tgNeed(t) + '</span>';
-    $k('#kmBtn').innerHTML = '<button class="go" data-k="play"' + (hum && ok ? '' : ' disabled') + '>▶ LETAK</button>' +
+    pick.render(); paintBtns();
+  }
+  function paintBtns(){
+    const p = me(), cs = selCards(), hum = human(), t = top(), r = cs.length ? tgCheck(cs, t, hum) : null;
+    if (p.remote || p.ai || (locals > 1 && !peek)) return;
+    $k('#kmBtn').innerHTML = '<button class="go" data-k="play"' + (hum && r && r.ok ? '' : ' disabled') + '>▶ LETAK</button>' +
       '<button data-k="pass"' + (hum && t ? '' : ' disabled') + '>✋ LEPAS</button>' +
       '<button class="q" data-k="tukar"' + (hum && !starUsed && p.stars >= 1 && cs.length === 1 && deck.length ? '' : ' disabled') + '>⭐ TUKAR 1 KAD</button>' +
       '<button class="df" data-k="buang"' + (hum && !starUsed && p.stars >= 2 && cs.length === 1 && p.hand.length > 1 ? '' : ' disabled') + '>⭐⭐ BUANG 1 KAD</button>';
@@ -6736,10 +6880,17 @@ function komboRun(ids, opt, net){
   }
   const paint = () => { paintTop(); paintMe(); paintHand(); };
   kmPileWire($k('#kmAr'));
-  kmHandWire($k('#kmHand'), {
-    can: () => !over && !busy && !me().ai && !me().remote && phase === 'play',
-    tap: id => { if (sel.has(id)) sel.delete(id); else if (sel.size < 5) sel.add(id); kmSnd('ui_klik', 'flip'); paintHand(); },
-    order: idsO => { const p = me(); p.hand = idsO.map(id => p.hand.find(c => c.id === id)).filter(Boolean); paintHand(); }
+  const pick = tgPick(root, {
+    ids: () => me().hand.map(c => c.id),
+    hidden: () => { const p = me(); return p.remote || p.ai || (locals > 1 && !peek); },
+    can: () => !over && phase === 'play' && !me().ai && !me().remote && !busy,
+    canPlay: () => human(),
+    check: ids => tgCheck(ids.map(cardById).filter(Boolean), top(), human()),
+    hint: () => tgNeed(top()),
+    play: ids => play(ids.map(id => me().hand.find(c => c.id === id)).filter(Boolean)),
+    order: ids => { const p = me(); const o = ids.map(id => p.hand.find(c => c.id === id)).filter(Boolean); if (o.length === p.hand.length) p.hand = o; },
+    msg: (t, c) => msg(t, c, 1800),
+    changed: () => paintBtns()
   });
   /* bilik berbilang peranti: keadaan awam + tangan setiap kumpulan jauh */
   const pub = () => { if (!net) return; clearTimeout(pubT); pubT = setTimeout(() => {
@@ -6760,7 +6911,7 @@ function komboRun(ids, opt, net){
   }
   function startTurn(){
     if (over) return;
-    sel.clear(); busy = false; starUsed = false; peek = false; turns++;
+    pick.clear(); busy = false; starUsed = false; peek = false; turns++;
     const p = me(); paint();
     if (P.length > 1) kmTurnBanner($k('#kmSt'), av(p, 54), p.name, false);
     clearTimeout(rto);
@@ -6781,9 +6932,9 @@ function komboRun(ids, opt, net){
     const p = me(), ev = tgEval(cs);
     if (!ev || !tgBeats(ev, top())) return;
     busy = true; clearTimeout(rto);
-    p.hand = p.hand.filter(c => !cs.includes(c)); sel.clear();
+    p.hand = p.hand.filter(c => !cs.includes(c)); pick.clear();
     table.push({ i: cur, ev, cards: tgSort(cs).map(c => c.id) }); newI = table.length - 1;
-    kmSnd(ev.bomb ? 'duel_kritikal' : 'kad_letup', ev.bomb ? 'myth' : 'flip');
+    if (p.ai || p.remote){ const ar = $k('#kmAr').getBoundingClientRect(); tgBurst($k('#kmSt'), cardSet(cs[0]).el, ar.left + ar.width * .45, ar.top + ar.height * .3, !!ev.bomb); kmSnd(ev.bomb ? 'duel_kritikal' : 'duel_serang', ev.bomb ? 'myth' : 'flip'); }
     if (ev.bomb) msg('💣 ' + esc(p.name) + ': ' + ev.name + '!', '#FCA5A5', 1800);
     paintArena(); paint();
     if (!p.hand.length) return later(() => finish(cur), 900);
@@ -6791,7 +6942,7 @@ function komboRun(ids, opt, net){
   }
   function pass(){
     const p = me(); if (!top()) return;
-    busy = true; clearTimeout(rto); p.pass = true; sel.clear();
+    busy = true; clearTimeout(rto); p.pass = true; pick.clear();
     kmSnd('ui_klik', 'flip'); msg('✋ ' + esc(p.name) + ' lepas', '#94A3B8', 1000); paint();
     later(advance, 700);
   }
@@ -6799,7 +6950,7 @@ function komboRun(ids, opt, net){
     const p = me(); if (starUsed || !c || !p.hand.includes(c)) return;
     if (kind === 'tukar'){ if (p.stars < 1 || !deck.length) return; p.stars -= 1; p.hand = tgSort(p.hand.filter(x => x !== c).concat(deck.splice(0, 1))); deck.push(c); msg('⭐ ' + esc(p.name) + ' tukar 1 kad', '#FDE68A', 1300); }
     else { if (p.stars < 2 || p.hand.length < 2) return; p.stars -= 2; p.hand = p.hand.filter(x => x !== c); deck.push(c); msg('⭐⭐ ' + esc(p.name) + ' buang 1 kad', '#FDE68A', 1300); }
-    starUsed = true; sel.clear(); kmSnd('kad_koyak', 'flip'); paint();
+    starUsed = true; pick.clear(); kmSnd('kad_koyak', 'flip'); paint();
   }
   /* ---------- kuiz meja baharu ---------- */
   const qPanel = (q, order, head, sub) => '<div class="pn"><div class="lb">🧠 ' + head + '</div><div class="q">' + esc(q.q) + '</div>' +
@@ -6922,7 +7073,7 @@ function komboRun(ids, opt, net){
       started = true; live = liveGo(); $k('#kmOv').innerHTML = ''; newTable(leader); return; }
     if (a === 'peek'){ peek = true; paintHand(); return; }
     if (!human()) return;
-    if (a === 'play') return play(selCards());
+    if (a === 'play') return pick.throwIt();
     if (a === 'pass') return pass();
     if (a === 'tukar' || a === 'buang') return starAct(a, selCards()[0]);
   });
@@ -6964,7 +7115,7 @@ function komboJoin(code, T){
   let st = null, seat = -1, hand = [], sel = new Set(), qShown = 0, offs = [], dead = false, n0 = Date.now(), su = false;
   const root = document.createElement('div'); root.className = 'km'; root.id = 'kmJoin';
   root.innerHTML = '<div class="km-st" id="kmSt"><div class="km-top" id="kmTop"></div><button class="km-x" data-k="quit"><i class="fa-solid fa-xmark"></i></button>' +
-    '<div class="km-ar" id="kmAr"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
+    '<div class="km-ar" id="kmAr"></div><div class="tg-zone" id="tgZone"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
     '<div class="km-btn" id="kmBtn"></div><div class="km-msg" id="kmMsg"></div><div id="kmOv"></div></div>';
   document.body.appendChild(root); kmSafe(lockBody);
   const $k = s => root.querySelector(s);
@@ -6972,7 +7123,7 @@ function komboJoin(code, T){
   const msg = (t, c, ms) => { const m = $k('#kmMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1400); };
   const send = a => T.set('a' + seat, Object.assign({ n: ++n0, order: hand.slice() }, a));
   const myTurn = () => st && st.started && !st.over && st.phase === 'play' && st.cur === seat && !st.busy;
-  const selIds = () => hand.filter(id => sel.has(id));
+  const selIds = () => pick.get();
   const chips = (s, i) => (s.pass ? '<span class="tg-chip ps">LEPAS</span>' : '') + (st.phase === 'play' && i === st.owner ? '<span class="tg-chip ld">👑 MEJA</span>' : '') + (i === st.cur && st.phase === 'play' ? '<span class="tg-chip">⏳ GILIRAN</span>' : '');
 
   function pickSeat(){
@@ -6987,14 +7138,12 @@ function komboJoin(code, T){
   function paintHand(){
     if (!st || seat < 0) return;
     const mine = st.seats[seat], go = myTurn(), t = st.top;
-    $k('#kmHand').innerHTML = hand.map(id => kmImg(id, ' data-id="' + id + '" class="' + (sel.has(id) ? 'sel' : '') + '"')).join('');
-    kmHandOv($k('#kmHand')); kmFill($k('#kmHand'));
-    const cs = selIds().map(cardById).filter(Boolean), ev = cs.length ? tgEval(cs) : null, ok = ev && tgBeats(ev, t);
-    $k('#kmPv').innerHTML = !go ? '<span style="color:#94A3B8;font-weight:600">' + (st.phase === 'quiz' ? '🧠 Kuiz meja baharu…' : 'Seret kad untuk susun strategi sementara menunggu') + '</span>' :
-      !cs.length ? '<span style="color:#FDE68A;font-weight:700">' + tgNeed(t) + '</span>' :
-      !ev ? '<span style="color:#FCA5A5">Bukan kombo</span>' :
-      ok ? '<span style="color:#86EFAC">✔ ' + ev.name + '</span>' : '<span style="color:#FCA5A5">✘ ' + ev.name + ' — ' + tgNeed(t) + '</span>';
-    $k('#kmBtn').innerHTML = '<button class="go" data-k="play"' + (go && ok ? '' : ' disabled') + '>▶ LETAK</button>' +
+    pick.render(); paintBtns();
+  }
+  function paintBtns(){
+    if (!st || seat < 0) return;
+    const mine = st.seats[seat], go = myTurn(), t = st.top, cs = selIds().map(cardById).filter(Boolean), r = cs.length ? tgCheck(cs, t, go) : null;
+    $k('#kmBtn').innerHTML = '<button class="go" data-k="play"' + (go && r && r.ok ? '' : ' disabled') + '>▶ LETAK</button>' +
       '<button data-k="pass"' + (go && t ? '' : ' disabled') + '>✋ LEPAS</button>' +
       '<button class="q" data-k="tukar"' + (go && !su && mine.stars >= 1 && cs.length === 1 && st.deckN ? '' : ' disabled') + '>⭐ TUKAR 1 KAD</button>' +
       '<button class="df" data-k="buang"' + (go && !su && mine.stars >= 2 && cs.length === 1 && hand.length > 1 ? '' : ' disabled') + '>⭐⭐ BUANG 1 KAD</button>';
@@ -7010,7 +7159,7 @@ function komboJoin(code, T){
     if (arKey !== paint.ar){                                // kemas meja hanya bila berubah (animasi tidak berulang)
       const prev = paint.ar; paint.ar = arKey;
       $k('#kmAr').innerHTML = !st.started ? '<div class="hint">⏳ Menunggu hos menekan MULA…</div>' :
-        plays.length ? kmPilesHtml(plays.map((p, k) => ({ i: k, name: p.name, combo: p.combo, cards: p.cards })), plays.length - 1, prev ? plays.length - 1 : -1) :
+        plays.length ? kmPilesHtml(plays.map((p, k) => ({ i: k, s: p.i, name: p.name, combo: p.combo, cards: p.cards })), plays.length - 1, prev ? plays.length - 1 : -1) :
         '<div class="hint">' + (st.phase === 'quiz' ? '🧠 Kuiz meja baharu…' : '🪜 ' + esc((S2[st.cur] || {}).name || '') + ' buka meja') + '</div>';
       kmFill($k('#kmAr'));
     }
@@ -7021,10 +7170,17 @@ function komboJoin(code, T){
     paintHand();
   }
   kmPileWire($k('#kmAr'));
-  kmHandWire($k('#kmHand'), {
+  const pick = tgPick(root, {
+    ids: () => hand.slice(),
+    hidden: () => seat < 0 || !st,
     can: () => seat >= 0 && !!st && !st.over,
-    tap: id => { if (sel.has(id)) sel.delete(id); else if (sel.size < 5) sel.add(id); kmSnd('ui_klik', 'flip'); paintHand(); },
-    order: ids => { hand = ids; paintHand(); }
+    canPlay: () => myTurn(),
+    check: ids => tgCheck(ids.map(cardById).filter(Boolean), st && st.top, myTurn()),
+    hint: () => st && st.phase === 'play' ? tgNeed(st.top) : 'kuiz meja baharu…',
+    play: ids => { send({ t: 'play', cards: ids }); paint(); },
+    order: ids => { hand = ids; },
+    msg: (t, c) => msg(t, c, 1800),
+    changed: () => paintBtns()
   });
   const qClear = () => $k('#kmSt').querySelectorAll('.km-qz').forEach(x => x.remove());
   function showQ(v){
@@ -7062,7 +7218,7 @@ function komboJoin(code, T){
     const key = st.phase === 'play' ? st.cur + ':' + st.table : '';
     if (key && key !== prevCur){
       const s = st.seats[st.cur];
-      if (st.cur === seat){ sel.clear(); kmSafe(() => vibrate([60, 40, 60])); kmSnd('ui_betul', 'hi'); }
+      if (st.cur === seat){ kmSafe(() => vibrate([60, 40, 60])); kmSnd('ui_betul', 'hi'); }
       if (s) kmTurnBanner($k('#kmSt'), s.av || '', s.name, st.cur === seat);
       prevCur = key;
     }
@@ -7080,16 +7236,15 @@ function komboJoin(code, T){
         const nh = (v && v.cards) || [];
         const keep = hand.filter(id => nh.includes(id));
         hand = keep.concat(nh.filter(id => !keep.includes(id)));
-        [...sel].forEach(id => { if (!hand.includes(id)) sel.delete(id); });
         su = !!(v && v.su); paint();
       }));
       offs.push(T.on('q' + seat, showQ));
       return paint();
     }
     if (seat < 0 || !myTurn()) return;
-    if (a === 'play'){ const ids = selIds(); sel.clear(); send({ t: 'play', cards: ids }); return paint(); }
-    if (a === 'pass'){ sel.clear(); send({ t: 'pass' }); return paint(); }
-    if (a === 'tukar' || a === 'buang'){ const id = selIds()[0]; sel.clear(); send({ t: a, card: id }); return paint(); }
+    if (a === 'play') return pick.throwIt();
+    if (a === 'pass'){ pick.clear(); send({ t: 'pass' }); return paint(); }
+    if (a === 'tukar' || a === 'buang'){ const id = selIds()[0]; pick.clear(); send({ t: a, card: id }); return paint(); }
   });
 }
 /* pautan sertai (?km=…): telefon kumpulan tanpa tetapan — tiada pemasangan, tiada data kelas */
