@@ -5554,7 +5554,7 @@ function liveWatch(){
     // dibuka hanya bila siaran terbukti hidup (mesej baharu, bukan sisa lama)
     if (init && prev === undefined) return;
     if (prev !== undefined && prev === v.t) return;
-    if (RUN || ESC || STOR || document.getElementById('btRoot')) return;   // peranti ini sendiri sedang bermain
+    if (RUN || ESC || STOR || document.getElementById('btRoot') || document.getElementById('kmRoot') || document.getElementById('kmJoin')) return;   // peranti ini sendiri sedang bermain
     liveOpen(v);
   });
 }
@@ -5744,17 +5744,17 @@ const GAME_LOBBY = {
       const mode = '<div class="lb-seg">' + b(!K.multi, 'kmm:0', '📺 1 peranti') + b(K.multi, 'kmm:1', '📱 Banyak peranti') + '</div>';
       if (all.length < 4) return top + mode + '<div class="lb-note" style="color:#FCA5A5;margin-top:10px;font-size:12px">⚠️ Perlu <b>4 kumpulan</b> (yang ada ahli) dalam kelas ini — sekarang ada <b>' + all.length + '</b>.</div>' +
         '<button class="lb-btn go" data-lb="kmgrp">➕ Cipta kumpulan di tab KUMPULAN</button><div class="lb-note">Selepas itu tekan <b>GAME</b> — skrin ini dibuka semula.</div>';
-      const nb = seats.filter(x => x.bot).length, nh = seats.length - nb, who = K.multi ? '📱 QR' : '👤 Murid';
+      const nb = seats.filter(x => x.bot).length, nh = seats.length - nb, who = K.multi ? '🔢 Kod' : '👤 Murid';
       const seatH = '<div class="km-seats">' + seats.map((x, i) => '<div class="km-seat' + (x.bot ? ' bot' : '') + '">' +
         '<button class="nm" data-lb="kms:' + i + '">' + teamAvatar(x.id, 24) + '<span>' + esc(teamName(x.id)) + '</span></button>' +
         '<div class="lb-seg">' + b(!x.bot, 'kmb:' + i + ':0', who) + b(x.bot, 'kmb:' + i + ':1', '🤖 Robot') + '</div></div>').join('') + '</div>';
-      const presets = (K.multi ? [[4, 'Semua QR'], [2, '2 + 2 robot'], [1, '1 + 3 robot']] : [[4, '4 murid'], [2, '2 + 2 robot'], [1, '1 + 3 robot'], [0, 'Semua robot']])
+      const presets = (K.multi ? [[4, 'Semua kod'], [2, '2 + 2 robot'], [1, '1 + 3 robot']] : [[4, '4 murid'], [2, '2 + 2 robot'], [1, '1 + 3 robot'], [0, 'Semua robot']])
         .map(([n, l]) => b(seats.every((x, i) => x.bot === (i >= n)), 'kmp:' + n, l)).join('');
       const right = '<div class="lb-seg">' + presets + '</div>' +
         (nb ? '<div class="lb-sec" style="margin-top:10px">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>' : '') +
         todayQNotice() +
-        '<button class="lb-btn go" data-lb="kmgo">' + (K.multi ? '📷 PAPAR KOD QR' : '▶ MULA') + '<span style="font-size:12px;font-weight:600;margin-left:6px">(' + nh + (K.multi ? ' telefon' : ' murid') + (nb ? ' · ' + nb + ' robot' : '') + ')</span></button>' +
-        '<div class="lb-note">' + (K.multi ? 'Peranti ini jadi <b>papan projektor</b>. Di telefon murid: tab GAME → KAD → <b>📷 Imbas QR</b>.' + (FB.on ? '' : ' <b style="color:#FCA5A5">Perlu Firebase aktif.</b>') : 'Semua bergilir di peranti ini.') +
+        '<button class="lb-btn go" data-lb="kmgo">' + (K.multi ? '🔢 BUKA BILIK' : '▶ MULA') + '<span style="font-size:12px;font-weight:600;margin-left:6px">(' + nh + (K.multi ? ' telefon' : ' murid') + (nb ? ' · ' + nb + ' robot' : '') + ')</span></button>' +
+        '<div class="lb-note">' + (K.multi ? 'Peranti ini jadi <b>papan projektor</b> (hos). Di telefon murid: tab GAME → KAD → <b>🔢 Masuk kod bilik</b>.' + (FB.on ? '' : ' <b style="color:#FCA5A5">Perlu Firebase aktif.</b>') : 'Semua bergilir di peranti ini.') +
           (all.length > 4 ? ' Ketik nama kumpulan untuk menukarnya.' : '') + '</div>';
       return top + '<div class="km-lb"><div>' + mode + seatH + '</div><div>' + right + '</div></div>';
     },
@@ -5772,12 +5772,12 @@ const GAME_LOBBY = {
       if (a === 'kmgrp'){ x.close(); KM_BACK = true; setTab('groups'); setTimeout(() => toast('Cipta 4 kumpulan & masukkan ahli, kemudian tekan GAME untuk kembali ke Kombo Ilmon.'), 300); return true; }
       if (a === 'kmgo'){
         if (all.length < 4){ toast('Perlu 4 kumpulan dalam kelas ini.', null, true); return true; }
-        if (K.multi && seats.every(t => t.bot)){ toast('Pilih sekurang-kurangnya satu bilik 📱 QR.', null, true); return true; }
+        if (K.multi && seats.every(t => t.bot)){ toast('Pilih sekurang-kurangnya satu bilik 🔢 Kod.', null, true); return true; }
         x.close(); komboStart(seats.map(t => ({ id: t.id, bot: !!t.bot })), { multi: !!K.multi, lvl: K.lvl }); return true;
       }
       return false;
     },
-    how: () => '<b>🎴 Kombo Ilmon</b> — 4 pemain — <b>📺 1 peranti</b> (setiap tempat murid atau robot, bergilir) atau <b>📱 banyak peranti</b> (peranti ini papan projektor, setiap kumpulan masuk biliknya dengan kod QR). Setiap giliran:<br>' +
+    how: () => '<b>🎴 Kombo Ilmon</b> — 4 pemain — <b>📺 1 peranti</b> (setiap tempat murid atau robot, bergilir) atau <b>📱 banyak peranti</b> (peranti ini papan projektor, setiap kumpulan masuk biliknya dengan kod 4 angka). Setiap giliran:<br>' +
       '1️⃣ <b>KUIZ +KAD</b> (30 saat): betul = buka pek 4 kad, pilih <b>2</b> (jawab dalam 10 saat = pilih <b>3</b>), maksimum 8 kad di tangan. Salah = tiada kad (tangan kosong dapat 1 kad simpati).<br>' +
       '2️⃣ <b>SERANG</b> satu lawan dengan kombo: <b>Pasangan</b> ×1.5, <b>Trio</b> ×2, <b>Turutan</b> nombor ×2, <b>Satu Alam</b> ×2.5, <b>Turutan Elemen</b> ×3, <b>Kombo Raja</b> ×4 — atau <b>BERTAHAN</b> (perisai ×1.5, selang satu pusingan) — atau <b>LANGKAU</b>.<br><br>' +
       '<b>🛡 Perisai</b> = kad yang tinggal di tangan (DEF × 2%, maks 60%). Kad yang dihantar hilang — dapatkan kad baharu hanya melalui kuiz!<br>' +
@@ -6468,7 +6468,7 @@ const KM_CSS = `
 `;
 function kmStyle(){ if (!document.getElementById('kmCss')){ const s = document.createElement('style'); s.id = 'kmCss'; s.textContent = KM_CSS; document.head.appendChild(s); } }
 
-/* seats: [{ id, bot }] 4 tempat · opt: { multi (peranti ini = papan projektor, setiap kumpulan sertai dengan kod QR), lvl } */
+/* seats: [{ id, bot }] 4 tempat · opt: { multi (peranti ini = papan projektor, setiap kumpulan sertai dengan kod 4 angka), lvl } */
 async function komboStart(seats, opt){
   opt = opt || {};
   seats = (seats || []).filter(t => t && teamOf(t.id)).slice(0, 4);
@@ -6766,7 +6766,8 @@ function komboRun(ids, opt, net){
     '<div class="km-ar" id="kmAr"></div><div class="km-pv" id="kmPv"></div><div class="km-me" id="kmMe"></div><div class="km-hand" id="kmHand"></div>' +
     '<div class="km-btn" id="kmBtn"></div><div class="km-msg" id="kmMsg"></div><div id="kmOv"></div></div>';
   document.body.appendChild(root); lockBody();
-  const live = liveHost('kombo', root, { title: 'Kombo Ilmon' + (net ? ' · Bilik ' + net.code : '') });
+  const liveGo = () => liveHost('kombo', root, { title: 'Kombo Ilmon' + (net ? ' · Bilik ' + net.code : '') });
+  let live = net ? null : liveGo();                      // banyak peranti: tayangan bermula bila hos tekan MULA
   const $k = s => root.querySelector(s);
   let msgT = 0;
   const msg = (t, c, ms) => { const m = $k('#kmMsg'); m.innerHTML = t; m.style.color = c || '#fff'; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => m.style.opacity = 0, ms || 1400); };
@@ -7042,11 +7043,10 @@ function komboRun(ids, opt, net){
       return;
     }
     if (a === 'again'){ quit(); setTimeout(() => komboRun(ids, opt, net), 60); return; }
-    if (a === 'begin'){                               // hanya hos; semua bilik 📱 QR mesti sudah disertai
+    if (a === 'begin'){                               // hanya hos; semua bilik 🔢 kod mesti sudah disertai
       const wait = P.filter((p, i) => p.remote && !joined[i]);
-      if (wait.length){ msg('⏳ Tunggu ' + wait.map(p => esc(p.name)).join(', ') + ' imbas QR', '#FDE68A', 2000); return; }
-      started = true; $k('#kmOv').innerHTML = ''; startTurn(); return; }
-    if (a === 'copylink'){ copyText(joinUrl(), 'Pautan sertai disalin.'); return; }
+      if (wait.length){ msg('⏳ Tunggu ' + wait.map(p => esc(p.name)).join(', ') + ' masuk kod', '#FDE68A', 2000); return; }
+      started = true; live = liveGo(); $k('#kmOv').innerHTML = ''; startTurn(); return; }
     if (!started || over || busy || me().ai || me().remote) return;
     const t = e.target.closest('[data-t]');
     if (t){ const p = P[+t.dataset.t]; if (p.hp > 0 && p !== me()){ target = p; kmSnd('ui_klik', 'flip'); paintTop(); paintHand(); } return; }
@@ -7055,20 +7055,16 @@ function komboRun(ids, opt, net){
     if (a === 'quiz') return quiz();
     if (a === 'skip') return skip();
   });
-  /* bilik menunggu: kod besar + kod QR + status setiap kumpulan */
-  const joinUrl = () => location.origin + location.pathname + '?km=' + b64urlEnc(JSON.stringify({ c: net.code, f: FB.cfg || fbCfgGet() || null }));
+  /* bilik menunggu: kod 4 angka besar + status setiap kumpulan */
   function lobbyRoom(){
     const nRem = P.filter(p => p.remote).length, nWait = P.filter((p, i) => p.remote && !joined[i]).length;   // MULA dikunci hingga semua telefon masuk
     const list = P.map((p, i) => '<div class="row" style="justify-content:space-between">' + av(p, 26) + '<span style="flex:1;text-align:left">' + esc(p.name) + '</span><b style="color:' +
       (p.ai ? '#94A3B8">🤖 robot' : !p.remote ? '#FACC15">📺 peranti ini' : joined[i] ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</b></div>').join('');
-    $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn" style="width:62%;display:flex;gap:2cqw;text-align:left">' +
-      '<div style="flex:1"><div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900">BILIK KOMBO ILMON</div>' +
-      '<div style="font-size:6cqw;font-weight:900;letter-spacing:.2em;line-height:1.1">' + net.code + '</div>' +
-      '<div style="font-size:1.2cqw;color:#94A3B8;line-height:1.5">Di telefon kumpulan: buka EduRank → GAME → KAD → <b>📷 IMBAS QR</b> (atau <b>Taip kod bilik</b>). MULA hanya boleh ditekan bila semua bilik 📱 sudah disertai.</div>' + list +
-      '<div class="bt"><button data-k="copylink">🔗 Salin pautan</button><button class="o" data-k="begin"' + (nWait ? ' disabled style="opacity:.45"' : '') + '>' + (nWait ? '⏳ Menunggu ' + (nRem - nWait) + '/' + nRem + ' telefon' : '▶ MULA') + '</button></div></div>' +
-      '<div id="kmQr" style="width:18cqw;height:18cqw;background:#fff;border-radius:1cqw;padding:.8cqw;flex:none"></div></div></div>';
-    const q = $k('#kmQr');
-    kmQr().then(QR => { if (!QR || !q.isConnected) return; q.innerHTML = ''; new QR(q, { text: joinUrl(), width: 512, height: 512, correctLevel: QR.CorrectLevel.L }); const im = q.querySelector('img,canvas'); if (im){ im.style.width = '100%'; im.style.height = '100%'; } });
+    $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn" style="width:56%;text-align:left">' +
+      '<div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900;text-align:center">BILIK KOMBO ILMON · KOD</div>' +
+      '<div style="font-size:9cqw;font-weight:900;letter-spacing:.25em;line-height:1.05;text-align:center;color:#FDE68A;text-shadow:0 0 2cqw rgba(250,204,21,.5)">' + net.code + '</div>' +
+      '<div style="font-size:1.25cqw;color:#94A3B8;line-height:1.5;text-align:center">Di telefon kumpulan: EduRank → GAME → KAD → <b>🔢 Masuk kod bilik</b>, taip kod ini, pilih kumpulan. MULA dibuka bila semua bilik 🔢 sudah masuk.</div>' + list +
+      '<div class="bt"><button class="o" data-k="begin"' + (nWait ? ' disabled style="opacity:.45"' : '') + '>' + (nWait ? '⏳ Menunggu ' + (nRem - nWait) + '/' + nRem + ' telefon' : '▶ MULA') + '</button></div></div></div>';
   }
   if (net){
     P.forEach((p, i) => {
@@ -7082,70 +7078,18 @@ function komboRun(ids, opt, net){
   paintArena();
   if (net){ paint(); lobbyRoom(); } else startTurn();
 }
-const KM_QRLIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-let KM_QRP = null;
-const kmQr = () => KM_QRP || (KM_QRP = new Promise(r => { if (window.QRCode) return r(window.QRCode); const s = document.createElement('script'); s.src = KM_QRLIB; s.onload = () => r(window.QRCode); s.onerror = () => r(null); document.head.appendChild(s); }));
-/* Imbas kod QR bilik Kombo dengan kamera (tab KAD) — BarcodeDetector, atau jsQR jika pelayar tiada */
-const KM_JSQR = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-let KM_JSQRP = null;
-const kmJsQR = () => KM_JSQRP || (KM_JSQRP = new Promise(r => { if (window.jsQR) return r(window.jsQR); const sc = document.createElement('script'); sc.src = KM_JSQR; sc.onload = () => r(window.jsQR || null); sc.onerror = () => r(null); document.head.appendChild(sc); }));
-async function kmScan(){
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('Kamera tidak disokong di peranti ini — guna "Taip kod bilik".', null, true);
-  const ov = document.createElement('div'); ov.className = 'kmsc';
-  ov.innerHTML = '<style>.kmsc{position:fixed;inset:0;z-index:995;background:#000;display:flex;align-items:center;justify-content:center;color:#fff}' +
-    '.kmsc video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}' +
-    '.kmsc .fr{position:relative;width:min(68vw,62vh);aspect-ratio:1;border:4px solid #FACC15;border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.5)}' +
-    '.kmsc .tx{position:absolute;top:calc(16px + env(safe-area-inset-top));left:12px;right:12px;text-align:center;font-weight:800;font-size:15px;text-shadow:0 2px 6px #000}' +
-    '.kmsc .bt{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;gap:10px}' +
-    '.kmsc .bt button{padding:12px 18px;border-radius:99px;background:rgba(30,41,59,.92);color:#fff;font-weight:800;border:1px solid #475569}</style>' +
-    '<video playsinline muted></video><div class="fr"></div><div class="tx">📷 Halakan kamera ke kod QR di skrin projektor</div>' +
-    '<div class="bt"><button data-x="code">⌨️ Taip kod</button><button data-x="close">✕ Tutup</button></div>';
-  document.body.appendChild(ov);
-  let stream = null, done = false, det = null, cv = null;
-  const stop = () => { done = true; if (stream) stream.getTracks().forEach(t => t.stop()); ov.remove(); };
-  ov.querySelector('[data-x=close]').onclick = stop;
-  ov.querySelector('[data-x=code]').onclick = () => { stop(); komboJoinAsk(); };
-  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); }
-  catch(e){ stop(); return toast('Kamera tidak dibenarkan. Benarkan kamera, atau guna "Taip kod bilik".', null, true); }
-  if (done){ stream.getTracks().forEach(t => t.stop()); return; }
-  const v = ov.querySelector('video'); v.srcObject = stream; await v.play().catch(() => {});
-  if ('BarcodeDetector' in window){ try { det = new BarcodeDetector({ formats: ['qr_code'] }); } catch(e){} }
-  const jsQR = det ? null : await kmJsQR();
-  if (!det && !jsQR){ stop(); return toast('Pengimbas QR gagal dimuat — guna "Taip kod bilik".', null, true); }
-  let busy = false;
-  const tick = async () => {
-    if (done) return;
-    let txt = null;
-    try {
-      if (det){ const r = await det.detect(v); if (r && r[0]) txt = r[0].rawValue; }
-      else if (v.videoWidth){ cv = cv || document.createElement('canvas'); const w = 480, h = Math.round(w * v.videoHeight / v.videoWidth); cv.width = w; cv.height = h;
-        const g = cv.getContext('2d', { willReadFrequently: true }); g.drawImage(v, 0, 0, w, h); const r = jsQR(g.getImageData(0, 0, w, h).data, w, h); if (r) txt = r.data; }
-    } catch(e){}
-    if (txt && !busy){ busy = true; if (await kmJoinText(txt)){ stop(); return; } busy = false; }
-    setTimeout(tick, 250);
-  };
-  tick();
-}
-/* teks dari QR → sertai bilik: pautan ?km=… atau kod 4 digit */
-async function kmJoinText(txt){
-  let code = '', cfg = null;
-  try { const p = new URL(txt).searchParams.get('km'); if (p){ const j = JSON.parse(b64urlDec(p)); code = String(j.c || ''); cfg = j.f || null; } } catch(e){}
-  if (!code && /^\d{4}$/.test(String(txt).trim())) code = String(txt).trim();
-  if (!/^\d{4}$/.test(code)) return false;
-  const T = await kmNet(code, cfg); if (!T){ toast('Tidak dapat menyambung ke bilik.', null, true); return true; }
-  kmSnd('ui_betul', 'hi'); await kadProbe(); komboJoin(code, T); return true;
-}
 /* ---------- PERANTI KUMPULAN: sertai bilik Kombo (tangan sendiri sahaja; hos memegang permainan) ---------- */
 async function komboJoinAsk(){
   const code = await promptBox({ title: 'Sertai Kombo Ilmon', label: 'Kod bilik (4 digit) di skrin hos', placeholder: '1234' });
   if (!code) return;
   const c = String(code).replace(/\D/g, '').slice(0, 4);
   if (c.length !== 4) return toast('Kod bilik ialah 4 digit.', null, true);
-  const T = await kmNet(c); if (!T) return toast('Sertai perlukan Firebase (Tetapan → Penyegerakan Firebase), atau imbas kod QR di skrin hos.', null, true);
+  const T = await kmNet(c); if (!T) return toast('Sertai perlukan Firebase (Tetapan → Penyegerakan Firebase) dengan tetapan sama seperti peranti hos.', null, true);
   await kadProbe(); komboJoin(c, T);
 }
 function komboJoin(code, T){
   kmStyle();
+  if (LVW.view) LVW.view.close();                         // tayangan lain ditutup — telefon ini pemain
   let st = null, seat = -1, hand = [], sel = new Set(), target = -1, q = null, qShown = 0, offs = [], dead = false, n0 = Date.now(), packOpen = false, fxSeen = 0;
   const root = document.createElement('div'); root.className = 'km'; root.id = 'kmJoin';
   root.innerHTML = '<div class="km-st" id="kmSt"><div class="km-top" id="kmTop"></div><button class="km-x" data-k="quit"><i class="fa-solid fa-xmark"></i></button>' +
@@ -7314,9 +7258,8 @@ function viewCards(){
     '<div style="font-size:40px;line-height:1">⚔️</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FF8A3D;text-shadow:0 0 12px rgba(255,138,61,.6)">DUEL KAD</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kumpul <b>Ilmon</b> — makhluk ajaib Alam Ilmuria — jawab kuiz untuk dapat kad dan bertarung dalam <b>Kombo Ilmon</b>.</div></div>' +
-    '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-scan"><i class="fa-solid fa-qrcode"></i> IMBAS QR — sertai bilik di projektor</button>' +
-    '<button class="btn btn-o clip-s w-full mt-2 !py-3 text-[16px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN</button>' +
-    '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="km-join"><i class="fa-solid fa-keyboard text-cyan"></i> Taip kod bilik</button>';
+    '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — sertai bilik di projektor</button>' +
+    '<button class="btn btn-o clip-s w-full mt-2 !py-3 text-[16px]" data-act="lobby" data-id="cards"><i class="fa-solid fa-play"></i> MAIN</button>';
 }
 /* Koleksi, TPC, pack & set kumpulan — dipaparkan dalam menu Duel Kad */
 function cardsHubHtml(){
@@ -11303,7 +11246,6 @@ const ACTS = {
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
   'lobby': d => gameLobby(d.id),
   'km-join': () => komboJoinAsk(),
-  'km-scan': () => kmScan(),
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
   'rpt-open': () => rptModal(),
