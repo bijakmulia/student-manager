@@ -313,6 +313,7 @@ input[type=range].sl::-moz-range-thumb{height:24px;width:14px;border:0;backgroun
       <div class="text-[17px] font-bold tracking-wide glow-o truncate">EDURANK</div>
       <div class="text-[9px] text-muted tracking-widest">DICIPTA OLEH ARIF AZIZ</div>
     </div>
+    <button id="hdrRefresh" class="btn clip-s px-2 py-1 text-[11px]" data-act="app-refresh" title="Muat semula (versi terkini)" style="display:none"><i class="fa-solid fa-rotate-right text-cyan"></i></button>
     <button class="btn clip-s px-2 py-1 text-[11px]" data-act="showcase-open"><i class="fa-solid fa-id-badge text-cyan"></i></button>
     <button class="btn clip-s px-2 py-1 text-[11px]" data-act="sync-status"><i id="syncIcon" class="fa-solid fa-database text-muted"></i></button>
   </div>
@@ -11146,6 +11147,7 @@ function escRun(THREE, sid, ac){
 const ACTS = {
   'team-pick': () => teamPick(id => { arenaUi().team = id; save(); renderTab(); }),
   'go-groups': () => setTab('groups'),
+  'app-refresh': () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} toast('Memuat semula…'); const u = new URL(location.href); u.searchParams.set('v', Date.now()); setTimeout(() => location.replace(u.href), 150); },   // app PC tiada butang refresh pelayar; ?v= elak versi lama dari cache
   'esc-start': escStart,
   'esc-opt': escOpt,
   'go-settings': ()=>setTab('settings'),
@@ -11465,6 +11467,9 @@ function installGate(){
   if (kmp){ S = blank(); komboJoinBoot(kmp); return; }  // pautan / kod QR sertai Kombo Ilmon: telefon kumpulan, tidak perlu pasang
   initPWA();
   if (!isInstalled()){ installGate(); return; }         // dalam pelayar: tutup app, papar arahan pasang sahaja
+  { let pc = false; try { pc = localStorage.getItem('rk_pc') === '1'; } catch(e){}   // butang refresh di app komputer (tiada butang refresh pelayar)
+    const app = ['standalone','fullscreen','minimal-ui','window-controls-overlay'].some(m => matchMedia('(display-mode: ' + m + ')').matches);
+    if (pc || (app && !matchMedia('(pointer: coarse)').matches)) $('#hdrRefresh').style.display = ''; }
   IDB = await idbOpen();
   Object.assign(PHOTOS, await idbAll());
   S = load();
