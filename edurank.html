@@ -5796,7 +5796,7 @@ const GAME_LOBBY = {
       return false;
     },
     how: () => '<b>🪜 Tangga Ilmon</b> — 4 kumpulan, 13 kad setiap satu. <b>Habiskan kad dahulu untuk menang.</b><br><br>' +
-      '<b>Kombo:</b> Tunggal · Pasangan (2 nombor sama) · Trio (3 sama) · Turutan 3–5 nombor berturut · <b>Turutan Elemen</b> (semua elemen sama, menang turutan biasa) · <b>Trio + Pasangan</b> (5 kad, juga kalahkan Turutan 5 biasa) · <b>💣 BOM</b> (4 nombor sama, atau Turutan Elemen 5 kad) memecahkan apa-apa kombo · <b>👑 Tangga Diraja</b> 1-2-3-4-5 elemen sama = paling kuat.<br>Tunggal nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡.<br><br>' +
+      '<b>Kombo:</b> Tunggal · Pasangan (2 nombor sama) · Trio (3 sama) · Turutan 5 nombor berturut · <b>Turutan Elemen</b> (semua elemen sama, menang turutan biasa) · <b>Trio + Pasangan</b> (5 kad, juga kalahkan Turutan 5 biasa) · <b>💣 BOM</b> (4 nombor sama, atau Turutan Elemen 5 kad) memecahkan apa-apa kombo · <b>👑 Tangga Diraja</b> 1-2-3-4-5 elemen sama = paling kuat.<br>Tunggal nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡.<br><br>' +
       '<b>Cara main:</b> pembuka meja letak apa-apa kombo. Kumpulan seterusnya mesti letak kombo <b>jenis & bilangan kad sama tetapi lebih tinggi</b> — atau <b>LEPAS</b> (keluar dari meja itu). Bila semua lain lepas, kombo terakhir menang meja dan pemenang membuka meja baharu.<br><br>' +
       '<b>🧠 Kuiz:</b> setiap meja baharu ada kuiz (banyak peranti: semua kumpulan serentak; 1 peranti: bergilir). Betul = +1⭐, terpantas / dalam 8 saat = +2⭐. Pada giliran sendiri: <b>⭐ Tukar</b> 1 kad lemah dengan kad baharu, atau <b>⭐⭐ Buang</b> 1 kad terus.<br><br>' +
       '<b>📺 1 peranti</b> — bergilir, tangan disembunyikan (tekan LIHAT KAD). <b>📱 Banyak peranti</b> — peranti ini papan projektor; setiap kumpulan masuk kod bilik di telefon.' +
@@ -6345,7 +6345,7 @@ function kadBake(c){
 }
 /* ---------- TANGGA ILMON: kombo menaik ----------
    Tunggal (nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡) · Pasangan · Trio · Trio + Pasangan (5 kad)
-   Turutan 3–5 (nombor berturut) · Turutan Elemen (semua elemen sama — menang mana-mana turutan biasa yang sama panjang)
+   Turutan 5 kad (nombor berturut) · Turutan Elemen (semua elemen sama — menang mana-mana turutan biasa yang sama panjang)
    5 kad: Turutan biasa < Trio + Pasangan < 💣 Turutan Elemen 5 < 👑 Tangga Diraja (1–2–3–4–5 elemen sama, paling kuat)
    💣 BOM: 4 nombor sama, atau Turutan Elemen 5 kad — memecahkan apa-apa kombo. Lawan = jenis & bilangan kad sama, nilai lebih tinggi. */
 const TG_NEXT = { air: 'alam', alam: 'api', api: 'kilat', kilat: 'air' };   // elemen yang mengalahkan (Tunggal nombor sama)
@@ -6365,7 +6365,7 @@ function tgEval(cards){
     if (k.length === 2 && Object.values(cnt).sort().join() === '2,3'){ const t = +k.find(x => cnt[x] === 3), p = +k.find(x => cnt[x] === 2);
       return { t: 'penuh', len: 5, r: t, name: 'Trio ' + t + ' + Pasangan ' + p }; }
   }
-  if (n >= 3 && nums.every((x, i) => !i || x === nums[i - 1] + 1)){
+  if (n === 5 && nums.every((x, i) => !i || x === nums[i - 1] + 1)){      // turutan mesti 5 kad
     const lo = nums[0], hi = nums[n - 1];
     if (n === 5 && oneEl) return lo === 1 ? { t: 'bom', len: 5, r: hi, bomb: 3, el: true, name: '👑 TANGGA DIRAJA 1–5' } :   // kombo paling kuat
       { t: 'bom', len: 5, r: hi, bomb: 2, el: true, name: '💣 BOM Turutan Elemen ' + lo + '–' + hi };
@@ -6396,7 +6396,7 @@ function tgCands(hand){
   hand.forEach(c => out.push([c]));
   Object.values(by).forEach(l => { for (let k = 2; k <= Math.min(4, l.length); k++) out.push(l.slice(0, k)); });
   Object.values(by).filter(l => l.length >= 3).forEach(t => Object.values(by).filter(l => l !== t && l.length >= 2).forEach(p => out.push(t.slice(0, 3).concat(p.slice(0, 2)))));   // trio + pasangan
-  for (let L = 3; L <= 5; L++) for (let s = 1; s + L - 1 <= 12; s++){
+  for (let L = 5, s = 1; s + L - 1 <= 12; s++){
     const seq = []; for (let v = s; v < s + L; v++){ if (!by[v]) break; seq.push(by[v]); }
     if (seq.length < L) continue;
     out.push(seq.map(l => l[0]));
@@ -6945,7 +6945,7 @@ function komboRun(ids, opt, net){
   function paintArena(){
     $k('#kmAr').innerHTML = table.length ? kmPilesHtml(piles(), table.length - 1, newI) :
       '<div class="hint">' + (phase === 'quiz' ? '🧠 Kuiz meja baharu…' : started ? '🪜 ' + esc(P[cur].name) + ' buka meja — letak apa-apa kombo' : '⏳ Menunggu…') +
-      '<br><span style="font-size:1.2cqw">Tunggal · Pasangan · Trio · Turutan 3–5 · Turutan Elemen · 💣 BOM (4 sama / Turutan Elemen 5)</span></div>';
+      '<br><span style="font-size:1.2cqw">Tunggal · Pasangan · Trio · Turutan 5 kad · Turutan Elemen · 💣 BOM (4 sama / Turutan Elemen 5)</span></div>';
     newI = -1; kmFill($k('#kmAr')); pub();
   }
   const paint = () => { paintTop(); paintMe(); paintHand(); };
