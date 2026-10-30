@@ -9216,8 +9216,7 @@ function storRun(team){
   let callAnsText = '';
   function supHtml(){
     if (!sup || !sup.here) return '';
-    const left = Math.max(0, Math.ceil(sup.until - T));
-    return '<div class="st-sup" data-sup="1"><div class="bb">' + stImg('ui_kotak', '📦') + ' Terima stok! ' + left + 's</div>' + stImg('pembekal', '🧑‍🔧') + '</div>';
+    return '<div class="st-sup" data-sup="1">' + stImg('pembekal', '🧑‍🔧') + '</div>';   // tiada dialog — pembekal di pintu sudah cukup jelas
   }
   function receive(){
     if (!sup || !sup.here) return;
@@ -9271,7 +9270,7 @@ function storRun(team){
     }
     const ph = $s('#stPhone'), bb = ph.querySelector('.bb');
     ph.classList.toggle('alt', !!ring && !ph.classList.contains('alt'));     // telefon berdering: tukar gambar telefon ↔ telefon_dering
-    if (ring && !bb) ph.insertAdjacentHTML('beforeend', '<div class="bb">' + stImg('ui_telefon', '📞') + ' ANGKAT!</div>'); else if (!ring && bb) bb.remove();
+    if (bb) bb.remove();                                                         // tiada dialog ANGKAT — telefon berdering & bergegar sahaja
     // pembekal
     if (sup){
       if (!sup.here && T >= sup.arrive){ sup.here = true; sup.until = T + sup.wait; door(true); snd('stor_lori', 'hi'); msg('🚚 Pembekal sampai di pintu stok!', '#7DD3FC', 1600); }
