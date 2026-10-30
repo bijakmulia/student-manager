@@ -10403,9 +10403,9 @@ async function escHost(){
       '<div class="lbl" style="color:#F87171">👻 SEKOLAH BERHANTU · KOD BILIK</div><div class="num" style="font-size:64px;font-weight:900;letter-spacing:.2em;color:#FDE68A;line-height:1.1">' + code + '</div>' +
       '<div class="text-[12px] text-muted">Di telefon kumpulan: EduRank → GAME → SERAM → <b>🔢 MASUK KOD BILIK</b>. Peta ' + (map + 1) + ' · ' + ESC_MAPS[map].name + '</div>' +
       '<div class="grid grid-cols-2 gap-2 mt-3 text-left">' + cfg.seats.map(x => '<div class="panel clip-s p-2 flex items-center gap-2">' + teamAvatar(x.id, 26) +
-        '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div><span class="text-[11px]" style="color:' + (x.joined ? '#4ADE80">✅ ' + KN_NAME(x.char) : '#64748B">⏳') + '</span></div>').join('') + '</div>' +
-      '<div class="text-[11px] text-muted mt-2">Boleh mula walaupun hanya ' + (n || 1) + ' kumpulan masuk.</div>' +
-      '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-3" data-r="x">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-r="go"' + (n ? '' : ' disabled style="opacity:.45"') + '>▶ MULA (' + n + ' pemain)</button></div></div>';
+        '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div><span class="text-[11px]" style="color:' + (x.joined ? '#4ADE80">✅ ' + ESC_NAME(x.char) : '#F59E0B">⏳ menunggu…') + '</span></div>').join('') + '</div>' +
+      '<div class="text-[11px] text-muted mt-2">Tekan MULA bila sedia — hanya kumpulan yang sudah masuk kod akan bermain.</div>' +
+      '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-3" data-r="x">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-r="go"' + (n ? '' : ' disabled style="opacity:.45"') + '>' + (n ? '▶ MULA (' + n + '/' + cfg.seats.length + ' telefon)' : '⏳ Menunggu telefon…') + '</button></div></div>';
   };
   cfg.seats.forEach((x, i) => offs.push(T.on('j' + i, v => { if (v && v.char && !x.joined){ x.joined = true; x.char = ESC_CHARS.includes(v.char) ? v.char : ESC_CHARS[i % ESC_CHARS.length]; pub(); paint(); } })));
   const hb = setInterval(pub, 2000); pub(); paint();
@@ -10434,7 +10434,7 @@ function escJoin(code, T){
       cfg.seats.map((x, i) => '<button class="btn clip-s !py-3 text-[13px]" data-s="' + i + '"' + (x.joined ? ' disabled style="opacity:.4"' : '') + '>' + esc(x.name) + (x.joined ? ' ✅' : '') + '</button>').join('') + '</div>'); return; }
     if (!char){ setTimeout(knThumbFill, 30); ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">' + esc(cfg.seats[seat].name) + ' · PILIH WATAK</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">' +
       ESC_CHARS.map(n => '<button class="btn clip-s" data-c="' + n + '" style="display:flex;flex-direction:column;gap:2px;padding:6px 2px"><img data-kt="esc:' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#3B1F2B,#120A10);border-radius:8px"><span class="text-[10px]">' + ESC_NAME(n) + '</span></button>').join('') + '</div>'); return; }
-    ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + ' · ' + KN_NAME(char) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
+    ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + ' · ' + ESC_NAME(char) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
   };
   offs.push(T.on('esc', v => {
     if (!v || started) return;
