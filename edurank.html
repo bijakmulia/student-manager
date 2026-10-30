@@ -4185,7 +4185,7 @@ function audPlay(id, vol){
   audBuf(url).then(d => {
     if (!d) return;
     const src = a.createBufferSource(), g = a.createGain();
-    src.buffer = d.buf; g.gain.value = Math.min(1.5, vol == null ? 1 : vol) * 0.9;
+    src.buffer = d.buf; g.gain.value = Math.min(1.5, vol == null ? 1 : vol) * 0.9 * (d.norm || 1);
     src.connect(g); g.connect(a.destination); src.start(0, d.ls);
   });
   return true;
@@ -4305,6 +4305,11 @@ function loopPoints(buf){
 const AUD_BUF = {};
 const audKey = src => src.length + ':' + src.slice(-48);
 const AUD_RAW = {};
+/* bunyi yang dijana terlalu perlahan (cth. run_coin, puncak −18 dB) dikuatkan sehingga puncak ≈ −2 dB; maks ×8 */
+function audNorm(buf){
+  let pk = 0; for (let c = 0; c < buf.numberOfChannels; c++){ const d = buf.getChannelData(c); for (let i = 0; i < d.length; i += 4){ const v = d[i] < 0 ? -d[i] : d[i]; if (v > pk) pk = v; } }
+  return pk > 0 && pk < .5 ? Math.min(8, .8 / pk) : 1;
+}
 function audBuf(src){
   if (!src) return Promise.resolve(null);
   const k = audKey(src);
@@ -4316,7 +4321,7 @@ function audBuf(src){
        ditangkap, fail rosak menjadi ralat halaman walaupun panggilan balik
        ralat sudah dipasang. */
     .then(ab => new Promise((res, rej) => { const p = a.decodeAudioData(ab, res, rej); if (p && p.catch) p.catch(rej); }))
-    .then(buf => Object.assign({ buf }, loopPoints(buf)))
+    .then(buf => Object.assign({ buf, norm: audNorm(buf) }, loopPoints(buf)))
     .catch(() => { delete AUD_BUF[k]; return null; });
   return AUD_BUF[k];
 }
@@ -5804,8 +5809,19 @@ const GAME_LOBBY = {
     opts: () => [
       lbSeg('lvl', 'KELAJUAN', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']], 'Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.'),
       lbSeg('qt', 'MASA MEMBACA SOALAN', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']], 'Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.')],
-    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await knFetch(knPick(arenaUi().team)); } catch(e){} p(1); },
+    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await knFetch(runChar(arenaUi().team)); } catch(e){} p(1); },
     starts: [['▶ MULA LARI', () => runStart()]],
+    get menu(){ const w = runCfg().watak; return [['watak', '🧍 Watak', KN_CHARS.includes(w) ? KN_NAME(w) : 'Auto (ikut kumpulan)']]; },
+    views: {
+      watak: { t: 'PILIH WATAK', h: () => { setTimeout(knThumbFill, 30); const w = runCfg().watak;
+        return '<div class="lb-note" style="margin-bottom:6px">Watak pelari 3D. <b>Auto</b> = setiap kumpulan dapat watak tersendiri.</div>' +
+          '<button class="lb-team' + (!KN_CHARS.includes(w) ? ' on' : '') + '" data-lb="rwk:auto" style="justify-content:center;font-weight:800">🎲 Auto (ikut kumpulan)</button>' +
+          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px">' + KN_CHARS.map(n =>
+            '<button class="lb-team' + (w === n ? ' on' : '') + '" data-lb="rwk:' + n + '" style="flex-direction:column;gap:2px;padding:6px 2px;margin:0">' +
+            '<img data-kt="' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#2B3B5C,#141C2E);border-radius:8px">' +
+            '<span style="font-size:10px;font-weight:700">' + KN_NAME(n) + '</span></button>').join('') + '</div>'; } }
+    },
+    act: (a, b, x) => { if (a.indexOf('rwk:') === 0){ runCfg().watak = a.slice(4); save(); x.setView('main'); return true; } return false; },
     how: () => 'Seorang mengawal, ahli lain membantu memilih gerbang jawapan.<br><b>Telefon:</b> leret kiri/kanan tukar lorong, leret atas untuk lompat.<br><b>Komputer:</b> ← → atau A D, lompat ↑ / W / Space.<br>Skor ÷ 120 = RP (2 hingga 25 RP).'
   },
   escape: {
@@ -6457,7 +6473,7 @@ const KM_CSS = `
 .km-cov .s{font-size:1.4cqw;color:#94A3B8}
 .km-qz{inset:0;z-index:45;background:rgba(2,6,23,.78);display:flex;align-items:center;justify-content:center}
 .km-qz .pn{width:62%;background:#0F172A;border:.3cqw solid #22D3EE;border-radius:1.6cqw;padding:2cqw;box-shadow:0 1cqw 4cqw rgba(0,0,0,.7)}
-.km-qz .lb{font-size:1.1cqw;letter-spacing:.2em;color:#22D3EE;font-weight:900}
+.km-qz .kq-lb{font-size:1.1cqw;letter-spacing:.2em;color:#22D3EE;font-weight:900}
 .km-qz .q{font-size:2cqw;font-weight:800;margin:1cqw 0 1.4cqw;line-height:1.35}
 .km-qz .op{display:grid;grid-template-columns:1fr 1fr;gap:1cqw}
 .km-qz .op button{padding:1.2cqw;border-radius:1cqw;background:#1E293B;border:.2cqw solid #475569;color:#fff;font-size:1.5cqw;text-align:left}
@@ -6985,7 +7001,7 @@ function komboRun(ids, opt, net){
     starUsed = true; pick.clear(); kmSnd('kad_koyak', 'flip'); paint();
   }
   /* ---------- kuiz meja baharu ---------- */
-  const qPanel = (q, order, head, sub) => '<div class="pn"><div class="lb">🧠 ' + head + '</div><div class="q">' + esc(q.q) + '</div>' +
+  const qPanel = (q, order, head, sub) => '<div class="pn"><div class="kq-lb">🧠 ' + head + '</div><div class="q">' + esc(q.q) + '</div>' +
     '<div class="op">' + order.map((i, j) => '<button data-ans="' + i + '" data-o="' + i + '"><b>' + 'ABCD'[j] + '</b>' + esc(q.c[i]) + '</button>').join('') + '</div>' +
     '<div class="qs-st">' + (sub || '') + '</div></div>';
   function award(res, fastest){                                // res: [{i, ok, ms}]
@@ -7224,7 +7240,7 @@ function komboJoin(code, T){
       return;
     }
     if (qShown === v.id) return; qShown = v.id;
-    const html = '<div class="pn"><div class="lb">🧠 KUIZ MEJA BAHARU · semua kumpulan menjawab</div><div class="q">' + esc(v.q) + '</div>' +
+    const html = '<div class="pn"><div class="kq-lb">🧠 KUIZ MEJA BAHARU · semua kumpulan menjawab</div><div class="q">' + esc(v.q) + '</div>' +
       '<div class="op">' + v.c.map((t, j) => '<button data-ans="' + v.idx[j] + '"><b>' + 'ABCD'[j] + '</b>' + esc(t) + '</button>').join('') + '</div>' +
       '<div class="qs-st">Betul = +1⭐ · betul paling pantas = +2⭐</div></div>';
     kmQuiz($k('#kmSt'), html, k => {
@@ -9565,7 +9581,7 @@ function runGame(THREE, sid, ac){
   // Watak beranimasi menggantikan model kotak bila fail GLB berjaya dimuat (kotak kekal sebagai sandaran)
   let mixer = null, ACT = {}, actNow = null;
   const play = (n, fade = .15) => { const a = ACT[n]; if (!a || actNow === a) return; a.reset().fadeIn(fade).play(); if (actNow) actNow.fadeOut(fade); actNow = a; };
-  knModel(knPick(sid)).then(gl => {
+  knModel(runChar(sid)).then(gl => {
     if (!alive) return;
     const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1;
     const k = 1.8 / h; m.scale.setScalar(k); m.position.y = -box.min.y * k;
@@ -9605,15 +9621,14 @@ function runGame(THREE, sid, ac){
     }
   };
   const spawnStars = (z, lane) => { for (let i = 0; i < 5; i++){ const m = new THREE.Mesh(starGeo, starMat); m.position.set(LANES[lane], 1, z - i * 2.2); scene.add(m); STARS.push({ m, lane }); } };
-  const gateTex = (txt, col) => ctex(256, 128, (g, w, h) => {
-    g.fillStyle = col; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(6, 6, w - 12, h - 12);
+  const gateTex = (txt, col) => ctex(512, 256, (g, w, h) => {       // jawapan panjang: balut perkataan hingga 5 baris, fon menyesuaikan
+    g.fillStyle = col; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(10, 10, w - 20, h - 20);
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    let fs = 44; g.font = 'bold ' + fs + 'px sans-serif';
-    while (g.measureText(txt).width > w - 24 && fs > 14){ fs -= 2; g.font = 'bold ' + fs + 'px sans-serif'; }
-    if (g.measureText(txt).width > w - 24){                          // dua baris
-      const words = txt.split(' '), mid = Math.ceil(words.length / 2);
-      g.fillText(words.slice(0, mid).join(' '), w / 2, h / 2 - fs * .6); g.fillText(words.slice(mid).join(' '), w / 2, h / 2 + fs * .6);
-    } else g.fillText(txt, w / 2, h / 2 + 2);
+    const words = txt.split(/\s+/), wrap = fs => { g.font = 'bold ' + fs + 'px sans-serif'; const L = []; let cur = '';
+      words.forEach(wd => { const t = cur ? cur + ' ' + wd : wd; if (g.measureText(t).width > w - 40 && cur){ L.push(cur); cur = wd; } else cur = t; }); if (cur) L.push(cur); return L; };
+    let fs = 92, L = wrap(fs);
+    while (fs > 22 && (L.length * fs * 1.12 > h - 30 || L.some(l => g.measureText(l).width > w - 40))){ fs -= 4; L = wrap(fs); }
+    L.forEach((l, i) => g.fillText(l, w / 2, h / 2 + (i - (L.length - 1) / 2) * fs * 1.12 + 2));
   });
   const GATE_COLS = ['#2A7FD4', '#D4532A', '#8A3AD4'];
   const spawnGates = (z, q) => {
@@ -9632,7 +9647,7 @@ function runGame(THREE, sid, ac){
     });
     GATES.push(row);
     $r('#rnQt').innerHTML = esc(q.q) + '<div class="flex gap-1 mt-2 text-[13px]">' + opts.map((ci, lane) =>
-      '<div class="flex-1 truncate" style="padding:3px 4px;background:' + GATE_COLS[lane] + ';color:#fff;border-radius:3px">' +
+      '<div class="flex-1" style="padding:3px 5px;background:' + GATE_COLS[lane] + ';color:#fff;border-radius:3px;line-height:1.25;overflow-wrap:anywhere">' +   // pilihan panjang berbalut, tidak terpotong
       ['◀ ', '▲ ', '▶ '][lane] + esc(String(q.c[ci])) + '</div>').join('') + '</div>';
     $r('#rnQ').style.display = 'block';
   };
@@ -10080,6 +10095,25 @@ async function knModel(name, dir = ''){
 // Model hantu: Hantu Putih = ghost, Toyol = zombie kecil hijau. Pontianak kekal primitif (tiada model CC0 berambut panjang yang seram).
 const ESC_GHOST_3D = { putih: ['ghost', 'hantu/', 1.9], toyol: ['zombie', 'hantu/', 1.15] };
 const knPick = id => KN_CHARS[hashStr(String(id || '')) % KN_CHARS.length];
+const runChar = sid => { const w = runCfg().watak; return KN_CHARS.includes(w) ? w : knPick(sid); };
+const KN_NAME = n => (n[0] === 'm' ? 'Lelaki ' : 'Perempuan ') + n.slice(-1).toUpperCase();
+/* gambar kecil watak: model 3D dilukis sekali ke kanvas (satu pemapar dikongsi), disimpan sebagai dataURL */
+const KN_THUMB = {};
+let KN_TR = null;
+function knThumb(name){
+  if (KN_THUMB[name]) return KN_THUMB[name];
+  return KN_THUMB[name] = (async () => {
+    const THREE = await import(ESC_THREE), gl = await knModel(name);
+    if (!KN_TR){ const cv = document.createElement('canvas'); cv.width = 160; cv.height = 200;
+      const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true }); R.outputColorSpace = THREE.SRGBColorSpace; KN_TR = { R, cv }; }
+    const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x445566, 2.2)); const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(2, 4, 5); sc.add(dl);
+    const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1, cy = (box.max.y + box.min.y) / 2; sc.add(m);
+    const cam = new THREE.PerspectiveCamera(30, 160 / 200, .1, 50); cam.position.set(h * .55, cy + h * .08, h * 2.3); cam.lookAt(0, cy, 0);
+    KN_TR.R.setClearColor(0x000000, 0); KN_TR.R.render(sc, cam);
+    return KN_TR.cv.toDataURL('image/png');
+  })().catch(() => { delete KN_THUMB[name]; return ''; });
+}
+function knThumbFill(){ document.querySelectorAll('img[data-kt]:not([src])').forEach(im => knThumb(im.dataset.kt).then(u => { if (u && im.isConnected) im.src = u; })); }
 // Wajah mengejut (jumpscare) daripada gambar guru: assets/seram/muka_<hantu>[2].jpg, disenaraikan oleh shrink-assets.ps1. Tiada gambar = SVG terbina.
 let SERAM_HAVE = null;
 const seramList = () => SERAM_HAVE || (SERAM_HAVE = fetch('assets/seram/senarai.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).catch(() => ({})));
