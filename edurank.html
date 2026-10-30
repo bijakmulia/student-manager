@@ -6663,6 +6663,16 @@ async function kmNet(code, cfg){
 const kmSafe = f => { try { f(); } catch(e){} };               // bunyi / getaran tidak boleh menghentikan permainan
 const kmSnd = (id, fb) => kmSafe(() => snd(id, fb));
 const kmImg = (id, attrs) => '<img data-kc="' + id + '" alt="" draggable="false"' + (attrs || '') + '>';
+/* ⭐ Tukar: pilih 1 daripada (hingga) 4 kad rawak dari dek. onPick(id) / onPick(null) = batal */
+function tgTukarShow(ov, giveId, optIds, onPick){
+  ov.innerHTML = '<div class="km-end"><div class="pn" style="width:70%"><div class="big" style="font-size:2.4cqw">⭐ TUKAR KAD</div>' +
+    '<div style="font-size:1.3cqw;color:#CBD5E1;margin:.6cqw 0 1cqw">Kad ini keluar:</div><div class="tk-give" style="display:flex;justify-content:center">' + kmImg(giveId, ' style="width:7cqw;border-radius:.6cqw;opacity:.75"') + '</div>' +
+    '<div style="font-size:1.4cqw;color:#FDE68A;margin:1.2cqw 0 .6cqw;font-weight:800">Pilih 1 kad baharu:</div>' +
+    '<div style="display:flex;gap:1.2cqw;justify-content:center">' + optIds.map(id => '<button data-tk="' + id + '" style="background:none;border:.25cqw solid transparent;border-radius:.8cqw;padding:.2cqw;cursor:pointer">' + kmImg(id, ' style="width:10cqw;border-radius:.6cqw;display:block"') + '</button>').join('') + '</div>' +
+    '<div class="bt"><button data-tk="">Batal</button></div></div></div>';
+  kmFill(ov);
+  ov.onclick = e => { const b = e.target.closest('[data-tk]'); if (!b) return; e.stopPropagation(); ov.onclick = null; ov.innerHTML = ''; onPick(b.dataset.tk || null); };
+}
 const kmFill = box => box.querySelectorAll('img[data-kc]').forEach(im => { if (!im.getAttribute('src')) kadBake(cardById(im.dataset.kc)).then(u => { if (im.dataset.kc && !im.getAttribute('src')) im.src = u; }); });
 /* Meja: kad terakhir setiap kumpulan sebagai longgokan bertindih (10%); tekan-tahan = buka 80%, seret ke longgokan lain = buka yang itu */
 const TG_PC = ['#F97316', '#22D3EE', '#A78BFA', '#4ADE80'];
@@ -7006,9 +7016,20 @@ function komboRun(ids, opt, net){
     kmSnd('ui_klik', 'flip'); msg('✋ ' + esc(p.name) + ' lepas', '#94A3B8', 1000); paint();
     later(advance, 700);
   }
+  function tukarDone(p, c, o){
+    if (!o || !deck.includes(o) || !p.hand.includes(c) || p.stars < 1) return;
+    p.stars -= 1; deck.splice(deck.indexOf(o), 1); deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, c);
+    p.hand = tgSort(p.hand.filter(x => x !== c).concat(o)); starUsed = true; pick.clear(); kmSnd('kad_koyak', 'flip');
+    msg('⭐ ' + esc(p.name) + ' tukar 1 kad', '#FDE68A', 1300); paint();
+  }
   function starAct(kind, c){
     const p = me(); if (starUsed || !c || !p.hand.includes(c)) return;
-    if (kind === 'tukar'){ if (p.stars < 1 || !deck.length) return; p.stars -= 1; p.hand = tgSort(p.hand.filter(x => x !== c).concat(deck.splice(0, 1))); deck.push(c); msg('⭐ ' + esc(p.name) + ' tukar 1 kad', '#FDE68A', 1300); }
+    if (kind === 'tukar'){ if (p.stars < 1 || !deck.length) return;
+      const opts = deck.slice().sort(() => Math.random() - .5).slice(0, 4);
+      if (p.ai) return tukarDone(p, c, opts.find(o => p.hand.some(h => h !== c && cardNum(h) === cardNum(o))) || opts.sort((a, b) => cardNum(b) - cardNum(a))[0]);
+      if (p.remote){ p.tk = { c, opts }; net.T.set('tk' + P.indexOf(p), { v: Date.now(), card: c.id, opts: opts.map(o => o.id) }); return; }
+      return tgTukarShow($k('#kmOv'), c.id, opts.map(o => o.id), id => { const o = opts.find(x => x.id === id); if (o && me() === p && !starUsed) tukarDone(p, c, o); });
+    }
     else { if (p.stars < 2 || p.hand.length < 2) return; p.stars -= 2; p.hand = p.hand.filter(x => x !== c); deck.push(c); msg('⭐⭐ ' + esc(p.name) + ' buang 1 kad', '#FDE68A', 1300); }
     starUsed = true; pick.clear(); kmSnd('kad_koyak', 'flip'); paint();
   }
@@ -7074,6 +7095,7 @@ function komboRun(ids, opt, net){
     if (a.order){ const o = find(a.order); if (o.length === p.hand.length) p.hand = o; }   // susunan tangan dari telefon
     if (a.t === 'play'){ const cs = find(a.cards); if (cs.length && cs.length === (a.cards || []).length) play(cs); return; }
     if (a.t === 'pass') return pass();
+    if (a.t === 'tukarpick'){ const t = p.tk; p.tk = null; if (t && a.pick) tukarDone(p, t.c, t.opts.find(o => o.id === a.pick)); return; }
     if (a.t === 'tukar' || a.t === 'buang') return starAct(a.t, find([a.card])[0]);
   }
   /* ---------- robot ---------- */
@@ -7308,6 +7330,8 @@ function komboJoin(code, T){
         su = !!(v && v.su); paint();
       }));
       offs.push(T.on('q' + seat, showQ));
+      let tkV = 0;
+      offs.push(T.on('tk' + seat, v => { if (!v || !v.opts || v.v === tkV) return; tkV = v.v; tgTukarShow($k('#kmOv'), v.card, v.opts, id => send({ t: 'tukarpick', pick: id })); }));
       return paint();
     }
     if (seat < 0 || !myTurn()) return;
@@ -10982,6 +11006,51 @@ function escRun(THREE, sid, ac, lvl, mp){
     pmMix = new THREE.AnimationMixer(m); gl.animations.forEach(c => { PACT[c.name] = pmMix.clipAction(c); }); if (PACT.walk) PACT.walk.timeScale = .85; pPlay('idle');
   }).catch(e => console.warn('watak seram', e));
   const solidAt = (x, z) => solids.some(q => x > q.x1 - .08 && x < q.x2 + .08 && z > q.z1 - .08 && z < q.z2 + .08);
+  /* ---------- laluan hantu: tidak menembusi dinding (grid 0.5 m + BFS, dibina semula setiap 2 s kerana pintu boleh terbuka) ---------- */
+  const NAV_C = .5, NAV_R = .3, NAV = {};
+  const navGrid = f => {
+    const now = performance.now(), F = FLOORS[f]; let g = NAV[f];
+    if (g && now - g.t < 2000) return g;
+    const x0 = -3, z0 = F.z0 - 14, W = Math.ceil((F.len + 6) / NAV_C), Hh = Math.ceil(28 / NAV_C), b = new Uint8Array(W * Hh);
+    const fs = solids.filter(q => q.z2 > z0 - 1 && q.z1 < z0 + 29);
+    for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++){ const x = x0 + (i + .5) * NAV_C, z = z0 + (j + .5) * NAV_C;
+      b[j * W + i] = fs.some(q => x > q.x1 - NAV_R && x < q.x2 + NAV_R && z > q.z1 - NAV_R && z < q.z2 + NAV_R) ? 1 : 0; }
+    return NAV[f] = { t: now, x0, z0, W, Hh, b, fs };
+  };
+  const navBlocked = (g, x, z) => g.fs.some(q => x > q.x1 - NAV_R + .05 && x < q.x2 + NAV_R - .05 && z > q.z1 - NAV_R + .05 && z < q.z2 + NAV_R - .05);
+  const navClear = (g, ax, az, bx, bz) => { const d = Math.hypot(bx - ax, bz - az), n = Math.ceil(d / .2);
+    for (let k = 1; k <= n; k++){ const t = k / n; if (navBlocked(g, ax + (bx - ax) * t, az + (bz - az) * t)) return false; } return true; };
+  const navPath = (g, ax, az, bx, bz) => {
+    const cell = (x, z) => [clamp(Math.floor((x - g.x0) / NAV_C), 0, g.W - 1), clamp(Math.floor((z - g.z0) / NAV_C), 0, g.Hh - 1)];
+    const free = (i, j) => { if (!g.b[j * g.W + i]) return [i, j];                      // sel permulaan/tujuan tersekat: cari sel bebas terdekat
+      for (let r = 1; r < 4; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++){ const a = i + di, c = j + dj; if (a >= 0 && c >= 0 && a < g.W && c < g.Hh && !g.b[c * g.W + a]) return [a, c]; }
+      return null; };
+    const s = free(...cell(ax, az)), e = free(...cell(bx, bz)); if (!s || !e) return null;
+    const N = g.W * g.Hh, prev = new Int32Array(N).fill(-1), q = new Int32Array(N), si = s[1] * g.W + s[0], ei = e[1] * g.W + e[0];
+    let h = 0, t = 0; q[t++] = si; prev[si] = si;
+    while (h < t){ const c = q[h++]; if (c === ei) break; const i = c % g.W, j = (c / g.W) | 0;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]){
+        const a = i + di, b2 = j + dj; if (a < 0 || b2 < 0 || a >= g.W || b2 >= g.Hh) continue; const n = b2 * g.W + a;
+        if (prev[n] >= 0 || g.b[n]) continue; if (di && dj && (g.b[j * g.W + a] || g.b[b2 * g.W + i])) continue;   // tiada potong bucu dinding
+        prev[n] = c; q[t++] = n; } }
+    if (prev[ei] < 0) return null;
+    const pts = []; for (let c = ei; c !== si; c = prev[c]) pts.push([g.x0 + (c % g.W + .5) * NAV_C, g.z0 + (((c / g.W) | 0) + .5) * NAV_C]);
+    pts.reverse(); pts.push([bx, bz]); return pts;
+  };
+  /* gerak hantu ke (tx,tz): terus jika laluan jelas, jika tidak ikut laluan grid. false = tidak boleh sampai */
+  const ghostMove = (tx, tz, sp, dt) => {
+    const g = navGrid(G.f); let ax = tx, az = tz;
+    if (!navClear(g, G.x, G.z, tx, tz)){
+      if (!G.path || (G.pT -= dt) <= 0 || Math.hypot(G.ptx - tx, G.ptz - tz) > 1.2){ G.path = navPath(g, G.x, G.z, tx, tz); G.pT = .4; G.ptx = tx; G.ptz = tz; }
+      if (!G.path || !G.path.length) return false;
+      while (G.path.length > 1 && navClear(g, G.x, G.z, G.path[1][0], G.path[1][1])) G.path.shift();
+      [ax, az] = G.path[0]; if (Math.hypot(ax - G.x, az - G.z) < .15 && G.path.length > 1){ G.path.shift(); [ax, az] = G.path[0]; }
+    } else G.path = null;
+    const gx = ax - G.x, gz = az - G.z, gl = Math.hypot(gx, gz);
+    if (gl > 1e-3){ const st = Math.min(gl, sp * dt); G.x += gx / gl * st; G.z += gz / gl * st; }
+    collide(G, NAV_R - .05);
+    return true;
+  };
   /* kamera orbit di belakang watak; dirapatkan bila terkena dinding */
   const tpCam = () => {
     const hy = 1.42, pit = clamp(P.pitch, -.55, .7) - .2, bx = Math.sin(P.yaw) * Math.cos(pit), by = -Math.sin(pit), bz = Math.cos(P.yaw) * Math.cos(pit);
@@ -10992,7 +11061,8 @@ function escRun(THREE, sid, ac, lvl, mp){
     if (pm) pm.visible = !MPH && d > .55;
     if (!MPH){                                                           // suluhan dari tangan, ke arah pandangan kamera
       if (pmHand && pm && pm.visible){ pm.updateMatrixWorld(); pmHand.getWorldPosition(_hv); } else _hv.set(P.x + Math.cos(P.yaw) * .25, 1.1, P.z - Math.sin(P.yaw) * .25);
-      torch.position.copy(_hv); torch.target.position.set(_hv.x - bx * 6, _hv.y - by * 6 - .4, _hv.z - bz * 6);
+      const hl = Math.hypot(bx, bz) || 1;                                 // sentiasa mendatar ke hadapan (tidak ikut kamera dongak/tunduk)
+      torch.position.copy(_hv); torch.target.position.set(_hv.x - bx / hl * 6, _hv.y - .55, _hv.z - bz / hl * 6);
     }
   };
   /* animasi almari: buka pintu → masuk / keluar → tutup pintu */
@@ -11459,7 +11529,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     if (!MPC && G.f !== P.f){
       G.hunt = false;
       if (!P.hide && (G.follow += dt) > 10){
-        const r = STAIRS[P.f]; G.f = P.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.follow = 0; G.grace = 1.5;
+        const r = STAIRS[P.f]; G.f = P.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.follow = 0; G.path = null; G.grace = 1.5;
         sfx('creak'); msg('Kamu terdengar sesuatu di <span style="color:#E23B3B">tangga</span>…', 2600);
       }
     } else G.follow = 0;
@@ -11476,9 +11546,8 @@ function escRun(THREE, sid, ac, lvl, mp){
         if (Math.hypot(G.wx - G.x, G.wz - G.z) < .5){ const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; }
         tx = G.wx; tz = G.wz; sp = GT.roam;
       }
-      const gx = tx - G.x, gz = tz - G.z, gl = Math.hypot(gx, gz) || 1;
-      G.x += gx / gl * sp * dt; G.z += gz / gl * sp * dt;
-      if (dist < .75 && !P.hide) return caught();
+      if (!ghostMove(tx, tz, sp, dt)){ if (G.hunt) G.hunt = false; G.wx = G.x; G.wz = G.z; }   // tidak boleh sampai: pilih titik lain
+      if (dist < .75 && !P.hide && navClear(navGrid(G.f), G.x, G.z, P.x, P.z)) return caught();
     }
     ghost.visible = same;
     const jitter = gKind === 'toyol' ? Math.abs(Math.sin(now / 90)) * .08 : Math.sin(now / 400) * .12 + .1;
@@ -11585,7 +11654,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   /* hos: hantu memburu pemain terdekat yang kelihatan */
   function hostGhost(dt){
     const pl = MPS.filter(q => q.joined && q.st && !q.safe && performance.now() - q.seen < 20000), onF = pl.filter(q => q.st.f === G.f);
-    if (!onF.length && pl.length){ if ((G.follow += dt) > 10){ const q = pl[Math.floor(Math.random() * pl.length)], r = STAIRS[q.st.f]; G.f = q.st.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.follow = 0; G.grace = 1.5; G.hunt = false; } }
+    if (!onF.length && pl.length){ if ((G.follow += dt) > 10){ const q = pl[Math.floor(Math.random() * pl.length)], r = STAIRS[q.st.f]; G.f = q.st.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.path = null; G.follow = 0; G.grace = 1.5; G.hunt = false; } }
     else G.follow = 0;
     if (G.grace > 0){ G.grace -= dt; return; }
     let tgt = null, td = 99;
@@ -11595,8 +11664,8 @@ function escRun(THREE, sid, ac, lvl, mp){
     let tx, tz, sp;
     if (G.hunt && tgt){ tx = tgt.st.x; tz = tgt.st.z; sp = huntSp + keys() * .2; }
     else { if (Math.hypot(G.wx - G.x, G.wz - G.z) < .5){ const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; } tx = G.wx; tz = G.wz; sp = GT.roam; }
-    const gx = tx - G.x, gz = tz - G.z, gl = Math.hypot(gx, gz) || 1; G.x += gx / gl * sp * dt; G.z += gz / gl * sp * dt;
-    if (G.hunt && tgt && td < .75) hostCatch(tgt);
+    if (!ghostMove(tx, tz, sp, dt)){ G.hunt = false; G.wx = G.x; G.wz = G.z; }
+    if (G.hunt && tgt && td < .75 && navClear(navGrid(G.f), G.x, G.z, tgt.st.x, tgt.st.z)) hostCatch(tgt);
   }
   function hostCatch(q){
     const far = WAYS[G.f].slice().sort((a, b) => Math.hypot(b[0] - G.x, b[1] - G.z) - Math.hypot(a[0] - G.x, a[1] - G.z))[0];
