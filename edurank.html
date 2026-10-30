@@ -8827,12 +8827,12 @@ const ST_CSS = `
 .st-counter{top:68.5%;height:16.5%}   /* kumpulan kaunter diturunkan 12.5%: penjual, blender & dapur bermula di bawah rak (49.5%) supaya senang seret dari rak */
 .st-counter.s{left:.4%;width:38.3%}
 .st-counter.k{left:61.3%;width:38.3%}
-.st-phone.desk{left:.5%;width:9%;top:25.5%;height:10.5%;background:none;border-radius:0;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
+.st-phone.desk{left:.5%;width:9%;top:27.4%;height:10.5%;background:none;border-radius:0;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
 .st-phone.desk>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
 .st-bin{left:51%;width:12.4%;top:62.9%;height:22.4%;font-size:5.4cqw}   /* gambar tong ada ruang kosong → kotak lebih besar supaya tong ≈ rujukan */
-.st-bl{left:90.7%;width:8.6%;top:22%;z-index:2}   /* atas meja laci kanan; lapisan di bawah dapur */
+.st-bl{left:90.7%;width:8.6%;top:24%;z-index:2}   /* atas meja laci kanan; lapisan di bawah dapur */
 .st-stn{z-index:3}
-.st-laci{position:absolute;top:35%;width:9.2%;height:15%;z-index:1;pointer-events:none}   /* meja laci di tepi rak: telefon (kiri), blender (kanan) */
+.st-laci{position:absolute;top:37.1%;width:9.2%;height:12.9%;z-index:1;pointer-events:none}   /* meja laci di tepi rak: telefon (kiri), blender (kanan) */
 .st-laci.l{left:.4%}.st-laci.r{left:90.4%}
 .st-laci>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
 .st-laci .dw{position:absolute;inset:0;border-radius:.3cqw .3cqw 0 0;background:linear-gradient(180deg,#C08A52 0 12%,#8B5A2B 12% 14%,#A86F3A 14%);border:.2cqw solid #5B3A1A;box-shadow:inset 0 -.4cqw 0 rgba(0,0,0,.15)}
@@ -9011,7 +9011,7 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [83, 64.5], BL_AT = [95, 29], BIN_AT = [57.2, 76.5], STN_AT = { dapur0: [94.5, 58.5] };
+  const TRAY_AT = [83, 64.5], BL_AT = [95, 31], BIN_AT = [57.2, 76.5], STN_AT = { dapur0: [94.5, 58.5] };
   const custAt = (z, i) => [SLOTX[z][i] + 5, 74];
   /* Dapur: logik GANTI gambar — dapur_<makanan> / dapur_hangus menggantikan gambar dapur kosong. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
