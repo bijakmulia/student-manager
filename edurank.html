@@ -8885,7 +8885,7 @@ function storRun(team){
   const root = document.createElement('div');
   root.className = 'st'; root.id = 'stRoot';
   /* rak berlapis: rak kosong (gambar/lukisan) → lapisan barang (#stL_<rak>) → label */
-  const ST_BOARD = [27, 49, 71, 93];                    // paras atas papan rak (% tinggi rak) — sama dengan prompt aset
+  const ST_BOARD = [31.5, 51.5, 72.5, 94.5];            // paras barang berdiri (% tinggi rak) — diukur dari gambar rak_jus semasa
   const shelfOf = id => ST_SHELVES.find(s => s[0] === id);
   const shelfSlots = id => ST_ITEMS.filter(i => i.sh === id).map(it => { const p = ST_SPOT[it.id];   // paras & tempat ikut ST_SHELF_ROWS
     return { it, lv: p.lv, x: 8 + 84 * (p.k + .5) / p.n, w: Math.min(28, 84 / p.n * (it.tg === 'j' ? .96 : .8)) }; });   // tin bahan jus dibesarkan sedikit   // saiz ikut rujukan, tidak menutup papan tanda rak
