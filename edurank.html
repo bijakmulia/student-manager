@@ -951,14 +951,15 @@ function promptBox(opt){
     let done = false;
     const id = openModal({
       center:true, icon:'fa-pen', title: opt.title || 'Input',
-      body: '<label class="lbl">'+esc(opt.label||'')+'</label><input id="pbInput" class="fld clip-s mt-1" value="'+esc(opt.value||'')+'" placeholder="'+esc(opt.placeholder||'')+'">',
-      footer: '<button class="btn clip-s flex-1" data-x="no">Batal</button><button class="btn btn-o clip-s flex-1" data-x="yes">Simpan</button>',
+      body: '<label class="lbl">'+esc(opt.label||'')+'</label><input id="pbInput" class="fld clip-s mt-1" value="'+esc(opt.value||'')+'" placeholder="'+esc(opt.placeholder||'')+'"'+(opt.auto?' inputmode="numeric" maxlength="'+opt.auto+'"':'')+'>',
+      footer: '<button class="btn clip-s flex-1" data-x="no">Batal</button><button class="btn btn-o clip-s flex-1" data-x="yes">'+esc(opt.okText||'Simpan')+'</button>',
       afterOpen: bd => { const i=$('#pbInput',bd); i.focus(); i.select(); },
       onClose: () => { if(!done) res(null); }
     });
     const bd = $('[data-modal="'+id+'"]');
     const submit = () => { done=true; res(($('#pbInput',bd).value||'').trim()); closeModal(id); };
     bd.addEventListener('keydown', e => { if(e.key==='Enter') submit(); });
+    if (opt.auto) $('#pbInput',bd).addEventListener('input', e => { if (e.target.value.replace(/\D/g,'').length >= opt.auto && !done) submit(); });   // kod lengkap: terus masuk
     bd.addEventListener('click', e => {
       const b = e.target.closest('[data-x]'); if(!b) return;
       if (b.dataset.x==='yes') submit(); else { done=true; res(null); closeModal(id); }
@@ -7190,7 +7191,7 @@ function komboRun(ids, opt, net){
 }
 /* ---------- PERANTI KUMPULAN: sertai bilik Kombo (tangan sendiri sahaja; hos memegang permainan) ---------- */
 async function komboJoinAsk(){
-  const code = await promptBox({ title: 'Masuk Kod Bilik', label: 'Kod bilik (4 digit) di skrin hos', placeholder: '1234' });
+  const code = await promptBox({ title: 'Masuk Kod Bilik', label: 'Kod bilik (4 digit) di skrin hos', placeholder: '1234', okText: 'Masuk', auto: 4 });
   if (!code) return;
   const c = String(code).replace(/\D/g, '').slice(0, 4);
   if (c.length !== 4) return toast('Kod bilik ialah 4 digit.', null, true);
