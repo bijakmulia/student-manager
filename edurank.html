@@ -10935,7 +10935,9 @@ function escRun(THREE, sid, ac, lvl, mp){
   fixtures.forEach(fx => { fx.tube = box(fx.x - .6, fx.z - .08, fx.x + .6, fx.z + .08, .05, H - .1, tubeMat(), false); fx.t = Math.random() * 5; fx.v = 1; fx.dead = Math.random() < .18; });
   const pool = [0, 1, 2, 3].map(() => { const l = new THREE.PointLight(0xcfe8d8, 0, 11, 2); scene.add(l); return l; });
   const torch = new THREE.SpotLight(0xfff1d6, LT.torch, 20, .5, .55, 1.6);
-  torch.position.set(0, -.1, 0); cam.add(torch); cam.add(torch.target); torch.target.position.set(0, -.15, -1);
+  /* lampu suluh dipegang watak (tangan kanan); hos (penonton) kekal pada kamera */
+  if (MPH){ torch.position.set(0, -.1, 0); cam.add(torch); cam.add(torch.target); torch.target.position.set(0, -.15, -1); }
+  else { torch.angle = .42; torch.penumbra = .45; scene.add(torch); scene.add(torch.target); }
 
   /* ---------- hantu ---------- */
   function buildGhost(kind){
@@ -11022,7 +11024,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   /* ---------- keadaan permainan ---------- */
   const P = { f: 0, x: 3.2, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0, hide: null, face: Math.PI / 2, anim: null, moving: false };
   /* watak 3D (pandangan orang ketiga) */
-  let pm = null, pmMix = null, pmFace = null, happyT = 0; const PACT = {}; let pActNow = null;
+  let pm = null, pmMix = null, pmFace = null, pmHand = null, happyT = 0; const _hv = new THREE.Vector3(); const PACT = {}; let pActNow = null;
   /* muka: gembira (kuiz betul / menang), takut (hantu dekat — bunyi tapak & detak jantung), biasa */
   const moodNow = now => now < happyT ? 'gembira' : P.fear > .05 && !P.safe ? 'takut' : 'biasa';
   const pPlay = n => { const a = PACT[n] || PACT.idle; if (!a || pActNow === a) return; a.reset().fadeIn(.18).play(); if (pActNow) pActNow.fadeOut(.18); pActNow = a; };
@@ -11034,7 +11036,12 @@ function escRun(THREE, sid, ac, lvl, mp){
     m.scale.setScalar(k); m.position.y = -bx.min.y * k;
     m.traverse(o => { if (o.isMesh){ o.frustumCulled = false; const mt = o.material; if (mt){ mt.roughness = .85; mt.needsUpdate = true; } } });
     pm = new THREE.Group(); pm.add(m); scene.add(pm);
-    pmMix = new THREE.AnimationMixer(m); gl.animations.forEach(c => { PACT[c.name] = pmMix.clipAction(c); }); pPlay('idle');
+    /* lampu suluh di tangan kanan */
+    const fl = new THREE.Group(); fl.position.set(-.24, .98, .3);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(.028, .022, .2, 10), new THREE.MeshStandardMaterial({ color: 0x23262B, roughness: .5, metalness: .6 })); body.rotation.x = Math.PI / 2; fl.add(body);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(.03, 12), new THREE.MeshBasicMaterial({ color: 0xFFF6DA })); lens.position.z = .101; fl.add(lens);
+    pm.add(fl); pmHand = fl;
+    pmMix = new THREE.AnimationMixer(m); gl.animations.forEach(c => { PACT[c.name] = pmMix.clipAction(c); }); if (PACT.walk) PACT.walk.timeScale = .7; pPlay('idle');
   }).catch(e => console.warn('watak seram', e));
   const solidAt = (x, z) => solids.some(q => x > q.x1 - .08 && x < q.x2 + .08 && z > q.z1 - .08 && z < q.z2 + .08);
   /* kamera orbit di belakang watak; dirapatkan bila terkena dinding */
@@ -11045,6 +11052,10 @@ function escRun(THREE, sid, ac, lvl, mp){
     for (let t = .25; t <= 2.7; t += .08){ const x = ox + bx * t, y = hy + by * t, z = oz + bz * t; if (y > H - .12 || y < .15 || solidAt(x, z)){ d = Math.max(.25, t - .2); break; } }
     cam.position.set(ox + bx * d, hy + by * d, oz + bz * d); cam.lookAt(ox - bx * 3, hy + .12 - by * 3, oz - bz * 3);
     if (pm) pm.visible = !MPH && d > .55;
+    if (!MPH){                                                           // suluhan dari tangan, ke arah pandangan kamera
+      if (pmHand && pm && pm.visible){ pm.updateMatrixWorld(); pmHand.getWorldPosition(_hv); } else _hv.set(P.x + Math.cos(P.yaw) * .25, 1.1, P.z - Math.sin(P.yaw) * .25);
+      torch.position.copy(_hv); torch.target.position.set(_hv.x - bx * 6, _hv.y - by * 6 - .4, _hv.z - bz * 6);
+    }
   };
   /* animasi almari: buka pintu → masuk / keluar → tutup pintu */
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -11492,11 +11503,13 @@ function escRun(THREE, sid, ac, lvl, mp){
       if (kb['d'] || kb['arrowright']) mx += 1;
       const m = Math.min(1, Math.hypot(mx, my));
       if (m > .05){
-        const sp = 3.3 * m, sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
+        /* berjalan perlahan; berlari sendiri bila hantu dekat atau sedang mengejar di tingkat yang sama */
+        P.run = (P.fear || 0) > .3 || (G.hunt && G.f === P.f);
+        const sp = (P.run ? 3.2 : 1.7) * m, sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
         const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
         P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt; P.face = Math.atan2(vx, vz);
-        P.bob += dt * 9 * m;
-        if (now - lastStep > 430){ lastStep = now; sfx('step'); }
+        P.bob += dt * (P.run ? 9 : 5.5) * m;
+        if (now - lastStep > (P.run ? 330 : 600)){ lastStep = now; sfx('step'); }
       }
       collide(P, .3);
       P.moving = m > .05;
@@ -11717,7 +11730,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   /* telefon: hantar kedudukan 8× sesaat */
   function mpPos(now){
     if (now - posT < 120) return; posT = now;
-    mp.T.set('p' + mp.seat, { f: P.f, x: +P.x.toFixed(2), z: +P.z.toFixed(2), face: +P.face.toFixed(2), mv: P.moving && !paused ? 1 : 0,
+    mp.T.set('p' + mp.seat, { f: P.f, x: +P.x.toFixed(2), z: +P.z.toFixed(2), face: +P.face.toFixed(2), mv: P.moving && !paused ? (P.run ? 2 : 1) : 0,
       h: P.hide ? [lockers.indexOf(P.hide.lk), P.hide.lk.occ.indexOf('me')] : null, d: P.anim ? lockers.indexOf(P.anim.spot.lk) : -1, safe: P.safe ? 1 : 0, e: moodNow(now)[0] });
   }
   /* pemain lain: watak + nama; dalam almari hanya nampak bila kita dalam almari yang sama */
@@ -11739,7 +11752,7 @@ function escRun(THREE, sid, ac, lvl, mp){
       if (!o){ o = { g: new THREE.Group(), mix: null, act: {}, now: null, x: t.x, z: t.z, f: t.f, face: t.face || 0 }; others.set(q.i, o); scene.add(o.g); o.g.add(nameTag(q.name));
         knModel(q.char).then(gl => { if (!alive) return; o.fc = escDress(THREE, gl.scene, q.char); const m = gl.scene, bx = new THREE.Box3().setFromObject(m), hh = bx.max.y - bx.min.y || 1, k = 1.62 / hh;
           m.scale.setScalar(k); m.position.y = -bx.min.y * k; m.traverse(z => { if (z.isMesh) z.frustumCulled = false; }); o.g.add(m);
-          o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); }).catch(() => {}); }
+          o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); if (o.act.walk) o.act.walk.timeScale = .7; }).catch(() => {}); }
       if (o.f !== t.f){ o.f = t.f; o.x = t.x; o.z = t.z; }
       o.x += (t.x - o.x) * Math.min(1, dt * 10); o.z += (t.z - o.z) * Math.min(1, dt * 10);
       let df = (t.face || 0) - o.face; df = Math.atan2(Math.sin(df), Math.cos(df)); o.face += df * Math.min(1, dt * 10);
@@ -11750,7 +11763,7 @@ function escRun(THREE, sid, ac, lvl, mp){
       /* cahaya malap dalam loker supaya kawan sebelah kelihatan */
       if (t.h && meIn) shared = true;
       if (o.fc) o.fc.mood({ g: 'gembira', t: 'takut' }[t.e] || 'biasa');
-      if (o.mix){ const a = o.act[t.mv ? 'walk' : 'idle'] || o.act.idle; if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
+      if (o.mix){ const a = o.act[t.mv === 2 ? 'sprint' : t.mv ? 'walk' : 'idle'] || o.act.walk || o.act.idle; if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
     });
     /* cahaya malap dari mata pemain dalam loker supaya kawan sebelah kelihatan */
     lkLt.visible = shared; if (shared) lkLt.position.copy(cam.position);
@@ -11764,7 +11777,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     if (MP){ renderOthers(dt); if (MPC && !ended) mpPos(now); }
     if (pmFace) pmFace.mood(moodNow(now));
     if (pm){ pm.position.set(P.x, 0, P.z); let df = P.face - pm.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); pm.rotation.y += df * Math.min(1, dt * 12);
-      pPlay(P.anim ? 'walk' : P.moving && !paused ? (PACT.sprint && Math.hypot(joy.x, joy.y) > .85 ? 'sprint' : 'walk') : 'idle'); pmMix.update(dt); }
+      pPlay(P.anim ? 'walk' : P.moving && !paused ? (P.run && PACT.sprint ? 'sprint' : 'walk') : 'idle'); pmMix.update(dt); }
     ambient(dt, now);
     R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
