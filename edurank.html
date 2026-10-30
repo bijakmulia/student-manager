@@ -3804,6 +3804,8 @@ function tqPrompt(sj, info, nq, scope){
     '  "soalan": [',
     '    {',
     '      "soalan": "teks soalan penuh",',
+    '      "pendek": "versi SANGAT pendek soalan yang sama, MAKSIMUM 10 perkataan",',
+    '      "jawapan_pendek": "jawapan betul diringkaskan, MAKSIMUM 5 perkataan",',
     dk ? '      "sp": "kod Standard Pembelajaran yang diuji, cth 9.2.1",' : '',
     '      "pilihan": ["teks A", "teks B", "teks C", "teks D"],',
     '      "betul": 2,',
@@ -3822,7 +3824,9 @@ function tqPrompt(sj, info, nq, scope){
     '· "betul" ialah INDEKS bermula 0 (0 = pilihan pertama, 3 = pilihan keempat). Bukan huruf, bukan teks jawapan.',
     '· "ejek" ialah array 4 item yang SELARI dengan "pilihan": item ke-0 untuk pilihan pertama, dan seterusnya. ' +
       'Letak string kosong "" pada kedudukan jawapan yang betul.',
-    '· Medan "soalan", "pilihan", "betul", "huraian" dan "ejek" WAJIB ada pada setiap soalan.'
+    '· "pendek" dan "jawapan_pendek" digunakan untuk teka-teki padanan kad (kad kecil): soalan maksimum 10 perkataan, jawapan maksimum 5 perkataan, ' +
+      'maksud mesti sama dengan soalan penuh dan jawapan betulnya. Jangan guna "pilihan di atas" atau rujukan kepada pilihan lain.',
+    '· Medan "soalan", "pendek", "jawapan_pendek", "pilihan", "betul", "huraian" dan "ejek" WAJIB ada pada setiap soalan.'
   ].filter(Boolean).join('\n');
 }
 
@@ -3842,7 +3846,7 @@ function tqParse(raw, sj, bab){
   const qs = sQuestions(arr, 't' + Date.now().toString(36), 60);
   if (!qs.length) throw new Error('Tiada soalan sah. Setiap soalan perlu "soalan", "pilihan" dan "betul".');
   return qs.map((q, i) => { const sp = skCode(q.sp); return { id:uid('q'), subjectId:sj, chapterId:ch,
-    q:q.q, c:q.c, a:q.a, ejek:q.ejek, huraian:q.huraian, sp, sk: sp ? sp.split('.').slice(0, 2).join('.') : '' }; });
+    q:q.q, c:q.c, a:q.a, ejek:q.ejek, huraian:q.huraian, qs:q.qs || '', as:q.as || '', sp, sk: sp ? sp.split('.').slice(0, 2).join('.') : '' }; });
 }
 
 const tqHasExp = q => !!(q && ((q.ejek || []).some(Boolean) || q.huraian));
@@ -4077,7 +4081,9 @@ function sQuestions(arr, bi, cap){
       if (!ej[j]) ej[j] = hur || ('Jawapan betul ialah {a}.');
       if (ej[j].indexOf('{a}') < 0) ej[j] = 'Jawapannya {a}. ' + ej[j];
     }
+    const words = (t, n) => String(t || '').trim().split(/s+/).filter(Boolean).slice(0, n).join(' ');
     out.push({ id:'sq' + bi + '_' + k, q:qt, c, a, ejek:ej, sp: sTxt(v.sp, 24),
+      qs: words(sTxt(v.pendek, 120), 10), as: words(sTxt(v.jawapan_pendek, 60), 5),
       huraian: hur ? (hur.indexOf('{a}') < 0 ? 'Jawapannya {a}. ' + hur : hur) : 'Jawapan betul ialah {a}.' });
   });
   return out;
@@ -5763,17 +5769,16 @@ const GAME_LOBBY = {
       const mode = '<div class="lb-seg">' + b(!K.multi, 'kmm:0', '📺 1 peranti') + b(K.multi, 'kmm:1', '📱 Banyak peranti') + '</div>';
       if (all.length < 4) return top + mode + '<div class="lb-note" style="color:#FCA5A5;margin-top:10px;font-size:12px">⚠️ Perlu <b>4 kumpulan</b> (yang ada ahli) dalam kelas ini — sekarang ada <b>' + all.length + '</b>.</div>' +
         '<button class="lb-btn go" data-lb="kmgrp">➕ Cipta kumpulan di tab KUMPULAN</button><div class="lb-note">Selepas itu tekan <b>GAME</b> — skrin ini dibuka semula.</div>';
-      const nb = seats.filter(x => x.bot).length, nh = seats.length - nb, who = K.multi ? '🔢 Kod' : '👤 Murid';
-      const seatH = '<div class="km-seats">' + seats.map((x, i) => '<div class="km-seat' + (x.bot ? ' bot' : '') + '">' +
+      const nb = K.multi ? 0 : seats.filter(x => x.bot).length, nh = seats.length - nb;
+      // banyak peranti: 4 bilik kod sentiasa; kumpulan yang tidak masuk kod dimainkan robot secara automatik
+      const seatH = '<div class="km-seats">' + seats.map((x, i) => '<div class="km-seat' + (!K.multi && x.bot ? ' bot' : '') + '">' +
         '<button class="nm" data-lb="kms:' + i + '">' + teamAvatar(x.id, 24) + '<span>' + esc(teamName(x.id)) + '</span></button>' +
-        '<div class="lb-seg">' + b(!x.bot, 'kmb:' + i + ':0', who) + b(x.bot, 'kmb:' + i + ':1', '🤖 Robot') + '</div></div>').join('') + '</div>';
-      const presets = (K.multi ? [[4, 'Semua kod'], [2, '2 + 2 robot'], [1, '1 + 3 robot']] : [[4, '4 murid'], [2, '2 + 2 robot'], [1, '1 + 3 robot'], [0, 'Semua robot']])
-        .map(([n, l]) => b(seats.every((x, i) => x.bot === (i >= n)), 'kmp:' + n, l)).join('');
-      const right = '<div class="lb-seg">' + presets + '</div>' +
-        (nb ? '<div class="lb-sec" style="margin-top:10px">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>' : '') +
+        (K.multi ? '<span style="font-size:11px;color:#94A3B8;white-space:nowrap">📱 telefon</span>'
+          : '<div class="lb-seg">' + b(!x.bot, 'kmb:' + i + ':0', '👤 Murid') + b(x.bot, 'kmb:' + i + ':1', '🤖 Robot') + '</div>') + '</div>').join('') + '</div>';
+      const right = (K.multi || nb ? '<div class="lb-sec">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>' : '') +
         todayQNotice() +
-        '<button class="lb-btn go" data-lb="kmgo">' + (K.multi ? '👑 BUKA BILIK (HOS)' : '▶ MULA') + '<span style="font-size:12px;font-weight:600;margin-left:6px">(' + nh + (K.multi ? ' telefon' : ' murid') + (nb ? ' · ' + nb + ' robot' : '') + ')</span></button>' +
-        '<div class="lb-note">' + (K.multi ? 'Peranti ini jadi <b>papan projektor</b> (hos). Di telefon murid: tab GAME → KAD → <b>🔢 Masuk kod bilik</b>.' + (FB.on ? '' : ' <b style="color:#FCA5A5">Perlu Firebase aktif.</b>') : 'Semua bergilir di peranti ini.') +
+        '<button class="lb-btn go" data-lb="kmgo">' + (K.multi ? '👑 BUKA BILIK (HOS)' : '▶ MULA' + '<span style="font-size:12px;font-weight:600;margin-left:6px">(' + nh + ' murid' + (nb ? ' · ' + nb + ' robot' : '') + ')</span>') + '</button>' +
+        '<div class="lb-note">' + (K.multi ? 'Peranti ini jadi <b>papan projektor</b> (hos). Murid masuk kod di telefon; kumpulan yang tidak masuk dimainkan <b>robot</b> secara automatik.' + (FB.on ? '' : ' <b style="color:#FCA5A5">Perlu Firebase aktif.</b>') : 'Semua bergilir di peranti ini.') +
           (all.length > 4 ? ' Ketik nama kumpulan untuk menukarnya.' : '') + '</div>';
       return top + '<div class="km-lb"><div>' + mode + seatH + '</div><div>' + right + '</div></div>';
     },
@@ -5786,13 +5791,11 @@ const GAME_LOBBY = {
         const k = all.findIndex(g => g.id === seats[i].id), nx = all.slice(k + 1).concat(all.slice(0, k)).find(g => !used.includes(g.id));
         seats[i].id = nx.id; save(); x.paint(); return true; }
       if (a.indexOf('kmb:') === 0){ const [, i, v] = a.split(':'); seats[+i].bot = v === '1'; save(); x.paint(); return true; }
-      if (a.indexOf('kmp:') === 0){ const n = +a.slice(4); seats.forEach((t, i) => t.bot = i >= n); save(); x.paint(); return true; }
       if (a.indexOf('kml:') === 0){ K.lvl = a.slice(4); save(); x.paint(); return true; }
       if (a === 'kmgrp'){ x.close(); KM_BACK = true; setTab('groups'); setTimeout(() => toast('Cipta 4 kumpulan & masukkan ahli, kemudian tekan GAME untuk kembali ke Kombo Ilmon.'), 300); return true; }
       if (a === 'kmgo'){
         if (all.length < 4){ toast('Perlu 4 kumpulan dalam kelas ini.', null, true); return true; }
-        if (K.multi && seats.every(t => t.bot)){ toast('Pilih sekurang-kurangnya satu bilik 🔢 Kod.', null, true); return true; }
-        x.close(); komboStart(seats.map(t => ({ id: t.id, bot: !!t.bot })), { multi: !!K.multi, lvl: K.lvl }); return true;
+        x.close(); komboStart(seats.map(t => ({ id: t.id, bot: !K.multi && !!t.bot })), { multi: !!K.multi, lvl: K.lvl }); return true;
       }
       return false;
     },
@@ -5811,7 +5814,7 @@ const GAME_LOBBY = {
       lbSeg('lvl', 'KELAJUAN', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']], 'Mudah: lari perlahan, laju bertambah perlahan. Sukar: laju dari awal dan cepat bertambah.'),
       lbSeg('qt', 'MASA MEMBACA SOALAN', [[5,'5s'],[8,'8s'],[12,'12s'],[16,'16s'],[20,'20s']], 'Berapa saat soalan dipaparkan sebelum pelari sampai ke gerbang jawapan.')],
     preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await knFetch(runChar(arenaUi().team)); } catch(e){} p(1); },
-    starts: [['▶ MULA LARI', () => runStart()]],
+    starts: [['▶ MAIN (1 peranti)', () => runStart()], ['👑 BUKA BILIK · HOS (banyak peranti)', () => runHost()]],
     get menu(){ const w = runCfg().watak; return [['watak', '🧍 Watak', KN_CHARS.includes(w) ? KN_NAME(w) : 'Auto (ikut kumpulan)']]; },
     views: {
       watak: { t: 'PILIH WATAK', h: () => { setTimeout(knThumbFill, 30); const w = runCfg().watak;
@@ -5823,7 +5826,7 @@ const GAME_LOBBY = {
             '<span style="font-size:10px;font-weight:700">' + KN_NAME(n) + '</span></button>').join('') + '</div>'; } }
     },
     act: (a, b, x) => { if (a.indexOf('rwk:') === 0){ runCfg().watak = a.slice(4); save(); x.setView('main'); return true; } return false; },
-    how: () => 'Seorang mengawal, ahli lain membantu memilih gerbang jawapan.<br><b>Telefon:</b> leret kiri/kanan tukar lorong, leret atas untuk lompat.<br><b>Komputer:</b> ← → atau A D, lompat ↑ / W / Space.<br>Skor ÷ 120 = RP (2 hingga 25 RP).'
+    how: () => '<b>1 peranti:</b> seorang mengawal, ahli lain membantu memilih gerbang jawapan. <b>Banyak peranti:</b> peranti ini jadi papan kedudukan; setiap kumpulan berlari di telefon sendiri dengan soalan yang sama — skor tertinggi menang.<br><b>Telefon:</b> leret kiri/kanan tukar lorong, leret atas untuk lompat.<br><b>Komputer:</b> ← → atau A D, lompat ↑ / W / Space.<br>Skor ÷ 120 = RP (2 hingga 25 RP).'
   },
   escape: {
     title: 'SEKOLAH BERHANTU', ico: '👻', c: '#F87171',
@@ -5838,7 +5841,7 @@ const GAME_LOBBY = {
       lbSeg('peta', 'PETA MULA', ESC_MAPS.map((m, i) => [i, (i + 1) + ' · ' + m.name.replace('BLOK ', '')]), 'Selesai satu peta → teruskan ke peta seterusnya.'),
       lbSeg('rp', 'RP MAKSIMUM', [[15,'15'],[30,'30'],[50,'50']], 'Mudah ×0.8 · Sukar ×1.3.')]; },
     preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), escModel(await import(ESC_THREE), escChar(arenaUi().team)).catch(() => {}), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
-    starts: [['🚪 MASUK SEKOLAH (1 peranti)', () => escStart()], ['👑 BUKA BILIK · HOS (banyak peranti)', () => escHost()]],
+    starts: [['▶ MAIN (1 peranti)', () => escStart()], ['👑 BUKA BILIK · HOS (banyak peranti)', () => escHost()]],
     get menu(){ const w = escCfg().watak; return [['ewatak', '🧍 Watak', ESC_CHARS.includes(w) ? ESC_NAME(w) : 'Auto (ikut kumpulan)']]; },
     views: {
       ewatak: { t: 'PILIH WATAK', h: () => { setTimeout(knThumbFill, 30); const w = escCfg().watak;
@@ -7200,11 +7203,12 @@ async function komboJoinAsk(){
   toast('Mencari bilik ' + c + '…');
   const kind = await new Promise(res => {                // bilik Tangga Ilmon ('st') atau Sekolah Berhantu ('esc')
     let done = false; const offs = []; const fin = k => { if (done) return; done = true; offs.forEach(o => { try { o && o(); } catch(e){} }); res(k); };
-    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }));
+    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }), T.on('run', v => { if (v && !v.closed) fin('run'); }));
     setTimeout(() => fin(null), 6000);
   });
   if (!kind) return toast('Bilik ' + c + ' tidak dijumpai. Semak kod di skrin hos.', null, true);
   if (kind === 'esc') return escJoin(c, T);
+  if (kind === 'run') return runJoin(c, T);
   await kadProbe(); komboJoin(c, T);
 }
 function komboJoin(code, T){
@@ -9588,8 +9592,110 @@ async function runStart(){
   catch(e){ RUN = null; const r = $('#runRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
-function runGame(THREE, sid, ac){
-  const player = teamOf(sid);                     // sid = id kumpulan yang berlari
+/* ---------- LARIAN ILMU BANYAK PERANTI: peranti ini = papan kedudukan (hos); setiap kumpulan berlari di telefon ---------- */
+async function runHost(){
+  const seats = classTeams().slice(0, 8);
+  if (!seats.length) return toast('Cipta kumpulan dahulu.', null, true);
+  const code = String(1000 + Math.floor(Math.random() * 9000));
+  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  const c = runCfg(), qs = [];
+  for (let i = 0; i < 30; i++){ const q = escQuestion(); qs.push({ q: q.q, c: q.c, a: q.a }); }
+  const cfg = { g: 'run', code, lvl: c.lvl, qt: c.qt, qs, seats: seats.map(g => ({ id: g.id, name: g.name, joined: false })), started: false };
+  const st = {}, offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#3A2410,#07050A');
+  document.body.appendChild(ov); lockBody();
+  const pub = () => T.set('run', cfg);
+  let done = false;
+  const row = (x, i) => { const r = st[i] || {};
+    return '<div class="panel clip-s p-2 flex items-center gap-2">' + teamAvatar(x.id, 26) + '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div>' +
+      (!cfg.started ? '<span class="text-[11px]" style="color:' + (x.joined ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</span>'
+        : '<span class="num text-[11px] text-muted">' + (r.d || 0) + ' m · ' + (r.r || 0) + '/' + (r.a || 0) + ' · ' + '<span style="color:#FF4D6A">' + '❤'.repeat(Math.max(0, r.l == null ? 3 : r.l)) + '</span></span>' +
+          '<b class="num text-[15px]" style="color:' + (r.over ? '#94A3B8' : '#FFB347') + ';min-width:52px;text-align:right">' + (r.sc || 0) + (r.over ? ' 🏁' : '') + '</b>') + '</div>'; };
+  const paint = () => {
+    if (done) return;
+    const n = cfg.seats.filter(x => x.joined).length, list = cfg.seats.map((x, i) => [x, i]).filter(([x]) => !cfg.started || x.joined)
+      .sort((a, b) => cfg.started ? ((st[b[1]] || {}).sc || 0) - ((st[a[1]] || {}).sc || 0) : 0);
+    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:560px;border-color:#FFB347">' +
+      (cfg.started ? '<div class="lbl" style="color:#FFB347">🏃‍♂️ LARIAN ILMU · KEDUDUKAN LANGSUNG</div>'
+        : '<div><span style="display:inline-block;background:#FACC15;color:#1A1405;font-weight:900;font-size:13px;letter-spacing:.15em;padding:3px 12px;border-radius:99px;margin-bottom:6px">👑 HOS — kongsi kod ini</span></div>' +
+          '<div class="lbl" style="color:#FFB347">🏃‍♂️ LARIAN ILMU · KOD BILIK</div><div class="num" style="font-size:64px;font-weight:900;letter-spacing:.2em;color:#FDE68A;line-height:1.1">' + code + '</div>' +
+          '<div class="text-[12px] text-muted">Di telefon kumpulan: EduRank → GAME → <b>🔢 MASUK KOD BILIK</b>, taip kod ini.</div>') +
+      '<div class="grid gap-2 mt-3 text-left">' + list.map(([x, i]) => row(x, i)).join('') + '</div>' +
+      (cfg.started ? '<div class="flex gap-2 mt-3"><button class="btn btn-o clip-s flex-1 !py-3" data-r="end">🏁 TAMATKAN &amp; REKOD</button></div>'
+        : '<div class="text-[11px] text-muted mt-2">Tekan MULA bila sedia — hanya kumpulan yang sudah masuk kod akan berlari.</div>' +
+          '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-3" data-r="x">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-r="go"' + (n ? '' : ' disabled style="opacity:.45"') + '>' +
+          (n ? '▶ MULA (' + n + '/' + cfg.seats.length + ' telefon)' : '⏳ Menunggu telefon…') + '</button></div>') + '</div>';
+  };
+  const close = () => { clearInterval(hb); offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
+  function finish(){                                   // rekod RP & PBD bagi setiap kumpulan yang berlari
+    if (done) return; done = true;
+    const d = runData(); d.gbest = d.gbest || {};
+    const res = cfg.seats.map((x, i) => [x, st[i] || {}]).filter(([x]) => x.joined).sort((a, b) => (b[1].sc || 0) - (a[1].sc || 0));
+    const rows = res.map(([x, r], k) => { const sc = r.sc || 0, rp = runRP(sc);
+      if (sc > (d.gbest[x.id] || 0)) d.gbest[x.id] = sc; d.plays[x.id] = (d.plays[x.id] || 0) + 1;
+      teamRP(x.id, rp); const tp = gameToPBD(x.id, 'run', r.r || 0, r.a || 0, { score: sc });
+      return '<div class="panel clip-s p-2 flex items-center gap-2"><b class="num" style="color:#FFB347;width:18px">' + (k + 1) + '</b>' + teamAvatar(x.id, 26) +
+        '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div><span class="num text-[11px] text-muted">' + (r.r || 0) + '/' + (r.a || 0) + ' betul</span>' +
+        '<b class="num text-[14px] text-cyan">' + sc + '</b><span class="num text-[12px] text-orange">+' + rp + ' RP</span>' + (tp ? '<b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b>' : '') + '</div>'; }).join('');
+    save(true); clearInterval(hb); T.set('run', { closed: true });
+    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:560px;border-color:#FFB347"><div style="font-size:40px">🏆</div>' +
+      '<div class="font-bold tracking-widest text-[20px]" style="color:#FFB347">' + (res[0] ? esc(res[0][0].name).toUpperCase() + ' MENANG!' : 'TAMAT') + '</div>' +
+      '<div class="grid gap-2 mt-3 text-left">' + rows + '</div><button class="btn btn-o clip-s w-full !py-3 mt-3" data-r="x">Tutup</button></div>';
+  }
+  cfg.seats.forEach((x, i) => {
+    offs.push(T.on('j' + i, v => { if (v && !x.joined && !cfg.started){ x.joined = true; pub(); paint(); } }));
+    offs.push(T.on('r' + i, v => { if (!v || done || !cfg.started) return; st[i] = v; paint();
+      if (cfg.seats.every((y, k) => !y.joined || (st[k] && st[k].over))) finish(); }));
+  });
+  const hb = setInterval(pub, 2000); pub(); paint();
+  ov.onclick = e => {
+    const b = e.target.closest('[data-r]'); if (!b) return;
+    if (b.dataset.r === 'x'){ if (!cfg.started) T.set('run', { closed: true }); return close(); }
+    if (b.dataset.r === 'end') return finish();
+    if (b.dataset.r === 'go' && cfg.seats.some(x => x.joined)){ cfg.started = true; pub(); paint(); }
+  };
+}
+/* telefon kumpulan: pilih kumpulan → tunggu hos → berlari */
+function runJoin(code, T){
+  let cfg = null, seat = -1, ac = null, started = false;
+  const offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#3A2410,#07050A');
+  document.body.appendChild(ov); lockBody();
+  const close = () => { offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
+  const panel = h => '<div class="panel clip p-5 w-full text-center" style="max-width:480px;border-color:#FFB347"><div class="lbl" style="color:#FFB347">🏃‍♂️ LARIAN ILMU · BILIK ' + esc(code) + '</div>' + h +
+    '<button class="btn clip-s w-full !py-2 mt-3" data-j="x">Keluar</button></div>';
+  const paint = () => {
+    if (!cfg){ ov.innerHTML = panel('<div class="mt-4 text-muted">Mencari bilik…</div>'); return; }
+    if (seat < 0){ ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">PILIH KUMPULAN KAMU</div><div class="grid grid-cols-2 gap-2 mt-3">' +
+      cfg.seats.map((x, i) => '<button class="btn clip-s !py-3 text-[13px]" data-s="' + i + '"' + (x.joined ? ' disabled style="opacity:.4"' : '') + '>' + esc(x.name) + (x.joined ? ' ✅' : '') + '</button>').join('') + '</div>'); return; }
+    ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
+  };
+  offs.push(T.on('run', v => {
+    if (!v || started) return;
+    if (v.closed){ toast('Bilik ditutup oleh hos.', null, true); return close(); }
+    cfg = v;
+    if (seat >= 0 && v.started){ started = true; return begin(); }
+    paint();
+  }));
+  ov.onclick = e => {
+    if (e.target.closest('[data-j]')) return close();
+    const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled){
+      seat = +sb.dataset.s; orientFree();                 // landskap dibuka semasa sentuhan
+      try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
+      T.set('j' + seat, { t: Date.now() }); import(ESC_THREE).catch(() => {}); knFetch(runChar(cfg.seats[seat].id)).catch(() => {}); paint();
+    }
+  };
+  async function begin(){
+    close();
+    let THREE; try { THREE = await import(ESC_THREE); } catch(er){ return toast('Gagal memuat enjin 3D.', null, true); }
+    RUN = { loading: true };
+    try { runGame(THREE, null, ac, { T, cfg, seat }); } catch(er){ RUN = null; console.error(er); toast('Permainan gagal dimulakan.', null, true); }
+  }
+  paint();
+}
+
+function runGame(THREE, sid, ac, mp){
+  /* mp = { T, cfg, seat }: telefon dalam bilik hos — soalan dari hos, keputusan dihantar ke hos (hos merekod RP & PBD) */
+  if (mp) sid = mp.cfg.seats[mp.seat].id;
+  const player = mp ? { name: mp.cfg.seats[mp.seat].name, members: [] } : teamOf(sid);   // sid = id kumpulan yang berlari
   const root = document.createElement('div');
   root.id = 'runRoot';
   root.style.cssText = 'position:fixed;inset:0;z-index:950;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit';
@@ -9615,7 +9721,7 @@ function runGame(THREE, sid, ac){
   const R = new THREE.WebGLRenderer({ canvas: $r('#rnCv'), antialias: true, powerPreference: 'high-performance' });
   R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   R.outputColorSpace = THREE.SRGBColorSpace;
-  const live = liveHost('run', root, { canvas: $r('#rnCv'), title: 'Larian Ilmu' });
+  const live = mp ? null : liveHost('run', root, { canvas: $r('#rnCv'), title: 'Larian Ilmu' });
   const scene = new THREE.Scene();
   const skyTex = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d');
     const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#2A1B5C'); gr.addColorStop(.45, '#C2508A'); gr.addColorStop(.7, '#FF9A4D'); gr.addColorStop(1, '#FFD27A');
@@ -9807,7 +9913,9 @@ function runGame(THREE, sid, ac){
 
   /* ---------- keadaan ---------- */
   const P = { lane: 1, x: 0, y: 0, vy: 0, inv: 0, phase: 0 };
-  const RL = RUN_LVL[runCfg().lvl] || RUN_LVL.sederhana, RQ = runCfg().qt;
+  const RL = RUN_LVL[mp ? mp.cfg.lvl : runCfg().lvl] || RUN_LVL.sederhana, RQ = mp ? +mp.cfg.qt || 8 : runCfg().qt;
+  let mqi = 0, pubT = 0;
+  const mpPub = over => { if (mp) mp.T.set('r' + mp.seat, { sc: score(), d: Math.floor(dist), r: right, a: asked, l: lives, over: !!over, t: Date.now() }); };
   let speed = RL.v0, dist = 0, stars = 0, right = 0, asked = 0, lives = 3, alive = true, ended = false, paused = false;
   let nextObs = -40, nextStar = -30, nextQ = 160, lastSpawnZ = -40;
   RUN = { close: () => quit() };
@@ -9902,7 +10010,7 @@ function runGame(THREE, sid, ac){
     if (nextObs >= 0 && !gateNear){ spawnObstacle(-90); nextObs = -(14 + Math.random() * 10) * (11 / speed) * 1.4; }
     if (nextStar >= 0){ spawnStars(-90, Math.floor(Math.random() * 3)); nextStar = -(30 + Math.random() * 20); }
     if (nextQ <= 0 && !GATES.some(g => !g.done)){
-      const q = escQuestion();
+      const q = mp ? mp.cfg.qs[mqi++ % mp.cfg.qs.length] : escQuestion();
       spawnGates(-Math.max(60, speed * RQ), q); nextQ = 260 + Math.random() * 60 + speed * RQ;
       OBS.slice().forEach((o, i) => { if (o.m.position.z < -60) { scene.remove(o.m); o.dead = true; } });
       for (let i = OBS.length - 1; i >= 0; i--) if (OBS[i].dead) OBS.splice(i, 1);
@@ -9927,7 +10035,7 @@ function runGame(THREE, sid, ac){
       if (!g.done && g.z > -0.2){
         g.done = true; asked++;
         const ok = g.opts[P.lane] === g.q.a;
-        teamQuiz(sid, ok);
+        if (!mp) teamQuiz(sid, ok);
         if (ok){ right++; stars += 5; sfxR('right'); msg('BETUL! +60', '#4ADE80'); P.inv = Math.max(P.inv, .8); }
         else { sfxR('wrong'); msg('SALAH! Jawapan: ' + esc(String(g.q.c[g.q.a])), '#FF6B6B', 2200); hurt(); }
         $r('#rnQ').style.display = 'none'; hud();
@@ -9939,6 +10047,17 @@ function runGame(THREE, sid, ac){
   function gameOver(){
     if (ended) return;
     ended = true; sfxR('over'); play('die', .2);
+    if (mp){                                          // telefon: hantar keputusan ke hos; hos merekod RP & PBD
+      mpPub(true); const e = $r('#rnEnd');
+      e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:400px"><div style="font-size:40px">🏁</div>' +
+        '<div class="font-bold tracking-widest text-[20px] mt-1" style="color:#FFB347">TAMAT LARIAN</div><div class="text-[13px] text-muted mt-1">' + esc(player.name) + '</div>' +
+        '<div class="grid grid-cols-2 gap-2 mt-4 num"><div class="panel clip-s p-2"><div class="text-[18px] text-cyan">' + score() + '</div><div class="text-[10px] text-muted">SKOR</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FFD76A">' + right + '/' + asked + '</div><div class="text-[10px] text-muted">BETUL</div></div></div>' +
+        '<div class="text-[12px] text-muted mt-3">📺 Lihat kedudukan &amp; RP di skrin hos.</div>' +
+        '<button class="btn btn-o clip-s w-full !py-3 mt-4" data-end="quit">Tutup</button></div>';
+      e.style.display = 'flex'; e.onclick = ev => { if (ev.target.closest('[data-end]')) quit(); };
+      return;
+    }
     const sc = score(), rp = runRP(sc), d = runData();
     d.gbest = d.gbest || {};
     const prev = d.gbest[sid] || 0;
@@ -9967,7 +10086,8 @@ function runGame(THREE, sid, ac){
   function quit(){
     if (!alive) return;
     alive = false; RUN = null;
-    if (!ended && asked) save();
+    if (mp && !ended) mpPub(true);                      // keluar awal = tamat bagi hos
+    if (!mp && !ended && asked) save();
     window.removeEventListener('resize', resize); window.removeEventListener('keydown', onKey);
     window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
     if (A) A.stop();
@@ -9980,6 +10100,7 @@ function runGame(THREE, sid, ac){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!ended && !paused) update(dt);
+    if (mp && !ended && now - pubT > 600){ pubT = now; mpPub(false); }
     else if (ended && mixer) mixer.update(dt);
     R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
@@ -10440,12 +10561,15 @@ function escQuestion(){
   return { q: q.q, c: keep.map(i => q.c[i]), a: keep.indexOf(q.a) };
 }
 /* 4 pasangan untuk teka-teki padanan: soalan ↔ jawapan betul (hasil unik) */
+const nWords = t => String(t || '').trim().split(/s+/).filter(Boolean).length;
+/* versi pendek untuk teka-teki padanan: soalan ≤10 perkataan, jawapan ≤5 perkataan (medan qs/as dari AI, atau soalan asal yang memang pendek) */
+const qShort = q => { const a = q.as || String(q.c[q.a]), t = q.qs || q.q; return nWords(t) <= 10 && nWords(a) <= 5 ? [t, a] : null; };
 function escPairs(){
   const bank = topicalBank(S.ui.activeSubjectId).filter(q => q.c && q.c[q.a] !== undefined);
   const out = [], seen = new Set();
   bank.slice().sort(() => Math.random() - .5).forEach(q => {
-    const a = String(q.c[q.a]);
-    if (out.length < 4 && !seen.has(a)){ seen.add(a); out.push([q.q.length > 60 ? q.q.slice(0, 57) + '…' : q.q, a]); }
+    const p = qShort(q); if (!p) return;
+    if (out.length < 4 && !seen.has(p[1])){ seen.add(p[1]); out.push(p); }
   });
   for (let n = 0; out.length < 4 && n < 200; n++){
     const m = escMathQ();
@@ -10520,6 +10644,7 @@ function escJoin(code, T){
     const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled){ seat = +sb.dataset.s; return paint(); }
     const cb = e.target.closest('[data-c]'); if (cb){
       char = cb.dataset.c; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
+      orientFree();                                       // landskap mesti dibuka semasa sentuhan (MULA hos datang dari rangkaian, bukan sentuhan)
       T.set('j' + seat, { char, t: Date.now() }); import(ESC_THREE).catch(() => {}); knFetch(char).catch(() => {}); paint();
     }
   };
@@ -10566,7 +10691,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   const ovl = 'position:absolute;inset:0;display:none;align-items:safe center;justify-content:center;padding:16px;overflow-y:auto;';   // skrin rendah (telefon landskap): boleh skrol, tidak terpotong
   root.innerHTML =
     '<canvas id="escCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
-    '<div id="escSlit" style="position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 0%,rgba(255,200,96,.16),transparent 60%),repeating-linear-gradient(180deg,#2a1d0d 0 30px,transparent 30px 38px),linear-gradient(90deg,#22170a 0 12%,transparent 12% 88%,#22170a 88%)"></div>' +
+    '<div id="escSlit" style="position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 20%,rgba(255,200,96,.16),transparent 60%),linear-gradient(180deg,#2a1d0d 0 43%,#120c05 43% 44%,transparent 44% 53%,#120c05 53% 54%,#2a1d0d 54%),linear-gradient(90deg,#22170a 0 12%,transparent 12% 88%,#22170a 88%)"></div>'   /* satu celah mendatar sejajar mata */ +
     '<div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.9) 100%)"></div>' +
     '<div id="escRed" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,rgba(150,0,0,.6) 100%);opacity:0;transition:opacity .25s"></div>' +
     '<div id="escFade" style="position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .35s"></div>' +
