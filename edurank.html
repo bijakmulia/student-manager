@@ -7455,7 +7455,7 @@ async function komboJoinBoot(param){
 
 /* ---------- TAB GAME: KAD ---------- */
 function viewCards(){
-  if (!ctxOk()) return emptyState('fa-box-open','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. TPC dikumpul dari skor positif kelas tersebut.');
+  if (!ctxOk()) return emptyState('fa-box-open','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. TPC dikumpul dari skor positif kelas tersebut.') + '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — sertai bilik hos</button>';   // telefon murid tanpa kelas/subjek masih boleh masuk bilik
   return '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(255,138,61,.25),rgba(120,60,200,.12) 60%,transparent),var(--panel,#141C26)">' +
     '<div style="font-size:40px;line-height:1">⚔️</div>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FF8A3D;text-shadow:0 0 12px rgba(255,138,61,.6)">DUEL KAD</div>' +
@@ -8577,7 +8577,7 @@ function storAssetsModal(){
 
 /* ---------- tab game ---------- */
 function viewStor(){
-  if (!ctxOk()) return emptyState('fa-store','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas.');
+  if (!ctxOk()) return emptyState('fa-store','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas.') + '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — sertai bilik hos</button>';   // telefon murid tanpa kelas/subjek masih boleh masuk bilik
   const o = arenaUi(), d = storData(), c = storCfg();
   const board = classTeams().filter(g => d.best[g.id]).sort((a, b) => d.best[b.id] - d.best[a.id]).slice(0, 5);
   const have = ST_ASSETS.filter(a => ST_HAVE.has(a.id)).length;
@@ -8587,6 +8587,7 @@ function viewStor(){
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#7DD3FC;text-shadow:0 0 12px rgba(60,160,255,.6)">SIMULASI STOR SUKAN</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Uruskan <b class="text-cyan">Stor Sukan</b> dan <b style="color:#4ADE80">Kedai Sihat</b>. Atlet datang meminta peralatan dan makanan bernutrisi — ambil dari rak, masak jika perlu, dan serahkan sebelum <b style="color:#FF7A7A">kesabaran</b> mereka habis. Jawab telefon pembekal untuk menambah stok!</div></div>';
   h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="stor"><i class="fa-solid fa-play"></i> MAIN</button>';
+  h += '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — main di projektor hos</button>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERBAIK KUMPULAN</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
     '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#FDE68A">⭐ ' + d.best[g.id] + '</span></div>').join('') + '</div>';
@@ -9170,8 +9171,8 @@ function storRun(team, mp){
     return { who, z, need: need.map(i => i.id), got: [], tx: pick(ST_FOOD_TX) };
   }
   const BUB_T = 5;                                        // saat dialog dipapar sebelum sembunyi
-  const bubHid = c => !c.o.ret && c.bubTo != null && T > c.bubTo;
-  const showBub = c => { c.bubTo = T + BUB_T; ['s', 'k'].forEach(z => cust[z].forEach((x, i) => { if (x === c){ const e = $s('#stC_' + z + i); if (e) e.classList.remove('bh'); } })); };
+  const bubHid = c => !!c.manHid || (!c.o.ret && c.bubTo != null && T > c.bubTo);   // manHid = ditutup dengan ketikan
+  const showBub = c => { c.manHid = false; c.bubTo = T + BUB_T; ['s', 'k'].forEach(z => cust[z].forEach((x, i) => { if (x === c){ const e = $s('#stC_' + z + i); if (e) e.classList.remove('bh'); } })); };
   const shake = (z, i) => { const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); } };
   function custHtml(){
     return ['s', 'k'].map(z => cust[z].map((c, i) => {
@@ -9558,7 +9559,8 @@ function storRun(team, mp){
     if (t.closest('[data-bin]')) return msg(bin ? 'Seret tong sampah ke pintu untuk dibuang' : 'Seret barang yang salah ke sini', '#FDE68A', 1200);
     const tr = t.closest('[data-tr]'); if (tr) return msg('Seret makanan kepada pelanggan, ke rak (pulang) atau ke tong sampah', '#FDE68A', 1300);
     const cu = t.closest('[data-cu]'); if (cu){ const c = cust[cu.dataset.cu[0]][+cu.dataset.cu[1]], r = c && c.o.jus && jusOf(c.o.jus);
-      if (c) showBub(c);                                   // ketik pelanggan = dialog muncul semula
+      if (c && !bubHid(c)){ c.manHid = true; cu.classList.add('bh'); return; }   // ketik bila dialog terbuka = tutup segera
+      if (c) showBub(c);                                   // ketik bila tertutup = dialog muncul semula
       if (r) return msg('<span class="st-rcp">' + r.ings.map(id => '<i>' + ST_IT[id].e + '</i>').join('') + '</span>', '#0F172A', 3400);   // ketik pelanggan jus = resipi emoji
       if (c && c.o.ret) return msg('Seret peralatan dari atlet ini ke tempat asalnya di rak', '#FDE68A', 1400);
       return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan kepada pelanggan ini', '#FDE68A', 1200); }
@@ -9731,7 +9733,7 @@ function runData(){
 }
 const runRP = score => clamp(Math.round(score / 120), 2, 25);
 function viewRun(){
-  if (!ctxOk()) return emptyState('fa-person-running','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu.');
+  if (!ctxOk()) return emptyState('fa-person-running','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu.') + '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — sertai bilik hos</button>';   // telefon murid tanpa kelas/subjek masih boleh masuk bilik
   const o = arenaUi(), d = runData();
   const bank = qBank(S.ui.activeSubjectId);
   d.gbest = d.gbest || {};
@@ -10839,7 +10841,7 @@ const escRP = (sec, c) => Math.round(clamp(c.rp - Math.floor(sec / 30), Math.rou
 const escBadge = sid => (((S.escape || {}).wins || {})[sid]) ? (S.badges.find(b => b.id === 'sys_esc') || null) : null;
 
 function viewEscape(){
-  if (!ctxOk()) return emptyState('fa-ghost','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan teka-teki diambil dari bank soalan subjek itu.');
+  if (!ctxOk()) return emptyState('fa-ghost','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan teka-teki diambil dari bank soalan subjek itu.') + '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — sertai bilik hos</button>';   // telefon murid tanpa kelas/subjek masih boleh masuk bilik
   const o = arenaUi(), c = escCfg(), D = ESC_DIFF[c.diff] || ESC_DIFF.sederhana;
   const bank = qBank(S.ui.activeSubjectId);
   const d = escData(); d.gbest = d.gbest || {};
