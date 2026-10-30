@@ -8262,6 +8262,13 @@ const ST_ITEMS = [
   ['madu','Madu','🍯','jus','j',2,null,'a small honey jar with a wooden honey dipper dripping golden honey']
 ].map(([id, n, e, sh, tg, p, prep, d, img, col]) => ({ id, n, e, sh: ST_SPOT[id] ? ST_SPOT[id].sh : null, tg, p, prep, d, img, col }))
   .filter(i => i.sh).map(i => Object.assign(i, { z: ST_SHELVES.find(s => s[0] === i.sh)[2] }));
+/* tin bahan jus (aset tin_<id>): gambar pada pembalut, warna latar pembalut */
+const ST_TIN = [['j_susu', 'a glass of fresh white milk with a milk splash', 'light sky-blue'], ['j_yogurt', 'a small bowl of creamy white yogurt', 'light blue'],
+  ['j_kelapa', 'a green young coconut cut open showing white flesh', 'light green'], ['j_pisang', 'a bunch of ripe yellow bananas', 'light blue'],
+  ['j_tembikai', 'a juicy red watermelon slice with black seeds', 'light green'], ['j_oren', 'a whole orange and a half orange slice', 'light green'],
+  ['mangga', 'a ripe yellow-orange mango with a green leaf', 'light green'], ['strawberi', 'three bright red strawberries with green tops', 'cream white'],
+  ['bayam', 'a bunch of fresh green spinach leaves', 'cream white'], ['timun', 'a green cucumber with a few round slices', 'cream white'],
+  ['chia', 'a heap of tiny black chia seeds on a wooden spoon', 'cream white'], ['madu', 'a golden honeycomb with dripping golden honey', 'light blue']];
 const ST_COL = { j_susu:'#F7F4EC', j_yogurt:'#FFF3D6', j_kelapa:'#E9F5D2', j_pisang:'#F6DE6E', j_tembikai:'#F0525C', j_oren:'#FF9F2E', mangga:'#FFC233', strawberi:'#E8384F', bayam:'#3F9D3F', timun:'#A6D86E', chia:'#5B5B5B', madu:'#E3A21A' };
 /* 5 resipi JUS BLEND SIHAT: bahan (tanpa mengira susunan), warna jus siap, huraian gelas (prompt aset jus_<id>) */
 const ST_JUS = [
@@ -8384,7 +8391,7 @@ const ST_ASSETS = [].concat(
    ['rak_buah','an empty tall wooden market display stand whose 4 shelves are shallow empty wicker trays'],
    ['rak_sejuk','an empty tall drinks refrigerator with a clear glass door, 4 empty wire shelves visible inside, cool white interior light'],
    ['rak_jus','an empty tall wide pastel-yellow juice bar ingredient shelf with a small fruit-shaped sign area on the header']
-  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', ST_STYLE + ', straight front view. ' + d[0].toUpperCase() + d.slice(1) + '. It has exactly 4 shelf boards; the TOP SURFACES of the boards are at about 27%, 49%, 71% and 93% of the image height, and the area above the first board is a plain header panel. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. ' + ST_MAG + ' No text, no people.')),
+  ].map(([id, d]) => stA(id, 'Perabot & Stesen', 'tall', 'LAMPIRKAN templat tools/template/templat_rak.png. ' + ST_STYLE + ', perfectly straight front view (no side angle). ' + d[0].toUpperCase() + d.slice(1) + '. Follow the attached sketch EXACTLY for the layout: the outer frame fills the whole image, the top frame is only a thin strip, and there are exactly 4 shelf boards. The front edge of each board starts EXACTLY on a red line of the sketch (27%, 49%, 71% and 93% from the top) — the flat top surface of the board sits just above the red line, so objects placed on the red line stand on the board. Do NOT draw the red lines. The shelves are COMPLETELY EMPTY — nothing on them. The unit fills the ENTIRE image edge to edge with no empty margin. ' + ST_MAG + ' No text, no people.')),
   /* PASANGAN GAMBAR (logik GANTI, bukan lapisan): setiap gambar dijana SENDIRI (tiada lampiran). Prompt dalam satu pasangan
      memakai huraian objek yang SAMA perkataan demi perkataan dan objek memenuhi gambar; auto-push memotong tepi rapat,
      jadi kedudukan objek sama dan pertukaran gambar nampak lancar. */
@@ -8422,6 +8429,7 @@ const ST_ASSETS = [].concat(
    ['tong_separuh', 'HALF FULL of rubbish: crumpled paper, fruit peels and an empty juice cup filling the inside up to the middle'],
    ['tong_penuh', 'OVERFLOWING with rubbish: a messy heap of fruit peels, a banana peel hanging over the rim, crumpled paper and cups piled above the rim, with faint green smelly wavy lines']
   ].map(([id, d]) => stA(id, 'Jus Blend & Tong Sampah', 'sq', 'LAMPIRKAN templat tools/template/templat_tong.png. Use the attached picture as the template: draw EXACTLY the same green plastic rubbish bin (same shape, same size, same position, same camera angle, same recycle symbol, same art style, same magenta background). The ONLY change: the bin is ' + d + '.')),
+  ST_TIN.map(([id, pic, bg]) => stA('tin_' + id, 'Jus Blend & Tong Sampah', 'sq', ST_STYLE + ', perfectly straight FRONT view (camera level, no tilt). One single short cylindrical metal food tin can with a shiny silver rim on the top and bottom — exactly the same can shape and size for every ingredient. Its paper wrapper has NO text, NO letters, NO numbers and NO logo — only ONE big, clear, bold picture of ' + pic + ' filling most of the wrapper, on a plain ' + bg + ' background. The tin fills most of the image height, centred. ' + ST_MAG + ' No text.')),
   ST_JUS.map(r => stA('jus_' + r.id, 'Jus Blend & Tong Sampah', 'sq', ST_STYLE + ', slight 3/4 view. Game item icon of a tall clear glass of ' + r.d + ', with a striped paper straw. Single object centred, filling most of the image, whole glass visible, no ground shadow. ' + ST_MAG + ' No text.')),
   [['ui_syiling','a shiny gold coin with a simple embossed star'],
    ['ui_hati','a glossy red heart'],
@@ -8660,6 +8668,9 @@ const ST_CSS = `
 .st-zl{top:51%}
 .st-shelf{top:9.5%;height:40%}
 .st-si{height:21%;cursor:grab;touch-action:none;pointer-events:auto}
+.st-si.tn{height:20%}
+.st-si.tn .st-tin{width:68%;height:92%}
+.st-si.tn .st-tin b{font-size:2.2cqw}
 .st-si i{font-size:2.6cqw}
 .st-shelf[data-z="k"] .st-si i{font-size:2.3cqw}
 .st-si .c{position:absolute;right:-4%;top:-6%;z-index:3;min-width:1.5cqw;height:1.5cqw;padding:0 .3cqw;border-radius:99px;background:#DC2626;color:#fff;font-size:.95cqw;font-weight:900;font-style:normal;display:flex;align-items:center;justify-content:center;box-shadow:0 .1cqw .3cqw rgba(0,0,0,.4)}
@@ -8823,7 +8834,9 @@ const ST_CSS = `
 .st-shelf .nm{display:none}
 .st-shelf.low::after{content:'STOK RENDAH';position:absolute;left:50%;top:1%;transform:translateX(-50%);z-index:3;background:#B91C1C;color:#fff;font-size:.8cqw;font-weight:900;padding:.1cqw .5cqw;border-radius:99px;white-space:nowrap}
 .st-door{left:42%;width:15.9%;top:12.5%;height:37.5%}
-.st-clock,.st-zl{display:none}
+.st-zl{display:none}
+.st-clock{left:48.4%;width:3.2%;top:8.2%;z-index:5}   /* jam dinding kecil di atas pintu, muat antara HUD dan bingkai pintu */
+.st-clock b{display:none}
 .st-counter{top:68.5%;height:16.5%}   /* kumpulan kaunter diturunkan 12.5%: penjual, blender & dapur bermula di bawah rak (49.5%) supaya senang seret dari rak */
 .st-counter.s{left:.4%;width:38.3%}
 .st-counter.k{left:61.3%;width:38.3%}
@@ -8875,7 +8888,7 @@ function storRun(team){
   const ST_BOARD = [27, 49, 71, 93];                    // paras atas papan rak (% tinggi rak) — sama dengan prompt aset
   const shelfOf = id => ST_SHELVES.find(s => s[0] === id);
   const shelfSlots = id => ST_ITEMS.filter(i => i.sh === id).map(it => { const p = ST_SPOT[it.id];   // paras & tempat ikut ST_SHELF_ROWS
-    return { it, lv: p.lv, x: 8 + 84 * (p.k + .5) / p.n, w: Math.min(28, 84 / p.n * .8) }; });   // saiz ikut rujukan, tidak menutup papan tanda rak
+    return { it, lv: p.lv, x: 8 + 84 * (p.k + .5) / p.n, w: Math.min(28, 84 / p.n * (it.tg === 'j' ? .96 : .8)) }; });   // tin bahan jus dibesarkan sedikit   // saiz ikut rujukan, tidak menutup papan tanda rak
   const shelfHtml = ([id, nm, z, x, w]) => {
     const img = ST_HAVE.has('rak_jus') ? 'rak_jus' : 'rak_' + id;   // semua rak: rak kuning yang sama
     return '<div class="st-shelf" data-sh="' + id + '" data-z="' + z + '" style="left:' + x + '%;width:' + w + '%">' +
@@ -8939,8 +8952,9 @@ function storRun(team){
   const fly = (t, x, y) => { const n = document.createElement('div'); n.className = 'st-fly'; n.textContent = t; n.style.left = x + '%'; n.style.top = y + '%'; $s('#stStage').appendChild(n); setTimeout(() => n.remove(), 1150); };
   const walk = x => { const m = $s('#stMe'); m.style.left = x + '%'; m.classList.remove('walk'); void m.offsetWidth; m.classList.add('walk'); };
   const icon = (id, cls) => { const i = ST_IT[id];
-    if (i.tg === 'j'){ const tx = { j_susu: 'SUSU', j_yogurt: 'YOGURT', chia: 'CHIA' }[id];      // bahan jus: tin berlabel emoji (atau nama), tanpa aset
-      return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b' + (tx ? ' class="tx' + (id === 'chia' ? ' dk' : '') + '">' + tx : '>' + i.e) + '</b></span>'; }
+    if (i.tg === 'j'){                                    // bahan jus: gambar tin_<id> (tiada label, hanya gambar bahan) — atau tin lukisan app
+      if (ST_HAVE.has('tin_' + id)) return stImg('tin_' + id, i.e, cls);
+      return '<span class="st-tin ' + (cls || '') + '" style="--c:' + ST_COL[id] + '"><b>' + i.e + '</b></span>'; }
     return stImg(i.img || id, i.e, cls); };
   const trayIcon = x => x.jus ? stImg('jus_' + x.jus, '🥤') : icon(x.id);
   const jusOf = id => ST_JUS.find(r => r.id === id);
@@ -8995,7 +9009,7 @@ function storRun(team){
     $s('#stL_' + id).innerHTML = shelfSlots(id).map(({ it, lv, x, w }) => {
       const n = stock[it.id], pop = n > (shown[it.id] == null ? n : shown[it.id]);
       shown[it.id] = n;
-      return '<span class="st-si' + (n ? '' : ' out') + (pop ? ' pop' : '') + '" data-it="' + it.id + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
+      return '<span class="st-si' + (it.tg === 'j' ? ' tn' : '') + (n ? '' : ' out') + (pop ? ' pop' : '') + '" data-it="' + it.id + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
         '<i>' + icon(it.id) + '</i>' + (it.prep ? '<b class="pr">🍳</b>' : '') +
         (n && n <= 2 ? '<b class="c">' + n + '</b>' : '') + '</span>';                // lencana hanya bila stok hampir habis
     }).join('');
