@@ -8823,21 +8823,21 @@ const ST_CSS = `
 .st-shelf.low::after{content:'STOK RENDAH';position:absolute;left:50%;top:1%;transform:translateX(-50%);z-index:3;background:#B91C1C;color:#fff;font-size:.8cqw;font-weight:900;padding:.1cqw .5cqw;border-radius:99px;white-space:nowrap}
 .st-door{left:42%;width:15.9%;top:12.5%;height:37.5%}
 .st-clock,.st-zl{display:none}
-.st-counter{top:56%;height:16.5%}
+.st-counter{top:68.5%;height:16.5%}   /* kumpulan kaunter diturunkan 12.5%: penjual, blender & dapur bermula di bawah rak (49.5%) supaya senang seret dari rak */
 .st-counter.s{left:.4%;width:38.3%}
 .st-counter.k{left:61.3%;width:38.3%}
-.st-phone.desk{left:.8%;width:9%;top:46.5%;height:10.5%;background:none;border-radius:0;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
+.st-phone.desk{left:.8%;width:9%;top:59%;height:10.5%;background:none;border-radius:0;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
 .st-phone.desk>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
-.st-bin{left:51%;width:12.4%;top:50.4%;height:22.4%;font-size:5.4cqw}   /* gambar tong ada ruang kosong → kotak lebih besar supaya tong ≈ rujukan */
-.st-bl{left:69.6%;width:9.6%;top:41.6%}
+.st-bin{left:51%;width:12.4%;top:62.9%;height:22.4%;font-size:5.4cqw}   /* gambar tong ada ruang kosong → kotak lebih besar supaya tong ≈ rujukan */
+.st-bl{left:69.6%;width:9.6%;top:54.1%}
 .st-bl .bn{display:none}
-.st-stn{left:89.1%;width:10.9%;top:37%;height:18.6%}
+.st-stn{left:89.1%;width:10.9%;top:49.5%;height:18.6%}
 .st-stn .nm{display:none}
-.st-tray{left:77.6%;width:11.4%;top:47.2%;height:9%}
+.st-tray{left:77.6%;width:11.4%;top:59.7%;height:9%}
 .st-tray .g{grid-template-columns:repeat(4,1fr)!important;grid-template-rows:1fr!important;gap:0 2%!important}
 .st-tray .g>div,.st-tray .g>div:nth-child(-n+3),.st-tray .g>div:nth-child(3){transform:none!important}
 .st-sup{left:45%;width:10%;top:18%;height:31%}
-.st-me{top:37%;height:24%}
+.st-me{top:49.5%;height:24%}
 .st-cu{top:69%;height:31%}
 .st-bub{transform:translateX(var(--bx,-50%)) scale(var(--bs,1));transform-origin:50% 100%;transition:transform .38s cubic-bezier(.3,1.5,.5,1),opacity .28s ease}
 .st-cu[data-cu="s0"] .st-bub{--bx:-30%;transform-origin:30% 100%}.st-cu[data-cu="s0"] .st-bub::after{left:30%}      /* dialog di hujung pentas tidak terkeluar */
@@ -9001,7 +9001,7 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [83, 52], BL_AT = [74.4, 50], BIN_AT = [57.2, 64], STN_AT = { dapur0: [94.5, 46] };
+  const TRAY_AT = [83, 64.5], BL_AT = [74.4, 62.5], BIN_AT = [57.2, 76.5], STN_AT = { dapur0: [94.5, 58.5] };
   const custAt = (z, i) => [SLOTX[z][i] + 5, 74];
   /* Dapur: logik GANTI gambar — dapur_<makanan> / dapur_hangus menggantikan gambar dapur kosong. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
@@ -9081,7 +9081,7 @@ function storRun(team){
   function finishCust(z, i, pts, pay, note){
     const c = cust[z][i]; if (!c) return;
     c.leaving = true; score += pts; coins += pay; good++;
-    fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5, 56);
+    fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5, 68.5);
     snd('stor_kaching', 'hi'); vibrate(20); paintTray();
     if (note) msg(note[0], note[1], 1800);
     setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
