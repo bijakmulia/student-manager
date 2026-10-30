@@ -8391,7 +8391,7 @@ const ST_ASSETS = [].concat(
   [...(() => {
     const fill = ' The object is centred and fills the ENTIRE image edge to edge, straight front view, nothing cut off. ' + ST_MAG;
     const DOOR = ST_STYLE + ', straight front view. A tall double door of a shop back room inside a thick dark wooden door frame; the door panels are grey metal with small square windows.';
-    const PHONE = ST_STYLE + ', straight front view with a slight top-down angle. A red old-style rotary desk telephone standing on its own (NO table), with its coiled cord curled beside it; it will be placed on top of a shop counter.';
+    const PHONE = ST_STYLE + ', perfectly straight FRONT view (camera level, NO side angle, NO perspective). A red old-style rotary desk telephone standing on its own (NO table), with its coiled cord curled beside it; it will be placed on top of a small drawer cabinet.';
     const STOVE = ST_STYLE + ', straight front view with a slight top-down angle. A compact single-burner cafe stove on a small steel cabinet with ONE wide black frying pan on the burner.';
     const P = (id, g, ar, base, state, extra) => stA(id, g, ar, base + ' ' + state + fill + ' No text, no people' + (extra || '') + '.');
     const gD = 'Pintu & Telefon (pasangan)', gK = 'Dapur & Blender (ganti gambar)';
@@ -8405,6 +8405,7 @@ const ST_ASSETS = [].concat(
       P('dapur_hangus', gK, 'sqL', STOVE, 'The pan contains black BURNT food with dark grey smoke rising and a small orange flame flaring from the pan.'),
     ];
   })()],
+  [stA('meja_laci', 'Perabot & Stesen', 'sq', ST_STYLE + ', perfectly straight FRONT view (camera level, NO side angle, NO perspective — the left and right sides of the furniture are NOT visible). A small low wooden drawer cabinet (bedside-table size) with a flat light-wood top and TWO stacked drawers with small round brass knobs, warm honey-brown wood. The flat top surface is EMPTY (a telephone or a blender will be placed on it by the game). The cabinet fills the whole image: left and right edges touch the image sides, the top edge near the top of the image, the short legs touching the bottom edge. ' + ST_MAG + ' No text, no objects on top.')],
   /* kaunter: SATU meja panjang — game meregang bahagian tengah (hujung 15% kiri/kanan dikekalkan) */
   [['kaunter_stor', 'a light wooden top and a soft blue front panel'],
    ['kaunter_kafe', 'a cream top and a soft mint-green front panel']
@@ -8826,17 +8827,25 @@ const ST_CSS = `
 .st-counter{top:68.5%;height:16.5%}   /* kumpulan kaunter diturunkan 12.5%: penjual, blender & dapur bermula di bawah rak (49.5%) supaya senang seret dari rak */
 .st-counter.s{left:.4%;width:38.3%}
 .st-counter.k{left:61.3%;width:38.3%}
-.st-phone.desk{left:.8%;width:9%;top:59%;height:10.5%;background:none;border-radius:0;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
+.st-phone.desk{left:.5%;width:9%;top:25.5%;height:10.5%;background:none;border-radius:0;z-index:4;align-items:flex-end;justify-content:center;font-size:4cqw}
 .st-phone.desk>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom}
 .st-bin{left:51%;width:12.4%;top:62.9%;height:22.4%;font-size:5.4cqw}   /* gambar tong ada ruang kosong → kotak lebih besar supaya tong ≈ rujukan */
-.st-bl{left:69.6%;width:9.6%;top:54.1%}
+.st-bl{left:90.7%;width:8.6%;top:22%;z-index:2}   /* atas meja laci kanan; lapisan di bawah dapur */
+.st-stn{z-index:3}
+.st-laci{position:absolute;top:35%;width:9.2%;height:15%;z-index:1;pointer-events:none}   /* meja laci di tepi rak: telefon (kiri), blender (kanan) */
+.st-laci.l{left:.4%}.st-laci.r{left:90.4%}
+.st-laci>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+.st-laci .dw{position:absolute;inset:0;border-radius:.3cqw .3cqw 0 0;background:linear-gradient(180deg,#C08A52 0 12%,#8B5A2B 12% 14%,#A86F3A 14%);border:.2cqw solid #5B3A1A;box-shadow:inset 0 -.4cqw 0 rgba(0,0,0,.15)}
+.st-laci .dw i{position:absolute;left:10%;right:10%;height:30%;border:.18cqw solid #5B3A1A;border-radius:.25cqw;background:#B97C43}
+.st-laci .dw i::after{content:'';position:absolute;left:50%;top:50%;width:.8cqw;height:.8cqw;margin:-.4cqw;border-radius:50%;background:#FACC15;border:.12cqw solid #5B3A1A}
+.st-laci .dw i:nth-child(1){top:22%}.st-laci .dw i:nth-child(2){top:60%}
 .st-bl .bn{display:none}
 .st-stn{left:89.1%;width:10.9%;top:49.5%;height:18.6%}
 .st-stn .nm{display:none}
 .st-tray{left:77.6%;width:11.4%;top:59.7%;height:9%}
 .st-tray .g{grid-template-columns:repeat(4,1fr)!important;grid-template-rows:1fr!important;gap:0 2%!important}
 .st-tray .g>div,.st-tray .g>div:nth-child(-n+3),.st-tray .g>div:nth-child(3){transform:none!important}
-.st-sup{left:45%;width:10%;top:18%;height:31%}
+.st-sup{left:46.7%;width:6.6%;top:31.5%;height:18%}   /* sama saiz pelanggan yang muncul di pintu */
 .st-me{top:49.5%;height:24%}
 .st-cu{top:69%;height:31%}
 .st-bub{transform:translateX(var(--bx,-50%)) scale(var(--bs,1));transform-origin:50% 100%;transition:transform .38s cubic-bezier(.3,1.5,.5,1),opacity .28s ease}
@@ -8883,6 +8892,7 @@ function storRun(team){
     '<div class="st-door' + (ST_HAVE.has('pintu_buka') ? ' img2' : '') + '" id="stDoor" data-door="1">' + (ST_HAVE.has('pintu_stor') ? stImg('pintu_stor', '', 'cl') : '') + (ST_HAVE.has('pintu_buka') ? stImg('pintu_buka', '', 'op') : '') + '</div>' +
     '<div class="st-me" id="stMe" style="left:22%">' + stImg(ME, cfg.watak === 'l' ? '🧑‍💼' : '🧕') + '</div>' +
     '<div id="stSup"></div>' +
+    ['l', 'r'].map(k => '<div class="st-laci ' + k + '">' + (ST_HAVE.has('meja_laci') ? stImg('meja_laci', '') : '<div class="dw"><i></i><i></i></div>') + '</div>').join('') +
     '<div class="st-phone desk" id="stPhone" data-ph="1">' + (ST_HAVE.has('telefon') ? stImg('telefon', '', 'id') + (ST_HAVE.has('telefon_dering') ? stImg('telefon_dering', '', 'rg') : '') : '<span class="st-emo">☎️</span>') + '</div>' +
     // kaunter = SATU meja panjang: hujung kiri/kanan gambar dikekalkan, bahagian tengah diregang (border-image), tiada segmen
     ['s', 'k'].map(z => { const im = ST_HAVE.get(z === 's' ? 'kaunter_stor' : 'kaunter_kafe');
@@ -9001,7 +9011,7 @@ function storRun(team){
     void n.offsetWidth; n.style.left = to[0] + '%'; n.style.top = to[1] + '%'; n.style.opacity = 0;
     setTimeout(() => n.remove(), 700);
   };
-  const TRAY_AT = [83, 64.5], BL_AT = [74.4, 62.5], BIN_AT = [57.2, 76.5], STN_AT = { dapur0: [94.5, 58.5] };
+  const TRAY_AT = [83, 64.5], BL_AT = [95, 29], BIN_AT = [57.2, 76.5], STN_AT = { dapur0: [94.5, 58.5] };
   const custAt = (z, i) => [SLOTX[z][i] + 5, 74];
   /* Dapur: logik GANTI gambar — dapur_<makanan> / dapur_hangus menggantikan gambar dapur kosong. */
   const stnBase = k => ST_HAVE.get(k + '_kosong') || ST_HAVE.get(k) || '';
@@ -9130,7 +9140,7 @@ function storRun(team){
     if (bl.r || bl.blending) return msg('Jus sudah siap — seret blender kepada pelanggan (atau ke tong sampah).', '#FDE68A', 1600);
     if (bl.ings.length >= BL_MAX) return msg('Blender penuh! Seret blender ke tong sampah.', '#FCA5A5', 1500);
     if (stock[id] <= 0) return;
-    stock[id]--; bl.ings.push(id); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), BL_AT); walk(70); paintShelves(); paintBl(true);
+    stock[id]--; bl.ings.push(id); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), BL_AT); walk(86); paintShelves(); paintBl(true);
     const key = bl.ings.slice().sort().join(','), r = ST_JUS.find(j => j.ings.slice().sort().join(',') === key);
     if (r){
       bl.blending = r.id; paintBl(); snd('stor_blender', 'flip');
