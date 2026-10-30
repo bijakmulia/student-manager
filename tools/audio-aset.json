@@ -65,6 +65,12 @@
     { "id": "esc_laugh",      "g": "Sekolah Berhantu", "k": "sfx", "s": 1.6, "p": "High-pitched eerie ghost woman laugh echoing in a corridor, horror" },
     { "id": "esc_giggle",     "g": "Sekolah Berhantu", "k": "sfx", "s": 1.2, "p": "Small mischievous goblin giggle, creepy and playful" },
 
+    { "id": "km_whoosh",      "g": "Tangga Ilmon", "k": "sfx", "s": 0.8, "p": "Powerful magical whoosh of a glowing trading card flying fast toward the camera, airy swoosh with a sparkle trail, epic anime card game" },
+    { "id": "km_hentam",      "g": "Tangga Ilmon", "k": "sfx", "s": 1.2, "p": "Massive cinematic impact when a magic card slams into the screen, deep boom with shockwave and glass-like shimmer, epic anime card game" },
+    { "id": "km_menang",      "g": "Tangga Ilmon", "k": "sfx", "s": 2.5, "p": "Short triumphant win fanfare for winning a round, bright brass stab with magical chime sparkle and crowd-like energy, epic anime card game" },
+    { "id": "km_lima",        "g": "Tangga Ilmon", "k": "sfx", "s": 3.5, "p": "Legendary five-card ultimate combo victory, rising orchestral power surge with choir-like synth swell, thunder boom and golden sparkle shower, epic anime card game" },
+    { "id": "km_bom",         "g": "Tangga Ilmon", "k": "sfx", "s": 2, "p": "Huge magical bomb explosion when four cards burst apart, heavy boom with crackling energy and debris whoosh, epic anime card game" },
+
     { "id": "bgm_menu",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Cheerful inspiring school game main menu theme, bright piano and light orchestra, warm and friendly, seamless loop, instrumental, 100 BPM" },
     { "id": "bgm_stor",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Upbeat cozy shop management game music, light marimba, ukulele and bouncy bass with subtle Malaysian gamelan bells, seamless loop, instrumental, 110 BPM" },
     { "id": "bgm_duel",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Energetic anime card battle music, driving drums, electric guitar and orchestral hits, heroic, seamless loop, instrumental, 140 BPM" },

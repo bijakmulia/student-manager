@@ -6872,6 +6872,87 @@ function kmTurnBanner(stage, av, name, mine){
   b.innerHTML = av + '<div><div class="t">' + (mine ? 'GILIRAN KAMU' : 'GILIRAN') + '</div><div class="n">' + esc(name) + '</div></div>';
   stage.appendChild(b); setTimeout(() => b.remove(), 2100);
 }
+/* ---------- ANIMASI MENANG MEJA: kad terbang ke arah skrin, aura & kuasa — gaya ikut bilangan kad ----------
+   1 kad  : berpusing laju dari meja, hentam ke skrin (gelombang kejutan)
+   2 kad  : terbang dari kiri & kanan, berlaga di tengah (percikan), sebelah-menyebelah
+   3 kad  : mengorbit dalam bulatan, kemudian membentuk kipas
+   4 kad  : 💣 BOM — bertimbun, meletup ke luar, skrin bergegar
+   5 kad  : satu demi satu dari jauh "whoom whoom whoom" → kipas besar berkilau (👑 Diraja = pelangi)
+   Bunyi: km_whoosh (setiap kad), km_hentam (hentaman), km_menang / km_lima / km_bom (tema) — sandaran bunyi sintetik. Pulang = tempoh (ms). */
+const KM_WIN_CSS = `
+.km-win{position:absolute;inset:0;z-index:80;pointer-events:none;perspective:95cqh;overflow:hidden;--rgb:250,204,21}
+.km-win .bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 48%,rgba(var(--rgb),.38),rgba(2,6,23,.9) 68%);animation:kwBg var(--T) ease both}
+.km-win .rays{position:absolute;left:50%;top:48%;width:240cqh;height:240cqh;margin:-120cqh 0 0 -120cqh;background:repeating-conic-gradient(from 0deg,rgba(var(--rgb),.3) 0 5deg,transparent 5deg 15deg);
+  -webkit-mask:radial-gradient(circle,#000 8%,transparent 55%);mask:radial-gradient(circle,#000 8%,transparent 55%);animation:kwRays var(--T) linear both}
+.km-win.rb .rays{background:repeating-conic-gradient(from 0deg,rgba(255,80,80,.35) 0 5deg,transparent 5deg 10deg,rgba(80,200,255,.35) 10deg 15deg,transparent 15deg 20deg,rgba(255,220,60,.35) 20deg 25deg,transparent 25deg 30deg)}
+.km-win .cards{position:absolute;left:50%;top:50%;transform-style:preserve-3d}
+.km-win.shk .cards{animation:kwShake .5s linear var(--hit) both}
+.km-win .wc{position:absolute;width:var(--w,20cqh);aspect-ratio:5/7;left:calc(var(--w,20cqh) / -2);top:calc(var(--w,20cqh) * -.7);transform-style:preserve-3d;opacity:0;
+  animation:var(--a) var(--d) cubic-bezier(.22,.85,.3,1) var(--dl) both}
+.km-win .wc img{display:block;width:100%;height:100%;border-radius:1.3cqh;box-shadow:0 0 2.6cqh .8cqh rgba(var(--rgb),.95),0 0 9cqh 3cqh rgba(var(--rgb),.45);animation:kwAura .45s ease-in-out infinite alternate}
+.km-win .wc::after{content:'';position:absolute;inset:-6%;border-radius:2cqh;background:conic-gradient(from var(--g,0deg),transparent,rgba(var(--rgb),.9),transparent 30%);filter:blur(1.2cqh);z-index:-1;animation:kwSpin 1.1s linear infinite}
+.km-win .rg{position:absolute;left:50%;top:50%;width:10cqh;height:10cqh;margin:-5cqh;border-radius:50%;border:1.2cqh solid rgba(var(--rgb),.9);opacity:0;animation:kwRing .9s ease-out var(--hit) both}
+.km-win .rg.b{animation-delay:calc(var(--hit) + .15s);border-width:.6cqh}
+.km-win .fl{position:absolute;inset:0;background:#fff;opacity:0;animation:kwFlash .5s ease-out var(--hit) both}
+.km-win .sp{position:absolute;left:50%;top:50%;width:1.4cqh;height:1.4cqh;margin:-.7cqh;border-radius:50%;background:rgb(var(--rgb));box-shadow:0 0 1.6cqh rgb(var(--rgb)),0 0 .5cqh #fff;opacity:0;animation:kwSpark 1.1s cubic-bezier(.1,.8,.3,1) calc(var(--hit) + var(--sd)) both}
+.km-win .tt{position:absolute;left:0;right:0;top:9%;text-align:center;font-weight:900;font-size:9.5cqh;letter-spacing:.06em;line-height:1;white-space:nowrap;
+  color:#FDE68A;filter:drop-shadow(0 0 1.4cqh rgba(var(--rgb),.95)) drop-shadow(0 .7cqh 0 #431407);animation:kwTxt var(--Tt) cubic-bezier(.2,1.5,.35,1) var(--hit) both}
+.km-win .tt i{font-style:normal;display:inline-block;background:linear-gradient(180deg,#FFFBE0 0%,#FDE68A 30%,#FACC15 50%,#EA580C 52%,#FDBA74 75%,#FFF7D6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;animation:kwLet .5s cubic-bezier(.2,1.8,.4,1) calc(var(--hit) + var(--li) * .05s) both}
+.km-win .sb{position:absolute;left:0;right:0;top:21.5%;text-align:center;font-size:3.4cqh;font-weight:900;letter-spacing:.35em;color:#fff;text-shadow:0 0 1.2cqh rgba(var(--rgb),1),0 .3cqh 0 #000;
+  animation:kwSub var(--Tt) ease var(--hit) both}
+.km-win .who{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);display:flex;align-items:center;gap:1.4cqh;padding:1cqh 2.6cqh 1cqh 1.2cqh;border-radius:99px;
+  background:rgba(2,6,23,.75);border:.3cqh solid rgba(var(--rgb),.9);box-shadow:0 0 3cqh rgba(var(--rgb),.6);font-size:3cqh;font-weight:900;color:#fff;white-space:nowrap;animation:kwWho var(--Tt) ease var(--hit) both}
+@keyframes kwBg{0%{opacity:0}8%{opacity:1}88%{opacity:1}100%{opacity:0}}
+@keyframes kwRays{0%{opacity:0;transform:rotate(0) scale(.4)}20%{opacity:1}85%{opacity:1}100%{opacity:0;transform:rotate(80deg) scale(1.3)}}
+@keyframes kwAura{to{box-shadow:0 0 4cqh 1.4cqh rgba(var(--rgb),1),0 0 13cqh 5cqh rgba(var(--rgb),.6)}}
+@keyframes kwSpin{to{transform:rotate(360deg)}}
+@keyframes kwRing{0%{opacity:0;transform:scale(.2)}2%{opacity:1;transform:scale(.25)}100%{opacity:0;transform:scale(9)}}
+@keyframes kwFlash{0%{opacity:0}2%{opacity:.85}100%{opacity:0}}
+@keyframes kwSpark{0%{opacity:0;transform:translate(0,0) scale(1.4)}3%{opacity:1}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.3)}}
+@keyframes kwShake{0%,100%{transform:translate(0,0)}15%{transform:translate(-1.6cqh,1cqh)}30%{transform:translate(1.8cqh,-1.2cqh)}45%{transform:translate(-1.2cqh,-.8cqh)}60%{transform:translate(1cqh,1.2cqh)}80%{transform:translate(-.5cqh,.4cqh)}}
+@keyframes kwTxt{0%{opacity:0;transform:scale(3.2);filter:blur(1.5cqh)}14%{opacity:1;transform:scale(.92);filter:blur(0) drop-shadow(0 0 1.4cqh rgba(var(--rgb),.95))}22%{transform:scale(1.06)}30%{transform:scale(1)}86%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-3cqh) scale(1.1)}}
+@keyframes kwLet{0%{transform:translateY(-6cqh) rotate(-18deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes kwSub{0%,10%{opacity:0;letter-spacing:1.2em}30%{opacity:1;letter-spacing:.35em}86%{opacity:1}100%{opacity:0}}
+@keyframes kwWho{0%,15%{opacity:0;transform:translate(-50%,4cqh)}30%{opacity:1;transform:translate(-50%,0)}86%{opacity:1}100%{opacity:0}}
+@keyframes kw1{0%{opacity:0;transform:translate3d(0,40cqh,-260cqh) rotateY(0) scale(.3)}10%{opacity:1}45%{transform:translate3d(0,0,55cqh) rotateY(1080deg) scale(1.55)}55%{transform:translate3d(0,0,30cqh) rotateY(1080deg) scale(1.35)}86%{opacity:1;transform:translate3d(0,-1cqh,34cqh) rotateY(1080deg) rotateZ(-2deg) scale(1.38)}100%{opacity:0;transform:translate3d(0,0,170cqh) rotateY(1080deg) scale(2.2)}}
+@keyframes kw2{0%{opacity:0;transform:translate3d(calc(var(--sd2) * 90cqh),-25cqh,-120cqh) rotateZ(calc(var(--sd2) * -220deg)) scale(.5)}12%{opacity:1}40%{transform:translate3d(calc(var(--sd2) * 3cqh),0,35cqh) rotateZ(calc(var(--sd2) * 25deg)) scale(1.25)}52%{transform:translate3d(var(--fx),0,18cqh) rotateZ(var(--fr)) scale(1.18)}86%{opacity:1;transform:translate3d(var(--fx),-1cqh,22cqh) rotateZ(var(--fr)) scale(1.2)}100%{opacity:0;transform:translate3d(var(--fx),0,170cqh) rotateZ(var(--fr)) scale(2)}}
+@keyframes kw3{0%{opacity:0;transform:rotateZ(calc(var(--i) * 120deg)) translateY(-42cqh) rotateZ(calc(var(--i) * -120deg)) scale(.35)}10%{opacity:1}38%{transform:rotateZ(calc(var(--i) * 120deg + 540deg)) translateY(-22cqh) rotateZ(calc(var(--i) * -120deg - 540deg)) scale(.85)}58%{transform:translate3d(var(--fx),0,28cqh) rotateZ(var(--fr)) scale(1.2)}86%{opacity:1;transform:translate3d(var(--fx),-1cqh,24cqh) rotateZ(var(--fr)) scale(1.18)}100%{opacity:0;transform:translate3d(var(--fx),0,170cqh) rotateZ(var(--fr)) scale(2)}}
+@keyframes kw4{0%{opacity:0;transform:translate3d(0,0,-200cqh) rotateZ(calc(var(--i) * 8deg)) scale(.4)}12%{opacity:1}28%{transform:translate3d(0,0,40cqh) rotateZ(calc(var(--i) * 4deg)) scale(1.3)}40%{transform:translate3d(calc(var(--fx) * 1.9),calc(var(--i) * 4cqh - 6cqh),25cqh) rotateZ(calc(var(--fr) * 3.5)) scale(1.2)}58%{transform:translate3d(var(--fx),0,14cqh) rotateZ(var(--fr)) scale(1.12)}86%{opacity:1;transform:translate3d(var(--fx),-1cqh,16cqh) rotateZ(var(--fr)) scale(1.14)}100%{opacity:0;transform:translate3d(var(--fx),0,170cqh) rotateZ(var(--fr)) scale(2)}}
+@keyframes kw5{0%{opacity:0;transform:translate3d(calc(var(--fx) * 4),45cqh,-420cqh) rotateY(620deg) rotateZ(90deg);filter:blur(2.5cqh)}10%{opacity:1}40%{transform:translate3d(var(--fx),-2cqh,60cqh) rotateY(0) rotateZ(var(--fr)) scale(1.3);filter:blur(0)}50%{transform:translate3d(var(--fx),0,10cqh) rotateZ(var(--fr)) scale(1.05)}90%{opacity:1;transform:translate3d(var(--fx),-1cqh,12cqh) rotateZ(var(--fr)) scale(1.07)}100%{opacity:0;transform:translate3d(var(--fx),0,170cqh) rotateZ(var(--fr)) scale(1.9)}}
+`;
+function kmWinFx(stage, w){                               // w = { cards:[id], combo, name, av, mine }
+  if (!stage || !w || !w.cards || !w.cards.length) return 0;
+  if (!document.getElementById('kmWinCss')){ const st = document.createElement('style'); st.id = 'kmWinCss'; st.textContent = KM_WIN_CSS; document.head.appendChild(st); }
+  const n = Math.min(5, w.cards.length), bom = /BOM/.test(w.combo || ''), raja = /DIRAJA/i.test(w.combo || '');
+  const kind = n >= 5 ? 5 : bom || n === 4 ? 4 : n;
+  const T = { 1: { d: 3.2, hit: .45 * 3.2, w: 26, rgb: '0,240,255' }, 2: { d: 3, hit: 1.2, w: 22, rgb: '74,222,128' }, 3: { d: 3.2, hit: 1.86, w: 20, rgb: '167,139,250' },
+              4: { d: 3.2, hit: .9, w: 19, rgb: '239,68,68' }, 5: { d: 3.6, hit: 0, w: 18, rgb: raja ? '255,215,90' : '250,204,21' } }[kind];
+  const stg = kind === 5 ? .22 : kind === 3 ? 0 : kind === 2 ? 0 : .05;           // 5 kad: datang satu demi satu
+  const D = T.d + (n - 1) * stg, durOf = k => kind === 5 ? D - k * stg : T.d;   // 5 kad: datang bergilir, keluar serentak
+  if (kind === 5) T.hit = (n - 1) * stg + .4 * T.d;
+  const total = Math.max(T.d + (n - 1) * stg, T.hit + 2.3) + .2;
+  const spread = { 1: 0, 2: 13, 3: 14, 4: 12, 5: 12.5 }[kind], rot = { 1: 0, 2: 6, 3: 9, 4: 7, 5: 8 }[kind];
+  const title = (w.mine ? 'MEJA KAMU!' : 'MENANG MEJA!').split('').map((ch, i) => ch === ' ' ? ' ' : '<i style="--li:' + i + '">' + ch + '</i>').join('');
+  const el = document.createElement('div'); el.className = 'km-win' + (kind === 4 ? ' shk' : '') + (raja ? ' rb' : '');
+  el.style.cssText = '--rgb:' + T.rgb + ';--T:' + total + 's;--Tt:' + (total - T.hit) + 's;--hit:' + T.hit + 's;--w:' + T.w + 'cqh';
+  el.innerHTML = '<div class="bg"></div><div class="rays"></div><div class="fl"></div><div class="rg"></div><div class="rg b"></div>' +
+    Array.from({ length: 26 }, (_, k) => { const a = k / 26 * Math.PI * 2 + Math.random() * .3, r = 30 + Math.random() * 45;
+      return '<i class="sp" style="--sx:' + (Math.cos(a) * r).toFixed(1) + 'cqh;--sy:' + (Math.sin(a) * r).toFixed(1) + 'cqh;--sd:' + (Math.random() * .15).toFixed(2) + 's"></i>'; }).join('') +
+    '<div class="cards">' + w.cards.slice(0, 5).map((id, k) => { const o = k - (n - 1) / 2;
+      return '<div class="wc" style="--i:' + k + ';--fx:' + (o * spread).toFixed(1) + 'cqh;--fr:' + (o * rot).toFixed(1) + 'deg;--sd2:' + (k ? 1 : -1) + ';--a:kw' + kind + ';--d:' + durOf(k).toFixed(2) + 's;--dl:' + (k * stg).toFixed(2) + 's;--g:' + (k * 70) + 'deg">' + kmImg(id) + '</div>'; }).join('') + '</div>' +
+    '<div class="tt">' + title + '</div><div class="sb">' + esc(w.combo || '') + '</div>' +
+    '<div class="who">' + (w.av || '') + '<span>' + esc(w.name || '') + '</span></div>';
+  stage.appendChild(el); kmFill(el);
+  // bunyi: whoosh setiap kad · hentaman · tema kemenangan
+  const S = (ms, id, fb) => setTimeout(() => kmSnd(id, fb), ms);
+  for (let k = 0; k < (kind === 5 ? n : 1); k++) S(k * stg * 1000 + 60, 'km_whoosh', 'swing');
+  if (kind === 2) S(250, 'km_whoosh', 'swing');
+  S(T.hit * 1000, kind === 4 ? 'km_bom' : 'km_hentam', kind === 4 ? 'burst' : 'impact');
+  S(T.hit * 1000 + 120, kind === 5 ? 'km_lima' : 'km_menang', 'myth');
+  setTimeout(() => kmSafe(() => vibrate(kind >= 4 ? [80, 40, 120] : [60])), T.hit * 1000);
+  setTimeout(() => el.remove(), total * 1000 + 100);
+  return total * 1000;
+}
 /* TANGGA ILMON (hos): 13 kad setiap kumpulan · lawan kombo di meja atau LEPAS · pemenang meja buka meja baharu ·
    kuiz serentak setiap meja baharu (betul +1⭐, terpantas +2⭐) · ⭐ Tukar / ⭐⭐ Buang · habis kad dahulu = menang.
    opt: { seats: [{id, bot}], bots: [{id, name}], lvl: mudah|sederhana|sukar, allBots (ujian) } */
@@ -6974,10 +7055,10 @@ function komboRun(ids, opt, net){
     net.T.set('st', { v: Date.now(), code: net.code, g: 'tangga', cur, phase, table: tableNo, over, started: !!started, busy, owner: owner(), top: top(),
       plays: table.map(t => ({ i: t.i, name: P[t.i].name, combo: t.ev.name, cards: t.cards })), deckN: deck.length,
       seats: P.map((p, i) => ({ name: p.name, ai: p.ai, remote: !!p.remote, n: p.hand.length, stars: p.stars, pass: p.pass, av: av(p, 40), joined: !!joined[i] })),
-      rank: finalRank });
+      rank: finalRank, win: lastWin });
     P.forEach((p, i) => { if (p.remote) net.T.set('h' + i, { cards: p.hand.map(c => c.id), su: i === cur && starUsed }); });
   }, 60); };
-  let started = !net;
+  let started = !net, lastWin = null;
 
   /* ---------- meja & giliran ---------- */
   function newTable(L){
@@ -6999,8 +7080,10 @@ function komboRun(ids, opt, net){
     if (over) return;
     const act = P.filter(p => !p.pass && p.hand.length);
     if (table.length && act.length <= 1){                       // semua lain LEPAS → pemilik meja menang meja
-      const w = owner(); msg('👑 ' + esc(P[w].name) + ' menang meja!', '#FDE68A', 1600); kmSnd('ui_hebat', 'myth');
-      later(() => newTable(w), 1500); return;
+      const w = owner(), last = table[table.length - 1];
+      lastWin = { n: (lastWin ? lastWin.n : 0) + 1, i: w, name: P[w].name, av: av(P[w], 40), combo: last.ev.name, cards: last.cards, t: Date.now() };
+      const ms = kmWinFx($k('#kmSt'), lastWin) || 1500; pub();
+      later(() => newTable(w), ms + 200); return;
     }
     let n = cur; do { n = (n + 1) % P.length; } while (P[n].pass || !P[n].hand.length);
     cur = n; startTurn();
@@ -7309,7 +7392,7 @@ function komboJoin(code, T){
   }
   orientFree();
   function close(){ if (dead) return; dead = true; orientBack(); offs.forEach(f => { try { f(); } catch(e){} }); root.remove(); kmSafe(unlockBody); if (window.S && S.ui && S.ui.tab === 'arena') renderTab(); }
-  let prevCur = -1, ended = false;
+  let prevCur = -1, ended = false, winSeen = -2;
   offs.push(T.on('st', v => {
     if (dead) return;
     if (v && v.closed){ msg('Bilik ditutup oleh hos', '#FCA5A5', 2500); setTimeout(close, 1200); return; }
@@ -7323,6 +7406,8 @@ function komboJoin(code, T){
       if (s) kmTurnBanner($k('#kmSt'), s.av || '', s.name, st.cur === seat);
       prevCur = key;
     }
+    if (st.win && st.win.n !== winSeen){ const fresh = winSeen !== -1 && Date.now() - st.win.t < 8000; winSeen = st.win.n;
+      if (fresh) kmWinFx($k('#kmSt'), Object.assign({}, st.win, { mine: st.win.i === seat })); }
     if (st.over && !ended){ ended = true; showEnd(); }
     paint();
   }));
