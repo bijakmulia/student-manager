@@ -5836,7 +5836,7 @@ const GAME_LOBBY = {
       lbSeg('light', 'KECERAHAN', [['gelap','Gelap'],['biasa','Biasa'],['terang','Terang']]),
       lbSeg('peta', 'PETA MULA', ESC_MAPS.map((m, i) => [i, (i + 1) + ' · ' + m.name.replace('BLOK ', '')]), 'Selesai satu peta → teruskan ke peta seterusnya.'),
       lbSeg('rp', 'RP MAKSIMUM', [[15,'15'],[30,'30'],[50,'50']], 'Mudah ×0.8 · Sukar ×1.3.')]; },
-    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), knFetch(escChar(arenaUi().team)), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
+    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), escModel(await import(ESC_THREE), escChar(arenaUi().team)).catch(() => {}), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
     starts: [['🚪 MASUK SEKOLAH (1 peranti)', () => escStart()], ['📱 BUKA BILIK (banyak peranti)', () => escHost()]],
     get menu(){ const w = escCfg().watak; return [['ewatak', '🧍 Watak', ESC_CHARS.includes(w) ? ESC_NAME(w) : 'Auto (ikut kumpulan)']]; },
     views: {
@@ -10120,154 +10120,95 @@ const KN_NAME = n => (n[0] === 'm' ? 'Lelaki ' : 'Perempuan ') + n.slice(-1).toU
 /* gambar kecil watak: model 3D dilukis sekali ke kanvas (satu pemapar dikongsi), disimpan sebagai dataURL */
 const KN_THUMB = {};
 let KN_TR = null;
-/* ---------- Sekolah Berhantu: baju sekolah, tudung & muka ekspresi pada watak Kenney ----------
-   Warna ditukar dengan memindahkan UV ke petak lain dalam colormap Kenney (16 lajur x 4 baris).
-   sel = lajur + baris*16. Petak berguna: putih 57, biru muda 44, biru laut gelap 53, hitam 48,
-   merah 40, kuning 36, hijau 35, khaki 58. */
-const ESC_DRESS = {
-  'male-a':   { n: 'Murid Lelaki',          shirt: 57, pants: 53, shoe: 48 },
-  'male-b':   { n: 'Pengawas Lelaki',       shirt: 44, pants: 53, shoe: 48 },
-  'male-c':   { n: 'Lelaki Baju Sukan',     shirt: 40, pants: 48, shoe: 57, hide: [43, 37] },
-  'male-e':   { n: 'Pengakap',              shirt: 33, pants: 35, shoe: 48, shorts: true },
-  'female-a': { n: 'Murid Perempuan',       shirt: 57, pants: 53, shoe: 57, sleeve: true, tudung: 0xF4F4F0 },
-  'female-b': { n: 'Pengawas Perempuan',    shirt: 44, pants: 53, shoe: 48, sleeve: true, tudung: 0x2B3A67 },
-  'female-c': { n: 'Perempuan Baju Sukan',  shirt: 36, pants: 48, shoe: 57, sleeve: true, tudung: 0x3E63B8 },
-  'female-e': { n: 'Pengawas Pusat Sumber', shirt: 40, pants: 48, shoe: 48, sleeve: true, tudung: 0xE9DCC0 }
+/* ---------- Sekolah Berhantu: nama watak ---------- */
+const ESC_CNAME = { 'male-a': 'Murid Lelaki', 'male-b': 'Pengawas Lelaki', 'male-c': 'Lelaki Baju Sukan', 'male-e': 'Pengakap',
+  'female-a': 'Murid Perempuan', 'female-b': 'Pengawas Perempuan', 'female-c': 'Perempuan Baju Sukan', 'female-e': 'Pengawas Pusat Sumber' };
+const ESC_NAME = n => ESC_CNAME[n] || KN_NAME(n);
+/* ---------- Sekolah Berhantu: watak manusia saiz sebenar (Quaternius, CC0, poly.pizza) ----------
+   adventurer = lelaki, woman1 (Casual) / woman2 (Formal) = perempuan. Rangka sama; setiap bahagian badan
+   ialah mesh berasingan dengan bahan berwarna (tiada tekstur) — warna baju ditukar terus pada bahan,
+   lengan panjang / kain melalui warna bucu ikut tulang. */
+const ESC_REAL = {
+  'male-a':   { base: 'adventurer', shirt: 0xF2F2EE, trim: 0xE4E4E0, pants: 0x1E2A44, shoe: 0x161616, hair: 0x14100C, skin: 0xC8946A },
+  'male-b':   { base: 'adventurer', shirt: 0x2D4C8F, trim: 0x22396B, pants: 0x1A2236, shoe: 0x161616, hair: 0x1A120C, skin: 0xD9A57C },
+  'male-c':   { base: 'adventurer', shirt: 0xB3262A, trim: 0xF0F0F0, pants: 0x18181A, shoe: 0xEDEDED, hair: 0x0E0B08, skin: 0xA8714B },
+  'male-e':   { base: 'adventurer', shirt: 0xB59A68, trim: 0xA88C5C, pants: 0x34452A, shoe: 0x3A2A1C, hair: 0x2A1A10, skin: 0xC08560 },
+  'female-a': { base: 'woman1', shirt: 0xF2F2EE, pants: 0x1E2A44, shoe: 0xEDEDED, sleeve: true, hair: 0x15100C, skin: 0xD7A27C },
+  'female-b': { base: 'woman2', shirt: 0x8DB6E6, pants: 0x1E2A44, shoe: 0x161616, sleeve: true, hair: 0x2A1A10, skin: 0xC8946A },
+  'female-c': { base: 'woman1', shirt: 0xF2C230, pants: 0x18181A, shoe: 0xEDEDED, sleeve: true, hair: 0x0E0B08, skin: 0xB57F58 },
+  'female-e': { base: 'woman2', shirt: 0x7A1F2B, pants: 0x18181A, shoe: 0x161616, sleeve: true, hair: 0x3B2416, skin: 0xD9A882 }
 };
-const ESC_NAME = n => ESC_DRESS[n] ? ESC_DRESS[n].n : KN_NAME(n);
-/* muka dilukis ke kanvas: 'biasa' | 'takut' | 'gembira' */
-function escFaceCanvas(kind){
-  const W = 256, H = 192, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
-  c.lineCap = 'round'; c.lineJoin = 'round'; const ink = '#2A1A14', ex = [78, 178], ey = 82;
-  const brow = (dy, tilt) => { c.strokeStyle = ink; c.lineWidth = 9; ex.forEach((x, i) => { const s = i ? -1 : 1; c.beginPath(); c.moveTo(x - 24, ey - 40 + dy + tilt * s); c.lineTo(x + 24, ey - 40 + dy - tilt * s); c.stroke(); }); };
-  if (kind === 'gembira'){
-    c.strokeStyle = ink; c.lineWidth = 11; ex.forEach(x => { c.beginPath(); c.arc(x, ey + 10, 20, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); });
-    c.fillStyle = 'rgba(255,120,140,.55)'; ex.forEach(x => { c.beginPath(); c.ellipse(x + (x < 128 ? -14 : 14), ey + 34, 20, 11, 0, 0, Math.PI * 2); c.fill(); });
-    c.fillStyle = ink; c.beginPath(); c.moveTo(96, 128); c.quadraticCurveTo(128, 186, 160, 128); c.closePath(); c.fill();
-    c.fillStyle = '#F07890'; c.beginPath(); c.ellipse(128, 154, 15, 9, 0, 0, Math.PI * 2); c.fill();
-  } else if (kind === 'takut'){
-    brow(-8, 9);
-    ex.forEach(x => { c.fillStyle = '#fff'; c.strokeStyle = ink; c.lineWidth = 6; c.beginPath(); c.ellipse(x, ey + 4, 23, 27, 0, 0, Math.PI * 2); c.fill(); c.stroke();
-      c.fillStyle = ink; c.beginPath(); c.arc(x, ey + 6, 7, 0, Math.PI * 2); c.fill(); });
-    c.strokeStyle = ink; c.lineWidth = 7; c.fillStyle = '#5A2630'; c.beginPath(); c.moveTo(102, 146);
-    for (let i = 1; i <= 6; i++) c.lineTo(102 + i * 9, 146 + (i % 2 ? -7 : 0)); c.lineTo(156, 160); c.lineTo(102, 160); c.closePath(); c.fill(); c.stroke();
-    c.fillStyle = '#7CC8FF'; c.beginPath(); c.moveTo(222, 30); c.quadraticCurveTo(238, 56, 222, 64); c.quadraticCurveTo(206, 56, 222, 30); c.fill();
-  } else {
-    brow(4, 3);
-    ex.forEach(x => { c.fillStyle = ink; c.beginPath(); c.ellipse(x, ey + 6, 15, 19, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(x + 5, ey - 2, 5, 0, Math.PI * 2); c.fill(); });
-    c.strokeStyle = ink; c.lineWidth = 8; c.beginPath(); c.moveTo(112, 146); c.lineTo(144, 146); c.stroke();
-  }
-  return cv;
+const ESC_RBUF = {};
+async function escModel(THREE, name){
+  const R = ESC_REAL[name] || ESC_REAL['male-a'];
+  if (!KN_LOADER) KN_LOADER = import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js').then(m => new m.GLTFLoader());
+  const url = 'assets/3d/real/' + R.base + '.glb';
+  const buf = ESC_RBUF[url] || (ESC_RBUF[url] = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).catch(e => { delete ESC_RBUF[url]; throw e; }));
+  const [L, b] = await Promise.all([KN_LOADER, buf]);
+  const gl = await L.parseAsync(b, 'assets/3d/real/');
+  /* klip: idle / walk / sprint (nama Kenney yang digunakan permainan) */
+  const pickClip = re => gl.animations.find(c => re.test(c.name));
+  const clips = [['idle', /\|Idle$/], ['walk', /\|Walk$/], ['sprint', /\|Run$/]].map(([n, re]) => { const c = pickClip(re); if (!c) return null; const k = c.clone(); k.name = n; return k; }).filter(Boolean);
+  gl.animations = clips;
+  escDressReal(THREE, gl.scene, R);
+  return gl;
 }
-/* pakaikan baju sekolah pada gl.scene Kenney; pulangkan { mood(k) } untuk tukar muka */
-function escDress(THREE, root, name){
-  const D = ESC_DRESS[name]; if (!D) return { mood(){} };
-  let body = null, head = null; root.traverse(o => { if (o.isSkinnedMesh){ if (/head/.test(o.name)) head = o; else body = o; } });
-  if (!body || !head) return { mood(){} };
-  /* petak setiap bucu dikira dari titik tengah UV segi tiga (bucu di tepi petak tidak tersalah petak) */
-  const CELLS = new Map();
-  const cellsOf = geo => { if (CELLS.has(geo)) return CELLS.get(geo);
-    const uv = geo.attributes.uv, ix = geo.index, n = ix ? ix.count : uv.count, out = new Int16Array(uv.count).fill(-1);
-    for (let t = 0; t < n; t += 3){ const a = ix ? ix.getX(t) : t, b = ix ? ix.getX(t + 1) : t + 1, c = ix ? ix.getX(t + 2) : t + 2;
-      const u = (uv.getX(a) + uv.getX(b) + uv.getX(c)) / 3, v = (uv.getY(a) + uv.getY(b) + uv.getY(c)) / 3;
-      const k = Math.min(15, Math.floor(u * 16)) + Math.min(3, Math.floor(v * 4)) * 16; out[a] = out[b] = out[c] = k; }
-    CELLS.set(geo, out); return out; };
-  const geoOf = new Map();
-  const cellOf = (uv, i) => cellsOf(geoOf.get(uv))[i];
-  /* tengah lajur (buang jalur melintang Kenney), kecerunan menegak dikekalkan */
-  const setCell = (uv, i, to) => { const k = cellOf(uv, i); if (k < 0) return; const fv = clamp(uv.getY(i) * 4 - Math.floor(k / 16), .04, .96); uv.setXY(i, ((to % 16) + .5) / 16, (Math.floor(to / 16) + fv) / 4); };
-  [body, head].forEach(m => geoOf.set(m.geometry.attributes.uv, m.geometry));
-  /* tanpa mipmap: aras mip kecil mencampur lajur palet bersebelahan (jalur pelangi pada tepi baju) */
-  [body, head].forEach(m => { const t = m.material && m.material.map; if (t){ t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; t.needsUpdate = true; } });
-  const boneOf = (m, i) => { const si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight; let b = 0;
-    for (let c = 1; c < 4; c++) if (sw.getComponent(i, c) > sw.getComponent(i, b)) b = c; return m.skeleton.bones[si.getComponent(i, b)].name; };
-  /* kulit = petak kepala terbanyak yang juga ada pada badan (tangan) */
-  const cnt = {}, onBody = new Set();
-  for (let i = 0; i < body.geometry.attributes.uv.count; i++) onBody.add(cellOf(body.geometry.attributes.uv, i));
-  for (let i = 0; i < head.geometry.attributes.uv.count; i++){ const k = cellOf(head.geometry.attributes.uv, i); cnt[k] = (cnt[k] || 0) + 1; }
-  /* kotak kepala + telinga Kenney = 220 bucu */
-  const SKIN = +Object.keys(cnt).sort((a, b) => ((cnt[b] === 220) - (cnt[a] === 220)) * 1e6 + (onBody.has(+b) - onBody.has(+a)) * 1e4 + cnt[b] - cnt[a])[0];
-  /* bucu dipisahkan ikut segi tiga supaya setiap bucu milik satu petak sahaja */
-  [body, head].forEach(m => { m.geometry = m.geometry.toNonIndexed(); geoOf.set(m.geometry.attributes.uv, m.geometry); });
-  const hg = head.geometry, huv = hg.attributes.uv, hp = hg.attributes.position;
-  const g = body.geometry, uv = g.attributes.uv, p = g.attributes.position;
-  const bb = { x0: 9, x1: -9, y0: 9, y1: -9, z0: 9, z1: -9 };
-  for (let i = 0; i < hp.count; i++) if (cellOf(huv, i) === SKIN){ const x = hp.getX(i), y = hp.getY(i), z = hp.getZ(i);
-    bb.x0 = Math.min(bb.x0, x); bb.x1 = Math.max(bb.x1, x); bb.y0 = Math.min(bb.y0, y); bb.y1 = Math.max(bb.y1, y); bb.z0 = Math.min(bb.z0, z); bb.z1 = Math.max(bb.z1, z); }
-  const w = bb.x1 - bb.x0, h = bb.y1 - bb.y0;
-  let fx = 0;                                                            // separuh lebar muka (tanpa telinga)
-  for (let i = 0; i < hp.count; i++) if (cellOf(huv, i) === SKIN && hp.getZ(i) > bb.z1 - .01) fx = Math.max(fx, Math.abs(hp.getX(i) - (bb.x0 + bb.x1) / 2));
-  /* badan */
-  let armX = 0; const legMax = {};                                       // tangan = hujung lengan paling jauh dari badan
-  for (let i = 0; i < uv.count; i++){ const b = boneOf(body, i), k = cellOf(uv, i), y = p.getY(i);
-    if (/arm/.test(b)) armX = Math.max(armX, Math.abs(p.getX(i))); if (/leg/.test(b)) legMax[k] = Math.max(legMax[k] || -9, y); }
-  /* keputusan dibuat sekali bagi setiap segi tiga (bucu bercampur petak = jalur pelangi) */
-  const pick = (b, k, y, ax) => {
-    if (/leg/.test(b)){
-      if (legMax[k] <= .035) return -1;                                  // tapak kasut
-      if (legMax[k] <= .1 && k !== SKIN) return D.shoe;
-      if (k === SKIN && D.shorts && y > .03) return -1;
-      return D.pants;
+function escDressReal(THREE, root, R){
+  const kill = [];
+  root.traverse(o => { if (!o.isMesh) return; o.frustumCulled = false; if (/backpack/i.test(o.name)) kill.push(o); });
+  kill.forEach(o => o.parent.remove(o));
+  root.updateMatrixWorld(true);
+  let headBone = null, wrist = null; root.traverse(o => { if (o.isBone && o.name === 'Head') headBone = o; if (o.isBone && o.name === 'Wrist.R') wrist = o; });
+  const col = h => new THREE.Color(h);
+  /* tulang dominan setiap bucu */
+  const domBone = (m, i) => { const si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight; if (!si) return ''; let b = 0;
+    for (let c = 1; c < 4; c++) if (sw.getComponent(i, c) > sw.getComponent(i, b)) b = c; const bn = m.skeleton.bones[si.getComponent(i, b)]; return bn ? bn.name : ''; };
+  const paint = (m, fn) => { const g = m.geometry, n = g.attributes.position.count, c = new Float32Array(n * 3), t = new THREE.Color();
+    for (let i = 0; i < n; i++){ t.set(fn(domBone(m, i), i)); c[i * 3] = t.r; c[i * 3 + 1] = t.g; c[i * 3 + 2] = t.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(c, 3)); m.material.vertexColors = true; m.material.color.set(0xffffff); };
+  const isHand = b => /Wrist|Index|Middle|Ring|Pinky|Thumb|Fist/.test(b), isLeg = b => /UpperLeg|LowerLeg/.test(b);
+  const meshes = []; root.traverse(o => { if (o.isSkinnedMesh) meshes.push(o); });
+  const hairMeshes = [];
+  meshes.forEach(m => {
+    m.material = m.material.clone(); m.material.roughness = .85; m.material.metalness = 0;
+    const part = /head/i.test(m.name) ? 'head' : /feet/i.test(m.name) ? 'feet' : /legs/i.test(m.name) ? 'legs' : 'body', mn = m.material.name;
+    if (mn === 'Skin'){
+      if (R.sleeve && part === 'body') paint(m, b => isHand(b) || /Head/.test(b) ? R.skin : R.shirt);   // lengan panjang (baju kurung)
+      else if (R.sleeve && part === 'legs') paint(m, b => isLeg(b) ? R.pants : R.skin);                 // kain labuh
+      else m.material.color.set(R.skin);
+      return;
     }
-    if (/arm/.test(b)) return D.sleeve ? (ax > armX - .05 ? SKIN : D.shirt) : k === SKIN ? -1 : D.shirt;   // tangan kekal kulit; lengan panjang untuk baju kurung
-    if (k === SKIN && !D.tudung) return -1;                              // leher
-    return y < .215 && !D.tudung ? 48 : D.shirt;
-  };
-  for (let t = 0; t + 2 < uv.count; t += 3){
-    const to = pick(boneOf(body, t), cellOf(uv, t), (p.getY(t) + p.getY(t + 1) + p.getY(t + 2)) / 3, Math.abs(p.getX(t) + p.getX(t + 1) + p.getX(t + 2)) / 3);
-    if (to >= 0) for (let i = t; i < t + 3; i++) setCell(uv, i, to);
-  }
-  uv.needsUpdate = true;
-  /* kepala: mata & janggut asal disorok; rambut disorok di bawah tudung (bucu dikecutkan ke tengah kepala) */
-  const cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2, cz = (bb.z0 + bb.z1) / 2;
-  for (let i = 0; i < hp.count; i++){ const k = cellOf(huv, i); if (k === SKIN) continue;
-    const x = hp.getX(i), y = hp.getY(i), z = hp.getZ(i);
-    const onFace = z > bb.z1 - .02 && x > bb.x0 + w * .08 && x < bb.x1 - w * .08 && y > bb.y0 + h * .12 && y < bb.y0 + h * .62;
-    const beard = z > 0 && y < bb.y0 + h * .3;
-    if (onFace || beard || D.tudung || (D.hide && D.hide.includes(k))) hp.setXYZ(i, cx + (x - cx) * .2, cy + (y - cy) * .2, cz + (z - cz) * .2);
-  }
-  huv.needsUpdate = true; hp.needsUpdate = true;
-  /* kepingan tambahan diikat pada tulang kepala / badan (ikut animasi) */
-  const bones = head.skeleton.bones, bi = n => Math.max(0, bones.findIndex(b => b.name === n));
-  const addPiece = (geo, bone, mat) => {
-    const n = geo.attributes.position.count, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++){ si[i * 4] = bone; sw[i * 4] = 1; }
-    geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
-    const m = new THREE.SkinnedMesh(geo, mat); m.frustumCulled = false; m.position.copy(head.position); m.quaternion.copy(head.quaternion); m.scale.copy(head.scale);
-    head.parent.add(m); m.bind(head.skeleton, head.bindMatrix); return m; };
-  const box = (x0, x1, y0, y1, z0, z1) => { const q = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0); q.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); return q; };
-  const HB = bi('head'), TB = bi('torso');
-  if (D.tudung){
-    const mt = new THREE.MeshStandardMaterial({ color: D.tudung, roughness: .9 }), e = Math.max(.005, w * .03), mx = (bb.x0 + bb.x1) / 2, fw2 = (fx || w * .38) * .9;
-    const X0 = bb.x0 - e, X1 = bb.x1 + e, Y1 = bb.y1 + e, Z0 = bb.z0 - e, Z1 = bb.z1 + e, fy = bb.y0 + h * .74;
-    addPiece(box(X0, X1, bb.y1, Y1, Z0, Z1), HB, mt);                          // atas
-    addPiece(box(X0, X1, bb.y0 - h * .12, Y1, Z0, bb.z0), HB, mt);             // belakang
-    addPiece(box(X0, bb.x0, bb.y0 - h * .12, Y1, Z0, Z1), HB, mt);             // kiri
-    addPiece(box(bb.x1, X1, bb.y0 - h * .12, Y1, Z0, Z1), HB, mt);             // kanan
-    addPiece(box(X0, X1, fy, Y1, bb.z1, Z1), HB, mt);                          // dahi
-    addPiece(box(X0, mx - fw2, bb.y0 - h * .12, fy, bb.z1, Z1), HB, mt);       // bingkai muka kiri
-    addPiece(box(mx + fw2, X1, bb.y0 - h * .12, fy, bb.z1, Z1), HB, mt);       // bingkai muka kanan
-    addPiece(box(X0, X1, bb.y0 - h * .12, bb.y0 + h * .02, Z0, Z1), HB, mt);   // bawah dagu
-    const cape = new THREE.CylinderGeometry(w * .5, w * .78, h * .3, 4, 1); cape.rotateY(Math.PI / 4);
-    cape.translate((bb.x0 + bb.x1) / 2, bb.y0 - h * .14, (bb.z0 + bb.z1) / 2);
-    addPiece(cape, TB, mt);                                                    // labuh atas bahu
-  }
-  /* muka */
-  const tex = {}, fm = new THREE.MeshStandardMaterial({ transparent: true, alphaTest: .05, roughness: .8, depthWrite: false });
-  const getTex = k => tex[k] || (tex[k] = Object.assign(new THREE.CanvasTexture(escFaceCanvas(k)), { colorSpace: THREE.SRGBColorSpace }));
-  fm.map = getTex('biasa');
-  const fw = Math.min(w * .84, (fx || w * .4) * 2 * (D.tudung ? .86 : 1)), fh = fw * .75, fp = new THREE.PlaneGeometry(fw, fh);
-  fp.translate((bb.x0 + bb.x1) / 2, bb.y0 + h * (D.tudung ? .36 : .4), bb.z1 + .004);
-  addPiece(fp, HB, fm);
-  let cur = 'biasa';
-  return { mood(k){ if (k === cur) return; cur = k; fm.map = getTex(k); fm.needsUpdate = true; } };
+    if (part === 'head'){
+      if (/Eye|Pupil|White/.test(mn)) return;
+      if (/Eyebrow/.test(mn) || (mn === 'Brown' && m.geometry.attributes.position.count < 200)){ m.material.color.set(0x1A120C); return; }
+      m.material.color.set(R.hair); if (R.base === 'adventurer') hairMeshes.push(m); return;
+    }
+    if (part === 'feet'){ m.material.color.set(R.shoe); return; }
+    if (part === 'legs'){ m.material.color.set(/Gold/.test(mn) ? R.shoe : R.base === 'woman2' ? R.shirt : R.pants); return; }   // gaun woman2 = baju kurung labuh ke lutut
+    m.material.color.set(/Gold/.test(mn) ? (R.trim || R.shirt) : /LightGreen/.test(mn) ? (R.trim || R.shirt) : R.shirt);
+  });
+  if (!headBone) return;
+  /* ruang tulang kepala: kotak kepala, arah muka & arah atas */
+  const v = new THREE.Vector3(), box = new THREE.Box3(), inv = new THREE.Matrix4().copy(headBone.matrixWorld).invert();
+  const headSkin = meshes.find(m => /head/i.test(m.name) && m.material.name === 'Skin');
+  let eyeUp = null;
+  if (headSkin){ const n = headSkin.geometry.attributes.position.count;
+    for (let i = 0; i < n; i++){ if (domBone(headSkin, i) !== 'Head') continue; headSkin.getVertexPosition(i, v); headSkin.applyBoneTransform(i, v); v.applyMatrix4(headSkin.matrixWorld).applyMatrix4(inv); box.expandByPoint(v); } }
+  if (box.isEmpty()) return;
+  const qInv = new THREE.Quaternion(); headBone.getWorldQuaternion(qInv); qInv.invert();
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(qInv).normalize(), up = new THREE.Vector3(0, 1, 0).applyQuaternion(qInv).normalize();
+  const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+  /* janggut lelaki: bucu rambut di bawah paras hidung & di depan diwarnakan kulit (tinggal rambut di kepala) */
+  hairMeshes.forEach(m => { const p = m.geometry.attributes.position, toB = new THREE.Matrix4().copy(m.matrixWorld).premultiply(inv), hh = Math.abs(sz.dot(up)) || sz.y;
+    paint(m, (b, i) => { v.fromBufferAttribute(p, i); m.applyBoneTransform(i, v); v.applyMatrix4(toB); const d = v.sub(c);
+      if (d.dot(up) < -hh * .05 && d.dot(fwd) > -hh * .05)return R.skin; return R.hair; }); });
+
 }
 function knThumb(name){
   if (KN_THUMB[name]) return KN_THUMB[name];
   return KN_THUMB[name] = (async () => {
     const esc = name.indexOf('esc:') === 0, nm = esc ? name.slice(4) : name;
-    const THREE = await import(ESC_THREE), gl = await knModel(nm); if (esc) escDress(THREE, gl.scene, nm);
+    const THREE = await import(ESC_THREE), gl = esc ? await escModel(THREE, nm) : await knModel(nm);
     if (!KN_TR){ const cv = document.createElement('canvas'); cv.width = 160; cv.height = 200;
       const R = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true }); R.outputColorSpace = THREE.SRGBColorSpace; KN_TR = { R, cv }; }
     const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x445566, 2.2)); const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(2, 4, 5); sc.add(dl);
@@ -11024,14 +10965,11 @@ function escRun(THREE, sid, ac, lvl, mp){
   /* ---------- keadaan permainan ---------- */
   const P = { f: 0, x: 3.2, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0, hide: null, face: Math.PI / 2, anim: null, moving: false };
   /* watak 3D (pandangan orang ketiga) */
-  let pm = null, pmMix = null, pmFace = null, pmHand = null, happyT = 0; const _hv = new THREE.Vector3(); const PACT = {}; let pActNow = null;
-  /* muka: gembira (kuiz betul / menang), takut (hantu dekat — bunyi tapak & detak jantung), biasa */
-  const moodNow = now => now < happyT ? 'gembira' : P.fear > .05 && !P.safe ? 'takut' : 'biasa';
+  let pm = null, pmMix = null, pmHand = null, pmWrist = null; const _hv = new THREE.Vector3(); const PACT = {}; let pActNow = null;
   const pPlay = n => { const a = PACT[n] || PACT.idle; if (!a || pActNow === a) return; a.reset().fadeIn(.18).play(); if (pActNow) pActNow.fadeOut(.18); pActNow = a; };
   const myChar = MPH ? null : MPC ? (mp.cfg.seats[mp.seat].char || escChar(sid)) : escChar(sid);
-  if (!MPH) knModel(myChar).then(gl => {
+  if (!MPH) escModel(THREE, myChar).then(gl => {
     if (!alive) return;
-    pmFace = escDress(THREE, gl.scene, myChar);
     const m = gl.scene, bx = new THREE.Box3().setFromObject(m), h = bx.max.y - bx.min.y || 1, k = 1.62 / h;
     m.scale.setScalar(k); m.position.y = -bx.min.y * k;
     m.traverse(o => { if (o.isMesh){ o.frustumCulled = false; const mt = o.material; if (mt){ mt.roughness = .85; mt.needsUpdate = true; } } });
@@ -11040,8 +10978,8 @@ function escRun(THREE, sid, ac, lvl, mp){
     const fl = new THREE.Group(); fl.position.set(-.24, .98, .3);
     const body = new THREE.Mesh(new THREE.CylinderGeometry(.028, .022, .2, 10), new THREE.MeshStandardMaterial({ color: 0x23262B, roughness: .5, metalness: .6 })); body.rotation.x = Math.PI / 2; fl.add(body);
     const lens = new THREE.Mesh(new THREE.CircleGeometry(.03, 12), new THREE.MeshBasicMaterial({ color: 0xFFF6DA })); lens.position.z = .101; fl.add(lens);
-    pm.add(fl); pmHand = fl;
-    pmMix = new THREE.AnimationMixer(m); gl.animations.forEach(c => { PACT[c.name] = pmMix.clipAction(c); }); if (PACT.walk) PACT.walk.timeScale = .7; pPlay('idle');
+    pm.add(fl); pmHand = fl; m.traverse(o => { if (o.isBone && o.name === 'Wrist.R') pmWrist = o; });
+    pmMix = new THREE.AnimationMixer(m); gl.animations.forEach(c => { PACT[c.name] = pmMix.clipAction(c); }); if (PACT.walk) PACT.walk.timeScale = .85; pPlay('idle');
   }).catch(e => console.warn('watak seram', e));
   const solidAt = (x, z) => solids.some(q => x > q.x1 - .08 && x < q.x2 + .08 && z > q.z1 - .08 && z < q.z2 + .08);
   /* kamera orbit di belakang watak; dirapatkan bila terkena dinding */
@@ -11232,7 +11170,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     if (n.kind === 'exit'){
       if (keys() < D.keys){ sfx('buzz'); return msg('Pintu berkunci. Perlu <span style="color:#FFD76A">'+D.keys+' kunci</span> ('+keys()+'/'+D.keys+').'); }
       if (MPC){                                          // banyak peranti: selamat keluar, tunggu kawan
-        if (!P.safe){ P.safe = true; happyT = Infinity; mpSend({ t: 'safe' }); sfx('win'); paused = true; stopInput(); $e('#escAct').style.display = 'none';
+        if (!P.safe){ P.safe = true; mpSend({ t: 'safe' }); sfx('win'); paused = true; stopInput(); $e('#escAct').style.display = 'none';
           const e = $e('#escEnd'); e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:380px"><i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i><div class="font-bold tracking-widest text-[18px] mt-2" style="color:#4ADE80">KAMU SELAMAT KELUAR!</div><div class="text-[12px] text-muted mt-2">Tunggu kawan-kawan keluar…</div></div>'; e.style.display = 'flex'; }
         return;
       }
@@ -11272,7 +11210,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     const finish = pick => {
       if (done) return; done = true; stop();
       const ok = pick === q.a;
-      answered++; if (ok){ correct++; happyT = performance.now() + 3000; } mpSend({ t: 'q', ok: ok ? 1 : 0 });
+      answered++; if (ok) correct++; mpSend({ t: 'q', ok: ok ? 1 : 0 });
       teamQuiz(sid, ok);
       closeUi();
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Papan '+bd.label); }
@@ -11303,7 +11241,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     };
     const finish = ok => {
       if (done) return; done = true; stop();
-      answered++; if (ok){ correct++; happyT = performance.now() + 3000; } mpSend({ t: 'q', ok: ok ? 1 : 0 });
+      answered++; if (ok) correct++; mpSend({ t: 'q', ok: ok ? 1 : 0 });
       teamQuiz(sid, ok);
       closeUi();
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Teka-teki perpustakaan selesai'); }
@@ -11435,7 +11373,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const go = b.dataset.end; quit(); if (go === 'again') setTimeout(() => MPH ? escHost() : escStart(MAPI), 50); else if (go === 'next') setTimeout(() => escStart(MAPI + 1), 50); };
   }
   function win(){
-    sfx('win'); happyT = Infinity;
+    sfx('win');
     const sec = Math.round(elapsed), rp = escRP(sec, cfg), d = escData();
     d.gbest = d.gbest || {};
     const prev = d.gbest[sid], first = player && player.members.some(m => !d.wins[m.id]);
@@ -11731,7 +11669,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   function mpPos(now){
     if (now - posT < 120) return; posT = now;
     mp.T.set('p' + mp.seat, { f: P.f, x: +P.x.toFixed(2), z: +P.z.toFixed(2), face: +P.face.toFixed(2), mv: P.moving && !paused ? (P.run ? 2 : 1) : 0,
-      h: P.hide ? [lockers.indexOf(P.hide.lk), P.hide.lk.occ.indexOf('me')] : null, d: P.anim ? lockers.indexOf(P.anim.spot.lk) : -1, safe: P.safe ? 1 : 0, e: moodNow(now)[0] });
+      h: P.hide ? [lockers.indexOf(P.hide.lk), P.hide.lk.occ.indexOf('me')] : null, d: P.anim ? lockers.indexOf(P.anim.spot.lk) : -1, safe: P.safe ? 1 : 0 });
   }
   /* pemain lain: watak + nama; dalam almari hanya nampak bila kita dalam almari yang sama */
   const others = new Map(); let lkLt = null;
@@ -11750,9 +11688,9 @@ function escRun(THREE, sid, ac, lvl, mp){
       const t = q.st; if (!t || !q.char) return;
       let o = others.get(q.i);
       if (!o){ o = { g: new THREE.Group(), mix: null, act: {}, now: null, x: t.x, z: t.z, f: t.f, face: t.face || 0 }; others.set(q.i, o); scene.add(o.g); o.g.add(nameTag(q.name));
-        knModel(q.char).then(gl => { if (!alive) return; o.fc = escDress(THREE, gl.scene, q.char); const m = gl.scene, bx = new THREE.Box3().setFromObject(m), hh = bx.max.y - bx.min.y || 1, k = 1.62 / hh;
+        escModel(THREE, q.char).then(gl => { if (!alive) return; const m = gl.scene, bx = new THREE.Box3().setFromObject(m), hh = bx.max.y - bx.min.y || 1, k = 1.62 / hh;
           m.scale.setScalar(k); m.position.y = -bx.min.y * k; m.traverse(z => { if (z.isMesh) z.frustumCulled = false; }); o.g.add(m);
-          o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); if (o.act.walk) o.act.walk.timeScale = .7; }).catch(() => {}); }
+          o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); if (o.act.walk) o.act.walk.timeScale = .85; }).catch(() => {}); }
       if (o.f !== t.f){ o.f = t.f; o.x = t.x; o.z = t.z; }
       o.x += (t.x - o.x) * Math.min(1, dt * 10); o.z += (t.z - o.z) * Math.min(1, dt * 10);
       let df = (t.face || 0) - o.face; df = Math.atan2(Math.sin(df), Math.cos(df)); o.face += df * Math.min(1, dt * 10);
@@ -11762,7 +11700,6 @@ function escRun(THREE, sid, ac, lvl, mp){
       else { o.g.position.set(o.x, 0, o.z); o.g.rotation.y = o.face; }
       /* cahaya malap dalam loker supaya kawan sebelah kelihatan */
       if (t.h && meIn) shared = true;
-      if (o.fc) o.fc.mood({ g: 'gembira', t: 'takut' }[t.e] || 'biasa');
       if (o.mix){ const a = o.act[t.mv === 2 ? 'sprint' : t.mv ? 'walk' : 'idle'] || o.act.walk || o.act.idle; if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
     });
     /* cahaya malap dari mata pemain dalam loker supaya kawan sebelah kelihatan */
@@ -11775,9 +11712,10 @@ function escRun(THREE, sid, ac, lvl, mp){
     else if (P.anim){ lockerAnim(0); tpCam(); }
     lockerAnim(dt);
     if (MP){ renderOthers(dt); if (MPC && !ended) mpPos(now); }
-    if (pmFace) pmFace.mood(moodNow(now));
     if (pm){ pm.position.set(P.x, 0, P.z); let df = P.face - pm.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); pm.rotation.y += df * Math.min(1, dt * 12);
-      pPlay(P.anim ? 'walk' : P.moving && !paused ? (P.run && PACT.sprint ? 'sprint' : 'walk') : 'idle'); pmMix.update(dt); }
+      pPlay(P.anim ? 'walk' : P.moving && !paused ? (P.run && PACT.sprint ? 'sprint' : 'walk') : 'idle'); pmMix.update(dt);
+      if (pmWrist && pmHand){ pm.updateMatrixWorld(true); pmWrist.getWorldPosition(_hv); pm.worldToLocal(_hv); pmHand.position.set(_hv.x, _hv.y, _hv.z + .05); }   // lampu suluh ikut tangan kanan
+    }
     ambient(dt, now);
     R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
