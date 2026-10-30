@@ -7155,9 +7155,9 @@ function komboRun(ids, opt, net){
       return;
     }
     if (a === 'again'){ quit(); setTimeout(() => komboRun(ids, opt, net), 60); return; }
-    if (a === 'begin'){                               // hanya hos; semua bilik 🔢 kod mesti sudah disertai
-      const wait = P.filter((p, i) => p.remote && !joined[i]);
-      if (wait.length){ msg('⏳ Tunggu ' + wait.map(p => esc(p.name)).join(', ') + ' masuk kod', '#FDE68A', 2000); return; }
+    if (a === 'begin'){                               // hanya hos; kumpulan yang belum masuk kod diganti robot (tiada mata)
+      if (P.some(p => p.remote) && !P.some((p, i) => p.remote && joined[i])){ msg('⏳ Belum ada telefon masuk kod', '#FDE68A', 2000); return; }
+      P.forEach((p, i) => { if (p.remote && !joined[i]){ p.remote = false; p.ai = true; } });
       started = true; live = liveGo(); $k('#kmOv').innerHTML = ''; newTable(leader); return; }
     if (a === 'peek'){ peek = true; paintHand(); return; }
     if (!human()) return;
@@ -7167,15 +7167,15 @@ function komboRun(ids, opt, net){
   });
   /* bilik menunggu: kod 4 angka besar + status setiap kumpulan */
   function lobbyRoom(){
-    const nRem = P.filter(p => p.remote).length, nWait = P.filter((p, i) => p.remote && !joined[i]).length;   // MULA dikunci hingga semua telefon masuk
+    const nRem = P.filter(p => p.remote).length, nIn = P.filter((p, i) => p.remote && joined[i]).length, lock = nRem && !nIn;   // MULA dibuka bila sekurang-kurangnya 1 telefon masuk
     const list = P.map((p, i) => '<div class="row" style="justify-content:space-between">' + av(p, 26) + '<span style="flex:1;text-align:left">' + esc(p.name) + '</span><b style="color:' +
       (p.ai ? '#94A3B8">🤖 robot' : !p.remote ? '#FACC15">📺 peranti ini' : joined[i] ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</b></div>').join('');
     $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn" style="width:56%;text-align:left">' +
       '<div style="text-align:center"><span style="display:inline-block;background:#FACC15;color:#1A1405;font-weight:900;font-size:1.3cqw;letter-spacing:.15em;padding:.3cqw 1.2cqw;border-radius:99px">👑 HOS — kongsi kod ini</span></div>' +
 '<div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900;text-align:center">BILIK TANGGA ILMON · KOD</div>' +
       '<div style="font-size:9cqw;font-weight:900;letter-spacing:.25em;line-height:1.05;text-align:center;color:#FDE68A;text-shadow:0 0 2cqw rgba(250,204,21,.5)">' + net.code + '</div>' +
-      '<div style="font-size:1.25cqw;color:#94A3B8;line-height:1.5;text-align:center">Di telefon kumpulan: EduRank → GAME → KAD → <b>🔢 Masuk kod bilik</b>, taip kod ini, pilih kumpulan. MULA dibuka bila semua bilik 🔢 sudah masuk.</div>' + list +
-      '<div class="bt"><button class="o" data-k="begin"' + (nWait ? ' disabled style="opacity:.45"' : '') + '>' + (nWait ? '⏳ Menunggu ' + (nRem - nWait) + '/' + nRem + ' telefon' : '▶ MULA') + '</button></div></div></div>';
+      '<div style="font-size:1.25cqw;color:#94A3B8;line-height:1.5;text-align:center">Di telefon kumpulan: EduRank → GAME → KAD → <b>🔢 Masuk kod bilik</b>, taip kod ini, pilih kumpulan. Tekan MULA bila sedia — kumpulan yang belum masuk dimainkan robot (tiada mata).</div>' + list +
+      '<div class="bt"><button class="o" data-k="begin"' + (lock ? ' disabled style="opacity:.45"' : '') + '>' + (lock ? '⏳ Menunggu telefon…' : '▶ MULA (' + nIn + '/' + nRem + ' telefon)') + '</button></div></div></div>';
   }
   if (net){
     P.forEach((p, i) => {
