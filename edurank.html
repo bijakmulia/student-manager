@@ -5771,7 +5771,7 @@ const GAME_LOBBY = {
       const right = '<div class="lb-seg">' + presets + '</div>' +
         (nb ? '<div class="lb-sec" style="margin-top:10px">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>' : '') +
         todayQNotice() +
-        '<button class="lb-btn go" data-lb="kmgo">' + (K.multi ? '🔢 BUKA BILIK' : '▶ MULA') + '<span style="font-size:12px;font-weight:600;margin-left:6px">(' + nh + (K.multi ? ' telefon' : ' murid') + (nb ? ' · ' + nb + ' robot' : '') + ')</span></button>' +
+        '<button class="lb-btn go" data-lb="kmgo">' + (K.multi ? '👑 BUKA BILIK (HOS)' : '▶ MULA') + '<span style="font-size:12px;font-weight:600;margin-left:6px">(' + nh + (K.multi ? ' telefon' : ' murid') + (nb ? ' · ' + nb + ' robot' : '') + ')</span></button>' +
         '<div class="lb-note">' + (K.multi ? 'Peranti ini jadi <b>papan projektor</b> (hos). Di telefon murid: tab GAME → KAD → <b>🔢 Masuk kod bilik</b>.' + (FB.on ? '' : ' <b style="color:#FCA5A5">Perlu Firebase aktif.</b>') : 'Semua bergilir di peranti ini.') +
           (all.length > 4 ? ' Ketik nama kumpulan untuk menukarnya.' : '') + '</div>';
       return top + '<div class="km-lb"><div>' + mode + seatH + '</div><div>' + right + '</div></div>';
@@ -5837,7 +5837,7 @@ const GAME_LOBBY = {
       lbSeg('peta', 'PETA MULA', ESC_MAPS.map((m, i) => [i, (i + 1) + ' · ' + m.name.replace('BLOK ', '')]), 'Selesai satu peta → teruskan ke peta seterusnya.'),
       lbSeg('rp', 'RP MAKSIMUM', [[15,'15'],[30,'30'],[50,'50']], 'Mudah ×0.8 · Sukar ×1.3.')]; },
     preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), escModel(await import(ESC_THREE), escChar(arenaUi().team)).catch(() => {}), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
-    starts: [['🚪 MASUK SEKOLAH (1 peranti)', () => escStart()], ['📱 BUKA BILIK (banyak peranti)', () => escHost()]],
+    starts: [['🚪 MASUK SEKOLAH (1 peranti)', () => escStart()], ['👑 BUKA BILIK · HOS (banyak peranti)', () => escHost()]],
     get menu(){ const w = escCfg().watak; return [['ewatak', '🧍 Watak', ESC_CHARS.includes(w) ? ESC_NAME(w) : 'Auto (ikut kumpulan)']]; },
     views: {
       ewatak: { t: 'PILIH WATAK', h: () => { setTimeout(knThumbFill, 30); const w = escCfg().watak;
@@ -7170,7 +7170,8 @@ function komboRun(ids, opt, net){
     const list = P.map((p, i) => '<div class="row" style="justify-content:space-between">' + av(p, 26) + '<span style="flex:1;text-align:left">' + esc(p.name) + '</span><b style="color:' +
       (p.ai ? '#94A3B8">🤖 robot' : !p.remote ? '#FACC15">📺 peranti ini' : joined[i] ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</b></div>').join('');
     $k('#kmOv').innerHTML = '<div class="km-end"><div class="pn" style="width:56%;text-align:left">' +
-      '<div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900;text-align:center">BILIK TANGGA ILMON · KOD</div>' +
+      '<div style="text-align:center"><span style="display:inline-block;background:#FACC15;color:#1A1405;font-weight:900;font-size:1.3cqw;letter-spacing:.15em;padding:.3cqw 1.2cqw;border-radius:99px">👑 HOS — kongsi kod ini</span></div>' +
+'<div style="font-size:1.2cqw;letter-spacing:.2em;color:#F59E0B;font-weight:900;text-align:center">BILIK TANGGA ILMON · KOD</div>' +
       '<div style="font-size:9cqw;font-weight:900;letter-spacing:.25em;line-height:1.05;text-align:center;color:#FDE68A;text-shadow:0 0 2cqw rgba(250,204,21,.5)">' + net.code + '</div>' +
       '<div style="font-size:1.25cqw;color:#94A3B8;line-height:1.5;text-align:center">Di telefon kumpulan: EduRank → GAME → KAD → <b>🔢 Masuk kod bilik</b>, taip kod ini, pilih kumpulan. MULA dibuka bila semua bilik 🔢 sudah masuk.</div>' + list +
       '<div class="bt"><button class="o" data-k="begin"' + (nWait ? ' disabled style="opacity:.45"' : '') + '>' + (nWait ? '⏳ Menunggu ' + (nRem - nWait) + '/' + nRem + ' telefon' : '▶ MULA') + '</button></div></div></div>';
@@ -10397,6 +10398,7 @@ async function escHost(){
   const paint = () => {
     const n = cfg.seats.filter(x => x.joined).length;
     ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:540px;border-color:#E23B3B">' +
+      '<div><span style="display:inline-block;background:#FACC15;color:#1A1405;font-weight:900;font-size:13px;letter-spacing:.15em;padding:3px 12px;border-radius:99px;margin-bottom:6px">👑 HOS — kongsi kod ini</span></div>' +
       '<div class="lbl" style="color:#F87171">👻 SEKOLAH BERHANTU · KOD BILIK</div><div class="num" style="font-size:64px;font-weight:900;letter-spacing:.2em;color:#FDE68A;line-height:1.1">' + code + '</div>' +
       '<div class="text-[12px] text-muted">Di telefon kumpulan: EduRank → GAME → SERAM → <b>🔢 MASUK KOD BILIK</b>. Peta ' + (map + 1) + ' · ' + ESC_MAPS[map].name + '</div>' +
       '<div class="grid grid-cols-2 gap-2 mt-3 text-left">' + cfg.seats.map(x => '<div class="panel clip-s p-2 flex items-center gap-2">' + teamAvatar(x.id, 26) +
