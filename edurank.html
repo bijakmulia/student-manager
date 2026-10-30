@@ -754,6 +754,8 @@ function migrate(d){
   (out.students||[]).forEach(s => { s.badges = Array.from(new Set((s.badges||[]).filter(id => validB.has(id)))); });
   if (!Array.isArray(out.ranks) || out.ranks.length !== 24) out.ranks = defaultRanks();
   if (!out.frames || typeof out.frames !== 'object') out.frames = {};
+  /* 2026-10-31: medan versi pendek (qs/as) lama dihasilkan oleh pemecah perkataan yang rosak (huruf 's' hilang) — buang sekali; soalan penuh tidak terjejas */
+  if (!out.fixQs1){ (out.quiz || []).forEach(q => { if (q && (q.qs || q.as)){ q.qs = ''; q.as = ''; } }); out.fixQs1 = true; }
   return out;
 }
 
@@ -4075,7 +4077,7 @@ function sQuestions(arr, bi, cap){
       if (!ej[j]) ej[j] = hur || ('Jawapan betul ialah {a}.');
       if (ej[j].indexOf('{a}') < 0) ej[j] = 'Jawapannya {a}. ' + ej[j];
     }
-    const words = (t, n) => String(t || '').trim().split(/s+/).filter(Boolean).slice(0, n).join(' ');
+    const words = (t, n) => String(t || '').trim().split(/\s+/).filter(Boolean).slice(0, n).join(' ');
     const short = String(v.jenis || '').toLowerCase() === 'pendek';
     out.push({ id:'sq' + bi + '_' + k, q:qt, c, a, ejek:ej, sp: sTxt(v.sp, 24), short,
       qs: short ? '' : words(sTxt(v.pendek, 120), 10), as: short ? '' : words(sTxt(v.jawapan_pendek, 60), 5),
@@ -10918,7 +10920,7 @@ function runQuestion(){
   return c.length < 2 ? escMathQ() : { q: t, c, a: 0 };
 }
 /* 4 pasangan untuk teka-teki padanan: soalan ↔ jawapan betul (hasil unik) */
-const nWords = t => String(t || '').trim().split(/s+/).filter(Boolean).length;
+const nWords = t => String(t || '').trim().split(/\s+/).filter(Boolean).length;
 /* versi pendek untuk teka-teki padanan: soalan ≤10 perkataan, jawapan ≤5 perkataan (medan qs/as dari AI, atau soalan asal yang memang pendek) */
 const qShort = q => { const a = q.as || String(q.c[q.a]), t = q.qs || q.q; return nWords(t) <= 10 && nWords(a) <= 5 ? [t, a] : null; };
 function escPairs(){
