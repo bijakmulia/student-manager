@@ -5834,9 +5834,21 @@ const GAME_LOBBY = {
       lbSeg('scare', 'TAHAP SERAM', [['penuh','Penuh'],['lembut','Lembut']], c.scare === 'lembut' ? 'Tiada wajah mengejut dan jeritan — sesuai untuk murid kecil.' : 'Wajah mengejut + jeritan bila ditangkap.'),
       lbSeg('ghost', 'HANTU', [['rawak','Rawak'],['putih','Putih'],['pontianak','Pontianak'],['toyol','Toyol']], c.ghost === 'rawak' ? 'Hantu dipilih secara rawak setiap permainan.' : ESC_GHOSTS[c.ghost].note),
       lbSeg('light', 'KECERAHAN', [['gelap','Gelap'],['biasa','Biasa'],['terang','Terang']]),
+      lbSeg('peta', 'PETA MULA', ESC_MAPS.map((m, i) => [i, (i + 1) + ' · ' + m.name.replace('BLOK ', '')]), 'Selesai satu peta → teruskan ke peta seterusnya.'),
       lbSeg('rp', 'RP MAKSIMUM', [[15,'15'],[30,'30'],[50,'50']], 'Mudah ×0.8 · Sukar ×1.3.')]; },
-    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
+    preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), knFetch(escChar(arenaUi().team)), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
     starts: [['🚪 MASUK SEKOLAH', () => escStart()]],
+    get menu(){ const w = escCfg().watak; return [['ewatak', '🧍 Watak', ESC_CHARS.includes(w) ? KN_NAME(w) : 'Auto (ikut kumpulan)']]; },
+    views: {
+      ewatak: { t: 'PILIH WATAK', h: () => { setTimeout(knThumbFill, 30); const w = escCfg().watak;
+        return '<div class="lb-note" style="margin-bottom:6px">Watak kamu di sekolah berhantu (pandangan orang ketiga).</div>' +
+          '<button class="lb-team' + (!ESC_CHARS.includes(w) ? ' on' : '') + '" data-lb="ewk:auto" style="justify-content:center;font-weight:800">🎲 Auto (ikut kumpulan)</button>' +
+          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px">' + ESC_CHARS.map(n =>
+            '<button class="lb-team' + (w === n ? ' on' : '') + '" data-lb="ewk:' + n + '" style="flex-direction:column;gap:2px;padding:6px 2px;margin:0">' +
+            '<img data-kt="' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#3B1F2B,#120A10);border-radius:8px">' +
+            '<span style="font-size:10px;font-weight:700">' + KN_NAME(n) + '</span></button>').join('') + '</div>'; } }
+    },
+    act: (a, b, x) => { if (a.indexOf('ewk:') === 0){ escCfg().watak = a.slice(4); save(); x.setView('main'); return true; } return false; },
     how: () => 'Ahli kumpulan berbincang dan menjawab bersama. Sembunyi dalam <b>loker merah</b> jika dikejar!<br><b>Telefon:</b> sentuh kiri untuk berjalan, seret kanan untuk melihat.<br><b>Komputer:</b> WASD / anak panah + seret tetikus · E untuk berinteraksi.'
   },
   stor: {
@@ -10133,8 +10145,31 @@ const ESC_LIGHT = {
   terang: { fog:.06, torch:40, amb:1.1 }
 };
 let ESC = null;                                   // permainan yang sedang berjalan
+/* 3 peta (dimainkan berturut-turut). Bilik: [tingkat, sisi (-1 utara / 1 selatan), x1, x2, pintu, jenis, nama];
+   setiap tingkat perlukan tangga; jenis bilik sama dalam semua peta (kunci, kod & padanan bergantung padanya).
+   Almari 2 orang di dinding selatan: [tingkat, x] — jauh dari pintu bilik sisi selatan. */
+const ESC_MAPS = [
+  { name: 'BLOK BESTARI', floors: [56, 40], rooms: [
+      [0,-1,4,14,9,'class','KELAS 1 BESTARI'], [0,-1,18,34,26,'library','PERPUSTAKAAN'], [0,-1,38,48,43,'class','KELAS 2 CEMERLANG'],
+      [0,1,4,12,8,'toilet','TANDAS'], [0,1,16,26,21,'class','KELAS 3 DINAMIK'], [0,1,30,40,35,'staff','BILIK GURU'], [0,1,44,52,48,'stairs','TANGGA'],
+      [1,-1,4,14,9,'lab','MAKMAL SAINS'], [1,1,14,24,19,'class','KELAS 4 GEMILANG'], [1,-1,26,36,31,'music','BILIK MUZIK'], [1,1,30,38,34,'stairs','TANGGA']],
+    hides: [[0,2.6],[0,14],[0,28],[0,41.4],[1,6],[1,26]] },
+  { name: 'BLOK GEMILANG', floors: [60, 44], rooms: [
+      [0,-1,4,14,9,'class','KELAS 5 ARIF'], [0,-1,18,28,23,'staff','BILIK GURU'], [0,-1,32,42,37,'class','KELAS 6 AMANAH'], [0,-1,46,58,52,'library','PERPUSTAKAAN'],
+      [0,1,4,12,8,'stairs','TANGGA'], [0,1,16,26,21,'class','KELAS 7 BAKTI'], [0,1,30,38,34,'toilet','TANDAS'], [0,1,42,52,47,'class','KELAS 8 CERIA'],
+      [1,-1,4,14,9,'music','BILIK MUZIK'], [1,-1,18,28,23,'class','KELAS 9 DEDIKASI'], [1,1,8,18,13,'lab','MAKMAL SAINS'], [1,1,30,38,34,'stairs','TANGGA']],
+    hides: [[0,14.5],[0,27.5],[0,40.5],[0,56],[1,4],[1,24],[1,41]] },
+  { name: 'BLOK LAMA', floors: [68, 52], rooms: [
+      [0,-1,4,14,9,'class','KELAS 10 USAHA'], [0,-1,18,26,22,'toilet','TANDAS'], [0,-1,30,40,35,'class','KELAS 11 TEKUN'], [0,-1,44,54,49,'staff','BILIK GURU'], [0,-1,56,66,61,'class','KELAS 12 JUJUR'],
+      [0,1,6,22,14,'library','PERPUSTAKAAN LAMA'], [0,1,26,36,31,'class','KELAS 13 SABAR'], [0,1,58,66,62,'stairs','TANGGA'],
+      [1,-1,6,16,11,'lab','MAKMAL SAINS'], [1,-1,20,30,25,'class','KELAS 14 IKHLAS'], [1,-1,40,48,44,'stairs','TANGGA'],
+      [1,1,10,20,15,'music','BILIK MUZIK'], [1,1,28,38,33,'class','KELAS 15 AMANAH']],
+    hides: [[0,2.6],[0,24],[0,40],[0,48],[0,54],[1,5],[1,24],[1,42],[1,48]] }
+];
+const ESC_CHARS = ['male-a', 'male-b', 'male-c', 'male-e', 'female-a', 'female-b', 'female-c', 'female-e'];   // 8 watak boleh dipilih
+const escChar = sid => { const w = escCfg().watak; return ESC_CHARS.includes(w) ? w : ESC_CHARS[hashStr(String(sid || '')) % ESC_CHARS.length]; };
 function escCfg(){
-  S.config.esc = Object.assign({ scare:'penuh', diff:'sederhana', ghost:'rawak', light:'biasa', rp:30 }, S.config.esc || {});
+  S.config.esc = Object.assign({ scare:'penuh', diff:'sederhana', ghost:'rawak', light:'biasa', rp:30, peta:0 }, S.config.esc || {});
   return S.config.esc;
 }
 function escData(){
@@ -10221,7 +10256,7 @@ function escPairs(){
   }
   return out;
 }
-async function escStart(){
+async function escStart(lvl){                       // lvl: indeks peta (berturut-turut selepas menang)
   const o = arenaUi();
   if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
   if (ESC || RUN) return;
@@ -10234,12 +10269,13 @@ async function escStart(){
   let THREE;
   try { THREE = await import(ESC_THREE); }
   catch(e){ ESC = null; orientBack(); return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
-  try { escRun(THREE, o.team, ac); }
+  try { escRun(THREE, o.team, ac, typeof lvl === 'number' ? lvl : null); }
   catch(e){ ESC = null; orientBack(); const r = $('#escRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
-function escRun(THREE, sid, ac){
+function escRun(THREE, sid, ac, lvl){
   const cfg = escCfg();
+  const MAPI = Math.max(0, Math.min(ESC_MAPS.length - 1, lvl == null ? (+cfg.peta || 0) : lvl)), MAP = ESC_MAPS[MAPI];
   const D = ESC_DIFF[cfg.diff] || ESC_DIFF.sederhana, LT = ESC_LIGHT[cfg.light] || ESC_LIGHT.biasa;
   const QT = +cfg.qt || D.qtime, MT = Math.round(D.match * QT / D.qtime);   // masa menjawab dilaras guru
   const gKind = ESC_GHOSTS[cfg.ghost] ? cfg.ghost : ['putih','pontianak','toyol'][Math.floor(Math.random() * 3)];
@@ -10442,25 +10478,15 @@ function escRun(THREE, sid, ac){
   };
   const books = texMat(bookTex, 1, 1);
 
-  const FLOORS = [ { z0: 0, len: 56, name: 'TINGKAT BAWAH' }, { z0: 40, len: 40, name: 'TINGKAT ATAS' } ];
-  const rooms = [
-    { f:0, side:-1, x1:4,  x2:14, door:9,  kind:'class',   name:'KELAS 1 BESTARI' },
-    { f:0, side:-1, x1:18, x2:34, door:26, kind:'library', name:'PERPUSTAKAAN' },
-    { f:0, side:-1, x1:38, x2:48, door:43, kind:'class',   name:'KELAS 2 CEMERLANG' },
-    { f:0, side: 1, x1:4,  x2:12, door:8,  kind:'toilet',  name:'TANDAS' },
-    { f:0, side: 1, x1:16, x2:26, door:21, kind:'class',   name:'KELAS 3 DINAMIK' },
-    { f:0, side: 1, x1:30, x2:40, door:35, kind:'staff',   name:'BILIK GURU' },
-    { f:0, side: 1, x1:44, x2:52, door:48, kind:'stairs',  name:'TANGGA' },
-    { f:1, side:-1, x1:4,  x2:14, door:9,  kind:'lab',     name:'MAKMAL SAINS' },
-    { f:1, side: 1, x1:14, x2:24, door:19, kind:'class',   name:'KELAS 4 GEMILANG' },
-    { f:1, side:-1, x1:26, x2:36, door:31, kind:'music',   name:'BILIK MUZIK' },
-    { f:1, side: 1, x1:30, x2:38, door:34, kind:'stairs',  name:'TANGGA' }
-  ];
+  const FLOORS = MAP.floors.map((len, i) => ({ z0: i * 40, len, name: i ? 'TINGKAT ATAS' : 'TINGKAT BAWAH' }));
+  const rooms = MAP.rooms.map(([f, side, x1, x2, door, kind, name]) => ({ f, side, x1, x2, door, kind, name }));
   rooms.forEach(r => {
     r.zc = FLOORS[r.f].z0; r.zn = r.zc + r.side * 2; r.zf = r.zc + r.side * 12;
     r.cx = (r.x1 + r.x2) / 2; r.cz = r.zc + r.side * 7; r.inF = r.side < 0 ? '+z' : '-z';
   });
-  const HIDES = [ [0, 3], [0, 14], [0, 28], [0, 41], [1, 6], [1, 26] ];
+  const HIDES = MAP.hides;
+  const LKW = .78;                                       // separuh lebar almari (muat 2 orang)
+  const lockers = [];
   const fixtures = [], fans = [], clocks = [], sources = [], inter = [];
 
   FLOORS.forEach((F, fi) => {
@@ -10477,12 +10503,19 @@ function escRun(THREE, sid, ac){
       doors.forEach(d => box(d - 1, zA, d + 1, zB, H - 2.3, 2.3, dark, false));
       if (side > 0){                                             // loker sepanjang dinding selatan
         const hs = HIDES.filter(h => h[0] === fi).map(h => h[1]);
-        const cuts = doors.map(d => [d - 1.6, d + 1.6]).concat(hs.map(h => [h - .5, h + .5])).sort((a, b) => a[0] - b[0]);
+        const cuts = doors.map(d => [d - 1.6, d + 1.6]).concat(hs.map(h => [h - LKW - .05, h + LKW + .05])).sort((a, b) => a[0] - b[0]);
         let a = 1;
         cuts.concat([[F.len - 1, F.len]]).forEach(([c0, c1]) => { if (c0 - a > .3) box(a, zc + 1.55, c0, zc + 1.9, 2, 0, texMat(lockerTex, (c0 - a) / 4, 1), true); a = Math.max(a, c1); });
-        hs.forEach(h => {
-          box(h - .45, zc + 1.45, h + .45, zc + 1.9, 2.1, 0, M.hide, true);
-          inter.push({ f: fi, x: h, z: zc + .95, kind: 'hide', spot: { f: fi, x: h, zc } });
+        hs.forEach(h => {                                       // almari 2 orang: badan + 2 pintu berengsel (dianimasi)
+          [[h - LKW, zc + 1.86, h + LKW, zc + 1.9, 2.2, 0], [h - LKW, zc + 1.4, h - LKW + .05, zc + 1.9, 2.2, 0], [h + LKW - .05, zc + 1.4, h + LKW, zc + 1.9, 2.2, 0],
+           [h - LKW, zc + 1.4, h + LKW, zc + 1.9, .06, 2.14], [h - .02, zc + 1.45, h + .02, zc + 1.88, 2.1, 0]].forEach(b => box(b[0], b[1], b[2], b[3], b[4], b[5], M.hide, false));
+          solids.push({ x1: h - LKW, z1: zc + 1.4, x2: h + LKW, z2: zc + 1.9 });
+          const doors = [-1, 1].map(sd => { const piv = new THREE.Group(); piv.position.set(h + sd * LKW, 0, zc + 1.4);
+            const dm = new THREE.Mesh(new THREE.BoxGeometry(LKW - .03, 2.08, .04), M.hide); dm.position.set(-sd * (LKW / 2), 1.08, 0); piv.add(dm);
+            [.55, .7, .85].forEach(y => { const sl = new THREE.Mesh(new THREE.BoxGeometry(LKW * .6, .03, .01), new THREE.MeshBasicMaterial({ color: 0x050505 })); sl.position.set(-sd * (LKW / 2), 1.08 + y * .9, -.025); piv.add(sl); });
+            scene.add(piv); return { piv, sd, a: 0, to: 0 }; });
+          const lk = { x: h, zc, doors, occ: [null, null] }; lockers.push(lk);
+          inter.push({ f: fi, x: h, z: zc + .95, kind: 'hide', spot: { f: fi, x: h, zc, lk } });
         });
       }
     });
@@ -10752,11 +10785,53 @@ function escRun(THREE, sid, ac){
     rooms.filter(r => r.f === f && r.kind !== 'staff').forEach(r => pts.push([r.cx, r.cz]));
     return pts;
   });
-  const G = { f: 0, x: 44, z: 0, wx: 30, wz: 0, hunt: false, grace: 7, follow: 0 };
+  const G = { f: 0, x: Math.round(FLOORS[0].len * .78), z: 0, wx: Math.round(FLOORS[0].len * .55), wz: 0, hunt: false, grace: 7, follow: 0 };
   const huntSp = D.hunt + GT.hunt, sight = D.sight + GT.sight;
 
   /* ---------- keadaan permainan ---------- */
-  const P = { f: 0, x: 1.5, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0, hide: null };
+  const P = { f: 0, x: 3.2, z: 0, yaw: -Math.PI / 2, pitch: 0, bob: 0, hide: null, face: Math.PI / 2, anim: null, moving: false };
+  /* watak 3D (pandangan orang ketiga) */
+  let pm = null, pmMix = null; const PACT = {}; let pActNow = null;
+  const pPlay = n => { const a = PACT[n] || PACT.idle; if (!a || pActNow === a) return; a.reset().fadeIn(.18).play(); if (pActNow) pActNow.fadeOut(.18); pActNow = a; };
+  knModel(escChar(sid)).then(gl => {
+    if (!alive) return;
+    const m = gl.scene, bx = new THREE.Box3().setFromObject(m), h = bx.max.y - bx.min.y || 1, k = 1.62 / h;
+    m.scale.setScalar(k); m.position.y = -bx.min.y * k;
+    m.traverse(o => { if (o.isMesh){ o.frustumCulled = false; const mt = o.material; if (mt){ mt.roughness = .85; mt.needsUpdate = true; } } });
+    pm = new THREE.Group(); pm.add(m); scene.add(pm);
+    pmMix = new THREE.AnimationMixer(m); gl.animations.forEach(c => { PACT[c.name] = pmMix.clipAction(c); }); pPlay('idle');
+  }).catch(e => console.warn('watak seram', e));
+  const solidAt = (x, z) => solids.some(q => x > q.x1 - .08 && x < q.x2 + .08 && z > q.z1 - .08 && z < q.z2 + .08);
+  /* kamera orbit di belakang watak; dirapatkan bila terkena dinding */
+  const tpCam = () => {
+    const hy = 1.42, pit = clamp(P.pitch, -.55, .7) - .2, bx = Math.sin(P.yaw) * Math.cos(pit), by = -Math.sin(pit), bz = Math.cos(P.yaw) * Math.cos(pit);
+    const sh = .38, ox = P.x + Math.cos(P.yaw) * sh, oz = P.z - Math.sin(P.yaw) * sh;   // anjak ke bahu kanan
+    let d = 2.7;
+    for (let t = .25; t <= 2.7; t += .08){ const x = ox + bx * t, y = hy + by * t, z = oz + bz * t; if (y > H - .12 || y < .15 || solidAt(x, z)){ d = Math.max(.25, t - .2); break; } }
+    cam.position.set(ox + bx * d, hy + by * d, oz + bz * d); cam.lookAt(ox - bx * 3, hy + .12 - by * 3, oz - bz * 3);
+    if (pm) pm.visible = d > .55;
+  };
+  /* animasi almari: buka pintu → masuk / keluar → tutup pintu */
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function lockerAnim(dt){
+    lockers.forEach(lk => lk.doors.forEach(dr => { dr.a += (dr.to - dr.a) * Math.min(1, dt * 12); dr.piv.rotation.y = -dr.sd * dr.a; }));
+    const an = P.anim; if (!an) return;
+    an.t += dt; const lk = an.spot.lk, t = an.t;
+    const door = o => lk.doors.forEach(dr => dr.to = o ? 1.75 : 0);
+    if (an.kind === 'in'){
+      if (t < .3) door(true);
+      const k = clamp((t - .22) / .45, 0, 1);
+      P.x = lerp(an.x0, an.sx, k); P.z = lerp(an.z0, an.zc + 1.66, k); P.face = k < .7 ? Math.atan2(an.sx - an.x0, an.zc + 1.66 - an.z0) : Math.PI;
+      if (t > .72) door(false);
+      if (t > 1.0){ P.anim = null; P.hide = an.spot; P.yaw = 0; P.pitch = 0; lk.doors.forEach(dr => dr.piv.visible = false); /* pandangan dari celah (lapisan escSlit) */ $e('#escSlit').style.display = 'block'; torch.intensity = 0; msg('Kamu bersembunyi… tahan nafas.', 2200); }
+    } else {
+      if (t < .25) door(true);
+      const k = clamp((t - .2) / .4, 0, 1);
+      P.x = an.sx; P.z = lerp(an.zc + 1.66, an.zc + .95, k); P.face = Math.PI;
+      if (t > .65) door(false);
+      if (t > .85){ P.anim = null; lk.occ[an.slot] = null; paused = false; P.yaw = -Math.PI / 2; P.face = Math.PI / 2; }   // kembali menghadap koridor
+    }
+  }
   let lives = D.lives, elapsed = 0, paused = false, alive = true, ended = false;
   let answered = 0, correct = 0, near = null, lastStep = 0, actLabel = '', room = null, laughT = 14;
   const got = [];                                     // sumber kunci mengikut urutan diperoleh (untuk toyol)
@@ -11026,23 +11101,24 @@ function escRun(THREE, sid, ac){
   function hide(spot){
     const dist = G.f === P.f ? Math.hypot(G.x - P.x, G.z - P.z) : 99;
     if (G.hunt && dist < 2.5){ sfx('buzz'); return msg('<span style="color:#FF5A5A">Terlalu dekat — ia nampak kamu!</span>'); }
-    P.hide = spot; stopInput(); sfx('clank');
-    P.x = spot.x; P.z = spot.zc + 1.72; P.yaw = 0; P.pitch = 0;
-    $e('#escSlit').style.display = 'block'; torch.intensity = 0;
+    if (P.anim) return;
+    const lk = spot.lk, slot = lk.occ[0] ? 1 : 0;
+    if (lk.occ[0] && lk.occ[1]) return msg('Almari ini sudah penuh!');
+    lk.occ[slot] = 'me'; stopInput(); sfx('clank');
+    P.anim = { kind: 'in', t: 0, spot, slot, x0: P.x, z0: P.z, sx: spot.x + (slot ? .37 : -.37), zc: spot.zc };
     if (G.hunt){ G.hunt = false; const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; }
-    msg('Kamu bersembunyi… tahan nafas.', 2200);
   }
   function unhide(){
-    const s = P.hide; P.hide = null; sfx('clank');
-    P.x = s.x; P.z = s.zc + 1.0; P.yaw = 0;
-    $e('#escSlit').style.display = 'none'; torch.intensity = LT.torch;
+    const s = P.hide, slot = s.lk.occ[0] === 'me' ? 0 : 1; P.hide = null; sfx('clank'); paused = true; s.lk.doors.forEach(dr => dr.piv.visible = true);
+    $e('#escSlit').style.display = 'none'; torch.intensity = LT.torch; P.yaw = Math.PI; P.pitch = 0;   // kamera di belakang watak menghadap koridor
+    P.anim = { kind: 'out', t: 0, spot: s, slot, sx: P.x, zc: s.zc };
   }
   function takeStairs(to){
     paused = true; stopInput(); sfx('stairs');
     const fade = $e('#escFade'); fade.style.opacity = 1;
     setTimeout(() => {
       const r = STAIRS[to];
-      P.f = to; P.x = r.door; P.z = r.zc + r.side * 3.2; P.yaw = 0; P.pitch = 0;
+      P.f = to; P.x = r.door; P.z = r.zc + r.side * 3.2; P.yaw = 0; P.pitch = 0; P.face = Math.PI;
       fade.style.opacity = 0; paused = false;
       msg(FLOORS[to].name, 1800);
     }, 1300);
@@ -11092,18 +11168,18 @@ function escRun(THREE, sid, ac){
       if (!alive) return;
       s.style.display = 'none'; s.innerHTML = '';
       if (lives <= 0) return lose();
-      P.f = 0; P.x = 1.5; P.z = 0; P.yaw = -Math.PI / 2; P.pitch = 0;
+      P.f = 0; P.x = 3.2; P.z = 0; P.yaw = -Math.PI / 2; P.pitch = 0; P.face = Math.PI / 2;
       const far = WAYS[0].slice().sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.z) - Math.hypot(a[0] - P.x, a[1] - P.z))[0];
       G.f = 0; G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
       paused = false; msg('Kamu terjaga semula di pintu masuk… <span style="color:#E23B3B">'+lives+' nyawa</span> lagi.', 3000);
     }, soft ? 1300 : 1500);
   }
-  function endScreen(html){
+  function endScreen(html, next){
     ended = true; paused = true; stopInput(); $e('#escAct').style.display = 'none'; actLabel = '';
     const e = $e('#escEnd'); e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:400px">' + html +
-      '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button></div></div>';
+      '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button>' + (next ? '<button class="btn btn-o clip-s flex-1 !py-3" data-end="next">Peta ' + (MAPI + 2) + ' ›</button>' : '<button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button>') + '</div></div>';
     e.style.display = 'flex';
-    e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const again = b.dataset.end === 'again'; quit(); if (again) setTimeout(escStart, 50); };
+    e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const go = b.dataset.end; quit(); if (go === 'again') setTimeout(() => escStart(MAPI), 50); else if (go === 'next') setTimeout(() => escStart(MAPI + 1), 50); };
   }
   function win(){
     sfx('win');
@@ -11118,13 +11194,13 @@ function escRun(THREE, sid, ac){
     save(true);
     endScreen('<i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i>' +
       '<div class="font-bold tracking-widest text-[20px] mt-2" style="color:#4ADE80">BERJAYA KELUAR!</div>' +
-      '<div class="text-[13px] text-muted mt-1">'+esc(player ? player.name : '')+' melarikan diri dari '+esc(GT.name)+' · '+D.name+'</div>' +
+      '<div class="text-[13px] text-muted mt-1">'+esc(player ? player.name : '')+' melarikan diri dari '+esc(GT.name)+' · PETA '+(MAPI + 1)+' '+esc(MAP.name)+' · '+D.name+'</div>' +
       (tp ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#00F0FF"><b style="color:'+TP_COLOR[tp]+'">TP'+tp+'</b> direkod dalam PBD untuk '+player.members.length+' ahli kumpulan</div>' : '') +
       '<div class="grid grid-cols-3 gap-2 mt-4 num">' +
         '<div class="panel clip-s p-2"><div class="text-[18px] text-cyan">'+fmtSec(sec)+'</div><div class="text-[10px] text-muted">MASA'+(!prev || sec < prev ? ' · REKOD!' : '')+'</div></div>' +
         '<div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FFD76A">'+correct+'/'+answered+'</div><div class="text-[10px] text-muted">BETUL</div></div>' +
         '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+'+rp+'</div><div class="text-[10px] text-muted">RP</div></div></div>' +
-      (first ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#E23B3B"><i class="fa-solid fa-certificate" style="color:#E23B3B"></i> Lencana baharu: <b>Pelarian Seram</b></div>' : ''));
+      (first ? '<div class="panel clip-s p-2 mt-3 text-[12px]" style="border-color:#E23B3B"><i class="fa-solid fa-certificate" style="color:#E23B3B"></i> Lencana baharu: <b>Pelarian Seram</b></div>' : ''), MAPI < ESC_MAPS.length - 1);
   }
   function stopEarly(){
     const tp = gameToPBD(sid, 'esc', correct, answered, { win: 0, early: 1 });
@@ -11163,7 +11239,7 @@ function escRun(THREE, sid, ac){
   const fwd = new THREE.Vector3();
   let last = performance.now(), beatT = 0, tickT = 0;
   function update(dt, now){
-    if (!P.hide){
+    if (!P.hide && !P.anim){
       let mx = joy.x, my = joy.y;
       if (kb['w'] || kb['arrowup']) my -= 1;
       if (kb['s'] || kb['arrowdown']) my += 1;
@@ -11173,14 +11249,15 @@ function escRun(THREE, sid, ac){
       if (m > .05){
         const sp = 3.3 * m, sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
         const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
-        P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt;
+        P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt; P.face = Math.atan2(vx, vz);
         P.bob += dt * 9 * m;
         if (now - lastStep > 430){ lastStep = now; sfx('step'); }
       }
       collide(P, .3);
+      P.moving = m > .05;
     }
-    cam.position.set(P.x, (P.hide ? 1.55 : 1.6 + Math.sin(P.bob) * .04), P.z);
-    cam.rotation.set(P.pitch, P.yaw, 0);
+    if (P.hide){ cam.position.set(P.x, 1.5, P.z); cam.rotation.set(P.pitch, P.yaw, 0); if (pm) pm.visible = false; }   // dalam almari: pandangan dari celah pintu
+    else tpCam();
     // hantu
     if (G.f !== P.f){
       G.hunt = false;
@@ -11241,7 +11318,7 @@ function escRun(THREE, sid, ac){
     });
     // di mana pemain berada
     const inRoom = rooms.find(r => r.f === P.f && P.x > r.x1 && P.x < r.x2 && (P.z - r.zc) * r.side > 2 && (P.z - r.zc) * r.side < 12) || null;
-    if (inRoom !== room){ room = inRoom; $e('#escWhere').textContent = FLOORS[P.f].name + (room ? ' · ' + room.name : ' · KORIDOR'); }
+    if (inRoom !== room){ room = inRoom; $e('#escWhere').textContent = 'PETA ' + (MAPI + 1) + ' ' + MAP.name + ' · ' + FLOORS[P.f].name + (room ? ' · ' + room.name : ' · KORIDOR'); }
     // benda yang boleh disentuh berhampiran
     near = null; let best = 2.4;
     if (P.hide) near = { kind: 'unhide' };
@@ -11284,6 +11361,10 @@ function escRun(THREE, sid, ac){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!paused && !ended){ elapsed += dt; $e('#escTime').textContent = fmtSec(elapsed); update(dt, now); }
+    else if (P.anim){ lockerAnim(0); tpCam(); }
+    lockerAnim(dt);
+    if (pm){ pm.position.set(P.x, 0, P.z); let df = P.face - pm.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); pm.rotation.y += df * Math.min(1, dt * 12);
+      pPlay(P.anim ? 'walk' : P.moving && !paused ? (PACT.sprint && Math.hypot(joy.x, joy.y) > .85 ? 'sprint' : 'walk') : 'idle'); pmMix.update(dt); }
     ambient(dt, now);
     R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
     requestAnimationFrame(frame);
