@@ -6657,7 +6657,8 @@ async function kmNet(code, cfg){
   }
   if (d){
     const ref = k => d.ref(db, 'ipbd_share/__kombo_' + code + '/' + k);
-    return { kind: 'fb', set: (k, v) => { try { d.set(ref(k), v === undefined ? null : JSON.parse(JSON.stringify(v))).catch(e => console.warn('kombo set', k, e)); } catch(e){ console.warn('kombo set', k, e); } },   // Firebase menolak nilai undefined — buang dahulu on: (k, cb) => d.onValue(ref(k), sn => cb(sn.val())) };
+    return { kind: 'fb', set: (k, v) => { try { d.set(ref(k), v === undefined ? null : JSON.parse(JSON.stringify(v))).catch(e => console.warn('kombo set', k, e)); } catch(e){ console.warn('kombo set', k, e); } },   // Firebase menolak nilai undefined — buang dahulu
+      on: (k, cb) => d.onValue(ref(k), sn => cb(sn.val())) };
   }
   if (!('BroadcastChannel' in window)) return null;
   const ch = new BroadcastChannel('edurank-kombo-' + code), subs = {}, last = {};
