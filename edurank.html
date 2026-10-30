@@ -3760,14 +3760,13 @@ function quizRecord(sid, ok){
    menerangkan kesilapan yang ITU, bukan kesilapan umum.                */
 function tqPrompt(sj, info, nq, scope){
   const sjn = (S.subjects.find(x => x.id === sj) || {}).name || 'Subjek';
-  const n = clamp(+nq || 20, 6, 60);
+  const n = clamp(+nq || 60, 6, 60), nShort = Math.floor(n / 2), nLong = n - nShort;   // separuh panjang, separuh pendek
   const extra = String(info || '').trim();
   const dk = scope ? dskpPromptBlock(sj, scope) : '';
   return [
     'Anda guru pakar yang menulis soalan untuk permainan pendidikan sekolah di Malaysia. Semuanya dalam Bahasa Melayu.',
-    'Dalam permainan ini, pelajar menjawab soalan untuk membuka pintu, menyerang dengan kad atau memilih gerbang semasa berlari. ' +
-      'Jika dia salah, permainan TERUS menunjukkan jawapan yang betul. Jadi setiap soalan perlu bukan sahaja betul, ' +
-      'tetapi juga membawa pengajaran bagi setiap kesilapan yang mungkin.',
+    'Dalam permainan ini, pelajar menjawab soalan untuk membuka pintu, menyerang dengan kad, memadankan kad atau memilih gerbang semasa berlari. ' +
+      'Jika dia salah, permainan TERUS menunjukkan jawapan yang betul berserta huraian ringkas.',
     '',
     'SUBJEK: ' + sjn,
     dk ? 'Soalan WAJIB berdasarkan Dokumen Standard Kurikulum dan Pentaksiran (DSKP) KSSM berikut:\n' + dk +
@@ -3775,58 +3774,53 @@ function tqPrompt(sj, info, nq, scope){
          'dan tulis kod SP itu (cth. "9.2.1") dalam medan "sp". Jangan keluar daripada skop SP yang disenaraikan.' : '',
     extra ? 'MAKLUMAT TAMBAHAN DARIPADA GURU (ikut ini dengan tepat — tingkatan, bab, tajuk atau topik): ' + extra
           : (dk ? '' : 'MAKLUMAT TAMBAHAN: tiada diberi — pilih tajuk teras subjek ini yang sesuai untuk sekolah menengah.'),
-    'BILANGAN SOALAN: tepat ' + n + ' soalan. Tiada soalan berulang.',
+    '',
+    'BILANGAN SOALAN: tepat ' + n + ' soalan dalam SATU senarai, tiada soalan berulang:',
+    '  • ' + nLong + ' soalan PANJANG — "jenis": "panjang". Soalan biasa yang jelas; pilihan jawapan boleh beberapa perkataan.',
+    '  • ' + nShort + ' soalan PENDEK — "jenis": "pendek". Untuk teka-teki padanan kad dan gerbang larian (dibaca sambil bergerak):',
+    '      - soalan MAKSIMUM 10 perkataan;',
+    '      - SETIAP pilihan jawapan (termasuk jawapan betul) MAKSIMUM 3 perkataan;',
+    '      - jawapan betul mesti unik — tiada dua soalan pendek yang mempunyai jawapan betul yang sama.',
+    'Soalan pendek boleh menguji konsep yang sama dengan soalan panjang, tetapi ditulis semula dengan ringkas.',
     '',
     'PERATURAN SOALAN:',
     'a. Setiap soalan: 4 pilihan jawapan, tepat SATU betul.',
-    'b. Ketiga-tiga pilihan lain mesti kesilapan yang MASUK AKAL — salah faham yang betul-betul berlaku dalam ' +
-      'kelas, bukan pilihan karut yang mudah ditolak.',
+    'b. Ketiga-tiga pilihan lain mesti kesilapan yang MASUK AKAL — salah faham yang betul-betul berlaku dalam kelas, bukan pilihan karut.',
     'c. Aras soalan bercampur: lebih kurang separuh mengingat dan memahami, separuh lagi mengaplikasi dan menganalisis.',
     'd. Soalan mesti benar secara fakta dan selaras dengan kurikulum Malaysia bagi tajuk yang guru nyatakan.',
-    'e. Soalan dijawab dalam ' + QUIZ_TIME + ' saat sambil bermain, jadi pastikan ayatnya pendek dan jelas. ' +
-      'Jangan soalan berbentuk petikan panjang atau yang memerlukan pengiraan berperingkat.',
+    'e. Soalan dijawab dalam ' + QUIZ_TIME + ' saat sambil bermain, jadi pastikan ayatnya jelas. Jangan soalan berbentuk petikan panjang atau pengiraan berperingkat.',
+    'f. Jangan guna "semua di atas", "tiada di atas" atau rujukan kepada pilihan lain.',
     '',
-    'EJEKAN + HURAIAN BAGI SETIAP JAWAPAN SALAH (ini bahagian paling penting):',
-    'Bagi SETIAP pilihan yang SALAH, tulis satu balasan watak lawan yang khusus untuk pilihan ITU. Setiap balasan mesti:',
-    '  (a) bermula dengan usikan pendek bersuara watak lawan;',
-    '  (b) mengandungi token {a} — permainan menggantikannya dengan teks jawapan yang betul;',
-    '  (c) menerangkan dalam 2 hingga 4 ayat KENAPA jawapan betul itu betul, berdasarkan isi pelajaran;',
-    '  (d) menerangkan KENAPA pilihan yang pelajar tekan itu salah — sebut salah fahamnya secara khusus.',
-    'Jadi tiga pilihan salah = tiga huraian BERBEZA, bukan satu huraian yang sama disalin tiga kali. ' +
-      'Inilah saat pelajar belajar, jadi jangan pendekkan.',
-    'Contoh bentuk: "Haha, tersilap! Jawapannya {a}. Membran sel separa telap, jadi hanya molekul kecil boleh lalu. ' +
-      'Kau pilih dinding sel — itu cuma ada pada sel tumbuhan dan ia menyokong, bukan menapis."',
-    'Nada: mengusik ringan dan sesuai dibaca di depan kelas. Tidak menghina pelajar.',
+    'HURAIAN: setiap soalan ada "huraian" — 1 hingga 2 ayat NEUTRAL yang menerangkan kenapa jawapan betul itu betul, ' +
+      'mengandungi token {a} (permainan menggantikannya dengan teks jawapan betul). Tiada usikan atau ejekan.',
     '',
     'PULANGKAN JSON SAHAJA. Tiada ayat pengenalan, tiada penjelasan, tiada pagar kod markdown. Format tepat:',
     '{',
     '  "tajuk": "nama tajuk atau topik soalan ini",',
     '  "soalan": [',
     '    {',
-    '      "soalan": "teks soalan penuh",',
-    '      "pendek": "versi SANGAT pendek soalan yang sama, MAKSIMUM 10 perkataan",',
-    '      "jawapan_pendek": "jawapan betul diringkaskan, MAKSIMUM 5 perkataan",',
+    '      "jenis": "panjang",',
+    '      "soalan": "teks soalan",',
     dk ? '      "sp": "kod Standard Pembelajaran yang diuji, cth 9.2.1",' : '',
     '      "pilihan": ["teks A", "teks B", "teks C", "teks D"],',
     '      "betul": 2,',
-    '      "huraian": "kenapa jawapan betul itu betul, 1-2 ayat, mengandungi {a}",',
-    '      "ejek": [',
-    '        "balasan jika pelajar pilih A: usikan + {a} + kenapa A salah",',
-    '        "balasan jika pelajar pilih B: usikan + {a} + kenapa B salah",',
-    '        "",',
-    '        "balasan jika pelajar pilih D: usikan + {a} + kenapa D salah"',
-    '      ]',
+    '      "huraian": "kenapa jawapan betul itu betul, 1-2 ayat, mengandungi {a}"',
+    '    },',
+    '    {',
+    '      "jenis": "pendek",',
+    '      "soalan": "soalan ringkas, maksimum 10 perkataan",',
+    dk ? '      "sp": "9.2.1",' : '',
+    '      "pilihan": ["≤3 perkataan", "≤3 perkataan", "≤3 perkataan", "≤3 perkataan"],',
+    '      "betul": 0,',
+    '      "huraian": "1 ayat, mengandungi {a}"',
     '    }',
     '  ]',
     '}',
     '',
-    'NOTA PENTING tentang medan "betul" dan "ejek":',
+    'NOTA PENTING:',
     '· "betul" ialah INDEKS bermula 0 (0 = pilihan pertama, 3 = pilihan keempat). Bukan huruf, bukan teks jawapan.',
-    '· "ejek" ialah array 4 item yang SELARI dengan "pilihan": item ke-0 untuk pilihan pertama, dan seterusnya. ' +
-      'Letak string kosong "" pada kedudukan jawapan yang betul.',
-    '· "pendek" dan "jawapan_pendek" digunakan untuk teka-teki padanan kad (kad kecil): soalan maksimum 10 perkataan, jawapan maksimum 5 perkataan, ' +
-      'maksud mesti sama dengan soalan penuh dan jawapan betulnya. Jangan guna "pilihan di atas" atau rujukan kepada pilihan lain.',
-    '· Medan "soalan", "pendek", "jawapan_pendek", "pilihan", "betul", "huraian" dan "ejek" WAJIB ada pada setiap soalan.'
+    '· Letakkan dahulu semua ' + nLong + ' soalan panjang, kemudian ' + nShort + ' soalan pendek. Kedudukan jawapan betul dirawakkan.',
+    '· Medan "jenis", "soalan", "pilihan", "betul" dan "huraian" WAJIB ada pada setiap soalan.'
   ].filter(Boolean).join('\n');
 }
 
@@ -3846,7 +3840,7 @@ function tqParse(raw, sj, bab){
   const qs = sQuestions(arr, 't' + Date.now().toString(36), 60);
   if (!qs.length) throw new Error('Tiada soalan sah. Setiap soalan perlu "soalan", "pilihan" dan "betul".');
   return qs.map((q, i) => { const sp = skCode(q.sp); return { id:uid('q'), subjectId:sj, chapterId:ch,
-    q:q.q, c:q.c, a:q.a, ejek:q.ejek, huraian:q.huraian, qs:q.qs || '', as:q.as || '', sp, sk: sp ? sp.split('.').slice(0, 2).join('.') : '' }; });
+    q:q.q, c:q.c, a:q.a, ejek:q.ejek, huraian:q.huraian, short:!!q.short, qs:q.qs || '', as:q.as || '', sp, sk: sp ? sp.split('.').slice(0, 2).join('.') : '' }; });
 }
 
 const tqHasExp = q => !!(q && ((q.ejek || []).some(Boolean) || q.huraian));
@@ -3858,7 +3852,7 @@ function tqBuild(opt){
   if (!sj) return toast('Pilih subjek di bahagian atas dahulu.', null, true);
   const sjn = subjName(sj);
   S.ui.tqInfo = S.ui.tqInfo || '';
-  S.ui.tqN = S.ui.tqN || 20;
+  S.ui.tqN = S.ui.tqN || 60;
   const id = openModal({ icon:'fa-brain', title:'Jana Soalan Dengan AI',
     body:
       '<div class="panel clip-s p-2" style="border-color:#FF6B00">' +
@@ -3876,8 +3870,8 @@ function tqBuild(opt){
           esc(S.ui.tqInfo) + '">' +
         '<label class="lbl mt-2 block">BERAPA SOALAN</label>' +
         '<select id="tqN" class="fld clip-s num mt-1">' +
-          [10,15,20,25,30,40,50,60].map(v => '<option value="' + v + '"' +
-            (+S.ui.tqN === v ? ' selected' : '') + '>' + v + ' soalan</option>').join('') + '</select>' +
+          [10,20,30,40,50,60].map(v => '<option value="' + v + '"' +
+            (+S.ui.tqN === v ? ' selected' : '') + '>' + v + ' soalan (' + Math.ceil(v / 2) + ' panjang + ' + Math.floor(v / 2) + ' pendek)</option>').join('') + '</select>' +
         '<button class="btn btn-o clip-s w-full mt-2 !py-2 text-[13px]" data-tq="copy">' +
           '<i class="fa-solid fa-clipboard"></i> SALIN PROMPT</button>' +
         '<div class="flex gap-2 mt-2">' +
@@ -3901,7 +3895,7 @@ function tqBuild(opt){
     const i = $('#tqInfo', bd), n = $('#tqN', bd), sc = $('#tqScope', bd);
     if (i) S.ui.tqInfo = i.value.trim();
     if (sc) S.ui.tqScope = sc.value;
-    if (n) S.ui.tqN = +n.value || 20;
+    if (n) S.ui.tqN = +n.value || 60;
   };
   bd.addEventListener('input', () => {
     keep();
@@ -4082,8 +4076,9 @@ function sQuestions(arr, bi, cap){
       if (ej[j].indexOf('{a}') < 0) ej[j] = 'Jawapannya {a}. ' + ej[j];
     }
     const words = (t, n) => String(t || '').trim().split(/s+/).filter(Boolean).slice(0, n).join(' ');
-    out.push({ id:'sq' + bi + '_' + k, q:qt, c, a, ejek:ej, sp: sTxt(v.sp, 24),
-      qs: words(sTxt(v.pendek, 120), 10), as: words(sTxt(v.jawapan_pendek, 60), 5),
+    const short = String(v.jenis || '').toLowerCase() === 'pendek';
+    out.push({ id:'sq' + bi + '_' + k, q:qt, c, a, ejek:ej, sp: sTxt(v.sp, 24), short,
+      qs: short ? '' : words(sTxt(v.pendek, 120), 10), as: short ? '' : words(sTxt(v.jawapan_pendek, 60), 5),
       huraian: hur ? (hur.indexOf('{a}') < 0 ? 'Jawapannya {a}. ' + hur : hur) : 'Jawapan betul ialah {a}.' });
   });
   return out;
@@ -10805,7 +10800,8 @@ function escMathQ(){
   return { q: a + ' ' + sym + ' ' + b + ' = ?', c: Array.from(opts).map(String), a: 0, ans: String(ans), short: a + ' ' + sym + ' ' + b };
 }
 function escQuestion(){
-  const bank = topicalBank(S.ui.activeSubjectId);
+  const all = topicalBank(S.ui.activeSubjectId), long = all.filter(q => !q.short);   // soalan pendek dikhaskan untuk padanan & larian
+  const bank = long.length ? Object.assign(long, { prefer: all.prefer }) : all;
   if (!bank.length) return escMathQ();
   const q = nextQ(bank);
   const keep = [0,1,2,3].filter(i => q.c[i] !== undefined && q.c[i] !== '');
