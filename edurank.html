@@ -9442,6 +9442,7 @@ function storRun(team, mp){
   function quit(){
     if (STOR && STOR.closed) return;
     if (mpOff) try { mpOff(); } catch(e){}
+    if (winOff) try { winOff(); } catch(e){}
     if (mp && !over) mp.T.set('res', { quit: true, t: Date.now() });
     if (!over && (good || poor || left)){ over = true; clearInterval(loop); if (!mp) save(); }
     over = true; clearInterval(loop); STOR = null;
@@ -9697,14 +9698,22 @@ async function runHost(){
   const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
   const c = runCfg(), qs = [];
   for (let i = 0; i < 30; i++){ const q = escQuestion(); qs.push({ q: q.q, c: q.c, a: q.a }); }
-  const cfg = { g: 'run', code, lvl: c.lvl, qt: c.qt, qs, seats: seats.map(g => ({ id: g.id, name: g.name, joined: false })), started: false };
+  const cfg = { g: 'run', code, lvl: c.lvl, qt: c.qt, qs, seats: seats.map(g => ({ id: g.id, name: g.name, joined: false, char: null })), started: false };
   const st = {}, offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#3A2410,#07050A');
   document.body.appendChild(ov); lockBody();
   const pub = () => T.set('run', cfg);
-  let done = false;
+  let done = false, ending = false;
+  /* tamat: pemenang (pelari terakhir / skor tertinggi) → kamera raikan pemenang → podium → keputusan */
+  const order = win => { const js = cfg.seats.map((y, k) => k).filter(k => cfg.seats[k].joined).sort((a, b) => ((st[b] || {}).sc || 0) - ((st[a] || {}).sc || 0));
+    return win == null ? js : [win].concat(js.filter(k => k !== win)); };
+  function endGame(win){
+    if (ending || done) return; ending = true;
+    const ord = order(win); T.set('win', { seat: ord[0], t: Date.now() });
+    if (RUN && RUN.celebrate){ RUN.celebrate(ord); setTimeout(() => finish(ord), 11500); } else finish(ord);
+  }
   const row = (x, i) => { const r = st[i] || {};
     return '<div class="panel clip-s p-2 flex items-center gap-2">' + teamAvatar(x.id, 26) + '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div>' +
-      (!cfg.started ? '<span class="text-[11px]" style="color:' + (x.joined ? '#4ADE80">✅ sudah sertai' : '#F59E0B">⏳ menunggu…') + '</span>'
+      (!cfg.started ? '<span class="text-[11px]" style="color:' + (x.joined ? '#4ADE80">✅ ' + KN_NAME(x.char || 'male-a') : '#F59E0B">⏳ menunggu…') + '</span>'
         : '<span class="num text-[11px] text-muted">' + (r.d || 0) + ' m · ' + (r.r || 0) + '/' + (r.a || 0) + ' · ' + '<span style="color:#FF4D6A">' + '❤'.repeat(Math.max(0, r.l == null ? 3 : r.l)) + '</span></span>' +
           '<b class="num text-[15px]" style="color:' + (r.over ? '#94A3B8' : '#FFB347') + ';min-width:52px;text-align:right">' + (r.sc || 0) + (r.over ? ' 🏁' : '') + '</b>') + '</div>'; };
   const paint = () => {
@@ -9723,10 +9732,10 @@ async function runHost(){
           (n ? '▶ MULA (' + n + '/' + cfg.seats.length + ' telefon)' : '⏳ Menunggu telefon…') + '</button></div>') + '</div>';
   };
   const close = () => { clearInterval(hb); offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
-  function finish(){                                   // rekod RP & PBD bagi setiap kumpulan yang berlari
+  function finish(ord){                                // rekod RP & PBD bagi setiap kumpulan yang berlari
     if (done) return; done = true;
     const d = runData(); d.gbest = d.gbest || {};
-    const res = cfg.seats.map((x, i) => [x, st[i] || {}]).filter(([x]) => x.joined).sort((a, b) => (b[1].sc || 0) - (a[1].sc || 0));
+    const res = (Array.isArray(ord) ? ord : order(null)).map(i => [cfg.seats[i], st[i] || {}]);
     const rows = res.map(([x, r], k) => { const sc = r.sc || 0, rp = runRP(sc);
       if (sc > (d.gbest[x.id] || 0)) d.gbest[x.id] = sc; d.plays[x.id] = (d.plays[x.id] || 0) + 1;
       teamRP(x.id, rp); const tp = gameToPBD(x.id, 'run', r.r || 0, r.a || 0, { score: sc });
@@ -9741,9 +9750,14 @@ async function runHost(){
       '<div class="grid gap-2 mt-3 text-left">' + rows + '</div><button class="btn btn-o clip-s w-full !py-3 mt-3" data-r="x">Tutup</button></div>';
   }
   cfg.seats.forEach((x, i) => {
-    offs.push(T.on('j' + i, v => { if (v && !x.joined && !cfg.started){ x.joined = true; pub(); paint(); } }));
-    offs.push(T.on('r' + i, v => { if (!v || done || !cfg.started) return; st[i] = v; paint();
-      if (cfg.seats.every((y, k) => !y.joined || (st[k] && st[k].over))) finish(); }));
+    offs.push(T.on('j' + i, v => { if (v && !x.joined && !cfg.started){
+      const used = cfg.seats.filter(y => y.joined).map(y => y.char);            // watak sudah diambil → beri watak lain yang bebas
+      x.char = KN_CHARS.includes(v.char) && !used.includes(v.char) ? v.char : KN_CHARS.find(c2 => !used.includes(c2));
+      x.joined = true; pub(); paint(); } }));
+    offs.push(T.on('r' + i, v => { if (!v || done || ending || !cfg.started) return; st[i] = v; paint();
+      const js = cfg.seats.map((y, k) => k).filter(k => cfg.seats[k].joined), alive = js.filter(k => !(st[k] && st[k].over));
+      if (js.length > 1 && alive.length === 1) endGame(alive[0]);                 // tinggal seorang = pemenang
+      else if (!alive.length) endGame(null); }));
   });
   const hb = setInterval(pub, 2000); pub(); paint();
   ov.onclick = e => {
@@ -9757,13 +9771,13 @@ async function runHost(){
     cfg.started = true; pub(); paint(); ov.style.display = 'none';
     let THREE; try { THREE = await import(ESC_THREE); } catch(er){ ov.style.display = ''; return toast('Gagal memuat enjin 3D.', null, true); }
     RUN = { loading: true };
-    try { runGame(THREE, cfg.seats.find(x => x.joined).id, ac, null, { cfg, st, finish, T }); }
+    try { runGame(THREE, cfg.seats.find(x => x.joined).id, ac, null, { cfg, st, finish: () => endGame(null), T }); }
     catch(er){ RUN = null; ov.style.display = ''; console.error(er); toast('Tayangan gagal dimulakan — papan kedudukan dipaparkan.', null, true); }
   }
 }
 /* telefon kumpulan: pilih kumpulan → tunggu hos → berlari */
 function runJoin(code, T){
-  let cfg = null, seat = -1, ac = null, started = false;
+  let cfg = null, seat = -1, ac = null, started = false, char = null;
   const offs = [], ov = document.createElement('div'); ov.id = 'mpRoom'; ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#3A2410,#07050A');
   if (LVW.view) LVW.view.close();                         // telefon ini pemain, bukan tayangan
   document.body.appendChild(ov); lockBody();
@@ -9772,9 +9786,14 @@ function runJoin(code, T){
     '<button class="btn clip-s w-full !py-2 mt-3" data-j="x">Keluar</button></div>';
   const paint = () => {
     if (!cfg){ ov.innerHTML = panel('<div class="mt-4 text-muted">Mencari bilik…</div>'); return; }
-    if (seat < 0){ ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">PILIH KUMPULAN KAMU</div><div class="grid grid-cols-2 gap-2 mt-3">' +
+    const taken = cfg.seats.filter((x, i) => x.joined && i !== seat).map(x => x.char);
+    if (char && seat < 0 && taken.includes(char)){ char = null; toast('Watak itu baru diambil kumpulan lain — pilih yang lain.', null, true); }
+    if (!char){ setTimeout(knThumbFill, 30); ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">1 · PILIH WATAK KAMU</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">' + KN_CHARS.map(n => { const tk = taken.includes(n);
+        return '<button class="btn clip-s" data-c="' + n + '"' + (tk ? ' disabled style="opacity:.35;display:flex;flex-direction:column;gap:2px;padding:6px 2px"' : ' style="display:flex;flex-direction:column;gap:2px;padding:6px 2px"') + '><img data-kt="' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#2B3B5C,#141C2E);border-radius:8px"><span class="text-[10px]">' + (tk ? '🔒 diambil' : KN_NAME(n)) + '</span></button>'; }).join('') + '</div>'); return; }
+    if (seat < 0){ ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">2 · PILIH KUMPULAN KAMU</div><div class="text-[12px] text-muted">Watak: ' + KN_NAME(char) + ' <button class="underline" data-c="">tukar</button></div><div class="grid grid-cols-2 gap-2 mt-3">' +
       cfg.seats.map((x, i) => '<button class="btn clip-s !py-3 text-[13px]" data-s="' + i + '"' + (x.joined ? ' disabled style="opacity:.4"' : '') + '>' + esc(x.name) + (x.joined ? ' ✅' : '') + '</button>').join('') + '</div>'); return; }
-    ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
+    ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + ' · ' + KN_NAME(cfg.seats[seat].char || char) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
   };
   offs.push(T.on('run', v => {
     if (!v || started) return;
@@ -9785,17 +9804,18 @@ function runJoin(code, T){
   }));
   ov.onclick = e => {
     if (e.target.closest('[data-j]')) return close();
-    const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled){
+    const cb = e.target.closest('[data-c]'); if (cb && !cb.disabled){ char = cb.dataset.c || null; if (char){ import(ESC_THREE).catch(() => {}); knFetch(char).catch(() => {}); } return paint(); }
+    const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled && char){
       seat = +sb.dataset.s; orientFree();                 // landskap dibuka semasa sentuhan
       try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
-      T.set('j' + seat, { t: Date.now() }); import(ESC_THREE).catch(() => {}); knFetch(runChar(cfg.seats[seat].id)).catch(() => {}); paint();
+      T.set('j' + seat, { char, t: Date.now() }); paint();
     }
   };
   async function begin(){
     close(); RUN = { loading: true };                     // tanda bermain SEBELUM memuat (tayangan automatik tidak mengambil alih)
     if (LVW.view) LVW.view.close();
     let THREE; try { THREE = await import(ESC_THREE); } catch(er){ RUN = null; return toast('Gagal memuat enjin 3D.', null, true); }
-    try { runGame(THREE, null, ac, { T, cfg, seat }); } catch(er){ RUN = null; console.error(er); toast('Permainan gagal dimulakan.', null, true); }
+    try { runGame(THREE, null, ac, { T, cfg, seat, char: cfg.seats[seat].char || char }); } catch(er){ RUN = null; console.error(er); toast('Permainan gagal dimulakan.', null, true); }
   }
   paint();
 }
@@ -9919,7 +9939,7 @@ function runGame(THREE, sid, ac, mp, spec){
   // Watak beranimasi menggantikan model kotak bila fail GLB berjaya dimuat (kotak kekal sebagai sandaran)
   let mixer = null, ACT = {}, actNow = null;
   const play = (n, fade = .15) => { const a = ACT[n]; if (!a || actNow === a) return; a.reset().fadeIn(fade).play(); if (actNow) actNow.fadeOut(fade); actNow = a; };
-  knModel(runChar(sid)).then(gl => {
+  knModel(mp && mp.char ? mp.char : runChar(sid)).then(gl => {
     if (!alive) return;
     const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1;
     const k = 1.8 / h; m.scale.setScalar(k); m.position.y = -box.min.y * k;
@@ -9935,7 +9955,20 @@ function runGame(THREE, sid, ac, mp, spec){
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = .02; scene.add(shadow);
 
   /* ---------- PENONTON (hos projektor): pelari beratur satu barisan di lorong tengah, skor tertinggi paling hadapan ---------- */
-  const SPR = new Map(), MV = {}, specOffs = []; let specT = 0;
+  const SPR = new Map(), MV = {}, specOffs = []; let specT = 0, camT = 0, cel = null, RUN_CEL = null; const camT0 = performance.now();
+  const camP = new THREE.Vector3(3.4, 5.4, 7.5), camL = new THREE.Vector3(0, 1, -9), _tp = new THREE.Vector3(), _tl = new THREE.Vector3();
+  const anim = (o, n, once) => { const a = o.act[n] || o.act.idle; if (!a || o.now === a) return; if (once){ a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } else a.setLoop(THREE.LoopRepeat); a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; };
+  const PZ = -10;                                                        // kedudukan podium
+  function podium(){                                                     // tapak 1-2-3 + nombor; yang lain terbaring di sebelah
+    const blk = [[0, 1.2, '#FACC15'], [-1.9, .8, '#CBD5E1'], [1.9, .5, '#F59E0B']];
+    blk.forEach(([x, h, c], k) => {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(1.7, h, 1.5), M(new THREE.Color(c).getHex())); b.position.set(x, h / 2, PZ); scene.add(b);
+      const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'); g.fillStyle = '#1E293B'; g.font = 'bold 96px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(k + 1), 64, 70);
+      const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(.8, .8), new THREE.MeshBasicMaterial({ map: tx, transparent: true })); p.position.set(x, h / 2, PZ + .76); scene.add(p);
+    });
+    return blk;
+  }
   if (spec){
     spec.cfg.seats.forEach((x, i) => { if (x.joined) specOffs.push(spec.T.on('m' + i, v => { if (v) MV[i] = v; })); });
     runner.visible = false; shadow.visible = false;
@@ -9953,8 +9986,11 @@ function runGame(THREE, sid, ac, mp, spec){
     let t = txt; while (g.measureText(t).width > 330 && t.length > 4) t = t.slice(0, -2); g.fillText(t === txt ? t : t + '…', 30, 64);
     g.textAlign = 'right'; g.fillStyle = over ? '#94A3B8' : '#FFB347'; g.fillText((over ? '🏁 ' : '') + sc, 486, 64);
     const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
+  if (spec) RUN_CEL = ord => { cel = { t: 0, t0: performance.now(), ord, blk: null }; };
   function specUpdate(dt){
-    const dz = 12 * dt;
+    const dz = cel ? Math.max(0, 12 - cel.t * 6) * dt : 12 * dt;          // jalan berhenti perlahan bila tamat
+    camT = (performance.now() - camT0) / 1000;                            // masa sebenar (peranti perlahan pun ikut jadual)
+    if (cel) cel.t = (performance.now() - cel.t0) / 1000;
     roadTex.offset.y += dz / (160 / 6);
     SCN.forEach(o => { o.position.z += dz; if (o.position.z > 12) o.position.z -= SPAN; });
     const st = spec.st, rank = spec.cfg.seats.map((x, i) => [x, i]).filter(([x]) => x.joined)
@@ -9965,7 +10001,7 @@ function runGame(THREE, sid, ac, mp, spec){
       if (!o){
         o = { g: new THREE.Group(), mix: null, act: {}, now: null, key: '' }; o.g.position.z = zAt(r); scene.add(o.g); SPR.set(i, o);
         const sp = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false, transparent: true })); sp.scale.set(2.2, .55, 1); sp.position.y = 2.4; sp.renderOrder = 5; o.g.add(sp); o.tag = sp;
-        knModel(runChar(x.id)).then(gl => { if (!alive) return;
+        knModel(x.char || runChar(x.id)).then(gl => { if (!alive) return;
           const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1, k = 1.8 / h;
           m.scale.setScalar(k); m.position.y = -box.min.y * k; m.rotation.y = Math.PI; m.traverse(q => { if (q.isMesh) q.frustumCulled = false; }); o.g.add(m);
           o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); }).catch(() => {});
@@ -9973,6 +10009,7 @@ function runGame(THREE, sid, ac, mp, spec){
       const v = st[i] || {};
       o.g.position.z += (zAt(r) - o.g.position.z) * Math.min(1, dt * 3);   // bertukar tempat dengan lancar bila skor berubah
       const mv = MV[i] || {};                                              // gerakan sebenar pemain: lorong, lompat, terlanggar
+      if (cel){ celRunner(o, i, dt); return; }
       o.g.position.x += ((mv.x || 0) - o.g.position.x) * Math.min(1, dt * 12);
       o.g.position.y += ((mv.y || 0) - o.g.position.y) * Math.min(1, dt * 16);
       o.g.visible = !(mv.h && !v.over) || Math.floor(performance.now() / 80) % 2 === 0;
@@ -9981,6 +10018,8 @@ function runGame(THREE, sid, ac, mp, spec){
       if (o.mix){ const a = (v.over ? o.act.die || o.act.idle : (mv.y || 0) > .08 ? o.act.jump || o.act.sprint : o.act.sprint) || o.act.sprint || o.act.idle;
         if (a === o.act.die || a === o.act.jump){ a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
     });
+    specCam(rank, zAt, dt);
+    if (cel){ $r('#rnSpec').style.display = 'none'; return; }
     if ((specT -= dt) > 0) return; specT = .5;
     $r('#rnSpec').innerHTML = '<div class="panel clip p-3" style="background:rgba(10,16,24,.82);border-color:#FFB347">' +
       '<div class="lbl" style="color:#FFB347">🏃‍♂️ LARIAN ILMU · BILIK ' + esc(spec.cfg.code) + '</div>' +
@@ -9990,6 +10029,43 @@ function runGame(THREE, sid, ac, mp, spec){
           '<span class="num text-[10px] text-muted">' + (v.r || 0) + '/' + (v.a || 0) + ' <span style="color:#FF4D6A">' + '❤'.repeat(Math.max(0, v.l == null ? 3 : v.l)) + '</span></span>' +
           '<b class="num text-[14px]" style="min-width:44px;text-align:right;color:' + (v.over ? '#94A3B8' : '#FFB347') + '">' + (v.sc || 0) + (v.over ? '🏁' : '') + '</b></div>'; }).join('') +
       '<button class="btn btn-o clip-s w-full !py-2 mt-3 text-[13px]" data-sp="end">🏁 TAMATKAN &amp; REKOD</button></div>';
+  }
+
+  /* tamat: 0–4.5 s pemenang melompat gembira (dekat) · selepas itu podium 1-2-3, yang lain terbaring */
+  function celRunner(o, i, dt){
+    const k = cel.ord.indexOf(i), win = k === 0, pod = cel.t >= 4.5;
+    if (pod && !cel.blk) cel.blk = podium();
+    o.g.visible = true;
+    const v = spec.st[i] || {}, key = 'c' + k + '|' + (v.sc || 0);                // tag ikut kedudukan akhir (pemenang = 1)
+    if (key !== o.key){ o.key = key; if (o.tag.material.map) o.tag.material.map.dispose(); o.tag.material.map = tagTex((k + 1) + '. ' + spec.cfg.seats[i].name, v.sc || 0, false); o.tag.material.needsUpdate = true; }
+    if (!pod){                                                          // pemenang ke tengah, yang lain ke tepi jalan (tidak menghalang kamera)
+      const tx = win ? 0 : (k % 2 ? -1 : 1) * (2.6 + Math.floor((k - 1) / 2) * 1.1);
+      o.g.position.x += (tx - o.g.position.x) * Math.min(1, dt * 5);
+      o.tag.visible = win;
+      if (win){ o.g.position.y = Math.abs(Math.sin(cel.t * 5)) * .7; anim(o, 'emote-yes'); }
+      else { o.g.position.y = 0; anim(o, 'idle'); }
+      return;
+    }
+    o.tag.visible = true;
+    let tx, ty, tz = PZ, ry = Math.PI;                                   // menghadap kamera
+    if (k >= 0 && k < 3){ tx = cel.blk[k][0]; ty = cel.blk[k][1]; anim(o, k === 0 ? 'emote-yes' : 'idle'); if (k === 0) ty += Math.abs(Math.sin(cel.t * 4)) * .35; }
+    else { tx = 3.6 + (k - 3) * 1.1; ty = 0; tz = PZ + .9; anim(o, 'die', true); }
+    o.g.position.x += (tx - o.g.position.x) * Math.min(1, dt * 4); o.g.position.y += (ty - o.g.position.y) * Math.min(1, dt * 6); o.g.position.z += (tz - o.g.position.z) * Math.min(1, dt * 4);
+    o.g.rotation.y += (ry - o.g.rotation.y) * Math.min(1, dt * 5);
+  }
+  /* kamera penonton: bertukar setiap 5 saat — belakang · atas (burung) · hadapan dekat; tamat: dekat pemenang → podium */
+  function specCam(rank, zAt, dt){
+    const n = rank.length, lead = zAt(0), mid = (zAt(0) + zAt(n - 1)) / 2;
+    if (cel){
+      if (cel.t < 4.5){ const o = SPR.get(cel.ord[0]), w = o ? o.g.position : _tl.set(0, 0, lead); _tp.set(w.x + 1.2, 2.3, w.z - 4.6); _tl.set(w.x, 1.2, w.z); }
+      else { _tp.set(0, 3.4, PZ + 8.5); _tl.set(0, 1.3, PZ); }
+    } else switch (Math.floor(camT / 5) % 3){
+      case 0: _tp.set(3.4, 5.4, 7.5); _tl.set(0, 1, mid - 4); break;                  // belakang (lalai)
+      case 1: _tp.set(0, 17, mid + 5); _tl.set(0, 0, mid); break;                     // atas — pandangan burung
+      default: _tp.set(1.4, 2.4, lead - 5.5); _tl.set(0, 1.2, lead + 2);              // hadapan dekat — wajah pelari
+    }
+    const k = 1 - Math.exp(-dt * (cel ? 3 : 2.2));
+    camP.lerp(_tp, k); camL.lerp(_tl, k); cam.position.copy(camP); cam.lookAt(camL);
   }
 
   /* ---------- halangan, bintang & gerbang ---------- */
@@ -10083,11 +10159,12 @@ function runGame(THREE, sid, ac, mp, spec){
   const RL = RUN_LVL[mp ? mp.cfg.lvl : runCfg().lvl] || RUN_LVL.sederhana, RQ = mp ? +mp.cfg.qt || 8 : runCfg().qt;
   let mqi = 0, pubT = 0, mvT = 0;
   const qOrd = mp ? mp.cfg.qs.map((_, i) => i).sort(() => Math.random() - .5) : null;
+  const winOff = mp ? mp.T.on('win', v => { if (!v || v.seat !== mp.seat || ended || !alive) return; msg('🏆 KAMU PEMENANG!', '#FACC15', 4000); setTimeout(() => { if (!ended) gameOver(); }, 1800); }) : null;
   const mpOff = mp ? mp.T.on('run', v => { if (v && v.closed && alive){ msg('📺 Hos menamatkan permainan', '#FDE68A', 2500); setTimeout(() => { if (alive) quit(); }, 2200); } }) : null;
   const mpPub = over => { if (mp) mp.T.set('r' + mp.seat, { sc: score(), d: Math.floor(dist), r: right, a: asked, l: lives, over: !!over, t: Date.now() }); };
   let speed = RL.v0, dist = 0, stars = 0, right = 0, asked = 0, lives = 3, alive = true, ended = false, paused = false;
   let nextObs = -40, nextStar = -30, nextQ = 160, lastSpawnZ = -40;
-  RUN = { close: () => quit() };
+  RUN = { close: () => quit(), celebrate: ord => RUN_CEL && RUN_CEL(ord) };
   const hud = () => {
     $r('#rnLives').innerHTML = [0, 1, 2].map(i => '<i class="fa-solid fa-heart" style="color:' + (i < lives ? '#FF4D6A' : 'rgba(0,0,0,.4)') + '"></i>').join(' ');
     $r('#rnStars').innerHTML = '★ ' + stars;
@@ -10801,10 +10878,13 @@ function escJoin(code, T){
     '<button class="btn clip-s w-full !py-2 mt-3" data-j="x">Keluar</button></div>';
   const paint = () => {
     if (!cfg){ ov.innerHTML = panel('<div class="mt-4 text-muted">Mencari bilik…</div>'); return; }
-    if (seat < 0){ ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">PILIH KUMPULAN KAMU</div><div class="grid grid-cols-2 gap-2 mt-3">' +
+    const taken = cfg.seats.filter((x, i) => x.joined && i !== seat).map(x => x.char);
+    if (char && seat < 0 && taken.includes(char)){ char = null; toast('Watak itu baru diambil kumpulan lain — pilih yang lain.', null, true); }
+    if (!char){ setTimeout(knThumbFill, 30); ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">1 · PILIH WATAK KAMU</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">' + ESC_CHARS.map(n => { const tk = taken.includes(n);
+        return '<button class="btn clip-s" data-c="' + n + '"' + (tk ? ' disabled style="opacity:.35;display:flex;flex-direction:column;gap:2px;padding:6px 2px"' : ' style="display:flex;flex-direction:column;gap:2px;padding:6px 2px"') + '><img data-kt="esc:' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#3B1F2B,#120A10);border-radius:8px"><span class="text-[10px]">' + (tk ? '🔒 diambil' : ESC_NAME(n)) + '</span></button>'; }).join('') + '</div>'); return; }
+    if (seat < 0){ ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">2 · PILIH KUMPULAN KAMU</div><div class="text-[12px] text-muted">Watak: ' + ESC_NAME(char) + ' <button class="underline" data-c="">tukar</button></div><div class="grid grid-cols-2 gap-2 mt-3">' +
       cfg.seats.map((x, i) => '<button class="btn clip-s !py-3 text-[13px]" data-s="' + i + '"' + (x.joined ? ' disabled style="opacity:.4"' : '') + '>' + esc(x.name) + (x.joined ? ' ✅' : '') + '</button>').join('') + '</div>'); return; }
-    if (!char){ setTimeout(knThumbFill, 30); ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">' + esc(cfg.seats[seat].name) + ' · PILIH WATAK</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">' +
-      ESC_CHARS.map(n => '<button class="btn clip-s" data-c="' + n + '" style="display:flex;flex-direction:column;gap:2px;padding:6px 2px"><img data-kt="esc:' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#3B1F2B,#120A10);border-radius:8px"><span class="text-[10px]">' + ESC_NAME(n) + '</span></button>').join('') + '</div>'); return; }
     ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + ' · ' + ESC_NAME(char) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
   };
   offs.push(T.on('esc', v => {
@@ -10816,11 +10896,11 @@ function escJoin(code, T){
   }));
   ov.onclick = e => {
     if (e.target.closest('[data-j]')) return close();
-    const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled){ seat = +sb.dataset.s; return paint(); }
-    const cb = e.target.closest('[data-c]'); if (cb){
-      char = cb.dataset.c; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
+    const cb = e.target.closest('[data-c]'); if (cb && !cb.disabled){ char = cb.dataset.c || null; if (char){ import(ESC_THREE).catch(() => {}); knFetch(char).catch(() => {}); } return paint(); }
+    const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled && char){
+      seat = +sb.dataset.s; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
       orientFree();                                       // landskap mesti dibuka semasa sentuhan (MULA hos datang dari rangkaian, bukan sentuhan)
-      T.set('j' + seat, { char, t: Date.now() }); import(ESC_THREE).catch(() => {}); knFetch(char).catch(() => {}); paint();
+      T.set('j' + seat, { char, t: Date.now() }); paint();
     }
   };
   async function begin(){
