@@ -9530,7 +9530,6 @@ function storRun(team, mp){
   function quit(){
     if (STOR && STOR.closed) return;
     if (mpOff) try { mpOff(); } catch(e){}
-    if (winOff) try { winOff(); } catch(e){}
     if (mp && !over) mp.T.set('res', { quit: true, t: Date.now() });
     if (!over && (good || poor || left)){ over = true; clearInterval(loop); if (!mp) save(); }
     over = true; clearInterval(loop); STOR = null;
@@ -10423,6 +10422,7 @@ function runGame(THREE, sid, ac, mp, spec){
     if (!alive) return;
     alive = false; RUN = null;
     if (mp && !ended) mpPub(true);                      // keluar awal = tamat bagi hos
+    if (winOff) try { winOff(); } catch(e){}
     specOffs.forEach(o => { try { o && o(); } catch(e){} });
     if (mpOff) try { mpOff(); } catch(e){}
     if (!mp && !ended && asked) save();
