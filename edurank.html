@@ -9557,6 +9557,7 @@ function viewRun(){
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FFB347;text-shadow:0 0 12px rgba(255,140,60,.6)">LARIAN ILMU</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Lari secepat mungkin di jalan sekolah! Elak halangan, kutip <b style="color:#FFD76A">bintang</b>, dan bila soalan muncul, lari melalui <b class="text-cyan">gerbang jawapan yang betul</b>. Makin jauh, makin laju!</div></div>';
   h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="run"><i class="fa-solid fa-play"></i> MAIN</button>';
+  h += '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — lari bersama kawan</button>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERTINGGI KUMPULAN</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
     '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#FFB347">' + d.gbest[g.id] + '</span></div>').join('') + '</div>';
