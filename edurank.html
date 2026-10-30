@@ -6712,6 +6712,12 @@ function kmPileWire(ar){
 /* Zon Kombo (Tangga Ilmon): seret kad dari tangan KE ATAS ke zon · seret kad zon KE ATAS lagi (ke meja) = letak kombo ·
    seret kad zon KE BAWAH = pulang ke tangan · seret mendatar di tangan = susun · ketik = masuk / keluar zon.
    Kombo tidak sah → zon bergegar + perisai merah. api: { ids, hidden, can, canPlay, check, hint, play, order, msg, changed } */
+/* susunan baharu sah hanya jika setiap kad tangan muncul TEPAT sekali (elak kad berganda) → pulang senarai kad, atau null */
+function kmSameSet(ids, hand){
+  if (!Array.isArray(ids) || ids.length !== hand.length || new Set(ids).size !== ids.length) return null;
+  const o = ids.map(id => hand.find(c => c.id === id));
+  return o.every(Boolean) ? o : null;
+}
 function tgBurst(stage, el, x, y, big){
   const col = { api: '#FF6B3C', alam: '#4ADE80', kilat: '#FACC15', air: '#38BDF8' }[el] || '#F59E0B', sr = stage.getBoundingClientRect();
   const b = document.createElement('div'); b.className = 'tg-burst' + (big ? ' big' : '');
@@ -6772,12 +6778,12 @@ function tgPick(root, api){
     const x = d; d = null; if (!x) return;
     zone.classList.remove('hov', 'aim');
     if (x.g) x.g.remove(); x.im.style.opacity = '';
-    if (!x.mode){ kmSnd('ui_klik', 'flip'); if (x.src === 'hand') staged.push(x.id); else staged = staged.filter(i => i !== x.id); return changed(); }
+    if (!x.mode){ kmSnd('ui_klik', 'flip'); if (x.src === 'hand'){ if (!staged.includes(x.id)) staged.push(x.id); } else staged = staged.filter(i => i !== x.id); return changed(); }
     if (x.mode === 'sort'){ x.im.classList.remove('drag'); x.im.style.transform = ''; api.order([...hand.querySelectorAll('img[data-id]')].map(i => i.dataset.id).concat(staged)); return; }
     const hr = hand.getBoundingClientRect(), zr = zone.getBoundingClientRect(), y = e.clientY;
     if (x.src === 'hand'){
       if (y < hr.top + 10){ const after = [...zone.querySelectorAll('img[data-z]')].findIndex(z => { const r = z.getBoundingClientRect(); return e.clientX < r.left + r.width / 2; });
-        if (after < 0) staged.push(x.id); else staged.splice(after, 0, x.id); kmSnd('stor_ambil', 'flip'); }
+        staged = staged.filter(i => i !== x.id); if (after < 0) staged.push(x.id); else staged.splice(after, 0, x.id); kmSnd('stor_ambil', 'flip'); }
       return changed();
     }
     if (y > zr.bottom - 4){ staged = staged.filter(i => i !== x.id); kmSnd('ui_klik', 'flip'); return changed(); }
@@ -6973,7 +6979,7 @@ function komboRun(ids, opt, net){
   const later = (f, ms) => setTimeout(f, ms * (window.KM_SPEED || 1));
   const P = opt.seats ? opt.seats.map(t => ({ id: t.id, name: teamName(t.id), ai: !!t.bot })) :
     ids.map(id => ({ id, name: teamName(id), ai: !!opt.allBots })).concat((opt.bots || []).map(b => ({ id: b.id || null, name: b.name, ai: true })));
-  const deck = CARDS.slice().sort(() => Math.random() - .5);
+  const deck = CARDS.slice().sort(() => Math.random() - .5), used = [];   // used = longgokan kad yang sudah dilempar / ditukar / dibuang
   P.forEach(p => { p.hand = tgSort(deck.splice(0, HAND0)); p.stars = 0; p.asked = 0; p.right = 0; p.pass = false; });
   if (net) P.forEach((p, i) => { p.remote = !p.ai && i !== net.hostSeat; });   // kumpulan bermain di peranti sendiri
   const locals = P.filter(p => !p.ai && !p.remote).length;                       // >1 = tangan disembunyikan antara giliran
@@ -7055,7 +7061,7 @@ function komboRun(ids, opt, net){
     check: ids => tgCheck(ids.map(cardById).filter(Boolean), top(), human()),
     hint: () => tgNeed(top()),
     play: ids => play(ids.map(id => me().hand.find(c => c.id === id)).filter(Boolean)),
-    order: ids => { const p = me(); const o = ids.map(id => p.hand.find(c => c.id === id)).filter(Boolean); if (o.length === p.hand.length) p.hand = o; },
+    order: ids => { const p = me(); const o = kmSameSet(ids, p.hand); if (o) p.hand = o; },
     msg: (t, c) => msg(t, c, 1800),
     changed: () => paintBtns()
   });
@@ -7072,6 +7078,7 @@ function komboRun(ids, opt, net){
   /* ---------- meja & giliran ---------- */
   function newTable(L){
     if (over) return;
+    table.forEach(t => t.cards.forEach(id => { const c = cardById(id); if (c && !used.includes(c)) used.push(c); }));   // kad meja lama → longgokan buangan
     table = []; P.forEach(p => p.pass = false); leader = L; cur = L; tableNo++; phase = 'quiz'; busy = true;
     paintArena(); paint();
     quizRound(() => { phase = 'play'; paintArena(); startTurn(); });
@@ -7098,6 +7105,7 @@ function komboRun(ids, opt, net){
     cur = n; startTurn();
   }
   function play(cs){
+    cs = cs.filter((c, i) => c && cs.indexOf(c) === i && me().hand.includes(c));   // tiada kad berganda / kad luar tangan
     const p = me(), ev = tgEval(cs);
     if (!ev || !tgBeats(ev, top())) return;
     busy = true; clearTimeout(rto);
@@ -7115,21 +7123,25 @@ function komboRun(ids, opt, net){
     kmSnd('ui_klik', 'flip'); msg('✋ ' + esc(p.name) + ' lepas', '#94A3B8', 1000); paint();
     later(advance, 700);
   }
+  /* kad rawak Tukar: dari baki dek + longgokan kad yang sudah dilempar — tidak pernah kad yang ada di tangan/meja */
+  const tukarPool = () => { const held = new Set(P.flatMap(q => q.hand).concat(table.flatMap(t => t.cards.map(cardById)))); return deck.concat(used).filter((c, i, a) => c && a.indexOf(c) === i && !held.has(c)); };
   function tukarDone(p, c, o){
-    if (!o || !deck.includes(o) || !p.hand.includes(c) || p.stars < 1) return;
-    p.stars -= 1; deck.splice(deck.indexOf(o), 1); deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, c);
+    if (!o || !p.hand.includes(c) || p.stars < 1 || p.hand.includes(o) || !tukarPool().includes(o)) return;
+    p.stars -= 1;
+    if (deck.includes(o)) deck.splice(deck.indexOf(o), 1); else used.splice(used.indexOf(o), 1);
+    if (!used.includes(c)) used.push(c);                                      // kad lama ke longgokan buangan
     p.hand = tgSort(p.hand.filter(x => x !== c).concat(o)); starUsed = true; pick.clear(); kmSnd('kad_koyak', 'flip');
     msg('⭐ ' + esc(p.name) + ' tukar 1 kad', '#FDE68A', 1300); paint();
   }
   function starAct(kind, c){
     const p = me(); if (starUsed || !c || !p.hand.includes(c)) return;
-    if (kind === 'tukar'){ if (p.stars < 1 || !deck.length) return;
-      const opts = deck.slice().sort(() => Math.random() - .5).slice(0, 4);
+    if (kind === 'tukar'){ const pool = tukarPool(); if (p.stars < 1 || !pool.length) return;
+      const opts = pool.sort(() => Math.random() - .5).slice(0, 4);
       if (p.ai) return tukarDone(p, c, opts.find(o => p.hand.some(h => h !== c && cardNum(h) === cardNum(o))) || opts.sort((a, b) => cardNum(b) - cardNum(a))[0]);
       if (p.remote){ p.tk = { c, opts }; net.T.set('tk' + P.indexOf(p), { v: Date.now(), card: c.id, opts: opts.map(o => o.id) }); return; }
       return tgTukarShow($k('#kmOv'), c.id, opts.map(o => o.id), id => { const o = opts.find(x => x.id === id); if (o && me() === p && !starUsed) tukarDone(p, c, o); });
     }
-    else { if (p.stars < 2 || p.hand.length < 2) return; p.stars -= 2; p.hand = p.hand.filter(x => x !== c); deck.push(c); msg('⭐⭐ ' + esc(p.name) + ' buang 1 kad', '#FDE68A', 1300); }
+    else { if (p.stars < 2 || p.hand.length < 2) return; p.stars -= 2; p.hand = p.hand.filter(x => x !== c); if (!used.includes(c)) used.push(c); msg('⭐⭐ ' + esc(p.name) + ' buang 1 kad', '#FDE68A', 1300); }
     starUsed = true; pick.clear(); kmSnd('kad_koyak', 'flip'); paint();
   }
   /* ---------- kuiz meja baharu ---------- */
@@ -7191,7 +7203,7 @@ function komboRun(ids, opt, net){
     if (a.t === 'ans' && rq && a.qid === rq.qid && !rq.got[i]){ rq.got[i] = { k: +a.ans, ms: Date.now() - rq.t0 }; rq.stat(); rq.check(); return; }
     if (cur !== i || phase !== 'play' || busy) return;
     const find = ids2 => (ids2 || []).map(id => p.hand.find(c => c.id === id)).filter(Boolean);
-    if (a.order){ const o = find(a.order); if (o.length === p.hand.length) p.hand = o; }   // susunan tangan dari telefon
+    if (a.order){ const o = kmSameSet(a.order, p.hand); if (o) p.hand = o; }   // susunan tangan dari telefon (set mesti sama tepat)
     if (a.t === 'play'){ const cs = find(a.cards); if (cs.length && cs.length === (a.cards || []).length) play(cs); return; }
     if (a.t === 'pass') return pass();
     if (a.t === 'tukarpick'){ const t = p.tk; p.tk = null; if (t && a.pick) tukarDone(p, t.c, t.opts.find(o => o.id === a.pick)); return; }
@@ -7370,7 +7382,7 @@ function komboJoin(code, T){
     check: ids => tgCheck(ids.map(cardById).filter(Boolean), st && st.top, myTurn()),
     hint: () => st && st.phase === 'play' ? tgNeed(st.top) : 'kuiz meja baharu…',
     play: ids => { send({ t: 'play', cards: ids }); paint(); },
-    order: ids => { hand = ids; },
+    order: ids => { const u = ids.filter((id, i) => ids.indexOf(id) === i && hand.includes(id)); if (u.length === hand.length) hand = u; },
     msg: (t, c) => msg(t, c, 1800),
     changed: () => paintBtns()
   });
@@ -7429,7 +7441,7 @@ function komboJoin(code, T){
       $k('#kmOv').innerHTML = ''; msg('✅ Kamu ' + esc(st.seats[seat].name), '#86EFAC', 1500);
       offs.push(T.on('h' + seat, v => {                  // kad dari hos: kekalkan susunan sendiri, kad baharu di hujung
         const nh = (v && v.cards) || [];
-        const keep = hand.filter(id => nh.includes(id));
+        const keep = hand.filter((id, i) => nh.includes(id) && hand.indexOf(id) === i);
         hand = keep.concat(nh.filter(id => !keep.includes(id)));
         su = !!(v && v.su); paint();
       }));
