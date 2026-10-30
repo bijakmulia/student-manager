@@ -5572,7 +5572,7 @@ function liveWatch(){
     // dibuka hanya bila siaran terbukti hidup (mesej baharu, bukan sisa lama)
     if (init && prev === undefined) return;
     if (prev !== undefined && prev === v.t) return;
-    if (RUN || ESC || STOR || document.getElementById('btRoot') || document.getElementById('kmRoot') || document.getElementById('kmJoin')) return;   // peranti ini sendiri sedang bermain
+    if (RUN || ESC || STOR || document.getElementById('btRoot') || document.getElementById('kmRoot') || document.getElementById('kmJoin') || document.getElementById('escRoot')) return;   // peranti ini sendiri sedang bermain
     liveOpen(v);
   });
 }
@@ -5837,7 +5837,7 @@ const GAME_LOBBY = {
       lbSeg('peta', 'PETA MULA', ESC_MAPS.map((m, i) => [i, (i + 1) + ' · ' + m.name.replace('BLOK ', '')]), 'Selesai satu peta → teruskan ke peta seterusnya.'),
       lbSeg('rp', 'RP MAKSIMUM', [[15,'15'],[30,'30'],[50,'50']], 'Mudah ×0.8 · Sukar ×1.3.')]; },
     preload: async p => { p(.2); await import(ESC_THREE); p(.6); try { await Promise.all([seramList(), knFetch(escChar(arenaUi().team)), ...Object.values(ESC_GHOST_3D).map(g => knFetch(g[0], g[1]))]); } catch(e){} p(1); },
-    starts: [['🚪 MASUK SEKOLAH', () => escStart()]],
+    starts: [['🚪 MASUK SEKOLAH (1 peranti)', () => escStart()], ['📱 BUKA BILIK (banyak peranti)', () => escHost()]],
     get menu(){ const w = escCfg().watak; return [['ewatak', '🧍 Watak', ESC_CHARS.includes(w) ? KN_NAME(w) : 'Auto (ikut kumpulan)']]; },
     views: {
       ewatak: { t: 'PILIH WATAK', h: () => { setTimeout(knThumbFill, 30); const w = escCfg().watak;
@@ -7162,11 +7162,19 @@ function komboRun(ids, opt, net){
 }
 /* ---------- PERANTI KUMPULAN: sertai bilik Kombo (tangan sendiri sahaja; hos memegang permainan) ---------- */
 async function komboJoinAsk(){
-  const code = await promptBox({ title: 'Sertai Tangga Ilmon', label: 'Kod bilik (4 digit) di skrin hos', placeholder: '1234' });
+  const code = await promptBox({ title: 'Masuk Kod Bilik', label: 'Kod bilik (4 digit) di skrin hos', placeholder: '1234' });
   if (!code) return;
   const c = String(code).replace(/\D/g, '').slice(0, 4);
   if (c.length !== 4) return toast('Kod bilik ialah 4 digit.', null, true);
   const T = await kmNet(c); if (!T) return toast('Sertai perlukan Firebase (Tetapan → Penyegerakan Firebase) dengan tetapan sama seperti peranti hos.', null, true);
+  toast('Mencari bilik ' + c + '…');
+  const kind = await new Promise(res => {                // bilik Tangga Ilmon ('st') atau Sekolah Berhantu ('esc')
+    let done = false; const offs = []; const fin = k => { if (done) return; done = true; offs.forEach(o => { try { o && o(); } catch(e){} }); res(k); };
+    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }));
+    setTimeout(() => fin(null), 6000);
+  });
+  if (!kind) return toast('Bilik ' + c + ' tidak dijumpai. Semak kod di skrin hos.', null, true);
+  if (kind === 'esc') return escJoin(c, T);
   await kadProbe(); komboJoin(c, T);
 }
 function komboJoin(code, T){
@@ -10196,7 +10204,8 @@ function viewEscape(){
     '<i class="fa-solid fa-ghost text-4xl" style="color:#E8ECF1;filter:drop-shadow(0 0 12px rgba(226,59,59,.8))"></i>' +
     '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#E23B3B;text-shadow:0 0 12px rgba(226,59,59,.6)">SEKOLAH BERHANTU</div>' +
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">Kamu terperangkap di sekolah dua tingkat pada waktu malam. Selesaikan teka-teki untuk mengumpul <b style="color:#FFD76A">'+D.keys+' kunci</b>, kemudian lari ke pintu <b style="color:#E23B3B">KELUAR</b>. Sembunyi dalam <b style="color:#E2803B">loker merah</b> jika dikejar!</div></div>';
-  h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="escape"><i class="fa-solid fa-play"></i> MAIN</button>';
+  h += '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — main bersama kawan</button>';
+  h += '<button class="btn btn-o clip-s w-full mt-2 !py-3 text-[16px]" data-act="lobby" data-id="escape"><i class="fa-solid fa-play"></i> MAIN</button>';
   if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">KUMPULAN TERPANTAS KELUAR</div>' + board.map((g, i) =>
     '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">'+(i+1)+'</span>' + teamAvatar(g.id, 24) +
     '<span class="flex-1 text-[13px] truncate">'+esc(g.name)+'</span><span class="num text-cyan text-[12px]">'+fmtSec(d.gbest[g.id])+'</span></div>').join('') + '</div>';
@@ -10256,6 +10265,83 @@ function escPairs(){
   }
   return out;
 }
+/* ---------- SEKOLAH BERHANTU BANYAK PERANTI: peranti ini = papan projektor (hos, memegang hantu & kunci); setiap kumpulan main di telefon ---------- */
+const escRoomCss = 'position:fixed;inset:0;z-index:960;background:radial-gradient(circle at 50% 30%,#2A0A12,#050206);display:flex;align-items:safe center;justify-content:center;padding:16px;color:#fff;overflow:auto';
+async function escHost(){
+  const seats = classTeams().slice(0, 8);
+  if (!seats.length) return toast('Cipta kumpulan dahulu.', null, true);
+  if (ESC || RUN) return;
+  let ac = null; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(e){}
+  const code = String(1000 + Math.floor(Math.random() * 9000));
+  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  const c = escCfg(), map = +c.peta || 0, gKind = ESC_GHOSTS[c.ghost] ? c.ghost : ['putih', 'pontianak', 'toyol'][Math.floor(Math.random() * 3)];
+  const cfg = { g: 'esc', code, map, gKind, diff: c.diff, light: c.light, qt: c.qt, scare: c.scare, code3: [0, 0, 0].map(() => Math.floor(Math.random() * 10)),
+    seats: seats.map(g => ({ id: g.id, name: g.name, char: null, joined: false })), started: false };
+  const offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss;
+  document.body.appendChild(ov); lockBody();
+  const pub = () => T.set('esc', cfg);
+  const paint = () => {
+    const n = cfg.seats.filter(x => x.joined).length;
+    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:540px;border-color:#E23B3B">' +
+      '<div class="lbl" style="color:#F87171">👻 SEKOLAH BERHANTU · KOD BILIK</div><div class="num" style="font-size:64px;font-weight:900;letter-spacing:.2em;color:#FDE68A;line-height:1.1">' + code + '</div>' +
+      '<div class="text-[12px] text-muted">Di telefon kumpulan: EduRank → GAME → SERAM → <b>🔢 MASUK KOD BILIK</b>. Peta ' + (map + 1) + ' · ' + ESC_MAPS[map].name + '</div>' +
+      '<div class="grid grid-cols-2 gap-2 mt-3 text-left">' + cfg.seats.map(x => '<div class="panel clip-s p-2 flex items-center gap-2">' + teamAvatar(x.id, 26) +
+        '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div><span class="text-[11px]" style="color:' + (x.joined ? '#4ADE80">✅ ' + KN_NAME(x.char) : '#64748B">⏳') + '</span></div>').join('') + '</div>' +
+      '<div class="text-[11px] text-muted mt-2">Boleh mula walaupun hanya ' + (n || 1) + ' kumpulan masuk.</div>' +
+      '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-3" data-r="x">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-r="go"' + (n ? '' : ' disabled style="opacity:.45"') + '>▶ MULA (' + n + ' pemain)</button></div></div>';
+  };
+  cfg.seats.forEach((x, i) => offs.push(T.on('j' + i, v => { if (v && v.char && !x.joined){ x.joined = true; x.char = ESC_CHARS.includes(v.char) ? v.char : ESC_CHARS[i % ESC_CHARS.length]; pub(); paint(); } })));
+  const hb = setInterval(pub, 2000); pub(); paint();
+  const close = () => { clearInterval(hb); offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
+  ov.onclick = async e => {
+    const b = e.target.closest('[data-r]'); if (!b) return;
+    if (b.dataset.r === 'x'){ T.set('esc', { closed: true }); return close(); }
+    if (!cfg.seats.some(x => x.joined)) return;
+    cfg.started = true; pub(); close();
+    let THREE; try { THREE = await import(ESC_THREE); } catch(er){ return toast('Gagal memuat enjin 3D.', null, true); }
+    orientFree(); ESC = { loading: true };
+    try { escRun(THREE, null, ac, map, { role: 'host', T, cfg }); } catch(er){ ESC = null; console.error(er); toast('Permainan gagal dimulakan.', null, true); }
+  };
+}
+/* telefon kumpulan: pilih kumpulan → pilih watak → tunggu hos */
+function escJoin(code, T){
+  let cfg = null, seat = -1, char = null, ac = null, started = false;
+  const offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss;
+  document.body.appendChild(ov); lockBody();
+  const close = () => { offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
+  const panel = h => '<div class="panel clip p-5 w-full text-center" style="max-width:480px;border-color:#E23B3B"><div class="lbl" style="color:#F87171">👻 SEKOLAH BERHANTU · BILIK ' + esc(code) + '</div>' + h +
+    '<button class="btn clip-s w-full !py-2 mt-3" data-j="x">Keluar</button></div>';
+  const paint = () => {
+    if (!cfg){ ov.innerHTML = panel('<div class="mt-4 text-muted">Mencari bilik…</div>'); return; }
+    if (seat < 0){ ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">PILIH KUMPULAN KAMU</div><div class="grid grid-cols-2 gap-2 mt-3">' +
+      cfg.seats.map((x, i) => '<button class="btn clip-s !py-3 text-[13px]" data-s="' + i + '"' + (x.joined ? ' disabled style="opacity:.4"' : '') + '>' + esc(x.name) + (x.joined ? ' ✅' : '') + '</button>').join('') + '</div>'); return; }
+    if (!char){ setTimeout(knThumbFill, 30); ov.innerHTML = panel('<div class="font-bold text-[16px] mt-2">' + esc(cfg.seats[seat].name) + ' · PILIH WATAK</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">' +
+      ESC_CHARS.map(n => '<button class="btn clip-s" data-c="' + n + '" style="display:flex;flex-direction:column;gap:2px;padding:6px 2px"><img data-kt="' + n + '" alt="" style="width:100%;aspect-ratio:4/5;object-fit:contain;background:radial-gradient(circle at 50% 40%,#3B1F2B,#120A10);border-radius:8px"><span class="text-[10px]">' + KN_NAME(n) + '</span></button>').join('') + '</div>'); return; }
+    ov.innerHTML = panel('<div class="mt-3 text-[15px]">✅ ' + esc(cfg.seats[seat].name) + ' · ' + KN_NAME(char) + '</div><div class="text-muted text-[13px] mt-2">Menunggu hos menekan MULA…</div>');
+  };
+  offs.push(T.on('esc', v => {
+    if (!v || started) return;
+    if (v.closed){ toast('Bilik ditutup oleh hos.', null, true); return close(); }
+    cfg = v;
+    if (seat >= 0 && char && v.started){ started = true; return begin(); }
+    paint();
+  }));
+  ov.onclick = e => {
+    if (e.target.closest('[data-j]')) return close();
+    const sb = e.target.closest('[data-s]'); if (sb && !sb.disabled){ seat = +sb.dataset.s; return paint(); }
+    const cb = e.target.closest('[data-c]'); if (cb){
+      char = cb.dataset.c; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
+      T.set('j' + seat, { char, t: Date.now() }); import(ESC_THREE).catch(() => {}); knFetch(char).catch(() => {}); paint();
+    }
+  };
+  async function begin(){
+    close();
+    let THREE; try { THREE = await import(ESC_THREE); } catch(er){ return toast('Gagal memuat enjin 3D.', null, true); }
+    orientFree(); ESC = { loading: true };
+    try { escRun(THREE, null, ac, cfg.map, { role: 'client', T, cfg, seat }); } catch(er){ ESC = null; console.error(er); toast('Permainan gagal dimulakan.', null, true); }
+  }
+  paint();
+}
 async function escStart(lvl){                       // lvl: indeks peta (berturut-turut selepas menang)
   const o = arenaUi();
   if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
@@ -10273,12 +10359,13 @@ async function escStart(lvl){                       // lvl: indeks peta (berturu
   catch(e){ ESC = null; orientBack(); const r = $('#escRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
-function escRun(THREE, sid, ac, lvl){
-  const cfg = escCfg();
+function escRun(THREE, sid, ac, lvl, mp){
+  const MPH = !!mp && mp.role === 'host', MPC = !!mp && mp.role === 'client', MP = MPH || MPC;   // banyak peranti: hos (papan) / telefon
+  const cfg = MP ? Object.assign({}, escCfg(), { diff: mp.cfg.diff, light: mp.cfg.light, qt: mp.cfg.qt, scare: mp.cfg.scare }) : escCfg();
   const MAPI = Math.max(0, Math.min(ESC_MAPS.length - 1, lvl == null ? (+cfg.peta || 0) : lvl)), MAP = ESC_MAPS[MAPI];
   const D = ESC_DIFF[cfg.diff] || ESC_DIFF.sederhana, LT = ESC_LIGHT[cfg.light] || ESC_LIGHT.biasa;
   const QT = +cfg.qt || D.qtime, MT = Math.round(D.match * QT / D.qtime);   // masa menjawab dilaras guru
-  const gKind = ESC_GHOSTS[cfg.ghost] ? cfg.ghost : ['putih','pontianak','toyol'][Math.floor(Math.random() * 3)];
+  const gKind = MP ? mp.cfg.gKind : ESC_GHOSTS[cfg.ghost] ? cfg.ghost : ['putih','pontianak','toyol'][Math.floor(Math.random() * 3)];
   const GT = ESC_GHOSTS[gKind];
   const soft = cfg.scare === 'lembut';
   const player = teamOf(sid);                     // sid = id kumpulan yang bermain
@@ -10314,7 +10401,7 @@ function escRun(THREE, sid, ac, lvl){
 
   /* ---------- pemapar & pentas ---------- */
   const R = new THREE.WebGLRenderer({ canvas: $e('#escCv'), antialias: false, powerPreference: 'high-performance' });
-  const live = liveHost('esc', root, { canvas: $e('#escCv'), title: 'Sekolah Berhantu' });
+  const live = MP ? null : liveHost('esc', root, { canvas: $e('#escCv'), title: 'Sekolah Berhantu' });   // banyak peranti: hos sendiri ialah papan projektor
   R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   R.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
@@ -10577,7 +10664,7 @@ function escRun(THREE, sid, ac, lvl){
     return clocks[clocks.length - 1];
   };
   /* digit kod Bilik Guru — tersembunyi di dinding */
-  const CODE = [0, 0, 0].map(() => Math.floor(Math.random() * 10));
+  const CODE = MP ? mp.cfg.code3.slice() : [0, 0, 0].map(() => Math.floor(Math.random() * 10));
   const found = [false, false, false];
   const digits = [];
   const addDigit = (idx, f, x, y, z, face) => {
@@ -10793,7 +10880,7 @@ function escRun(THREE, sid, ac, lvl){
   /* watak 3D (pandangan orang ketiga) */
   let pm = null, pmMix = null; const PACT = {}; let pActNow = null;
   const pPlay = n => { const a = PACT[n] || PACT.idle; if (!a || pActNow === a) return; a.reset().fadeIn(.18).play(); if (pActNow) pActNow.fadeOut(.18); pActNow = a; };
-  knModel(escChar(sid)).then(gl => {
+  if (!MPH) knModel(MPC ? (mp.cfg.seats[mp.seat].char || escChar(sid)) : escChar(sid)).then(gl => {
     if (!alive) return;
     const m = gl.scene, bx = new THREE.Box3().setFromObject(m), h = bx.max.y - bx.min.y || 1, k = 1.62 / h;
     m.scale.setScalar(k); m.position.y = -bx.min.y * k;
@@ -10809,7 +10896,7 @@ function escRun(THREE, sid, ac, lvl){
     let d = 2.7;
     for (let t = .25; t <= 2.7; t += .08){ const x = ox + bx * t, y = hy + by * t, z = oz + bz * t; if (y > H - .12 || y < .15 || solidAt(x, z)){ d = Math.max(.25, t - .2); break; } }
     cam.position.set(ox + bx * d, hy + by * d, oz + bz * d); cam.lookAt(ox - bx * 3, hy + .12 - by * 3, oz - bz * 3);
-    if (pm) pm.visible = d > .55;
+    if (pm) pm.visible = !MPH && d > .55;
   };
   /* animasi almari: buka pintu → masuk / keluar → tutup pintu */
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -10964,12 +11051,14 @@ function escRun(THREE, sid, ac, lvl){
 
   /* ---------- kunci ---------- */
   function gainKey(src, text){
+    if (MPC && !src._net){ src._pend = Date.now(); mpSend({ t: 'solve', i: sources.indexOf(src) }); }
     src.solved = true; got.push(src);
     sfx('chime'); hud();
     if (keys() >= D.keys){ drawSign(true); exitLight.color.set(0x30ff60); msg('Cukup kunci! Lari ke pintu <span style="color:#4ADE80">KELUAR</span> di hujung koridor tingkat bawah!', 4200); }
     else msg('<i class="fa-solid fa-key" style="color:#FFD76A"></i> '+(text || 'Kunci')+' — '+keys()+'/'+D.keys);
   }
   function summon(){                                   // jawapan salah: hantu muncul berhampiran
+    if (MPC) return mpSend({ t: 'wrong' });             // banyak peranti: hos memanggil hantu ke pemain ini
     const a = Math.random() * Math.PI * 2;
     G.f = P.f; G.x = P.x + Math.cos(a) * 7; G.z = P.z + Math.sin(a) * 7; G.hunt = true; G.grace = .6;
     fixtures.forEach(f => f.t = -1.2);
@@ -10983,6 +11072,11 @@ function escRun(THREE, sid, ac, lvl){
     if (n.kind === 'hide') return hide(n.spot);
     if (n.kind === 'exit'){
       if (keys() < D.keys){ sfx('buzz'); return msg('Pintu berkunci. Perlu <span style="color:#FFD76A">'+D.keys+' kunci</span> ('+keys()+'/'+D.keys+').'); }
+      if (MPC){                                          // banyak peranti: selamat keluar, tunggu kawan
+        if (!P.safe){ P.safe = true; mpSend({ t: 'safe' }); sfx('win'); paused = true; stopInput(); $e('#escAct').style.display = 'none';
+          const e = $e('#escEnd'); e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:380px"><i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i><div class="font-bold tracking-widest text-[18px] mt-2" style="color:#4ADE80">KAMU SELAMAT KELUAR!</div><div class="text-[12px] text-muted mt-2">Tunggu kawan-kawan keluar…</div></div>'; e.style.display = 'flex'; }
+        return;
+      }
       return win();
     }
     if (n.kind === 'stairs') return takeStairs(n.to);
@@ -11019,7 +11113,7 @@ function escRun(THREE, sid, ac, lvl){
     const finish = pick => {
       if (done) return; done = true; stop();
       const ok = pick === q.a;
-      answered++; if (ok) correct++;
+      answered++; if (ok) correct++; mpSend({ t: 'q', ok: ok ? 1 : 0 });
       teamQuiz(sid, ok);
       closeUi();
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Papan '+bd.label); }
@@ -11050,7 +11144,7 @@ function escRun(THREE, sid, ac, lvl){
     };
     const finish = ok => {
       if (done) return; done = true; stop();
-      answered++; if (ok) correct++;
+      answered++; if (ok) correct++; mpSend({ t: 'q', ok: ok ? 1 : 0 });
       teamQuiz(sid, ok);
       closeUi();
       if (ok){ drawBoard(Object.assign(bd, { solved: true })); gainKey(bd, 'Teka-teki perpustakaan selesai'); }
@@ -11091,9 +11185,8 @@ function escRun(THREE, sid, ac, lvl){
       if (c.dataset.c === 'no') return closeUi();
       if (val.join('') === CODE.join('')){
         closeUi();
-        staffDoor.open = true; staffDoor.mesh.visible = false;
-        const i = solids.indexOf(staffDoor.solid); if (i >= 0) solids.splice(i, 1);
-        sfx('creak'); hud(); msg('Mangga terbuka! Ambil <span style="color:#FFD76A">kunci emas</span> di meja guru.');
+        openStaff(); mpSend({ t: 'staff' });
+        sfx('creak'); msg('Mangga terbuka! Ambil <span style="color:#FFD76A">kunci emas</span> di meja guru.');
       } else { sfx('buzz'); ui.querySelector('.panel').style.borderColor = '#E23B3B'; setTimeout(() => { const p = ui.querySelector('.panel'); if (p) p.style.borderColor = '#8A6A2A'; }, 500); }
     };
   }
@@ -11102,15 +11195,16 @@ function escRun(THREE, sid, ac, lvl){
     const dist = G.f === P.f ? Math.hypot(G.x - P.x, G.z - P.z) : 99;
     if (G.hunt && dist < 2.5){ sfx('buzz'); return msg('<span style="color:#FF5A5A">Terlalu dekat — ia nampak kamu!</span>'); }
     if (P.anim) return;
-    const lk = spot.lk, slot = lk.occ[0] ? 1 : 0;
-    if (lk.occ[0] && lk.occ[1]) return msg('Almari ini sudah penuh!');
+    const lk = spot.lk, li = lockers.indexOf(lk), taken = MPS.filter(q => q.st && q.st.h && q.st.h[0] === li).map(q => q.st.h[1]);
+    const slot = [0, 1].find(k => !lk.occ[k] && !taken.includes(k));
+    if (slot == null) return msg('Almari ini sudah penuh!');
     lk.occ[slot] = 'me'; stopInput(); sfx('clank');
     P.anim = { kind: 'in', t: 0, spot, slot, x0: P.x, z0: P.z, sx: spot.x + (slot ? .37 : -.37), zc: spot.zc };
     if (G.hunt){ G.hunt = false; const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; }
   }
   function unhide(){
     const s = P.hide, slot = s.lk.occ[0] === 'me' ? 0 : 1; P.hide = null; sfx('clank'); paused = true; s.lk.doors.forEach(dr => dr.piv.visible = true);
-    $e('#escSlit').style.display = 'none'; torch.intensity = LT.torch; P.yaw = Math.PI; P.pitch = 0;   // kamera di belakang watak menghadap koridor
+    $e('#escSlit').style.display = 'none'; $e('#escSlit').style.opacity = 1; torch.intensity = LT.torch; P.yaw = Math.PI; P.pitch = 0;   // kamera di belakang watak menghadap koridor
     P.anim = { kind: 'out', t: 0, spot: s, slot, sx: P.x, zc: s.zc };
   }
   function takeStairs(to){
@@ -11138,7 +11232,7 @@ function escRun(THREE, sid, ac, lvl){
   function caught(){
     paused = true; stopInput();
     // toyol mencuri kunci dan bukannya nyawa
-    if (gKind === 'toyol' && got.length){
+    if (!MPC && gKind === 'toyol' && got.length){
       const src = got.pop(); src.reset();
       if (keys() < D.keys){ drawSign(false); exitLight.color.set(0xff2020); }
       sfx('giggle', 1); hud();
@@ -11148,7 +11242,7 @@ function escRun(THREE, sid, ac, lvl){
       paused = false;
       return;
     }
-    lives--; hud(); vibrate(soft ? 120 : [200, 80, 300]);
+    if (!MPC) lives--; hud(); vibrate(soft ? 120 : [200, 80, 300]);
     const s = $e('#escScare');
     if (soft){
       sfx('whoosh');
@@ -11167,7 +11261,7 @@ function escRun(THREE, sid, ac, lvl){
     setTimeout(() => {
       if (!alive) return;
       s.style.display = 'none'; s.innerHTML = '';
-      if (lives <= 0) return lose();
+      if (!MPC && lives <= 0) return lose();
       P.f = 0; P.x = 3.2; P.z = 0; P.yaw = -Math.PI / 2; P.pitch = 0; P.face = Math.PI / 2;
       const far = WAYS[0].slice().sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.z) - Math.hypot(a[0] - P.x, a[1] - P.z))[0];
       G.f = 0; G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
@@ -11177,9 +11271,9 @@ function escRun(THREE, sid, ac, lvl){
   function endScreen(html, next){
     ended = true; paused = true; stopInput(); $e('#escAct').style.display = 'none'; actLabel = '';
     const e = $e('#escEnd'); e.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:400px">' + html +
-      '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button>' + (next ? '<button class="btn btn-o clip-s flex-1 !py-3" data-end="next">Peta ' + (MAPI + 2) + ' ›</button>' : '<button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button>') + '</div></div>';
+      '<div class="flex gap-2 mt-4"><button class="btn clip-s flex-1 !py-3" data-end="quit">Tutup</button>' + (MPC ? '' : next ? '<button class="btn btn-o clip-s flex-1 !py-3" data-end="next">Peta ' + (MAPI + 2) + ' ›</button>' : '<button class="btn btn-o clip-s flex-1 !py-3" data-end="again"><i class="fa-solid fa-rotate"></i> Main Lagi</button>') + '</div></div>';
     e.style.display = 'flex';
-    e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const go = b.dataset.end; quit(); if (go === 'again') setTimeout(() => escStart(MAPI), 50); else if (go === 'next') setTimeout(() => escStart(MAPI + 1), 50); };
+    e.onclick = ev => { const b = ev.target.closest('[data-end]'); if (!b) return; const go = b.dataset.end; quit(); if (go === 'again') setTimeout(() => MPH ? escHost() : escStart(MAPI), 50); else if (go === 'next') setTimeout(() => escStart(MAPI + 1), 50); };
   }
   function win(){
     sfx('win');
@@ -11230,6 +11324,8 @@ function escRun(THREE, sid, ac, lvl){
       if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); if (m.emissiveMap) m.emissiveMap.dispose(); m.dispose(); });
     });
     R.dispose(); liveEnd(live);
+    if (MPH){ clearInterval(mpHb); mpOffs.forEach(o => { try { o && o(); } catch(e){} }); mp.T.set('st', { closed: true, v: Date.now() }); mp.T.set('esc', { closed: true }); }
+    if (MPC){ mpOffs.forEach(o => { try { o && o(); } catch(e){} }); mp.T.set('p' + mp.seat, null); }
     root.remove(); unlockBody(); orientBack();
     if (answered) save();                            // statistik kuiz pelajar
     if (S.ui.tab === 'arena') renderTab();
@@ -11239,6 +11335,7 @@ function escRun(THREE, sid, ac, lvl){
   const fwd = new THREE.Vector3();
   let last = performance.now(), beatT = 0, tickT = 0;
   function update(dt, now){
+    if (MPH) return hostUpdate(dt, now);
     if (!P.hide && !P.anim){
       let mx = joy.x, my = joy.y;
       if (kb['w'] || kb['arrowup']) my -= 1;
@@ -11256,10 +11353,11 @@ function escRun(THREE, sid, ac, lvl){
       collide(P, .3);
       P.moving = m > .05;
     }
-    if (P.hide){ cam.position.set(P.x, 1.5, P.z); cam.rotation.set(P.pitch, P.yaw, 0); if (pm) pm.visible = false; }   // dalam almari: pandangan dari celah pintu
+    if (P.hide){ cam.position.set(P.x, 1.5, P.z); cam.rotation.set(P.pitch, P.yaw, 0); if (pm) pm.visible = false;   // dalam almari: pandangan dari celah pintu
+      $e('#escSlit').style.opacity = clamp(1 - (Math.abs(Math.atan2(Math.sin(P.yaw), Math.cos(P.yaw))) - .35) * 2.2, 0, 1).toFixed(2); }   // menoleh ke tepi: nampak kawan dalam almari
     else tpCam();
     // hantu
-    if (G.f !== P.f){
+    if (!MPC && G.f !== P.f){
       G.hunt = false;
       if (!P.hide && (G.follow += dt) > 10){
         const r = STAIRS[P.f]; G.f = P.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.follow = 0; G.grace = 1.5;
@@ -11268,7 +11366,8 @@ function escRun(THREE, sid, ac, lvl){
     } else G.follow = 0;
     const same = G.f === P.f;
     const dx = P.x - G.x, dz = P.z - G.z, dist = same ? Math.hypot(dx, dz) : 99;
-    if (G.grace > 0) G.grace -= dt;
+    if (MPC) netGhost(dt);
+    else if (G.grace > 0) G.grace -= dt;
     else if (same){
       if (!G.hunt && !P.hide && dist < sight){ G.hunt = true; sfx('sting'); msg('<span style="color:#FF5A5A">Ia nampak kamu… LARI!</span>', 2000); }
       if (G.hunt && (dist > sight + 7 || P.hide)) G.hunt = false;
@@ -11357,12 +11456,163 @@ function escRun(THREE, sid, ac, lvl){
     fans.forEach(f => f.g.rotation.y += f.sp * dt);
     const gk = ghost.children.find(c => c.isPointLight); if (gk) gk.intensity = ghost.visible ? 2.5 : 0;
   }
+  /* ---------- banyak peranti ---------- */
+  const MPS = MP ? mp.cfg.seats.map((q, i) => ({ i, id: q.id, name: q.name, char: q.char, joined: q.joined, st: null, seen: 0, safe: false, ans: 0, ok: 0, n: 0 })) : [];
+  const mpOffs = []; let mpN = Date.now(), posT = 0, pubT2 = 0, NET = null, evSeen = 0, lastEv = null, specI = 0, specName = '', mpOver = null, mpHb = 0;
+  const mpSend = a => { if (MPC) mp.T.set('a' + mp.seat, Object.assign({ n: ++mpN }, a)); };
+  const openStaff = () => { if (!staffDoor || staffDoor.open) return; staffDoor.open = true; staffDoor.mesh.visible = false; const i = solids.indexOf(staffDoor.solid); if (i >= 0) solids.splice(i, 1); hud(); };
+  const srcName = q => q.type === 'match' ? 'Teka-teki perpustakaan' : q.type ? 'Papan ' + q.label : 'Kunci Bilik Guru';
+  const applySolved = i => { const q = sources[i]; if (!q || q.solved) return; q._net = true;
+    if (q.type) drawBoard(Object.assign(q, { solved: true })); else if (q.mesh) q.mesh.visible = false;
+    gainKey(q, srcName(q) + (MPC ? ' (kawan)' : '')); q._net = false; };
+  const applyLost = i => { const q = sources[i]; if (!q || !q.solved) return; const k = got.indexOf(q); if (k >= 0) got.splice(k, 1); q.reset(); if (keys() < D.keys){ drawSign(false); exitLight.color.set(0xff2020); } hud(); };
+  if (MP) MPS.forEach(q => { if (MPC && q.i === mp.seat) return; mpOffs.push(mp.T.on('p' + q.i, v => { q.st = v; if (v) q.seen = performance.now(); })); });
+  if (MPH){
+    MPS.forEach(q => mpOffs.push(mp.T.on('a' + q.i, a => { if (!a || !(a.n > q.n)) return; q.n = a.n; hostAct(q, a); })));
+    mpHb = setInterval(() => mp.T.set('esc', Object.assign({}, mp.cfg, { started: true })), 3000);
+    $e('#escHint').style.display = 'none';
+    root.addEventListener('pointerdown', e => { if (!e.target.closest('button,#escEnd')) specI++; });
+  }
+  if (MPC) mpOffs.push(mp.T.on('st', v => clientSync(v)));
+  /* hos: aksi telefon */
+  function hostAct(q, a){
+    if (ended) return;
+    if (a.t === 'solve') applySolved(a.i);
+    else if (a.t === 'staff'){ openStaff(); msg(esc(q.name) + ' membuka Bilik Guru!'); }
+    else if (a.t === 'q'){ q.ans++; if (a.ok) q.ok++; }
+    else if (a.t === 'safe'){ q.safe = true; msg('🚪 ' + esc(q.name) + ' selamat keluar!', 2400); }
+    else if (a.t === 'wrong' && q.st){ const ang = Math.random() * Math.PI * 2; G.f = q.st.f; G.x = q.st.x + Math.cos(ang) * 7; G.z = q.st.z + Math.sin(ang) * 7; G.hunt = true; G.tg = q.i; G.grace = .6; }
+  }
+  /* hos: hantu memburu pemain terdekat yang kelihatan */
+  function hostGhost(dt){
+    const pl = MPS.filter(q => q.joined && q.st && !q.safe && performance.now() - q.seen < 20000), onF = pl.filter(q => q.st.f === G.f);
+    if (!onF.length && pl.length){ if ((G.follow += dt) > 10){ const q = pl[Math.floor(Math.random() * pl.length)], r = STAIRS[q.st.f]; G.f = q.st.f; G.x = r.cx; G.z = r.zc + r.side * 8; G.follow = 0; G.grace = 1.5; G.hunt = false; } }
+    else G.follow = 0;
+    if (G.grace > 0){ G.grace -= dt; return; }
+    let tgt = null, td = 99;
+    onF.forEach(q => { if (q.st.h) return; const d = Math.hypot(q.st.x - G.x, q.st.z - G.z); if (d < td){ td = d; tgt = q; } });
+    if (G.hunt){ const c = MPS[G.tg]; if (!c || !c.st || c.st.h || c.safe || c.st.f !== G.f || Math.hypot(c.st.x - G.x, c.st.z - G.z) > sight + 7) G.hunt = false; else { tgt = c; td = Math.hypot(c.st.x - G.x, c.st.z - G.z); } }
+    if (!G.hunt && tgt && td < sight){ G.hunt = true; G.tg = tgt.i; sfx('sting', .5); }
+    let tx, tz, sp;
+    if (G.hunt && tgt){ tx = tgt.st.x; tz = tgt.st.z; sp = huntSp + keys() * .2; }
+    else { if (Math.hypot(G.wx - G.x, G.wz - G.z) < .5){ const w = WAYS[G.f][Math.floor(Math.random() * WAYS[G.f].length)]; G.wx = w[0]; G.wz = w[1]; } tx = G.wx; tz = G.wz; sp = GT.roam; }
+    const gx = tx - G.x, gz = tz - G.z, gl = Math.hypot(gx, gz) || 1; G.x += gx / gl * sp * dt; G.z += gz / gl * sp * dt;
+    if (G.hunt && tgt && td < .75) hostCatch(tgt);
+  }
+  function hostCatch(q){
+    const far = WAYS[G.f].slice().sort((a, b) => Math.hypot(b[0] - G.x, b[1] - G.z) - Math.hypot(a[0] - G.x, a[1] - G.z))[0];
+    if (gKind === 'toyol' && got.length){ const src = got[got.length - 1]; applyLost(sources.indexOf(src)); lastEv = { id: Date.now(), k: 'steal', seat: q.i }; sfx('giggle', 1); msg('<span style="color:#7CFF7C">Toyol mencuri satu kunci daripada ' + esc(q.name) + '!</span>', 3000); }
+    else { lives--; hud(); lastEv = { id: Date.now(), k: 'caught', seat: q.i }; sfx('scream', .5); msg('<span style="color:#FF5A5A">' + esc(q.name) + ' ditangkap!</span> ' + lives + ' nyawa pasukan lagi.', 2800); }
+    G.x = far[0]; G.z = far[1]; G.hunt = false; G.grace = 4;
+    if (lives <= 0) hostEnd(false);
+  }
+  const hostPub = () => mp.T.set('st', { v: Date.now(), g: { f: G.f, x: +G.x.toFixed(2), z: +G.z.toFixed(2), h: G.hunt ? 1 : 0, tg: G.hunt ? G.tg : -1 },
+    solved: sources.map((q, i) => q.solved ? i : -1).filter(i => i >= 0), staff: staffDoor && staffDoor.open ? 1 : 0, lives, safe: MPS.filter(q => q.safe).map(q => q.i), ev: lastEv, over: mpOver });
+  /* hos: kamera penonton mengikut seorang pemain (ketik skrin untuk tukar) */
+  function hostUpdate(dt, now){
+    hostGhost(dt);
+    const all = MPS.filter(q => q.st && !q.safe), out = all.filter(q => !q.st.h), pl = out.length ? out : all, tp = pl.length ? pl[specI % pl.length] : null;   // utamakan pemain yang tidak menyorok
+    if (tp){ const t = tp.st, lk = t.h ? lockers[t.h[0]] : null, tx = lk ? lk.x : t.x, tz = lk ? lk.zc - .4 : t.z;   // menyorok: kamera di koridor menghadap almari
+      if (P.f !== t.f){ P.f = t.f; P.x = tx; P.z = tz; }
+      P.x += (tx - P.x) * Math.min(1, dt * 8); P.z += (tz - P.z) * Math.min(1, dt * 8);
+      let dy = (lk ? 0 : (t.face || 0)) - Math.PI - P.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); P.yaw += dy * Math.min(1, dt * 2.5); P.pitch = 0;
+      if (specName !== tp.name){ specName = tp.name; $e('#escWhere').textContent = '👁 ' + tp.name + ' · ketik skrin untuk tukar pemain'; } }
+    tpCam();
+    ghost.visible = G.f === P.f;
+    ghost.position.set(G.x, Math.sin(now / 400) * .12 + .1, G.z);
+    if (tp) ghost.lookAt(tp.st.x, ghost.position.y, tp.st.z);
+    if (gMixer){ gPlay(G.hunt ? 'sprint' : 'walk'); gMixer.update(dt); }
+    if (now - pubT2 > 110){ pubT2 = now; hostPub(); }
+    const act = MPS.filter(q => q.joined && q.st && (q.safe || performance.now() - q.seen < 20000));
+    if (act.length && act.every(q => q.safe)) hostEnd(true);
+  }
+  function hostEnd(won){
+    if (ended) return; mpOver = won ? 'win' : 'lose'; hostPub();
+    sfx(won ? 'win' : 'scream', .6);
+    const sec = Math.round(elapsed);
+    const rows = MPS.filter(q => q.joined).map(q => { const g = teamOf(q.id); let tp = 0, rp = 0;
+      if (g && q.ans) tp = gameToPBD(q.id, 'esc', q.ok, q.ans, { win: won ? 1 : 0, sec });
+      if (g && won){ rp = escRP(sec, cfg); teamRP(q.id, rp); }
+      return '<div class="flex items-center gap-2 text-[12px] py-1">' + teamAvatar(q.id, 22) + '<span class="flex-1 text-left">' + esc(q.name) + (q.safe ? ' 🚪' : '') + '</span><span>🧠 ' + q.ok + '/' + q.ans + '</span>' +
+        (tp ? '<b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b>' : '') + (rp ? '<span class="text-orange">+' + rp + ' RP</span>' : '') + '</div>'; }).join('');
+    save(true);
+    endScreen((won ? '<i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i><div class="font-bold tracking-widest text-[20px] mt-2" style="color:#4ADE80">PASUKAN BERJAYA KELUAR!</div>'
+      : '<i class="fa-solid fa-ghost text-4xl" style="color:#E23B3B"></i><div class="font-bold tracking-widest text-[20px] mt-2" style="color:#E23B3B">' + esc(GT.name.toUpperCase()) + ' MENANG</div>') +
+      '<div class="text-[12px] text-muted mt-1">PETA ' + (MAPI + 1) + ' ' + esc(MAP.name) + ' · ' + fmtSec(sec) + ' · kunci ' + keys() + '/' + D.keys + '</div><div class="mt-3">' + rows + '</div>', false);
+  }
+  /* telefon: terima keadaan hos */
+  function clientSync(v){
+    if (!v || ended) return;
+    if (v.closed){ msg('Bilik ditutup oleh hos.', 3000); setTimeout(() => { if (alive) quit(); }, 2500); return; }
+    NET = v;
+    (v.solved || []).forEach(i => applySolved(i));
+    sources.forEach((q, i) => { if (q.solved && !(v.solved || []).includes(i) && (!q._pend || Date.now() - q._pend > 4000)) applyLost(i); });
+    if (v.staff) openStaff();
+    if (v.lives !== lives){ lives = v.lives; hud(); }
+    (v.safe || []).forEach(i => { if (MPS[i]) MPS[i].safe = true; });
+    if (v.ev && v.ev.id !== evSeen){ evSeen = v.ev.id; const who = MPS[v.ev.seat];
+      if (v.ev.seat === mp.seat){ if (v.ev.k === 'caught' && !P.safe) caught(); else if (v.ev.k === 'steal'){ sfx('giggle', 1); msg('<span style="color:#7CFF7C">Toyol mencuri satu kunci!</span>', 3000); } }
+      else if (who) msg('<span style="color:#FF5A5A">' + esc(who.name) + (v.ev.k === 'steal' ? ' kehilangan kunci kepada toyol!' : ' ditangkap!') + '</span>', 2400); }
+    if (v.over && !ended){
+      $e('#escEnd').style.display = 'none';
+      endScreen(v.over === 'win' ? '<i class="fa-solid fa-door-open text-4xl" style="color:#4ADE80"></i><div class="font-bold tracking-widest text-[20px] mt-2" style="color:#4ADE80">PASUKAN BERJAYA KELUAR!</div><div class="text-[12px] text-muted mt-2">Jawapan betul kamu: ' + correct + '/' + answered + '</div>'
+        : '<i class="fa-solid fa-ghost text-4xl" style="color:#E23B3B"></i><div class="font-bold tracking-widest text-[20px] mt-2" style="color:#E23B3B">' + esc(GT.name.toUpperCase()) + ' MENANG</div><div class="text-[12px] text-muted mt-2">Nyawa pasukan habis.</div>', false);
+    }
+  }
+  function netGhost(dt){
+    if (!NET || !NET.g) return;
+    const g = NET.g; if (G.f !== g.f){ G.f = g.f; G.x = g.x; G.z = g.z; }
+    G.x += (g.x - G.x) * Math.min(1, dt * 10); G.z += (g.z - G.z) * Math.min(1, dt * 10);
+    const was = G.hunt; G.hunt = !!g.h;
+    if (G.hunt && !was && g.tg === mp.seat && !P.hide){ sfx('sting'); msg('<span style="color:#FF5A5A">Ia nampak kamu… LARI!</span>', 2000); }
+  }
+  /* telefon: hantar kedudukan 8× sesaat */
+  function mpPos(now){
+    if (now - posT < 120) return; posT = now;
+    mp.T.set('p' + mp.seat, { f: P.f, x: +P.x.toFixed(2), z: +P.z.toFixed(2), face: +P.face.toFixed(2), mv: P.moving && !paused ? 1 : 0,
+      h: P.hide ? [lockers.indexOf(P.hide.lk), P.hide.lk.occ.indexOf('me')] : null, d: P.anim ? lockers.indexOf(P.anim.spot.lk) : -1, safe: P.safe ? 1 : 0 });
+  }
+  /* pemain lain: watak + nama; dalam almari hanya nampak bila kita dalam almari yang sama */
+  const others = new Map(); let lkLt = null;
+  const nameTag = t => { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d');
+    g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; const w = Math.min(250, g.measureText(t).width + 24);
+    g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(128 - w / 2, 12, w, 40); g.fillStyle = '#FDE68A'; g.fillText(t, 128, 33);
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false, transparent: true })); sp.scale.set(1.2, .3, 1); sp.position.y = 2.05; sp.renderOrder = 5; return sp; };
+  function renderOthers(dt){
+    const openLk = new Set(MPS.filter(q => q.st && q.st.d >= 0).map(q => q.st.d));
+    lockers.forEach((lk, li) => { if (!(P.anim && P.anim.spot.lk === lk)) lk.doors.forEach(dr => dr.to = openLk.has(li) ? 1.75 : 0); });
+    let shared = false;
+    if (!lkLt){ lkLt = new THREE.PointLight(0xffd9a0, 2.2, 2.2); scene.add(lkLt); }
+    MPS.forEach(q => {
+      if (MPC && q.i === mp.seat) return;
+      const t = q.st; if (!t || !q.char) return;
+      let o = others.get(q.i);
+      if (!o){ o = { g: new THREE.Group(), mix: null, act: {}, now: null, x: t.x, z: t.z, f: t.f, face: t.face || 0 }; others.set(q.i, o); scene.add(o.g); o.g.add(nameTag(q.name));
+        knModel(q.char).then(gl => { if (!alive) return; const m = gl.scene, bx = new THREE.Box3().setFromObject(m), hh = bx.max.y - bx.min.y || 1, k = 1.62 / hh;
+          m.scale.setScalar(k); m.position.y = -bx.min.y * k; m.traverse(z => { if (z.isMesh) z.frustumCulled = false; }); o.g.add(m);
+          o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); }).catch(() => {}); }
+      if (o.f !== t.f){ o.f = t.f; o.x = t.x; o.z = t.z; }
+      o.x += (t.x - o.x) * Math.min(1, dt * 10); o.z += (t.z - o.z) * Math.min(1, dt * 10);
+      let df = (t.face || 0) - o.face; df = Math.atan2(Math.sin(df), Math.cos(df)); o.face += df * Math.min(1, dt * 10);
+      const meIn = !!(P.hide && t.h && lockers.indexOf(P.hide.lk) === t.h[0]);
+      o.g.visible = !t.safe && t.f === P.f && (!t.h || meIn);
+      if (t.h && meIn){ const lk = lockers[t.h[0]]; o.g.position.set(lk.x + (t.h[1] ? .37 : -.37), 0, lk.zc + 1.66); o.g.rotation.y = Math.PI; }
+      else { o.g.position.set(o.x, 0, o.z); o.g.rotation.y = o.face; }
+      /* cahaya malap dalam loker supaya kawan sebelah kelihatan */
+      if (t.h && meIn) shared = true;
+      if (o.mix){ const a = o.act[t.mv ? 'walk' : 'idle'] || o.act.idle; if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
+    });
+    /* cahaya malap dari mata pemain dalam loker supaya kawan sebelah kelihatan */
+    lkLt.visible = shared; if (shared) lkLt.position.copy(cam.position);
+  }
   function frame(now){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!paused && !ended){ elapsed += dt; $e('#escTime').textContent = fmtSec(elapsed); update(dt, now); }
     else if (P.anim){ lockerAnim(0); tpCam(); }
     lockerAnim(dt);
+    if (MP){ renderOthers(dt); if (MPC && !ended) mpPos(now); }
     if (pm){ pm.position.set(P.x, 0, P.z); let df = P.face - pm.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); pm.rotation.y += df * Math.min(1, dt * 12);
       pPlay(P.anim ? 'walk' : P.moving && !paused ? (PACT.sprint && Math.hypot(joy.x, joy.y) > .85 ? 'sprint' : 'walk') : 'idle'); pmMix.update(dt); }
     ambient(dt, now);
