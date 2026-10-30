@@ -5796,7 +5796,7 @@ const GAME_LOBBY = {
       return false;
     },
     how: () => '<b>🪜 Tangga Ilmon</b> — 4 kumpulan, 13 kad setiap satu. <b>Habiskan kad dahulu untuk menang.</b><br><br>' +
-      '<b>Kombo:</b> Tunggal · Pasangan (2 nombor sama) · Trio (3 sama) · Turutan 5 nombor berturut · <b>Turutan Elemen</b> (semua elemen sama, menang turutan biasa) · <b>Trio + Pasangan</b> (5 kad, juga kalahkan Turutan 5 biasa) · <b>💣 BOM</b> (4 nombor sama, atau Turutan Elemen 5 kad) memecahkan apa-apa kombo · <b>👑 Tangga Diraja</b> 1-2-3-4-5 elemen sama = paling kuat.<br>Tunggal nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡.<br><br>' +
+      '<b>Kombo:</b> Tunggal · Pasangan (2 nombor sama) · Trio (3 sama) · Turutan 5 nombor berturut · <b>Turutan Elemen</b> (semua elemen sama, menang turutan biasa) · <b>Trio + Pasangan</b> (5 kad, kalahkan Turutan 5 biasa) · <b>Empat Sama + 1</b> (5 kad, kalahkan Turutan 5 biasa &amp; Trio + Pasangan) · <b>💣 BOM</b> (4 nombor sama, atau Turutan Elemen 5 kad) memecahkan apa-apa kombo · <b>👑 Tangga Diraja</b> 1-2-3-4-5 elemen sama = paling kuat.<br>Tunggal nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡.<br><br>' +
       '<b>Cara main:</b> pembuka meja letak apa-apa kombo. Kumpulan seterusnya mesti letak kombo <b>jenis & bilangan kad sama tetapi lebih tinggi</b> — atau <b>LEPAS</b> (keluar dari meja itu). Bila semua lain lepas, kombo terakhir menang meja dan pemenang membuka meja baharu.<br><br>' +
       '<b>🧠 Kuiz:</b> setiap meja baharu ada kuiz (banyak peranti: semua kumpulan serentak; 1 peranti: bergilir). Betul = +1⭐, terpantas / dalam 8 saat = +2⭐. Pada giliran sendiri: <b>⭐ Tukar</b> 1 kad lemah dengan kad baharu, atau <b>⭐⭐ Buang</b> 1 kad terus.<br><br>' +
       '<b>📺 1 peranti</b> — bergilir, tangan disembunyikan (tekan LIHAT KAD). <b>📱 Banyak peranti</b> — peranti ini papan projektor; setiap kumpulan masuk kod bilik di telefon.' +
@@ -6346,7 +6346,7 @@ function kadBake(c){
 /* ---------- TANGGA ILMON: kombo menaik ----------
    Tunggal (nombor sama: 🌿 kalahkan 💧, 🔥 kalahkan 🌿, ⚡ kalahkan 🔥, 💧 kalahkan ⚡) · Pasangan · Trio · Trio + Pasangan (5 kad)
    Turutan 5 kad (nombor berturut) · Turutan Elemen (semua elemen sama — menang mana-mana turutan biasa yang sama panjang)
-   5 kad: Turutan biasa < Trio + Pasangan < 💣 Turutan Elemen 5 < 👑 Tangga Diraja (1–2–3–4–5 elemen sama, paling kuat)
+   5 kad: Turutan biasa < Trio + Pasangan < Empat Sama + 1 < 💣 Turutan Elemen 5 < 👑 Tangga Diraja (1–2–3–4–5 elemen sama, paling kuat)
    💣 BOM: 4 nombor sama, atau Turutan Elemen 5 kad — memecahkan apa-apa kombo. Lawan = jenis & bilangan kad sama, nilai lebih tinggi. */
 const TG_NEXT = { air: 'alam', alam: 'api', api: 'kilat', kilat: 'air' };   // elemen yang mengalahkan (Tunggal nombor sama)
 function tgEval(cards){
@@ -6360,8 +6360,10 @@ function tgEval(cards){
     if (n === 4) return { t: 'bom', len: 4, r: nums[0], bomb: 1, name: '💣 BOM ' + nums[0] + ' ×4' };
     return null;
   }
-  if (n === 5){                                          // Trio + Pasangan
+  if (n === 5){                                          // Trio + Pasangan / Empat Sama + 1
     const cnt = {}; nums.forEach(x => cnt[x] = (cnt[x] || 0) + 1); const k = Object.keys(cnt);
+    const q = k.find(x => cnt[x] === 4);
+    if (q){ const s1 = +k.find(x => cnt[x] === 1); return { t: 'kuad', len: 5, r: +q, name: 'Empat ' + q + ' + ' + s1 }; }
     if (k.length === 2 && Object.values(cnt).sort().join() === '2,3'){ const t = +k.find(x => cnt[x] === 3), p = +k.find(x => cnt[x] === 2);
       return { t: 'penuh', len: 5, r: t, name: 'Trio ' + t + ' + Pasangan ' + p }; }
   }
@@ -6373,14 +6375,16 @@ function tgEval(cards){
   }
   return null;
 }
+const TG_R5 = { turutan: 1, penuh: 2, kuad: 3 };
 const tgBeats = (a, b) => !a ? false : !b ? true : a.bomb ? (!b.bomb || a.bomb > b.bomb || (a.bomb === b.bomb && a.r > b.r)) :
-  (!b.bomb && ((a.t === 'penuh' && b.t === 'turutan' && b.len === 5 && !b.el) ||        // Trio + Pasangan kalahkan Turutan 5 biasa
+  (!b.bomb && ((a.len === 5 && b.len === 5 && (TG_R5[a.t] || 0) > (TG_R5[b.t] || 0)) ||   // 5 kad: Turutan < Trio + Pasangan < Empat Sama + 1
     (a.t === b.t && a.len === b.len && (a.r > b.r || (a.t === 'tunggal' && a.r === b.r && TG_NEXT[b.e] === a.e)))));
 const TG_T = { pasangan: 'Pasangan', trio: 'Trio' };
 const tgNeed = b => !b ? 'Buka meja: letak apa-apa kombo' : b.bomb === 3 ? '👑 Tangga Diraja tidak boleh dikalahkan — LEPAS' : b.bomb ? 'Hanya 💣 BOM lebih kuat boleh lawan' :
   b.t === 'tunggal' ? 'Perlu Tunggal > ' + b.r + ', atau ' + b.r + elemOf(TG_NEXT[b.e]).ico + ' — atau 💣 BOM' :
-  b.t === 'penuh' ? 'Perlu Trio + Pasangan dengan trio > ' + b.r + ' — atau 💣 BOM' :
-  'Perlu ' + (TG_T[b.t] || 'Turutan ' + b.len + ' kad' + (b.el ? ' elemen sama' : '')) + ' lebih tinggi daripada ' + (b.r % 100) + (b.t === 'turutan' && !b.el ? ' (atau Turutan Elemen ' + b.len + ' kad' + (b.len === 5 ? ', atau Trio + Pasangan' : '') + ')' : '') + ' — atau 💣 BOM';
+  b.t === 'penuh' ? 'Perlu Trio + Pasangan dengan trio > ' + b.r + ', atau Empat Sama + 1 — atau 💣 BOM' :
+  b.t === 'kuad' ? 'Perlu Empat Sama + 1 dengan nombor > ' + b.r + ' — atau 💣 BOM' :
+  'Perlu ' + (TG_T[b.t] || 'Turutan ' + b.len + ' kad' + (b.el ? ' elemen sama' : '')) + ' lebih tinggi daripada ' + (b.r % 100) + (b.t === 'turutan' && !b.el ? ' (atau Trio + Pasangan, atau Empat Sama + 1)' : '') + ' — atau 💣 BOM';
 /* semakan kad di Zon Kombo: { ok, label, bomb } */
 function tgCheck(cards, top, turn){
   const ev = cards.length ? tgEval(cards) : null;
@@ -6396,6 +6400,7 @@ function tgCands(hand){
   hand.forEach(c => out.push([c]));
   Object.values(by).forEach(l => { for (let k = 2; k <= Math.min(4, l.length); k++) out.push(l.slice(0, k)); });
   Object.values(by).filter(l => l.length >= 3).forEach(t => Object.values(by).filter(l => l !== t && l.length >= 2).forEach(p => out.push(t.slice(0, 3).concat(p.slice(0, 2)))));   // trio + pasangan
+  Object.values(by).filter(l => l.length === 4).forEach(q => Object.values(by).filter(l => l !== q).forEach(o => out.push(q.concat([o[0]]))));   // empat sama + 1
   for (let L = 5, s = 1; s + L - 1 <= 12; s++){
     const seq = []; for (let v = s; v < s + L; v++){ if (!by[v]) break; seq.push(by[v]); }
     if (seq.length < L) continue;
@@ -6409,7 +6414,7 @@ function tgCands(hand){
 function tgAI(hand, top, danger, smart){
   const all = tgCands(hand), by = {};
   hand.forEach(c => by[cardNum(c)] = (by[cardNum(c)] || 0) + 1);
-  const breaks = x => x.ev.t === 'tunggal' && by[cardNum(x.cs[0])] > 1 ? 4 : x.ev.t === 'pasangan' && by[cardNum(x.cs[0])] > 2 ? 3 : 0;   // elak pecahkan pasangan / trio
+  const breaks = x => x.ev.t === 'kuad' ? 5 : x.ev.t === 'tunggal' && by[cardNum(x.cs[0])] > 1 ? 4 : x.ev.t === 'pasangan' && by[cardNum(x.cs[0])] > 2 ? 3 : 0;   // elak pecahkan pasangan / trio / BOM
   if (!top){
     const l = all.filter(x => !x.ev.bomb || x.cs.length === hand.length)
       .map(x => ({ x, c: (x.ev.r % 100) - x.cs.length * 2.4 + breaks(x) * smart + (Math.random() - .5) * 6 * (1 - smart) }))
@@ -6945,7 +6950,7 @@ function komboRun(ids, opt, net){
   function paintArena(){
     $k('#kmAr').innerHTML = table.length ? kmPilesHtml(piles(), table.length - 1, newI) :
       '<div class="hint">' + (phase === 'quiz' ? '🧠 Kuiz meja baharu…' : started ? '🪜 ' + esc(P[cur].name) + ' buka meja — letak apa-apa kombo' : '⏳ Menunggu…') +
-      '<br><span style="font-size:1.2cqw">Tunggal · Pasangan · Trio · Turutan 5 kad · Turutan Elemen · 💣 BOM (4 sama / Turutan Elemen 5)</span></div>';
+      '<br><span style="font-size:1.2cqw">Tunggal · Pasangan · Trio · Turutan 5 kad · Trio + Pasangan · Empat Sama + 1 · 💣 BOM (4 sama / Turutan Elemen 5)</span></div>';
     newI = -1; kmFill($k('#kmAr')); pub();
   }
   const paint = () => { paintTop(); paintMe(); paintHand(); };
@@ -10486,7 +10491,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   const ovl = 'position:absolute;inset:0;display:none;align-items:safe center;justify-content:center;padding:16px;overflow-y:auto;';   // skrin rendah (telefon landskap): boleh skrol, tidak terpotong
   root.innerHTML =
     '<canvas id="escCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
-    '<div id="escSlit" style="position:absolute;inset:0;pointer-events:none;display:none;background:repeating-linear-gradient(180deg,#040507 0 30px,transparent 30px 38px),linear-gradient(90deg,#040507 0 12%,transparent 12% 88%,#040507 88%)"></div>' +
+    '<div id="escSlit" style="position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 0%,rgba(255,200,96,.16),transparent 60%),repeating-linear-gradient(180deg,#2a1d0d 0 30px,transparent 30px 38px),linear-gradient(90deg,#22170a 0 12%,transparent 12% 88%,#22170a 88%)"></div>' +
     '<div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.9) 100%)"></div>' +
     '<div id="escRed" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 25%,rgba(150,0,0,.6) 100%);opacity:0;transition:opacity .25s"></div>' +
     '<div id="escFade" style="position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .35s"></div>' +
@@ -10903,6 +10908,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   /* lampu suluh dipegang watak (tangan kanan); hos (penonton) kekal pada kamera */
   if (MPH){ torch.position.set(0, -.1, 0); cam.add(torch); cam.add(torch.target); torch.target.position.set(0, -.15, -1); }
   else { torch.angle = .42; torch.penumbra = .45; scene.add(torch); scene.add(torch.target); }
+  const hideLt = new THREE.PointLight(0xffdc90, .45, 2.6, 1.6); hideLt.visible = false; scene.add(hideLt);   // lampu kuning malap dalam almari
 
   /* ---------- hantu ---------- */
   function buildGhost(kind){
@@ -11122,7 +11128,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     };
     const cackle = (f, n, gap, vol) => { for (let i = 0; i < n; i++){ tone('square', f * (1 - i * .03), f * .82, gap * .8, vol, i * gap); tone('sine', f * 2.02, 0, gap * .6, vol * .4, i * gap); } };
     return {
-      step:   () => noise(300 + Math.random() * 200, 1.2, .12, .12),
+      step:   () => noise(300 + Math.random() * 200, 1.2, .12, .036),   // tapak kaki perlahan (70% lebih senyap)
       beat:   v => { tone('sine', 65, 40, .16, .5 * v); tone('sine', 60, 38, .16, .38 * v, .22); },
       chime:  () => { tone('sine', 880, 0, .5, .25); tone('sine', 1320, 0, .7, .2, .12); },
       buzz:   () => tone('square', 110, 70, .45, .18),
@@ -11522,6 +11528,7 @@ function escRun(THREE, sid, ac, lvl, mp){
       collide(P, .3);
       P.moving = m > .05;
     }
+    hideLt.visible = !!P.hide; if (P.hide) hideLt.position.set(P.x, 1.9, P.z);
     if (P.hide){ cam.position.set(P.x, 1.5, P.z); cam.rotation.set(P.pitch, P.yaw, 0); if (pm) pm.visible = false;   // dalam almari: pandangan dari celah pintu
       $e('#escSlit').style.opacity = clamp(1 - (Math.abs(Math.atan2(Math.sin(P.yaw), Math.cos(P.yaw))) - .35) * 2.2, 0, 1).toFixed(2); }   // menoleh ke tepi: nampak kawan dalam almari
     else tpCam();
@@ -11741,7 +11748,7 @@ function escRun(THREE, sid, ac, lvl, mp){
       h: P.hide ? [lockers.indexOf(P.hide.lk), P.hide.lk.occ.indexOf('me')] : null, d: P.anim ? lockers.indexOf(P.anim.spot.lk) : -1, safe: P.safe ? 1 : 0 });
   }
   /* pemain lain: watak + nama; dalam almari hanya nampak bila kita dalam almari yang sama */
-  const others = new Map(); let lkLt = null;
+  const others = new Map();
   const nameTag = t => { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const g = c.getContext('2d');
     g.font = 'bold 30px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; const w = Math.min(250, g.measureText(t).width + 24);
     g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(128 - w / 2, 12, w, 40); g.fillStyle = '#FDE68A'; g.fillText(t, 128, 33);
@@ -11750,8 +11757,6 @@ function escRun(THREE, sid, ac, lvl, mp){
   function renderOthers(dt){
     const openLk = new Set(MPS.filter(q => q.st && q.st.d >= 0).map(q => q.st.d));
     lockers.forEach((lk, li) => { if (!(P.anim && P.anim.spot.lk === lk)) lk.doors.forEach(dr => dr.to = openLk.has(li) ? 1.75 : 0); });
-    let shared = false;
-    if (!lkLt){ lkLt = new THREE.PointLight(0xffd9a0, 2.2, 2.2); scene.add(lkLt); }
     MPS.forEach(q => {
       if (MPC && q.i === mp.seat) return;
       const t = q.st; if (!t || !q.char) return;
@@ -11767,12 +11772,8 @@ function escRun(THREE, sid, ac, lvl, mp){
       o.g.visible = !t.safe && t.f === P.f && (!t.h || meIn);
       if (t.h && meIn){ const lk = lockers[t.h[0]]; o.g.position.set(lk.x + (t.h[1] ? .37 : -.37), 0, lk.zc + 1.66); o.g.rotation.y = Math.PI; }
       else { o.g.position.set(o.x, 0, o.z); o.g.rotation.y = o.face; }
-      /* cahaya malap dalam loker supaya kawan sebelah kelihatan */
-      if (t.h && meIn) shared = true;
       if (o.mix){ const a = o.act[t.mv === 2 ? 'sprint' : t.mv ? 'walk' : 'idle'] || o.act.walk || o.act.idle; if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
     });
-    /* cahaya malap dari mata pemain dalam loker supaya kawan sebelah kelihatan */
-    lkLt.visible = shared; if (shared) lkLt.position.copy(cam.position);
   }
   function frame(now){
     if (!alive) return;
