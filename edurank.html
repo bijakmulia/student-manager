@@ -9638,6 +9638,8 @@ async function runHost(){
         '<div class="flex-1 min-w-0 text-[12px] font-bold truncate">' + esc(x.name) + '</div><span class="num text-[11px] text-muted">' + (r.r || 0) + '/' + (r.a || 0) + ' betul</span>' +
         '<b class="num text-[14px] text-cyan">' + sc + '</b><span class="num text-[12px] text-orange">+' + rp + ' RP</span>' + (tp ? '<b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b>' : '') + '</div>'; }).join('');
     save(true); clearInterval(hb); T.set('run', { closed: true });
+    if (RUN && RUN.close) RUN.close();                  // tutup tayangan 3D
+    ov.style.display = '';
     ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:560px;border-color:#FFB347"><div style="font-size:40px">🏆</div>' +
       '<div class="font-bold tracking-widest text-[20px]" style="color:#FFB347">' + (res[0] ? esc(res[0][0].name).toUpperCase() + ' MENANG!' : 'TAMAT') + '</div>' +
       '<div class="grid gap-2 mt-3 text-left">' + rows + '</div><button class="btn btn-o clip-s w-full !py-3 mt-3" data-r="x">Tutup</button></div>';
@@ -9652,8 +9654,16 @@ async function runHost(){
     const b = e.target.closest('[data-r]'); if (!b) return;
     if (b.dataset.r === 'x'){ if (!cfg.started) T.set('run', { closed: true }); return close(); }
     if (b.dataset.r === 'end') return finish();
-    if (b.dataset.r === 'go' && cfg.seats.some(x => x.joined)){ cfg.started = true; pub(); paint(); }
+    if (b.dataset.r === 'go' && cfg.seats.some(x => x.joined)) go();
   };
+  async function go(){                                  // hos jadi tayangan projektor: semua pelari beratur di satu jalan
+    let ac = null; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(er){}
+    cfg.started = true; pub(); paint(); ov.style.display = 'none';
+    let THREE; try { THREE = await import(ESC_THREE); } catch(er){ ov.style.display = ''; return toast('Gagal memuat enjin 3D.', null, true); }
+    RUN = { loading: true };
+    try { runGame(THREE, cfg.seats.find(x => x.joined).id, ac, null, { cfg, st, finish }); }
+    catch(er){ RUN = null; ov.style.display = ''; console.error(er); toast('Tayangan gagal dimulakan — papan kedudukan dipaparkan.', null, true); }
+  }
 }
 /* telefon kumpulan: pilih kumpulan → tunggu hos → berlari */
 function runJoin(code, T){
@@ -9693,8 +9703,9 @@ function runJoin(code, T){
   paint();
 }
 
-function runGame(THREE, sid, ac, mp){
-  /* mp = { T, cfg, seat }: telefon dalam bilik hos — soalan dari hos, keputusan dihantar ke hos (hos merekod RP & PBD) */
+function runGame(THREE, sid, ac, mp, spec){
+  /* mp = { T, cfg, seat }: telefon dalam bilik hos — soalan dari hos, keputusan dihantar ke hos (hos merekod RP & PBD)
+     spec = { cfg, st, finish }: hos = tayangan projektor — semua pelari beratur satu barisan, skor tertinggi di hadapan */
   if (mp) sid = mp.cfg.seats[mp.seat].id;
   const player = mp ? { name: mp.cfg.seats[mp.seat].name, members: [] } : teamOf(sid);   // sid = id kumpulan yang berlari
   const root = document.createElement('div');
@@ -9826,6 +9837,58 @@ function runGame(THREE, sid, ac, mp){
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(.45, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .3 }));
   shadow.rotation.x = -Math.PI / 2; shadow.position.y = .02; scene.add(shadow);
 
+  /* ---------- PENONTON (hos projektor): pelari beratur satu barisan di lorong tengah, skor tertinggi paling hadapan ---------- */
+  const SPR = new Map(); let specT = 0;
+  if (spec){
+    runner.visible = false; shadow.visible = false;
+    ['#rnLives', '#rnStars', '#rnScore', '#rnDist', '#rnHint'].forEach(q => $r(q).style.display = 'none');
+    $r('#rnQuit').style.marginLeft = 'auto';               // butang tutup ke kanan (panel kedudukan di kiri)
+    cam.position.set(3.4, 5.4, 7.5); cam.lookAt(0, 1, -9);
+    const pnl = document.createElement('div'); pnl.id = 'rnSpec';
+    pnl.style.cssText = 'position:absolute;left:12px;top:calc(12px + var(--safe-t,0px));width:min(340px,44vw);pointer-events:auto';
+    pnl.onclick = e => { if (e.target.closest('[data-sp]')) $r('#rnQuit').onclick(); };
+    root.appendChild(pnl);
+  }
+  const tagTex = (txt, sc, over) => { const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+    g.fillStyle = over ? 'rgba(40,40,48,.75)' : 'rgba(0,0,0,.6)'; g.beginPath(); g.roundRect(6, 14, 500, 100, 30); g.fill();
+    g.font = 'bold 40px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = over ? '#94A3B8' : '#FDE68A';
+    let t = txt; while (g.measureText(t).width > 330 && t.length > 4) t = t.slice(0, -2); g.fillText(t === txt ? t : t + '…', 30, 64);
+    g.textAlign = 'right'; g.fillStyle = over ? '#94A3B8' : '#FFB347'; g.fillText((over ? '🏁 ' : '') + sc, 486, 64);
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; };
+  function specUpdate(dt){
+    const dz = 12 * dt;
+    roadTex.offset.y += dz / (160 / 6);
+    SCN.forEach(o => { o.position.z += dz; if (o.position.z > 12) o.position.z -= SPAN; });
+    const st = spec.st, rank = spec.cfg.seats.map((x, i) => [x, i]).filter(([x]) => x.joined)
+      .sort((a, b) => ((st[b[1]] || {}).sc || 0) - ((st[a[1]] || {}).sc || 0));
+    const n = rank.length, zAt = r => -(n - 1 - r) * 2.6 - 1;           // kedudukan 1 = paling hadapan (jauh dari kamera)
+    rank.forEach(([x, i], r) => {
+      let o = SPR.get(i);
+      if (!o){
+        o = { g: new THREE.Group(), mix: null, act: {}, now: null, key: '' }; o.g.position.z = zAt(r); scene.add(o.g); SPR.set(i, o);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false, transparent: true })); sp.scale.set(2.2, .55, 1); sp.position.y = 2.4; sp.renderOrder = 5; o.g.add(sp); o.tag = sp;
+        knModel(runChar(x.id)).then(gl => { if (!alive) return;
+          const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1, k = 1.8 / h;
+          m.scale.setScalar(k); m.position.y = -box.min.y * k; m.rotation.y = Math.PI; m.traverse(q => { if (q.isMesh) q.frustumCulled = false; }); o.g.add(m);
+          o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); }).catch(() => {});
+      }
+      const v = st[i] || {};
+      o.g.position.z += (zAt(r) - o.g.position.z) * Math.min(1, dt * 3);   // bertukar tempat dengan lancar bila skor berubah
+      const key = r + '|' + (v.sc || 0) + '|' + (v.over ? 1 : 0);
+      if (key !== o.key){ o.key = key; if (o.tag.material.map) o.tag.material.map.dispose(); o.tag.material.map = tagTex((r + 1) + '. ' + x.name, v.sc || 0, v.over); o.tag.material.needsUpdate = true; }
+      if (o.mix){ const a = (v.over ? o.act.idle : o.act.sprint) || o.act.sprint || o.act.idle; if (a && o.now !== a){ a.reset().fadeIn(.2).play(); if (o.now) o.now.fadeOut(.2); o.now = a; } o.mix.update(dt); }
+    });
+    if ((specT -= dt) > 0) return; specT = .5;
+    $r('#rnSpec').innerHTML = '<div class="panel clip p-3" style="background:rgba(10,16,24,.82);border-color:#FFB347">' +
+      '<div class="lbl" style="color:#FFB347">🏃‍♂️ LARIAN ILMU · BILIK ' + esc(spec.cfg.code) + '</div>' +
+      rank.map(([x, i], r) => { const v = st[i] || {};
+        return '<div class="flex items-center gap-2 mt-2"><b class="num" style="width:16px;color:' + (r ? '#94A3B8' : '#FACC15') + '">' + (r + 1) + '</b>' + teamAvatar(x.id, 22) +
+          '<div class="flex-1 min-w-0 text-[12px] font-bold truncate" style="' + (v.over ? 'opacity:.55' : '') + '">' + esc(x.name) + '</div>' +
+          '<span class="num text-[10px] text-muted">' + (v.r || 0) + '/' + (v.a || 0) + ' <span style="color:#FF4D6A">' + '❤'.repeat(Math.max(0, v.l == null ? 3 : v.l)) + '</span></span>' +
+          '<b class="num text-[14px]" style="min-width:44px;text-align:right;color:' + (v.over ? '#94A3B8' : '#FFB347') + '">' + (v.sc || 0) + (v.over ? '🏁' : '') + '</b></div>'; }).join('') +
+      '<button class="btn btn-o clip-s w-full !py-2 mt-3 text-[13px]" data-sp="end">🏁 TAMATKAN &amp; REKOD</button></div>';
+  }
+
   /* ---------- halangan, bintang & gerbang ---------- */
   const OBS = [], STARS = [], GATES = [];
   const OB_KINDS = [
@@ -9916,6 +9979,8 @@ function runGame(THREE, sid, ac, mp){
   const P = { lane: 1, x: 0, y: 0, vy: 0, inv: 0, phase: 0 };
   const RL = RUN_LVL[mp ? mp.cfg.lvl : runCfg().lvl] || RUN_LVL.sederhana, RQ = mp ? +mp.cfg.qt || 8 : runCfg().qt;
   let mqi = 0, pubT = 0;
+  const qOrd = mp ? mp.cfg.qs.map((_, i) => i).sort(() => Math.random() - .5) : null;
+  const mpOff = mp ? mp.T.on('run', v => { if (v && v.closed && alive){ msg('📺 Hos menamatkan permainan', '#FDE68A', 2500); setTimeout(() => { if (alive) quit(); }, 2200); } }) : null;
   const mpPub = over => { if (mp) mp.T.set('r' + mp.seat, { sc: score(), d: Math.floor(dist), r: right, a: asked, l: lives, over: !!over, t: Date.now() }); };
   let speed = RL.v0, dist = 0, stars = 0, right = 0, asked = 0, lives = 3, alive = true, ended = false, paused = false;
   let nextObs = -40, nextStar = -30, nextQ = 160, lastSpawnZ = -40;
@@ -9966,6 +10031,7 @@ function runGame(THREE, sid, ac, mp){
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
   $r('#rnQuit').onclick = () => {
+    if (spec) return gameConfirm('Tamatkan larian untuk semua pemain?', 'Keputusan setiap kumpulan direkod sekarang dan semua telefon akan keluar.', 1, 0).then(ok => { if (ok) spec.finish(); });
     if (ended) return quit();
     const was = paused; paused = true;                // larian berhenti sementara soalan pengesahan dipapar
     gameConfirm(null, null, asked, right).then(ok => { if (ok){ if (asked) gameOver(); else quit(); } else { paused = was; last = performance.now(); } });
@@ -10011,7 +10077,7 @@ function runGame(THREE, sid, ac, mp){
     if (nextObs >= 0 && !gateNear){ spawnObstacle(-90); nextObs = -(14 + Math.random() * 10) * (11 / speed) * 1.4; }
     if (nextStar >= 0){ spawnStars(-90, Math.floor(Math.random() * 3)); nextStar = -(30 + Math.random() * 20); }
     if (nextQ <= 0 && !GATES.some(g => !g.done)){
-      const q = mp ? mp.cfg.qs[mqi++ % mp.cfg.qs.length] : escQuestion();
+      const q = mp ? mp.cfg.qs[qOrd[mqi++ % qOrd.length]] : escQuestion();
       spawnGates(-Math.max(60, speed * RQ), q); nextQ = 260 + Math.random() * 60 + speed * RQ;
       OBS.slice().forEach((o, i) => { if (o.m.position.z < -60) { scene.remove(o.m); o.dead = true; } });
       for (let i = OBS.length - 1; i >= 0; i--) if (OBS[i].dead) OBS.splice(i, 1);
@@ -10088,6 +10154,7 @@ function runGame(THREE, sid, ac, mp){
     if (!alive) return;
     alive = false; RUN = null;
     if (mp && !ended) mpPub(true);                      // keluar awal = tamat bagi hos
+    if (mpOff) try { mpOff(); } catch(e){}
     if (!mp && !ended && asked) save();
     window.removeEventListener('resize', resize); window.removeEventListener('keydown', onKey);
     window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
@@ -10100,7 +10167,8 @@ function runGame(THREE, sid, ac, mp){
   function frame(now){
     if (!alive) return;
     const dt = Math.min(.05, (now - last) / 1000); last = now;
-    if (!ended && !paused) update(dt);
+    if (spec) specUpdate(dt);
+    else if (!ended && !paused) update(dt);
     if (mp && !ended && now - pubT > 600){ pubT = now; mpPub(false); }
     else if (ended && mixer) mixer.update(dt);
     R.render(scene, cam); if (LIVE.frame) LIVE.frame(R.domElement);
