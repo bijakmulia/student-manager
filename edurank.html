@@ -8580,6 +8580,13 @@ const ST_CSS = `
 .st-bub .it{display:flex;gap:.4cqw;justify-content:center}
 .st-bub .it>span{position:relative;width:3.6cqw;height:3.6cqw;display:flex;align-items:center;justify-content:center;font-size:2.4cqw;border-radius:.6cqw;background:#F1F5F9}
 .st-bub .it>span.ok{background:#BBF7D0}
+.st-cu.rt,.st-bub [data-rt]{touch-action:none;cursor:grab}      /* seret dengan jari (tablet) tanpa dibatalkan oleh skrol */
+.st-bub [data-rt]{outline:.2cqw dashed #3B82F6;outline-offset:.1cqw;animation:stRtW 1.2s ease-in-out infinite}
+.st-bub [data-rt].lifted{opacity:.3;animation:none}
+@keyframes stRtW{50%{transform:translateY(-.3cqw)}}
+.st-si.home{z-index:4}
+.st-si.home::before{content:'';position:absolute;left:-12%;right:-12%;top:-6%;bottom:-4%;border-radius:.8cqw;background:rgba(59,130,246,.35);box-shadow:0 0 0 .3cqw #3B82F6,0 0 1.4cqw .3cqw #60A5FA;animation:stHome .7s ease-in-out infinite alternate;z-index:-1}
+@keyframes stHome{to{box-shadow:0 0 0 .3cqw #2563EB,0 0 2.2cqw .6cqw #93C5FD}}
 .st-bub .it>span.tag{width:auto;padding:0 .5cqw;font-size:1cqw;font-weight:800;gap:.2cqw;background:#FEF3C7}
 .st-bub .it>span.tag.ok{background:#BBF7D0}
 .st-bub .tx{font-size:.95cqw;font-weight:700;text-align:center;margin-top:.4cqw;max-width:15cqw;line-height:1.2;color:#334155}
@@ -8993,7 +9000,7 @@ function storRun(team){
       const body = r
         ? '<div class="jv"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span><div class="tx">"' + esc(o.tx) + '"</div></div>'   // gambar jus di atas, ayat pendek di bawah; resipi bila diketik
         : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '"' + (o.ret && !o.got.includes(id) ? ' data-rt="' + id + '"' : '') + '>' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
-      return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + (bubHid(c) ? ' bh' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
+      return '<div class="st-cu' + (o.ret ? ' rt' : '') + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + (bubHid(c) ? ' bh' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
         '<div class="pm">💬<b><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></b></div>' +
         '<div class="who">' + stImg(o.who.img, o.who.e) + '</div><div class="nm2">' + esc(o.who.n) + '</div></div>';
@@ -9006,6 +9013,8 @@ function storRun(team){
     paintCust();
   };
   const shown = {};
+  let homeId = null;                                      // barang pulangan sedang diseret → tempat asalnya diserlah biru
+  const setHome = id => { homeId = id; root.querySelectorAll('.st-si.home').forEach(e => e.classList.remove('home')); if (id){ const e = root.querySelector('.st-si[data-it="' + id + '"]'); if (e) e.classList.add('home'); } };
   const paintShelves = () => ST_SHELVES.forEach(([id]) => {
     const el = $s('[data-sh="' + id + '"]'); if (!el) return;
     el.classList.toggle('low', ST_ITEMS.some(i => i.sh === id && stock[i.id] <= 1));
@@ -9013,7 +9022,7 @@ function storRun(team){
     $s('#stL_' + id).innerHTML = shelfSlots(id).map(({ it, lv, x, w }) => {
       const n = stock[it.id], pop = n > (shown[it.id] == null ? n : shown[it.id]);
       shown[it.id] = n;
-      return '<span class="st-si' + (it.tg === 'j' ? ' tn' : '') + (n ? '' : ' out') + (pop ? ' pop' : '') + '" data-it="' + it.id + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
+      return '<span class="st-si' + (it.id === homeId ? ' home' : '') + (it.tg === 'j' ? ' tn' : '') + (n ? '' : ' out') + (pop ? ' pop' : '') + '" data-it="' + it.id + '" style="left:' + x + '%;bottom:' + (100 - ST_BOARD[lv]) + '%;width:' + w + '%">' +
         '<i>' + icon(it.id) + '</i>' + (it.prep ? '<b class="pr">🍳</b>' : '') +
         (n && n <= 2 ? '<b class="c">' + n + '</b>' : '') + '</span>';                // lencana hanya bila stok hampir habis
     }).join('');
@@ -9397,6 +9406,7 @@ function storRun(team){
       const rt = e.target.closest('[data-rt]'), id = rt ? rt.dataset.rt : c.o.need.find(x => !c.o.got.includes(x));
       if (!id) return;
       drag = { src: rt || cu, kind: 'rt', x: e.clientX, y: e.clientY, on: false, hot: null, id, cu: cu.dataset.cu };
+      setHome(id);                                        // serlah tempat asal sebaik ditekan
       return;
     }
     let kind = src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.dataset.ss ? 'ss' : src.dataset.bl ? 'bl' : src.dataset.bin ? 'bin' : 'tray';
@@ -9421,7 +9431,7 @@ function storRun(team){
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 10) return;
       drag.on = true;
       const g = drag.g = document.createElement('div'); g.className = 'st-ghost';
-      if (drag.kind === 'it' || drag.kind === 'rt') g.innerHTML = icon(drag.id);
+      if (drag.kind === 'it' || drag.kind === 'rt'){ g.innerHTML = icon(drag.id); if (drag.kind === 'rt' && drag.src.dataset.rt) drag.src.classList.add('lifted'); }
       else if (drag.kind === 'tr') g.innerHTML = trayIcon(tray[+drag.id]);
       else if (drag.kind === 'tray'){ g.classList.add('multi'); g.innerHTML = tray.map(x => '<span>' + trayIcon(x) + '</span>').join(''); }   // semua makanan atas kaunter dibawa bersama
       else if (drag.kind === 'ss'){ const x = stn.dapur[+drag.id.slice(-1)]; g.innerHTML = burnt(x) ? '<span class="st-emo">🔥</span>' : icon(x.id); }
@@ -9435,7 +9445,7 @@ function storRun(team){
     if (hot !== drag.hot){ if (drag.hot) drag.hot.classList.remove('st-hot'); drag.hot = hot; if (hot) hot.classList.add('st-hot'); }
   });
   const endDrag = e => {
-    liftOff();
+    liftOff(); setHome(null);
     if (!drag) return;
     const d = drag; drag = null;
     if (d.kind === 'me'){ d.me.classList.remove('drag'); if (d.on) dragEnd = performance.now(); return; }
