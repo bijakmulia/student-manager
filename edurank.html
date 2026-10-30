@@ -5433,9 +5433,11 @@ function todayQNotice(){
    jika tidak, hanya antara tab pada peranti sama (BroadcastChannel).        */
 /* Automatik: peranti yang menekan MULA = pemain (menyiarkan); peranti lain yang membuka EduRank = paparan.
    (Togol lama 'Siarkan' / 'Papar' dibuang — nilai tersimpan diabaikan.) */
-const lvCastOn = () => true;
-const lvViewOn = () => true;
-const lvNote = () => '<div class="lb-note" style="margin-top:8px">📺 <b>Tayangan projektor automatik:</b> peranti yang tekan MULA = pemain; peranti lain yang membuka EduRank (Firebase sama) memaparkan game ini. ' +
+let LIVE_ON = false;                                 // siaran hanya dihidupkan oleh pemain dalam bilik hos (Kaunter Stor)
+const lvCastOn = () => LIVE_ON;
+const lvViewOn = v => !!LVW.allow && !!v && v.by === LVW.allow;   // hos membuka siaran pemain biliknya sahaja
+const lvNote = () => '';
+const lvNoteOld = () => '<div class="lb-note" style="margin-top:8px">📺 <b>Tayangan projektor automatik:</b> peranti yang tekan MULA = pemain; peranti lain yang membuka EduRank (Firebase sama) memaparkan game ini. ' +
   (FB.on ? '<span style="color:#4ADE80">Firebase aktif ✓</span>' : '<b style="color:#FCA5A5">Firebase belum aktif di peranti ini — Tetapan → Penyegerakan Firebase.</b>') + '</div>';
 const LV_ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] };
 const LIVE = { frame: null, host: null };
@@ -5561,7 +5563,7 @@ function liveHost(g, root, opts){
 const liveEnd = h => { try { h && h.end(); } catch(e){} };
 
 /* ---------- PENONTON: tablet / projektor ---------- */
-const LVW = { T: null, kind: '', off: null, seen: {}, closed: {}, view: null };
+const LVW = { T: null, kind: '', off: null, seen: {}, closed: {}, view: null, allow: null };
 function liveWatch(){
   const T = lvT(), kind = T ? T.kind : '';
   if (kind === LVW.kind) return;
@@ -5575,7 +5577,7 @@ function liveWatch(){
     const V = LVW.view;
     if (V && V.sid === v.sid){ V.meta(v); return; }
     const prev = LVW.seen[v.sid]; LVW.seen[v.sid] = v.t;
-    if (v.end || LVW.closed[v.sid] || !lvViewOn()) return;
+    if (v.end || LVW.closed[v.sid] || !lvViewOn(v)) return;
     // dibuka hanya bila siaran terbukti hidup (mesej baharu, bukan sisa lama)
     if (init && prev === undefined) return;
     if (prev !== undefined && prev === v.t) return;
@@ -5872,7 +5874,7 @@ const GAME_LOBBY = {
       await Promise.all(urls.map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = () => { n++; p(.1 + .9 * n / urls.length); r(); }; im.src = u; })));
       p(1);
     },
-    starts: [['🏪 BUKA KEDAI', () => storStart()]],
+    starts: [['▶ MAIN (1 peranti)', () => storStart()], ['👑 BUKA BILIK · HOS (tayangan projektor)', () => storHost()]],
     how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> atlet <b>menyewa</b> peralatan sukan (harga murah) — seret dari rak <b>terus kepada atlet</b>. Atlet akan datang semula: seret peralatan yang dipulangkan ke <b>tempat asalnya di rak</b>.<br><b>Jus Blend Sihat:</b> gelembung pelanggan menunjukkan jus yang dipesan — <b>ketik pelanggan</b> untuk lihat resipinya, kemudian seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
   }
 };
@@ -5930,7 +5932,7 @@ function gameLobby(k){
           '<button class="' + (String(cfg[op.k] == null && op.k === 'duelQ' ? duelQ() : cfg[op.k]) === String(v) ? 'on' : '') + '" data-ls="' + op.k + '" data-lv="' + v + '" data-ln="' + (typeof v === 'number' ? 1 : 0) + '">' + l + '</button>').join('') + '</div>' +
         (op.note ? '<div class="lb-note">' + op.note + '</div>' : '')).join('') +
         (def.extra ? def.extra() : '') +
-        '<div class="lb-sec">TAYANG LANGSUNG KE PROJEKTOR</div>' + lvNote() + '</div>';
+        '</div>';
     } else if (def.views && def.views[view]){
       h = '<div class="lb-h"><button data-lb="back">‹</button>' + def.views[view].t + '</div><div class="lb-scroll">' + def.views[view].h() + '</div>';
     } else if (view === 'how'){
@@ -7203,12 +7205,13 @@ async function komboJoinAsk(){
   toast('Mencari bilik ' + c + '…');
   const kind = await new Promise(res => {                // bilik Tangga Ilmon ('st') atau Sekolah Berhantu ('esc')
     let done = false; const offs = []; const fin = k => { if (done) return; done = true; offs.forEach(o => { try { o && o(); } catch(e){} }); res(k); };
-    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }), T.on('run', v => { if (v && !v.closed) fin('run'); }));
+    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }), T.on('run', v => { if (v && !v.closed) fin('run'); }), T.on('stor', v => { if (v && !v.closed) fin('stor'); }));
     setTimeout(() => fin(null), 6000);
   });
   if (!kind) return toast('Bilik ' + c + ' tidak dijumpai. Semak kod di skrin hos.', null, true);
   if (kind === 'esc') return escJoin(c, T);
   if (kind === 'run') return runJoin(c, T);
+  if (kind === 'stor') return storJoin(c, T);
   await kadProbe(); komboJoin(c, T);
 }
 function komboJoin(code, T){
@@ -8513,6 +8516,90 @@ async function storStart(){
   catch(e){ STOR = null; const r = $('#stRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
 }
 
+/* ---------- KAUNTER STOR: BILIK HOS (tayangan sahaja) — 1 pemain masuk kod, hos = projektor yang memaparkan permainannya ---------- */
+async function storHost(){
+  const o = arenaUi(), t = teamOf(o.team);
+  if (!t) return toast('Pilih kumpulan (Pemain) dahulu.', null, true);
+  const code = String(1000 + Math.floor(Math.random() * 9000));
+  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  const cfg = { g: 'stor', code, team: { id: t.id, name: t.name }, cid: null, joined: false, started: false };
+  const offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#0E2A3A,#04080C');
+  document.body.appendChild(ov); lockBody();
+  const pub = () => T.set('stor', cfg);
+  let done = false, res = null;
+  const box = h => '<div class="panel clip p-5 w-full text-center" style="max-width:520px;border-color:#38BDF8">' + h + '</div>';
+  const paint = () => {
+    if (res) return;
+    if (!cfg.started){ ov.innerHTML = box('<div><span style="display:inline-block;background:#FACC15;color:#1A1405;font-weight:900;font-size:13px;letter-spacing:.15em;padding:3px 12px;border-radius:99px;margin-bottom:6px">👑 HOS — kongsi kod ini</span></div>' +
+      '<div class="lbl" style="color:#38BDF8">🏪 KAUNTER STOR · KOD BILIK</div><div class="num" style="font-size:64px;font-weight:900;letter-spacing:.2em;color:#FDE68A;line-height:1.1">' + code + '</div>' +
+      '<div class="text-[12px] text-muted">Di peranti pemain: EduRank → GAME → <b>🔢 MASUK KOD BILIK</b>, taip kod ini. Peranti ini jadi <b>tayangan projektor</b>.</div>' +
+      '<div class="panel clip-s p-2 flex items-center gap-2 mt-3 text-left">' + teamAvatar(t.id, 26) + '<div class="flex-1 text-[13px] font-bold">' + esc(t.name) + '</div>' +
+        '<span class="text-[11px]" style="color:' + (cfg.joined ? '#4ADE80">✅ pemain sudah masuk' : '#F59E0B">⏳ menunggu pemain…') + '</span></div>' +
+      '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-3" data-r="x">Tutup</button><button class="btn btn-o clip-s flex-1 !py-3" data-r="go"' + (cfg.joined ? '' : ' disabled style="opacity:.45"') + '>' +
+        (cfg.joined ? '▶ MULA' : '⏳ Menunggu pemain…') + '</button></div>'); return; }
+    ov.innerHTML = box('<div style="font-size:40px">📺</div><div class="font-bold text-[16px] mt-1">Menunggu siaran dari pemain…</div><div class="text-[12px] text-muted mt-1">' + esc(t.name) + ' · Bilik ' + code + '</div>' +
+      '<button class="btn clip-s w-full !py-2 mt-3" data-r="x">Tutup bilik</button>');
+  };
+  const close = () => { done = true; clearInterval(hb); clearInterval(vw); offs.forEach(o2 => { try { o2 && o2(); } catch(e){} }); LVW.allow = null; if (LVW.view) LVW.view.close(); ov.remove(); unlockBody(); };
+  offs.push(T.on('j0', v => { if (v && v.cid && !cfg.joined && !cfg.started){ cfg.joined = true; cfg.cid = v.cid; pub(); paint(); } }));
+  offs.push(T.on('res', v => { if (!v || !cfg.started || res || done) return;
+    if (v.quit){ toast('Pemain keluar dari permainan.'); return close(); }
+    res = v; const rp = clamp(Math.round(v.score / 60), 2, 25), d = storData();          // keputusan direkod di peranti hos
+    teamRP(t.id, rp); const tp = v.asked ? gameToPBD(t.id, 'stor', v.right, v.asked, { coins: v.coins, score: v.score }) : 0;
+    const best = !d.best[t.id] || v.score > d.best[t.id]; if (best) d.best[t.id] = v.score; d.plays[t.id] = (d.plays[t.id] || 0) + 1; save(true);
+    setTimeout(() => { if (LVW.view) LVW.view.close(); LVW.allow = null; T.set('stor', { closed: true }); ov.style.display = '';
+      ov.innerHTML = box('<div style="font-size:40px">' + (v.failed ? '🏚️' : '🏆') + '</div><div class="font-bold tracking-widest text-[20px]" style="color:#38BDF8">' + (v.failed ? 'KEDAI DITUTUP!' : 'SYIF TAMAT!') + '</div>' +
+        '<div class="text-[13px] text-muted mt-1">' + esc(t.name) + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
+        '<div class="grid grid-cols-3 gap-2 mt-3 num"><div class="panel clip-s p-2"><div class="text-[18px]" style="color:#FDE68A">⭐ ' + v.score + '</div><div class="text-[10px] text-muted">SKOR</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px]">RM' + v.coins + '</div><div class="text-[10px] text-muted">PENDAPATAN</div></div>' +
+        '<div class="panel clip-s p-2"><div class="text-[18px] text-orange">+' + rp + '</div><div class="text-[10px] text-muted">RP</div></div></div>' +
+        (tp ? '<div class="text-[12px] mt-2" style="color:#00F0FF"><b style="color:' + TP_COLOR[tp] + '">TP' + tp + '</b> direkod dalam PBD</div>' : '') +
+        '<button class="btn btn-o clip-s w-full !py-3 mt-3" data-r="x">Tutup</button>'); }, 2500);
+  }));
+  const hb = setInterval(() => { if (!res) pub(); }, 2000);
+  const vw = setInterval(() => { if (cfg.started && !res) ov.style.display = LVW.view ? 'none' : ''; }, 400);   // siaran pemain dipapar penuh
+  pub(); paint();
+  ov.onclick = e => {
+    const b = e.target.closest('[data-r]'); if (!b) return;
+    if (b.dataset.r === 'x'){ if (!res) T.set('stor', { closed: true }); return close(); }
+    if (b.dataset.r === 'go' && cfg.joined){ LVW.allow = cfg.cid; LVW.closed = {}; cfg.started = true; pub(); paint(); }
+  };
+}
+/* peranti pemain: masuk kod → SEDIA → tunggu hos menekan MULA → main (disiarkan ke hos) */
+function storJoin(code, T){
+  let cfg = null, ready = false, started = false;
+  const offs = [], ov = document.createElement('div'); ov.id = 'mpRoom'; ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#0E2A3A,#04080C');
+  document.body.appendChild(ov); lockBody(); if (LVW.view) LVW.view.close();
+  const close = () => { offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
+  const panel = h => '<div class="panel clip p-5 w-full text-center" style="max-width:480px;border-color:#38BDF8"><div class="lbl" style="color:#38BDF8">🏪 KAUNTER STOR · BILIK ' + esc(code) + '</div>' + h +
+    '<button class="btn clip-s w-full !py-2 mt-3" data-j="x">Keluar</button></div>';
+  const paint = () => {
+    if (!cfg){ ov.innerHTML = panel('<div class="mt-4 text-muted">Mencari bilik…</div>'); return; }
+    ov.innerHTML = panel('<div class="mt-3 text-[15px]">' + teamAvatar(cfg.team.id, 26) + ' <b>' + esc(cfg.team.name) + '</b></div>' +
+      (ready ? '<div class="text-muted text-[13px] mt-2">✅ Sedia — menunggu hos menekan MULA…</div>'
+        : '<button class="btn btn-o clip-s w-full !py-3 mt-3 text-[15px]" data-j="ok">✋ SAYA SEDIA</button><div class="text-[11px] text-muted mt-2">Kamu pemain — permainan kamu dipaparkan di projektor hos.</div>'));
+  };
+  offs.push(T.on('stor', v => {
+    if (!v || started) return;
+    if (v.closed){ toast('Bilik ditutup oleh hos.', null, true); return close(); }
+    cfg = v;
+    if (ready && v.started){ started = true; return begin(); }
+    paint();
+  }));
+  ov.onclick = e => {
+    const b = e.target.closest('[data-j]'); if (!b) return;
+    if (b.dataset.j === 'x') return close();
+    if (b.dataset.j === 'ok' && cfg && !ready){ ready = true; orientFree(); T.set('j0', { cid: CLIENT_ID, t: Date.now() }); storProbe(); paint(); }
+  };
+  async function begin(){
+    close(); STOR = { loading: true };
+    await Promise.race([storProbe(), new Promise(r => setTimeout(r, 5000))]);
+    try { storRun(cfg.team.id, { T, cfg }); }
+    catch(e){ STOR = null; const r = $('#stRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
+  }
+  paint();
+}
+
 /* ---------- gaya ---------- */
 const ST_CSS = `
 .st{position:fixed;inset:0;z-index:955;background:#0B1220;container-type:size;user-select:none;-webkit-user-select:none;touch-action:manipulation;overflow:hidden;font-family:inherit;color:#fff}
@@ -8888,8 +8975,10 @@ const ST_CSS = `
 function stStyle(){ if (!document.getElementById('stCss')){ const s = document.createElement('style'); s.id = 'stCss'; s.textContent = ST_CSS; document.head.appendChild(s); } }
 
 /* ---------- enjin ---------- */
-function storRun(team){
+function storRun(team, mp){
+  /* mp = { T, cfg }: pemain dalam bilik hos — permainan disiarkan ke hos (projektor); keputusan direkod di peranti hos */
   stStyle();
+  const TNAME = mp ? mp.cfg.team.name : teamName(team);
   const cfg = storCfg(), L = ST_LVL[cfg.lvl] || ST_LVL.mudah;
   const SABAR = +cfg.sabar || L.sabar, DUR = (+cfg.syif || 5) * 60, ME = cfg.watak === 'l' ? 'pekerja_l' : 'pekerja_p';
   const SLOTX = { s: [3, 14.5, 26], k: [64.5, 76.5, 88.5] };     // telefon (atas kaunter stor), blender & makanan (atas kaunter kafe) di hujung dalam: laluan dari pintu lapang
@@ -8932,7 +9021,8 @@ function storRun(team){
     '<div id="stPop"></div><div id="stCall"></div><div id="stEnd"></div>' +
   '</div>';
   document.body.appendChild(root); lockBody();
-  const live = liveHost('stor', root, { title: 'Stor Sukan' }); orientFree();
+  LIVE_ON = !!mp; const live = mp ? liveHost('stor', root, { title: 'Stor Sukan · ' + TNAME }) : null; LIVE_ON = false; orientFree();
+  const mpOff = mp ? mp.T.on('stor', v => { if (v && v.closed && !over){ msg('📺 Hos menutup bilik', '#FDE68A', 2200); setTimeout(() => { if (root.isConnected) quit(); }, 2000); } }) : null;
   const $s = q => root.querySelector(q);
 
   /* ---------- keadaan ---------- */
@@ -8955,7 +9045,7 @@ function storRun(team){
     $s('#stHud').innerHTML = '<span class="pill">⏱ ' + Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0') + '</span>' +
       '<span class="pill">' + stImg('ui_syiling', '🪙') + ' RM' + coins + '</span>' +
       '<span class="pill">' + [0, 1, 2, 3, 4].map(i => i < hearts ? stImg('ui_hati', '❤️') : '<span class="st-emo" style="opacity:.3">🖤</span>').join('') + '</span>' +
-      '<span class="pill" style="color:#FDE68A">⭐ ' + score + '</span><span class="pill">😊 ' + (good + poor) + '</span><span class="pill" style="font-size:1.1cqw;max-width:20cqw;overflow:hidden;white-space:nowrap">' + esc(teamName(team)) + '</span>' +
+      '<span class="pill" style="color:#FDE68A">⭐ ' + score + '</span><span class="pill">😊 ' + (good + poor) + '</span><span class="pill" style="font-size:1.1cqw;max-width:20cqw;overflow:hidden;white-space:nowrap">' + esc(TNAME) + '</span>' +
       '<button data-x="quit"><i class="fa-solid fa-xmark"></i></button>';
     // jam di atas pintu: jarum berpusing mengikut masa syif yang berlalu
     $s('#stClkH').style.transform = 'rotate(' + Math.min(360, T / DUR * 360) + 'deg)';
@@ -9330,24 +9420,30 @@ function storRun(team){
     if (over) return; over = true; clearInterval(loop);
     const served = good + poor, right = good + qRight, asked = served + left + qAsked;
     const rp = clamp(Math.round(score / 60), 2, 25), d = storData();
-    teamRP(team, rp);
-    const tp = asked ? gameToPBD(team, 'stor', right, asked, { coins, score }) : 0;
-    const best = !d.best[team] || score > d.best[team];
-    if (best) d.best[team] = score;
-    d.plays[team] = (d.plays[team] || 0) + 1;
-    save(true);
+    let tp = 0, best = false;
+    if (mp) mp.T.set('res', { score, coins, right, asked, served, left, qRight, qAsked, failed: !!failed, t: Date.now() });   // hos merekod RP & PBD
+    else {
+      teamRP(team, rp);
+      tp = asked ? gameToPBD(team, 'stor', right, asked, { coins, score }) : 0;
+      best = !d.best[team] || score > d.best[team];
+      if (best) d.best[team] = score;
+      d.plays[team] = (d.plays[team] || 0) + 1;
+      save(true);
+    }
     snd('stor_tamat', failed ? 'low' : 'myth');
     $s('#stEnd').innerHTML = '<div class="st-end"><div class="pn">' +
       '<div class="big">' + (failed ? 'KEDAI DITUTUP!' : 'SYIF TAMAT!') + '</div>' +
-      '<div style="font-size:1.3cqw;color:#94A3B8;margin-top:.5cqw">' + esc(teamName(team)) + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
+      '<div style="font-size:1.3cqw;color:#94A3B8;margin-top:.5cqw">' + esc(TNAME) + (mp ? ' · 📺 direkod di skrin hos' : '') + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
       '<div class="gr"><div><b style="color:#FDE68A">⭐ ' + score + '</b>skor</div><div><b>RM' + coins + '</b>pendapatan</div><div><b>' + served + '</b>dilayan · ' + left + ' pergi marah</div>' +
       '<div><b>' + qRight + '/' + qAsked + '</b>soalan pembekal</div><div><b style="color:#FB923C">+' + rp + '</b>RP</div><div><b style="color:' + (tp ? TP_COLOR[tp] : '#fff') + '">' + (tp ? 'TP' + tp : '—') + '</b>ke PBD</div></div>' +
-      '<div class="bt"><button data-x="quit">Tutup</button><button class="o" data-x="again">↻ Main Lagi</button></div></div></div>';
+      '<div class="bt"><button data-x="quit">Tutup</button>' + (mp ? '' : '<button class="o" data-x="again">↻ Main Lagi</button>') + '</div></div></div>';
     if (!failed) confettiBurst($s('#stEnd'), 70);
   }
   function quit(){
     if (STOR && STOR.closed) return;
-    if (!over && (good || poor || left)){ over = true; clearInterval(loop); save(); }
+    if (mpOff) try { mpOff(); } catch(e){}
+    if (mp && !over) mp.T.set('res', { quit: true, t: Date.now() });
+    if (!over && (good || poor || left)){ over = true; clearInterval(loop); if (!mp) save(); }
     over = true; clearInterval(loop); STOR = null;
     liveEnd(live); unDrag(); root.remove(); unlockBody(); orientBack();
     if (S.ui.tab === 'arena') renderTab();
