@@ -1,0 +1,79 @@
+PROMPT GAMBAR WATAK — SEKOLAH BERHANTU (siap pakai — salin SATU blok, tampal terus)
+=====================================================================
+
+CARA GUNA
+- Setiap prompt di bawah sudah LENGKAP. Salin satu blok sahaja, tampal ke ChatGPT / Gemini.
+- Watak pemain (1–8) bermuka kosong; muka ditampal kemudian (12–14). Hantu (9–11) ada muka sendiri.
+- Selepas dapat gambar depan, dalam perbualan yang sama hantar prompt SISI dan BELAKANG.
+- Meshy: Image to 3D (Multi-view: depan+sisi+belakang) → Auto-Rig Humanoid → Idle, Walk, Run → Download GLB.
+- Simpan model di assets/3d/custom/ dan muka di assets/seram/muka/ ikut nama fail.
+
+---------------------------------------------------------------------
+8 WATAK PEMAIN + 3 HANTU (model 3D)
+---------------------------------------------------------------------
+
+1) murid_lelaki_a.glb — Murid lelaki biasa
+Malaysian primary school boy, short black hair, white short-sleeve school shirt tucked in, navy blue long trousers, black belt, white socks, white canvas school shoes, small school badge on the chest pocket, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+2) murid_lelaki_b.glb — Pengawas lelaki
+Malaysian school prefect boy, neat side-parted black hair, dark blue long-sleeve prefect shirt with navy tie and gold prefect badge, dark navy trousers, black shoes, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+3) murid_lelaki_c.glb — Lelaki baju sukan
+Malaysian school boy in sports attire, spiky black hair, red school house sports t-shirt with white stripes, black track pants, white running shoes, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+4) murid_lelaki_e.glb — Pengakap lelaki
+Malaysian boy scout, short black hair, khaki short-sleeve scout shirt with green scarf and badges, dark green shorts, long green socks, brown boots, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+5) murid_perempuan_a.glb — Murid perempuan biasa
+Malaysian primary school girl wearing a white tudung (headscarf) neatly covering hair and neck, white baju kurung top, navy blue long skirt, white socks, white canvas school shoes, small school badge, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+6) murid_perempuan_b.glb — Pengawas perempuan
+Malaysian school prefect girl wearing a navy blue tudung, light blue baju kurung top with gold prefect badge, dark navy long skirt, black shoes, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+7) murid_perempuan_c.glb — Perempuan baju sukan
+Malaysian school girl in sports attire wearing a dark blue sports tudung, yellow school house sports t-shirt with long sleeves, black track pants, white running shoes, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+8) murid_perempuan_e.glb — Pengawas pusat sumber
+Malaysian school librarian prefect girl wearing a cream tudung, maroon baju kurung top with a small book-shaped badge, black long skirt, black shoes, faceless character: the front of the head is a smooth blank skin-coloured face with NO eyes, NO eyebrows, NO nose, NO mouth, NO facial features at all, flat smooth face area, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+9) hantu_putih.glb — Hantu Putih
+spooky but child-friendly ghost, tall thin figure wrapped in a pale grey-white tattered cloth robe, robe ends above the ankles so thin pale legs and bare feet are visible, long thin pale arms, hood over the head with a dark hollow face and two glowing red eyes, no blood, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, slender tall proportions
+
+10) pontianak.glb — Pontianak
+Malay folklore pontianak, spooky but child-friendly, pale woman with very long straight black hair falling in front of the shoulders down to the waist, pale face with glowing red eyes, long white kebaya-style dress ending at mid-shin, bare pale feet visible, long fingernails, no blood, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, slender tall proportions
+
+11) toyol.glb — Toyol
+Malay folklore toyol, small mischievous goblin child, bald round head, greenish-grey skin, big pointed ears, large glowing red eyes, cheeky grin with small teeth, loose red cloth wrapped around the waist like shorts, thin arms and legs, bare feet, full body single character, front view, standing straight in A-pose with arms angled 30 degrees away from the body, open hands, legs slightly apart, feet flat, looking straight ahead, centered, plain pure white background, no shadow, no props, no text, stylized chibi 3D game character, simple clean shapes, smooth surfaces, soft even studio lighting, cute but slightly spooky school game style, big head about one third of total height
+
+---------------------------------------------------------------------
+PANDANGAN SISI & BELAKANG (hantar selepas gambar depan, perbualan yang sama)
+---------------------------------------------------------------------
+
+SISI:
+same character as the previous image, exact same design, colours and proportions, side view facing right, A-pose, plain pure white background, no shadow
+
+BELAKANG:
+same character as the previous image, exact same design, colours and proportions, back view, A-pose, plain pure white background, no shadow
+
+---------------------------------------------------------------------
+3 TAMPALAN MUKA (dikongsi semua 8 pemain) — jana dalam SATU perbualan, ikut urutan
+---------------------------------------------------------------------
+
+12) biasa.png — Muka biasa / fokus (kebanyakan masa)
+calm focused determined expression, medium-sized round dark eyes with small white highlights, eyebrows straight and slightly lowered in concentration, small closed neutral mouth (short flat line), flat 2D facial expression decal only, eyes, eyebrows and mouth floating on an empty transparent background, NO head, NO skin, NO face outline, NO hair, NO ears, NO nose, front view, centered, square 1:1 image, features fill the middle 70% of the image, eyes placed slightly above the centre and mouth below, thick clean dark brown outlines, simple flat colours, cute chibi game style, symmetrical, no text, no shadow
+
+13) takut.png — Muka takut (dengar bunyi tapak kaki) — hantar dalam perbualan SAMA selepas no. 12
+same art style, same eye size and positions as the previous image. frightened startled expression, wide-open eyes with tiny pupils and big white areas, eyebrows raised high and slanted upward in the middle, small open wavy trembling mouth, one small blue sweat drop near the temple, flat 2D facial expression decal only, eyes, eyebrows and mouth floating on an empty transparent background, NO head, NO skin, NO face outline, NO hair, NO ears, NO nose, front view, centered, square 1:1 image, features fill the middle 70% of the image, eyes placed slightly above the centre and mouth below, thick clean dark brown outlines, simple flat colours, cute chibi game style, symmetrical, no text, no shadow
+
+14) gembira.png — Muka gembira (kuiz betul & menang peta) — hantar dalam perbualan SAMA
+same art style, same eye size and positions as the previous image. very happy joyful expression, eyes closed into upward happy arches (^ ^ shape), eyebrows raised and relaxed, big open smiling mouth with a pink tongue, two small soft pink blush ovals under the eyes, flat 2D facial expression decal only, eyes, eyebrows and mouth floating on an empty transparent background, NO head, NO skin, NO face outline, NO hair, NO ears, NO nose, front view, centered, square 1:1 image, features fill the middle 70% of the image, eyes placed slightly above the centre and mouth below, thick clean dark brown outlines, simple flat colours, cute chibi game style, symmetrical, no text, no shadow
+
+Latar mesti lutsinar (PNG). Jika keluar latar putih, tak apa — Claude boleh buang.
+
+---------------------------------------------------------------------
+TETAPAN MESHY (cadangan)
+---------------------------------------------------------------------
+- Image to 3D: gaya Cartoon/Stylized, poligon rendah (~10k jika ada pilihan), PBR boleh dimatikan
+- Auto-Rig: Humanoid; tanda dagu, pergelangan tangan, siku, lutut, pangkal paha bila diminta
+- Animasi: Idle, Walk, Run (hantu: Walk sahaja pun cukup)
+- Download: GLB (bukan FBX)
