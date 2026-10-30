@@ -5870,7 +5870,7 @@ const GAME_LOBBY = {
       p(1);
     },
     starts: [['🏪 BUKA KEDAI', () => storStart()]],
-    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> seret peralatan sukan dari rak <b>terus kepada atlet</b>.<br><b>Jus Blend Sihat:</b> gelembung pelanggan menunjukkan jus yang dipesan — <b>ketik pelanggan</b> untuk lihat resipinya, kemudian seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
+    how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> atlet <b>menyewa</b> peralatan sukan (harga murah) — seret dari rak <b>terus kepada atlet</b>. Atlet akan datang semula: seret peralatan yang dipulangkan ke <b>tempat asalnya di rak</b>.<br><b>Jus Blend Sihat:</b> gelembung pelanggan menunjukkan jus yang dipesan — <b>ketik pelanggan</b> untuk lihat resipinya, kemudian seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
   }
 };
 
@@ -8932,6 +8932,10 @@ function storRun(team){
   let bin = 0;                                           // berapa kali dibuang ke tong sampah (paras gambar)
   const BIN_MAX = 6;
   const cust = { s: [null, null, null], k: [null, null, null] };
+  /* SEWA peralatan sukan: atlet bayar sewa (murah), kemudian datang semula memulangkan barang → seret ke tempat asalnya di rak */
+  const rentals = [];                                      // { who, items, at }
+  const rentOf = id => Math.max(2, Math.round(ST_IT[id].p * .25));
+  const RET_TX = ['Saya pulangkan peralatan ini. Terima kasih!', 'Dah habis latihan, nak pulangkan barang.', 'Terima kasih sebab sewakan!', 'Perlawanan dah tamat — saya pulangkan.'];
   let T = 0, coins = 0, score = 0, hearts = 5, good = 0, poor = 0, left = 0, qRight = 0, qAsked = 0, over = false, paused = false, spawnT = 3;
   let ring = null, nextRing = 25 + Math.random() * 10, sup = null, call = null, lastTick = performance.now();
   STOR = { close: () => quit() };
@@ -8978,7 +8982,7 @@ function storRun(team){
     return { who, z, need: need.map(i => i.id), got: [], tx: pick(ST_FOOD_TX) };
   }
   const BUB_T = 5;                                        // saat dialog dipapar sebelum sembunyi
-  const bubHid = c => c.bubTo != null && T > c.bubTo;
+  const bubHid = c => !c.o.ret && c.bubTo != null && T > c.bubTo;
   const showBub = c => { c.bubTo = T + BUB_T; ['s', 'k'].forEach(z => cust[z].forEach((x, i) => { if (x === c){ const e = $s('#stC_' + z + i); if (e) e.classList.remove('bh'); } })); };
   const shake = (z, i) => { const e = $s('#stC_' + z + i); if (e){ e.classList.remove('no'); void e.offsetWidth; e.classList.add('no'); } };
   function custHtml(){
@@ -8988,7 +8992,7 @@ function storRun(team){
       if (c.bubTo == null) c.bubTo = T + BUB_T;
       const body = r
         ? '<div class="jv"><span class="gl">' + stImg('jus_' + r.id, '🥤') + '</span><div class="tx">"' + esc(o.tx) + '"</div></div>'   // gambar jus di atas, ayat pendek di bawah; resipi bila diketik
-        : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '">' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
+        : '<div class="it">' + o.need.map(id => '<span class="' + (o.got.includes(id) ? 'ok' : '') + '"' + (o.ret && !o.got.includes(id) ? ' data-rt="' + id + '"' : '') + '>' + icon(id) + '</span>').join('') + '</div><div class="tx' + (z === 'k' ? ' big' : '') + '">' + (z === 'k' ? '"' + esc(o.tx) + '"' : esc(o.tx)) + '</div>';
       return '<div class="st-cu' + (c.fresh ? ' fresh' : '') + (c.leaving ? ' out' : '') + (frac < .25 ? ' mad' : '') + (bubHid(c) ? ' bh' : '') + '" id="stC_' + z + i + '" data-cu="' + z + i + '" style="left:' + SLOTX[z][i] + '%">' +
         '<div class="st-bub">' + body + '<div class="pt"><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></div></div>' +
         '<div class="pm">💬<b><i style="width:' + (frac * 100) + '%;background:' + col + '"></i></b></div>' +
@@ -9105,7 +9109,7 @@ function storRun(team){
   function finishCust(z, i, pts, pay, note){
     const c = cust[z][i]; if (!c) return;
     c.leaving = true; score += pts; coins += pay; good++;
-    fly('+' + pts + '⭐ · RM' + pay, SLOTX[z][i] + 5, 68.5);
+    fly('+' + pts + '⭐' + (pay ? ' · RM' + pay : ''), SLOTX[z][i] + 5, 68.5);
     snd('stor_kaching', 'hi'); vibrate(20); paintTray();
     if (note) msg(note[0], note[1], 1800);
     setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
@@ -9125,11 +9129,16 @@ function storRun(team){
     const id = srcId(s), it = ST_IT[id], c = cust[z][i];
     if (!it || !c || c.leaving) return false;
     if (c.o.jus){ if (!quiet){ shake(z, i); msg('Pelanggan ini mahu ' + esc(jusOf(c.o.jus).n) + ' — buat di blender', '#FDE68A', 1500); } return false; }
+    if (c.o.ret){ if (!quiet){ shake(z, i); msg('Atlet ini memulangkan peralatan — seret barang darinya ke tempat asal di rak', '#FDE68A', 1600); } return false; }
     if (!c.o.need.includes(id) || c.o.got.includes(id)){ if (!quiet){ shake(z, i); snd('stor_salah', 'low'); msg('Bukan ini yang diminta!', '#FCA5A5', 1000); } return false; }
     if (!takeSrc(s)) return false;
     c.o.got.push(id); snd('stor_serah', 'flip'); flyTo(id, srcFrom(s), custAt(z, i)); walk(SLOTX[z][i] + 1.5);
     if (c.o.got.length === c.o.need.length){
       const frac = Math.max(0, c.p / c.max);
+      if (z === 's'){                                   // peralatan disewa: bayar sewa, datang semula untuk memulangkan
+        rentals.push({ who: c.o.who, items: c.o.need.slice(), at: T + 25 + Math.random() * 20 });
+        finishCust(z, i, 50 + Math.round(50 * frac), c.o.need.reduce((a, x) => a + rentOf(x), 0) + Math.round(frac * 3), [(frac > .6 ? 'Lengkap! 😄' : 'Terima kasih! 🙂') + ' (sewa)', '#86EFAC']);
+      } else
       finishCust(z, i, 50 + Math.round(50 * frac), c.o.need.reduce((a, x) => a + ST_IT[x].p, 0) + Math.round(frac * 6), [frac > .6 ? 'Lengkap! 😄' : 'Terima kasih! 🙂', '#86EFAC']);
     } else paintTray();
     return true;
@@ -9235,6 +9244,13 @@ function storRun(team){
     const now = performance.now(), dt = Math.min(.5, (now - lastTick) / 1000); lastTick = now;
     if (paused) return;
     T += dt;
+    // atlet datang semula memulangkan peralatan sewa
+    const due = rentals.findIndex(r => T >= r.at), fs = cust.s.findIndex(x => !x);
+    if (due >= 0 && fs >= 0){
+      const r = rentals.splice(due, 1)[0], max = SABAR * 1.3;
+      const c = cust.s[fs] = { o: { who: r.who, z: 's', ret: true, need: r.items, got: [], tx: pick(RET_TX) }, p: max, max, arriving: true };
+      snd('stor_loceng', 'flip'); walkIn('s', fs, c);
+    }
     // pelanggan baharu
     spawnT -= dt;
     if (spawnT <= 0){
@@ -9253,7 +9269,11 @@ function storRun(team){
     ['s', 'k'].forEach(z => cust[z].forEach((c, i) => {
       if (!c || c.leaving || c.arriving) return;
       c.p -= dt;
-      if (c.p <= 0){
+      if (c.p <= 0 && c.o.ret){
+        c.leaving = true; changed = true; snd('stor_salah', 'low');
+        msg('📦 ' + esc(c.o.who.n) + ' tinggalkan kedai — peralatan tidak kembali ke rak!', '#FCA5A5', 1800);
+        setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
+      } else if (c.p <= 0){
         c.leaving = true; left++; hearts--; changed = true; snd('stor_marah', 'low'); vibrate(60);
         msg('😠 ' + esc(c.o.who.n) + ' pergi dengan marah!', '#FCA5A5', 1600);
         setTimeout(() => { if (cust[z][i] === c){ cust[z][i] = null; paintCust(); } }, 650);
@@ -9343,6 +9363,7 @@ function storRun(team){
     const cu = t.closest('[data-cu]'); if (cu){ const c = cust[cu.dataset.cu[0]][+cu.dataset.cu[1]], r = c && c.o.jus && jusOf(c.o.jus);
       if (c) showBub(c);                                   // ketik pelanggan = dialog muncul semula
       if (r) return msg('<span class="st-rcp">' + r.ings.map(id => '<i>' + ST_IT[id].e + '</i>').join('') + '</span>', '#0F172A', 3400);   // ketik pelanggan jus = resipi emoji
+      if (c && c.o.ret) return msg('Seret peralatan dari atlet ini ke tempat asalnya di rak', '#FDE68A', 1400);
       return msg(cu.dataset.cu[0] === 's' ? 'Seret peralatan dari rak kepada atlet ini' : 'Seret makanan kepada pelanggan ini', '#FDE68A', 1200); }
     if (t.closest('[data-ph]')) return ring ? answerPhone() : msg('Tiada panggilan sekarang.', '#94A3B8', 800);
     if (t.closest('[data-sup]')) return receive();
@@ -9370,7 +9391,14 @@ function storRun(team){
       src = document.elementsFromPoint(e.clientX, e.clientY).map(x => !x.closest('#stMe') && x.closest(SEL)).find(Boolean) || null;
       if (!src){ const me = $s('#stMe'); me.classList.add('drag'); drag = { kind: 'me', me, on: false, x: e.clientX, y: e.clientY }; return; }
     }
-    if (!src) return;
+    if (!src){                                           // atlet memulangkan: seret barang (ikon dialog atau watak) ke rak
+      const cu = e.target.closest('[data-cu]'), c = cu && cust[cu.dataset.cu[0]][+cu.dataset.cu[1]];
+      if (!c || !c.o.ret || c.leaving) return;
+      const rt = e.target.closest('[data-rt]'), id = rt ? rt.dataset.rt : c.o.need.find(x => !c.o.got.includes(x));
+      if (!id) return;
+      drag = { src: rt || cu, kind: 'rt', x: e.clientX, y: e.clientY, on: false, hot: null, id, cu: cu.dataset.cu };
+      return;
+    }
     let kind = src.dataset.it ? 'it' : src.dataset.tr != null ? 'tr' : src.dataset.ss ? 'ss' : src.dataset.bl ? 'bl' : src.dataset.bin ? 'bin' : 'tray';
     if (kind === 'it' && !stock[src.dataset.it]) return;
     if (kind === 'ss' && !stn.dapur[+src.dataset.ss.slice(-1)]) return;
@@ -9393,7 +9421,7 @@ function storRun(team){
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 10) return;
       drag.on = true;
       const g = drag.g = document.createElement('div'); g.className = 'st-ghost';
-      if (drag.kind === 'it') g.innerHTML = icon(drag.id);
+      if (drag.kind === 'it' || drag.kind === 'rt') g.innerHTML = icon(drag.id);
       else if (drag.kind === 'tr') g.innerHTML = trayIcon(tray[+drag.id]);
       else if (drag.kind === 'tray'){ g.classList.add('multi'); g.innerHTML = tray.map(x => '<span>' + trayIcon(x) + '</span>').join(''); }   // semua makanan atas kaunter dibawa bersama
       else if (drag.kind === 'ss'){ const x = stn.dapur[+drag.id.slice(-1)]; g.innerHTML = burnt(x) ? '<span class="st-emo">🔥</span>' : icon(x.id); }
@@ -9403,7 +9431,7 @@ function storRun(team){
     }
     drag.g.style.left = e.clientX + 'px'; drag.g.style.top = e.clientY + 'px';
     let hot = dropAt(e.clientX, e.clientY);
-    if (hot === drag.src || (hot && drag.src.contains(hot))) hot = null;
+    if (hot === drag.src || (hot && drag.src.contains(hot)) || (drag.kind === 'rt' && hot && !hot.dataset.sh)) hot = null;
     if (hot !== drag.hot){ if (drag.hot) drag.hot.classList.remove('st-hot'); drag.hot = hot; if (hot) hot.classList.add('st-hot'); }
   });
   const endDrag = e => {
@@ -9419,6 +9447,16 @@ function storRun(team){
     const cu = tgt.dataset.cu, z = cu && cu[0], ci = cu && +cu[1];
     const toTray = tgt.classList.contains('st-tray'), toShelf = tgt.dataset.sh, toBl = tgt.dataset.bl, toBinT = tgt.dataset.bin, toDoor = tgt.dataset.door, toStn = tgt.dataset.ss;
     if (d.kind === 'bin'){ if (toDoor) emptyBin(); return; }
+    if (d.kind === 'rt'){                               // pulangkan ke tempat asal di rak
+      const rz = d.cu[0], ri = +d.cu[1], c = cust[rz][ri];
+      if (!c || !c.o.ret || c.leaving || c.o.got.includes(d.id)) return;
+      if (!toShelf) return;
+      if (ST_IT[d.id].sh !== toShelf){ snd('stor_salah', 'low'); return msg('Bukan rak ini — letak ' + esc(ST_IT[d.id].n) + ' di tempat asalnya', '#FCA5A5', 1500); }
+      c.o.got.push(d.id); stock[d.id]++; snd('stor_ambil', 'flip'); flyTo(d.id, custAt(rz, ri), shelfPos(d.id)); paintShelves();
+      if (c.o.got.length === c.o.need.length){ const frac = Math.max(0, c.p / c.max); finishCust(rz, ri, 20 + Math.round(20 * frac), 0, ['Peralatan dipulangkan ✔', '#86EFAC']); }
+      else paintCust();
+      return;
+    }
     if (d.kind === 'bl'){
       if (toBinT) return toBin(() => { bl.ings = []; bl.r = null; bl.blending = false; paintBl(); msg('Blender dikosongkan', '#FDE68A', 900); });
       if (cu && z === 'k'){ if (bl.r) return serveJus(ci); return msg(bl.blending ? 'Sedang dikisar… tunggu sekejap' : 'Jus belum lengkap — tambah bahan ikut resipi', '#FDE68A', 1300); }
