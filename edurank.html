@@ -9697,7 +9697,7 @@ async function runHost(){
   const code = String(1000 + Math.floor(Math.random() * 9000));
   const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
   const c = runCfg(), qs = [];
-  for (let i = 0; i < 30; i++){ const q = escQuestion(); qs.push({ q: q.q, c: q.c, a: q.a }); }
+  for (let i = 0; i < 30; i++){ const q = runQuestion(); qs.push({ q: q.q, c: q.c, a: q.a }); }
   const cfg = { g: 'run', code, lvl: c.lvl, qt: c.qt, qs, seats: seats.map(g => ({ id: g.id, name: g.name, joined: false, char: null })), started: false };
   const st = {}, offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#3A2410,#07050A');
   document.body.appendChild(ov); lockBody();
@@ -10007,9 +10007,9 @@ function runGame(THREE, sid, ac, mp, spec){
           o.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => o.act[c.name] = o.mix.clipAction(c)); }).catch(() => {});
       }
       const v = st[i] || {};
+      if (cel){ celRunner(o, i, dt); return; }                             // tamat: kedudukan diurus oleh perayaan/podium
       o.g.position.z += (zAt(r) - o.g.position.z) * Math.min(1, dt * 3);   // bertukar tempat dengan lancar bila skor berubah
       const mv = MV[i] || {};                                              // gerakan sebenar pemain: lorong, lompat, terlanggar
-      if (cel){ celRunner(o, i, dt); return; }
       o.g.position.x += ((mv.x || 0) - o.g.position.x) * Math.min(1, dt * 12);
       o.g.position.y += ((mv.y || 0) - o.g.position.y) * Math.min(1, dt * 16);
       o.g.visible = !(mv.h && !v.over) || Math.floor(performance.now() / 80) % 2 === 0;
@@ -10257,7 +10257,7 @@ function runGame(THREE, sid, ac, mp, spec){
     if (nextObs >= 0 && !gateNear){ spawnObstacle(-90); nextObs = -(14 + Math.random() * 10) * (11 / speed) * 1.4; }
     if (nextStar >= 0){ spawnStars(-90, Math.floor(Math.random() * 3)); nextStar = -(30 + Math.random() * 20); }
     if (nextQ <= 0 && !GATES.some(g => !g.done)){
-      const q = mp ? mp.cfg.qs[qOrd[mqi++ % qOrd.length]] : escQuestion();
+      const q = mp ? mp.cfg.qs[qOrd[mqi++ % qOrd.length]] : runQuestion();
       spawnGates(-Math.max(60, speed * RQ), q); nextQ = 260 + Math.random() * 60 + speed * RQ;
       OBS.slice().forEach((o, i) => { if (o.m.position.z < -60) { scene.remove(o.m); o.dead = true; } });
       for (let i = OBS.length - 1; i >= 0; i--) if (OBS[i].dead) OBS.splice(i, 1);
@@ -10810,6 +10810,18 @@ function escQuestion(){
   const q = nextQ(bank);
   const keep = [0,1,2,3].filter(i => q.c[i] !== undefined && q.c[i] !== '');
   return { q: q.q, c: keep.map(i => q.c[i]), a: keep.indexOf(q.a) };
+}
+/* Larian Ilmu: soalan VERSI PENDEK sahaja (≤10 perkataan, jawapan ≤5 perkataan) — dibaca sambil berlari.
+   Pilihan salah: pilihan asal yang pendek, atau jawapan pendek soalan lain. */
+function runQuestion(){
+  const all = topicalBank(S.ui.activeSubjectId), bank = all.filter(q => q.c && q.c[q.a] !== undefined && qShort(q));
+  if (!bank.length) return escMathQ();
+  bank.prefer = all.prefer;
+  const q = nextQ(bank), [t, a] = qShort(q);
+  const own = q.c.filter((x, i) => i !== q.a && x && nWords(x) <= 5 && String(x) !== a).map(String);
+  const more = bank.filter(x => x !== q).map(x => qShort(x)[1]).filter(x => x !== a && !own.includes(x)).sort(() => Math.random() - .5);
+  const c = [a].concat(own.concat(more).filter((x, i, l) => l.indexOf(x) === i).slice(0, 3));
+  return c.length < 2 ? escMathQ() : { q: t, c, a: 0 };
 }
 /* 4 pasangan untuk teka-teki padanan: soalan ↔ jawapan betul (hasil unik) */
 const nWords = t => String(t || '').trim().split(/s+/).filter(Boolean).length;
@@ -11584,7 +11596,7 @@ function escRun(THREE, sid, ac, lvl, mp){
     };
     const cackle = (f, n, gap, vol) => { for (let i = 0; i < n; i++){ tone('square', f * (1 - i * .03), f * .82, gap * .8, vol, i * gap); tone('sine', f * 2.02, 0, gap * .6, vol * .4, i * gap); } };
     return {
-      step:   () => noise(300 + Math.random() * 200, 1.2, .12, .036),   // tapak kaki perlahan (70% lebih senyap)
+      step:   () => noise(300 + Math.random() * 200, 1.2, .12, .006),   // tapak kaki: 5% kelantangan asal
       beat:   v => { tone('sine', 65, 40, .16, .5 * v); tone('sine', 60, 38, .16, .38 * v, .22); },
       chime:  () => { tone('sine', 880, 0, .5, .25); tone('sine', 1320, 0, .7, .2, .12); },
       buzz:   () => tone('square', 110, 70, .45, .18),
@@ -11979,7 +11991,7 @@ function escRun(THREE, sid, ac, lvl, mp){
         const vx = (-sy * -my + cy * mx), vz = (-cy * -my - sy * mx), vl = Math.hypot(vx, vz) || 1;
         P.x += vx / vl * sp * dt; P.z += vz / vl * sp * dt; P.face = Math.atan2(vx, vz);
         P.bob += dt * (P.run ? 9 : 5.5) * m;
-        if (now - lastStep > (P.run ? 330 : 600)){ lastStep = now; sfx('step'); }
+        if (now - lastStep > (P.run ? 330 : 600)){ lastStep = now; sfx('step', .05 / 1.5); }   // fail audio tapak kaki juga 5%
       }
       collide(P, .3);
       P.moving = m > .05;
