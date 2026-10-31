@@ -14056,6 +14056,7 @@ const ACTS = {
   'km-join': () => komboJoinAsk(),
   'murid-share': () => muridShareModal(),
   'murid-out': () => muridLogout(),
+  'murid-me': () => muridProfile(),
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
   'rpt-open': () => rptModal(),
@@ -14298,7 +14299,7 @@ function muridLink(){ const c = FB.cfg || {}; return location.origin + location.
 async function buildMuridPack(){
   const t = S.murid.token, cls = baseClasses().filter(c => S.students.some(x => x.classId === c.id));
   const st = [];
-  for (const x of S.students.filter(y => cls.some(c => c.id === y.classId))) st.push({ i: x.id, n: x.name, c: x.classId, g: x.gender || '', p: x.ic4 ? await muridPin(t, x.id, x.ic4) : '', ic: x.iconUrl || '' });
+  for (const x of S.students.filter(y => cls.some(c => c.id === y.classId))) st.push({ i: x.id, n: x.name, c: x.classId, g: x.gender || '', p: x.ic4 ? await muridPin(t, x.id, x.ic4) : '', ic: x.iconUrl || '', bn: x.bannerUrl || '' });
   const q = (S.quiz || []).map(x => ({ id: x.id, subjectId: x.subjectId, chapterId: x.chapterId || '', q: x.q, c: x.c, a: x.a, huraian: x.huraian || '', short: !!x.short, qs: x.qs || '', as: x.as || '', sp: x.sp || '', sk: x.sk || '' }));
   const cf = S.config || {};
   return { u: Date.now(), title: S.murid.title || 'EduRank', sc: S.share && S.share.on && FB.cfg ? b64urlEnc(JSON.stringify({ d: FB.cfg.databaseURL.replace(/\/$/, ''), t: S.share.token })) : '',
@@ -14369,8 +14370,9 @@ async function muridDb(){
   if (!KM_APP.db){
     const [a, dd, au] = await Promise.all([import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js'), import('https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js'), import('https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js')]);
     const app = a.initializeApp(MURID_CFG, 'kombo'); await au.signInAnonymously(au.getAuth(app));
-    KM_APP.d = dd; KM_APP.db = dd.getDatabase(app);
+    KM_APP.d = dd; KM_APP.db = dd.getDatabase(app); KM_APP.app = app;
   }
+  if (!KM_APP.app){ const a = await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js'); KM_APP.app = a.getApp('kombo'); }
   return KM_APP;
 }
 const KM_LVL_X = { mudah: .8, sederhana: 1, sukar: 1.2 };          /* tahap robot Tangga Ilmon → pemberat ketepatan PBD */
@@ -14413,7 +14415,11 @@ async function muridRecvStart(){
   const off = d.onChildAdded(ref, snap => {
     const v = snap.val(), key = snap.key;
     S.murid.done = S.murid.done || [];
-    if (v && !S.murid.done.includes(key) && muridApply(v)){ got++; clearTimeout(toastT); toastT = setTimeout(() => { toast('📲 ' + got + ' keputusan game murid direkod ke PBD.'); got = 0; if (S.ui.tab === 'report' || S.ui.tab === 'students') renderTab(); }, 1200); }
+    if (v && v.k === 'foto' && !S.murid.done.includes(key)){ const st = stu(v.s);
+      if (st){ const o1 = st.iconUrl, o2 = st.bannerUrl; if (v.ic) st.iconUrl = v.ic; if (v.bn) st.bannerUrl = v.bn;
+        [o1, o2].forEach(u => { if (u && u !== st.iconUrl && u !== st.bannerUrl) fbDeleteUrl(u); });
+        toast('📸 ' + st.name + ' menukar gambar profil & banner.'); if (S.ui.tab === 'students') renderTab(); } }
+    else if (v && !S.murid.done.includes(key) && muridApply(v)){ got++; clearTimeout(toastT); toastT = setTimeout(() => { toast('📲 ' + got + ' keputusan game murid direkod ke PBD.'); got = 0; if (S.ui.tab === 'report' || S.ui.tab === 'students') renderTab(); }, 1200); }
     S.murid.done.push(key); S.murid.done = S.murid.done.slice(-300); save();
     d.remove(d.ref(FB.db, base + '/' + key)).catch(() => {});
   });
@@ -14531,7 +14537,7 @@ function muridApp(me){
   const P = MURID.pack; MURID.me = me;
   S = blank();
   S.classes = P.cls.map(c => ({ id: c.i, name: c.n })); S.subjects = P.sj.map(x => ({ id: x.i, name: x.n }));
-  S.students = P.st.map(x => ({ id: x.i, name: x.n, classId: x.c, gender: x.g, iconUrl: x.ic, fields: {}, badges: [] }));
+  S.students = P.st.map(x => ({ id: x.i, name: x.n, classId: x.c, gender: x.g, iconUrl: x.ic, bannerUrl: x.bn || '', fields: {}, badges: [] }));
   S.groups = (P.gr || []).map(g => ({ id: g.i, classId: g.c, name: g.n, members: g.m || [] }));
   S.quiz = P.q || []; S.chapters = P.ch || [];
   Object.keys(P.cfg || {}).forEach(k => { if (P.cfg[k] != null) S.config[k] = P.cfg[k]; });
@@ -14551,7 +14557,7 @@ function muridApp(me){
   if (!$('[data-nav="msc"]')) $('nav').insertAdjacentHTML('afterbegin', '<button class="navbtn" data-nav="msc"><i class="fa-solid fa-trophy text-base"></i><span>SHOWCASE</span></button>');
   $$('header [data-act="showcase-open"], header [data-act="sync-status"]').forEach(b => b.style.display = 'none');
   const ttl = $('header .glow-o'); if (ttl) ttl.textContent = P.title || 'EDURANK';
-  if (!$('#mMe')) $('#hdrRefresh').insertAdjacentHTML('beforebegin', '<button id="mMe" class="btn clip-s px-2 py-1 text-[11px] max-w-[45%] truncate" data-act="murid-out" title="Tukar akaun">👋 ' + esc(me.n.split(' ')[0]) + ' <i class="fa-solid fa-right-from-bracket text-muted"></i></button>');
+  if (!$('#mMe')) $('#hdrRefresh').insertAdjacentHTML('beforebegin', '<button id="mMe" class="btn clip-s px-2 py-1 text-[11px] max-w-[45%] truncate" data-act="murid-me" title="Profil saya">👋 ' + esc(me.n.split(' ')[0]) + ' <i class="fa-solid fa-user-pen text-muted"></i></button>');
   $('#hdrRefresh').style.display = '';
   bgmInit(); audProbe(); kadProbe();
   $$('.navbtn').forEach(b => b.classList.toggle('on', b.dataset.nav === S.ui.tab));
@@ -14566,6 +14572,38 @@ function muridShowcase(){
   if (P && P.awam) return emptyState('fa-trophy', 'Showcase Untuk Murid Sekolah', 'Mod Awam hanya untuk bermain game. Showcase dilihat oleh murid sekolah yang log masuk dengan kod sekolah.') + '<button class="btn btn-o clip-s w-full mt-3" data-act="murid-out">Masuk dengan kod sekolah</button>';
   if (!P || !P.sc) return emptyState('fa-trophy', 'Showcase Belum Dikongsi', 'Guru kamu belum menerbitkan showcase. Main game dahulu!');
   return '<iframe src="' + location.pathname + '?s=' + P.sc + '" title="Showcase" style="width:100%;height:calc(100vh - 200px - var(--safe-t) - var(--safe-b));border:0;border-radius:14px;background:#0C1118;margin-top:10px"></iframe>';
+}
+function muridProfile(){
+  const me = MURID && MURID.me; if (!me) return;
+  const awam = MURID.pack && MURID.pack.awam, s = stu(me.i) || {};
+  const id = openModal({ icon: 'fa-user-pen', title: 'Profil Saya',
+    body: '<div class="flex items-center gap-3">' + avatarHtml(s, 64) + '<div class="flex-1 min-w-0"><div class="font-bold text-[16px] truncate">' + esc(me.n) + '</div><div class="text-[12px] text-muted">' + esc((MURID.pack.cls.find(c => c.i === me.c) || {}).n || '') + '</div></div></div>' +
+      (s.bannerUrl ? '<img src="' + esc(s.bannerUrl) + '" alt="" style="width:110px;aspect-ratio:1/2;object-fit:cover;border-radius:10px;margin:12px auto 0;display:block">' : '') +
+      (awam ? '<div class="text-[12px] text-muted mt-3">Mod Awam tidak mempunyai profil. Masuk dengan kod sekolah untuk menukar gambar.</div>'
+        : '<div class="lbl mt-4">TUKAR GAMBAR PROFIL & BANNER</div><div class="text-[11px] text-muted mt-1">Langkah 1: banner badan penuh (1:2) · Langkah 2: ikon muka (1:1). Gambar dikemas kini di showcase selepas guru membuka app.</div>' +
+          '<div class="grid grid-cols-2 gap-2 mt-2"><button class="btn btn-c clip-s !py-2" data-mp="gal"><i class="fa-solid fa-image"></i> Galeri</button><button class="btn clip-s !py-2" data-mp="cam"><i class="fa-solid fa-camera"></i> Kamera</button></div>'),
+    footer: '<button class="btn btn-d clip-s flex-1" data-mp="out"><i class="fa-solid fa-right-from-bracket"></i> Log Keluar</button><button class="btn clip-s flex-1" data-close="1">Tutup</button>' });
+  $('[data-modal="' + id + '"]').addEventListener('click', e => { const b = e.target.closest('[data-mp]'); if (!b) return;
+    if (b.dataset.mp === 'out'){ closeModal(id); return muridLogout(); }
+    pickPhoto(b.dataset.mp === 'cam', file => { closeModal(id); muridPhotoFlow(file); }); });
+}
+async function muridPhotoFlow(file){
+  if (!checkImage(file) || !MURID || !MURID.me) return;
+  const banner = await cropModal({ file, ratio:0.5, w:400, h:800, minB:12*1024, maxB:45*1024, title:'Langkah 1 — Banner (1:2)', hint:'Bingkai penuh badan untuk banner showcase kamu.' });
+  if (!banner) return;
+  const icon = await cropModal({ file, ratio:1, w:200, h:200, minB:4*1024, maxB:18*1024, focus:true, title:'Langkah 2 — Ikon Muka (1:1)', hint:'Tekan pada muka untuk fokus, zum sehingga muka penuh bingkai.' });
+  if (!icon) return;
+  toast('Memuat naik gambar…');
+  try {
+    const K = await muridDb(), st = await import('https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js'), store = st.getStorage(KM_APP.app), sid = MURID.me.i, tag = Date.now().toString(36);
+    const up = async (path, data) => { const r = st.ref(store, path); await st.uploadString(r, data, 'data_url'); return st.getDownloadURL(r); };
+    const bn = await up('student_banners/' + sid + '_' + tag + '.jpg', banner), ic = await up('student_photos/' + sid + '_' + tag + '.jpg', icon);
+    const base = (await muridPath(MURID.p.t, MURID.kod)) + '_r';
+    await K.d.set(K.d.push(K.d.ref(K.db, 'ipbd_share/' + base)), { k: 'foto', s: sid, ic, bn, t: Date.now() });
+    const me = stu(sid); if (me){ me.iconUrl = ic; me.bannerUrl = bn; }
+    const ps = MURID.pack.st.find(x => x.i === sid); if (ps){ ps.ic = ic; ps.bn = bn; }
+    renderTab(); toast('📸 Gambar dihantar! Ia muncul di showcase selepas guru membuka app.');
+  } catch(e){ console.warn('muat naik gambar murid', e); toast('Gagal memuat naik gambar. Semak internet dan cuba lagi.', null, true); }
 }
 async function muridLogout(){
   if (!await confirmBox({ title: 'Tukar Akaun', okText: 'Log Keluar', message: 'Log keluar dan pilih nama lain?' })) return;
