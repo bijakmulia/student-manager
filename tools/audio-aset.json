@@ -102,6 +102,7 @@
     { "id": "kl_salah",       "g": "Klinik Remaja", "k": "sfx", "s": 0.8, "p": "Soft gentle wrong-answer buzz for a kids game, short, not harsh" },
     { "id": "kl_sembuh",      "g": "Klinik Remaja", "k": "sfx", "s": 1.5, "p": "Happy healing sparkle with a short cheerful jingle, patient feels better, kids game" },
 
+    { "id": "bgm_klinik",     "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Calm warm friendly clinic background music for a kids educational game, soft marimba and light piano, gentle caring mood, relaxed 90 BPM, seamless loop, instrumental" },
     { "id": "bgm_menu",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Cheerful inspiring school game main menu theme, bright piano and light orchestra, warm and friendly, seamless loop, instrumental, 100 BPM" },
     { "id": "bgm_stor",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Upbeat cozy shop management game music, light marimba, ukulele and bouncy bass with subtle Malaysian gamelan bells, seamless loop, instrumental, 110 BPM" },
     { "id": "bgm_duel",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Energetic anime card battle music, driving drums, electric guitar and orchestral hits, heroic, seamless loop, instrumental, 140 BPM" },

@@ -4264,7 +4264,8 @@ let SFX_CTX = null;
    lagu gelung pendek tidak lagi terasa berulang.                         */
 const BGM_SLOTS = [
   { k:'menu', name:'Lagu Latar App', ico:'fa-house', hint:'Dimainkan di semua skrin app (game 3D guna bunyinya sendiri)' },
-  { k:'kad', name:'Lagu Tangga Ilmon', ico:'fa-layer-group', hint:'Dimainkan semasa game kad Tangga Ilmon (senyap jika tiada)' }
+  { k:'kad', name:'Lagu Tangga Ilmon', ico:'fa-layer-group', hint:'Dimainkan semasa game kad Tangga Ilmon (senyap jika tiada)' },
+  { k:'klinik', name:'Lagu Klinik Remaja', ico:'fa-stethoscope', hint:'Dimainkan semasa game Klinik Remaja (senyap jika tiada)' }
 ];
 /* KELANTANGAN UTAMA: setiap bunyi (lagu latar, bunyi efek, bunyi enjin game) disambung ke audOut(a), bukan terus ke speaker */
 const masterVol = () => { const v = S && S.config ? S.config.masterVol : undefined; return (v === undefined || v === null || isNaN(+v)) ? 1 : clamp(+v, 0, 100) / 100; };
@@ -4362,7 +4363,7 @@ const bgmOn = () => !(S && S.config && S.config.bgmOn === 0);
 /* Skrin mana sedang dipaparkan? Pentas lakonan dekat di atas papan, papan
    di atas menu. */
 function bgmScene(){
-  for (const [sel, k] of [['#simRoot','sim'], ['#kmRoot','kad'], ['#kmJoin','kad'], ['#stRoot','stor'], ['#btRoot','duel'], ['#runRoot','run'], ['#escRoot','esc']]) if (document.querySelector(sel)) return k;
+  for (const [sel, k] of [['#simRoot','sim'], ['#kmRoot','kad'], ['#kmJoin','kad'], ['#stRoot','stor'], ['#btRoot','duel'], ['#runRoot','run'], ['#escRoot','esc'], ['#klRoot','klinik']]) if (document.querySelector(sel)) return k;
   return 'menu';
 }
 function bgmTarget(){
@@ -8558,6 +8559,8 @@ function klRun(team){
   const pat = (mood, cls) => { const e = $k('#klPat'); e.className = 'kl-pat' + (cls ? ' ' + cls : ''); e.innerHTML = klPatImg(P.g, mood, P.c.look) + '<div class="kl-name">' + esc(P.nm) + ' · ' + P.age + ' thn</div>'; };
   const meter = v => { $k('#klMeter').innerHTML = v == null ? '' : '<div class="kl-meter">💚 RASA SELAMAT<div class="b"><i style="width:' + Math.round(v * 100) + '%"></i></div></div>'; };
   const head = (step, h) => '<div class="kl-step">' + step + '</div><div class="kl-h">' + h + '</div>';
+  const nextBtn = (b, fn) => { b.innerHTML = 'Seterusnya ➜'; delete b.dataset.used; b.disabled = false;   /* butang yang sama bertukar fungsi */
+    b.onclick = () => { if (b.dataset.used) return; b.dataset.used = 1; b.disabled = true; sfx('flip'); fn(); }; };
   const go = (label, fn, dis) => { const b = document.createElement('button'); b.className = 'kl-go'; b.innerHTML = label; b.disabled = !!dis; b.onclick = () => { if (b.dataset.used) return; b.dataset.used = 1; b.disabled = true; sfx('flip'); fn(); };   /* sekali tekan sahaja (elak langkau pesakit) */ pan().appendChild(b); return b; };
   /* ---------- aliran pesakit ---------- */
   function next(){
@@ -8622,8 +8625,8 @@ function klRun(team){
         if (g && on.has(i)){ hit++; b.classList.add('ok'); } else if (!g && on.has(i)){ wrong++; b.classList.add('no'); } else if (g) b.style.borderColor = '#4ADE80'; });
       const full = hit === good.length && !wrong, pts = Math.max(0, Math.round(40 * (hit - wrong) / good.length));
       $k('#klMsg').innerHTML = full ? '✅ Sempurna!' : '🟩 Garisan hijau = pilihan betul yang tertinggal · 🟥 merah = tidak sesuai.';
-      if (isHelp){ add(0, full); P.max += 20; P.pts += full ? 20 : Math.round(pts / 2); score += full ? 20 : Math.round(pts / 2); hud(); sfx(full ? 'myth' : 'low'); if (full) meter(1); setTimeout(() => go('Seterusnya ➜', then), 400); }
-      else { P.max += 40; P.pts += pts; add(pts); sfx(full ? 'myth' : 'low'); pat('gembira'); talk(full ? 'Terima kasih, doktor! Saya cuba buat begitu.' : 'Baik doktor, saya akan ingat yang betul.'); setTimeout(() => go('Seterusnya ➜', then), 400); }
+      if (isHelp){ add(0, full); P.max += 20; P.pts += full ? 20 : Math.round(pts / 2); score += full ? 20 : Math.round(pts / 2); hud(); sfx(full ? 'myth' : 'low'); if (full) meter(1); nextBtn(btn, then); }
+      else { P.max += 40; P.pts += pts; add(pts); sfx(full ? 'myth' : 'low'); pat('gembira'); talk(full ? 'Terima kasih, doktor! Saya cuba buat begitu.' : 'Baik doktor, saya akan ingat yang betul.'); nextBtn(btn, then); }
     });
   }
   /* mini-game: berus gigi — gosok setiap zon */
