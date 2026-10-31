@@ -14278,13 +14278,21 @@ async function buildMuridPack(){
     gr: (S.groups || []).filter(g => cls.some(c => c.id === g.classId)).map(g => ({ i: g.id, c: g.classId, n: g.name, m: g.members || [] })),
     q, ch: S.chapters || [], cfg: { klinik: cf.klinik, stor: cf.stor, esc: cf.esc, run: cf.run, rpPerScore: cf.rpPerScore }, ar: { kombo: (S.ui.arena || {}).kombo || null } };
 }
+const AWAM = 'AWAM';                                 /* kod khas pakej orang awam */
+async function buildAwamPack(){
+  const P = await buildMuridPack(), T = ['Merah', 'Biru', 'Hijau', 'Kuning'];
+  return Object.assign(P, { awam: 1, sc: '', title: (S.murid.title || 'EduRank') + ' · Awam', cls: [{ i: 'awam', n: 'Awam' }],
+    st: T.map((t, k) => ({ i: k ? 'aw' + k : 'tetamu', n: k ? 'Pemain ' + (k + 1) : 'Tetamu', c: 'awam', g: '', p: '', ic: '' })),
+    gr: T.map((t, k) => ({ i: 'awg' + k, c: 'awam', n: 'Pasukan ' + t, m: [k ? 'aw' + k : 'tetamu'] })) });
+}
 async function publishMurid(){
   if (!S.murid || !S.murid.on || !FB.on || muridBusy) return;
   muridBusy = true;
-  try { const p = await muridPath(S.murid.token, S.murid.kod); await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + p), JSON.parse(JSON.stringify(await buildMuridPack()))); }
+  try { const p = await muridPath(S.murid.token, S.murid.kod); await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + p), JSON.parse(JSON.stringify(await buildMuridPack())));
+    const pa = await muridPath(S.murid.token, AWAM); await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + pa), S.murid.awam === false ? null : JSON.parse(JSON.stringify(await buildAwamPack()))); }
   finally { muridBusy = false; }
 }
-async function unpublishMurid(t, kod){ try { await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + await muridPath(t, kod)), null); } catch(e){} }
+async function unpublishMurid(t, kod){ try { await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + await muridPath(t, kod)), null); if (kod !== AWAM) await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + await muridPath(t, AWAM)), null); } catch(e){} }
 const randKod = () => { const a = new Uint8Array(6); crypto.getRandomValues(a); return Array.from(a, x => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x % 32]).join(''); };
 function muridShareModal(){
   if (!FB.on) return openModal({ center:true, icon:'fa-mobile-screen-button', title:'Kongsi Game kepada Murid',
@@ -14298,6 +14306,7 @@ function muridShareModal(){
       '<label class="lbl mt-3 block">TAJUK (cth. nama sekolah)</label><input id="muT" class="fld clip-s mt-1" value="' + esc(m ? m.title : 'EduRank') + '">' +
       '<label class="lbl mt-3 block">KOD SEKOLAH</label><input id="muK" class="fld clip-s mt-1 num !text-[20px] tracking-[.3em] uppercase" maxlength="8" value="' + esc(m ? m.kod : randKod()) + '">' +
       '<div class="panel clip-s p-2 mt-3 text-[12px]">🪪 PIN log masuk: <b>' + nPin + '/' + nSt + '</b> murid ada PIN (4 digit akhir IC). Murid tanpa PIN terus memilih nama.<br><span class="text-muted text-[11px]">Tetapkan PIN: tab Pelajar → Daftar → tampal senarai nama + IC dari Excel → Apply IC.</span></div>' +
+      '<label class="panel clip-s p-2 mt-2 text-[12px] flex gap-2 items-start"><input id="muA" type="checkbox" class="mt-1"' + (!m || m.awam !== false ? ' checked' : '') + '><span>🌍 <b>Benarkan orang awam main</b> tanpa kod sekolah — main saje-saje: tiada nama murid, tiada showcase, tiada markah PBD.</span></label>' +
       (S.share && S.share.on ? '' : '<div class="text-[11px] text-[#FFC24D] mt-2"><i class="fa-solid fa-circle-info"></i> Showcase belum dikongsi — terbitkan di butang Showcase supaya murid boleh melihatnya.</div>') +
       (m ? '<div class="lbl mt-3">PAUTAN MURID</div><div class="flex gap-2 mt-1"><input id="muL" readonly class="fld clip-s !text-[11px] num" value="' + esc(muridLink()) + '"><button class="btn btn-c clip-s !px-3" data-mu="copy"><i class="fa-solid fa-copy"></i></button></div>' +
         '<div class="flex justify-center mt-3"><div id="muQR" style="background:#fff;padding:10px"></div></div>' +
@@ -14314,9 +14323,10 @@ function muridShareModal(){
     if (b.dataset.mu === 'pub'){
       const kod = ($('#muK', bd).value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (kod.length < 4) return toast('Kod sekolah sekurang-kurangnya 4 aksara.', null, true);
+      if (kod === AWAM) return toast('Kod AWAM dikhaskan untuk orang awam — pilih kod lain.', null, true);
       b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menerbit...';
       if (m && m.kod !== kod) await unpublishMurid(m.token, m.kod);
-      S.murid = { on: true, token: m ? m.token : newToken(), kod, title: ($('#muT', bd).value || '').trim() || 'EduRank' }; save(true);
+      S.murid = { on: true, token: m ? m.token : newToken(), kod, title: ($('#muT', bd).value || '').trim() || 'EduRank', awam: $('#muA', bd).checked }; save(true);
       try { await publishMurid(); muridRecvStart(); toast('Versi murid diterbitkan.'); closeModal(id); renderTab(); setTimeout(muridShareModal, 220); }
       catch(err){ b.disabled = false; b.textContent = 'Cuba Lagi'; toast('Gagal menerbit: semak Security Rules (ipbd_share).', null, true); }
     }
@@ -14337,6 +14347,7 @@ async function muridDb(){
 }
 function muridResult(game, right, asked, extra){
   if (!asked || !MURID || !MURID.me) return 0;
+  if (MURID.pack && MURID.pack.awam){ setTimeout(() => toast('🌍 Mod Awam: main saje-saje, markah tidak direkod.'), 900); return 0; }
   const dayKey = MURID.me.i + '|' + (S.ui.activeSubjectId || '') + '|' + todayKey();
   let days = {}; try { days = JSON.parse(localStorage.getItem('rk_murid_day') || '{}'); } catch(e){}
   if (days[dayKey]){ setTimeout(() => toast('🎮 Latihan sahaja — markah hari ini untuk subjek ini sudah direkod. Cuba lagi esok!'), 900); return 0; }
@@ -14440,7 +14451,12 @@ function muridLogin(step){
   if (!P){
     el.innerHTML = wrap('<label class="lbl">KOD SEKOLAH</label><input id="mKod" class="fld clip-s mt-1 num !text-[24px] text-center tracking-[.3em] uppercase" maxlength="8" placeholder="ABC123" autocomplete="off">' +
       '<button id="mKodGo" class="btn btn-o clip-s w-full !py-3 mt-3 text-[15px]">MASUK</button><div id="mErr" class="text-[12px] text-[#FCA5A5] mt-2 text-center"></div>' +
-      '<div class="text-[11px] text-muted mt-4 text-center">Kod sekolah diberi oleh guru kamu.</div>');
+      '<div class="text-[11px] text-muted mt-4 text-center">Kod sekolah diberi oleh guru kamu.</div>' +
+      '<div class="flex items-center gap-2 my-5 text-[11px] text-muted"><i class="flex-1 h-px bg-[#2F4257]"></i>ATAU<i class="flex-1 h-px bg-[#2F4257]"></i></div>' +
+      '<button id="mAwam" class="btn btn-c clip-s w-full !py-3 text-[15px]">🌍 MAIN SEBAGAI AWAM</button><div class="text-[11px] text-muted mt-2 text-center">Tiada kod sekolah? Main saje-saje — markah tidak direkod.</div>');
+    $('#mAwam').onclick = async () => { $('#mErr').textContent = 'Memuatkan…';
+      try { const pack = await muridFetch(MURID.p.t, AWAM, MURID.p.f.databaseURL); if (!pack || !pack.st) return $('#mErr').textContent = 'Guru belum membuka permainan untuk orang awam.';
+        MURID.pack = pack; MURID.kod = AWAM; muridIn(pack.st[0], ''); } catch(e){ $('#mErr').textContent = 'Tiada sambungan internet. Cuba lagi.'; } };
     const go = async () => { const kod = ($('#mKod').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (kod.length < 4) return;
       $('#mErr').textContent = 'Menyemak…';
       try { const pack = await muridFetch(MURID.p.t, kod, MURID.p.f.databaseURL); if (!pack || !pack.st) return $('#mErr').textContent = 'Kod sekolah salah atau perkongsian telah dihentikan.';
@@ -14511,6 +14527,7 @@ function muridApp(me){
 }
 function muridShowcase(){
   const P = MURID && MURID.pack;
+  if (P && P.awam) return emptyState('fa-trophy', 'Showcase Untuk Murid Sekolah', 'Mod Awam hanya untuk bermain game. Showcase dilihat oleh murid sekolah yang log masuk dengan kod sekolah.') + '<button class="btn btn-o clip-s w-full mt-3" data-act="murid-out">Masuk dengan kod sekolah</button>';
   if (!P || !P.sc) return emptyState('fa-trophy', 'Showcase Belum Dikongsi', 'Guru kamu belum menerbitkan showcase. Main game dahulu!');
   return '<iframe src="' + location.pathname + '?s=' + P.sc + '" title="Showcase" style="width:100%;height:calc(100vh - 200px - var(--safe-t) - var(--safe-b));border:0;border-radius:14px;background:#0C1118;margin-top:10px"></iframe>';
 }
