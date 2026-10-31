@@ -13439,15 +13439,475 @@ const SAINS_RX = /sains|science/i;
   SIM_LIB.push({ id: 'jana', subj: SAINS_RX, subjLabel: 'SAINS T3', ico: '⚡', title: 'Penjanaan & Penghantaran Elektrik', desc: 'Prinsip penjana, sumber tenaga di stesen jana kuasa, transformer injak naik & turun, Grid Nasional dan pengiraan kos elektrik.', scenes, dur: T0, render });
 })();
 
+/* ---------- KUIZ SIMULASI: 20 soalan setiap simulasi ('babak|soalan|jawapan betul|salah|salah|salah') ---------- */
+const SIM_Q = {
+voli: [
+'0|Berapakah ukuran gelanggang bola tampar?|18 m × 9 m|28 m × 15 m|13.4 m × 6.1 m|20 m × 10 m',
+'0|Berapakah bilangan pemain setiap pasukan di atas gelanggang bola tampar?|6|5|7|9',
+'0|Apakah yang membahagikan gelanggang bola tampar kepada dua?|Jaring|Garisan serangan|Bulatan tengah|Kon',
+'1|Kedudukan pemain bola tampar dikira bermula dari mana?|Belakang kanan|Depan kiri|Tengah depan|Belakang kiri',
+'1|Bilakah pemain bola tampar berputar kedudukan?|Apabila pasukan mendapat semula servis|Setiap kali mata dijaringkan lawan|Selepas setiap set sahaja|Apabila jurulatih meminta',
+'1|Ke arah manakah pemain bola tampar berputar?|Ikut arah jam|Lawan arah jam|Ke kiri sahaja|Bebas',
+'2|Pemain di kedudukan manakah membuat servis?|Kedudukan 1|Kedudukan 3|Kedudukan 4|Kedudukan 6',
+'2|Dari manakah servis bola tampar dibuat?|Belakang garisan hujung|Tengah gelanggang|Dekat jaring|Garisan tepi',
+'2|Servis yang sah mesti…|melepasi atas jaring dan jatuh di gelanggang lawan|menyentuh jaring dahulu|melantun di gelanggang sendiri|dipukul dengan dua tangan',
+'3|Hantaran dasar (bump) dibuat menggunakan…|lengan bawah yang dirapatkan|hujung jari|tapak kaki|kepala',
+'3|Semasa hantaran dasar, lutut pemain hendaklah…|dibengkokkan|diluruskan|dikunci|diangkat',
+'4|Umpan (set) dibuat dengan menolak bola menggunakan…|hujung jari di atas dahi|penumbuk|lengan bawah|bahu',
+'4|Tujuan umpan ialah…|menghantar bola tinggi dekat jaring untuk penyerang|menyerang terus ke lantai|membuat servis|menyekat lawan',
+'5|Apakah nama pukulan kuat ke bawah selepas melompat?|Rejaman (spike)|Umpan|Hantaran dasar|Servis',
+'5|Pemain yang melompat di jaring untuk menghalang rejaman membuat…|sekatan (block)|umpan|servis|putaran',
+'6|Berapakah sentuhan maksimum setiap pasukan bola tampar?|3|2|4|5',
+'6|Bolehkah seorang pemain menyentuh bola 2 kali berturut-turut?|Tidak boleh|Boleh|Boleh jika penyerang|Boleh semasa servis',
+'6|Bola yang jatuh tepat di atas garisan dikira…|MASUK|KELUAR|ulang|kesalahan',
+'7|Satu set bola tampar dimenangi dengan berapa mata (beza 2)?|25|21|15|11',
+'7|Berapa set perlu dimenangi untuk menjadi juara bola tampar?|3|2|4|5'],
+kriket: [
+'0|Apakah bentuk padang kriket?|Bujur|Segi empat sama|Berlian|Bulat kecil',
+'0|Berapakah panjang pitch kriket?|20.12 m|18.29 m|13.4 m|28 m',
+'0|Berapakah bilangan batang pada setiap wiket?|3|2|4|5',
+'0|Apakah yang diletakkan di atas batang wiket?|2 bail|Bola|Bendera|Kon',
+'1|Berapakah bilangan pemain setiap pasukan kriket?|11|9|7|6',
+'1|Berapakah bilangan pemukul di padang pada satu masa?|2|1|3|11',
+'1|Pemain yang berdiri di belakang wiket untuk menangkap bola dipanggil…|penjaga wiket|pembaling|pemukul|pengadil',
+'2|Bagaimanakah lengan pembaling kriket semasa membaling?|Lurus, tidak dibengkokkan|Dibengkokkan|Di bawah paras pinggang|Berpusing seperti kincir',
+'2|Berapakah balingan dalam satu over?|6|5|4|8',
+'2|Bola kriket biasanya melantun di mana sebelum sampai kepada pemukul?|Atas pitch|Atas wiket|Luar sempadan|Tidak melantun langsung',
+'3|Bagaimanakah 1 larian diperoleh?|Kedua-dua pemukul berlari bertukar hujung pitch|Bola mengenai wiket|Pemukul memukul bola ke atas|Pembaling membaling 6 kali',
+'4|Bola yang bergolek sampai ke sempadan memberi berapa larian?|4|6|1|2',
+'4|Bola yang melepasi sempadan tanpa menyentuh tanah memberi berapa larian?|6|4|3|2',
+'5|"Bowled" bermaksud…|bola mengenai wiket dan bail jatuh|bola ditangkap|pemukul lari keluar pitch|bola keluar sempadan',
+'5|Bola yang dipukul dan disambut oleh pemadang sebelum menyentuh tanah menyebabkan pemukul…|keluar|mendapat 6 larian|mendapat 4 larian|membaling semula',
+'6|Bola tidak sah (no-ball atau wide) memberi…|+1 larian kepada pasukan memukul|pemukul keluar|6 larian|over tamat',
+'6|LBW berlaku apabila…|kaki menghalang bola yang menuju ke wiket|bola keluar sempadan|pemukul berlari|bail jatuh sendiri',
+'6|"Run out" berlaku apabila wiket dijatuhkan sebelum…|pemukul sampai ke garisan pukul|pembaling membaling|over bermula|bola melantun',
+'7|Inning tamat apabila berapa pemukul keluar?|10|11|6|9',
+'7|Bagaimanakah pasukan kriket menang?|Mengumpul larian paling banyak|Menjatuhkan wiket paling banyak|Membaling paling laju|Memukul 6 paling banyak sahaja'],
+softball: [
+'0|Apakah bentuk padang dalam softball?|Berlian|Bulat|Bujur|Segi tiga',
+'0|Berapakah jarak antara tapak dalam softball?|18.29 m|20.12 m|13.11 m|9.15 m',
+'0|Pembaling softball membaling dari bulatan berapa meter dari tapak rumah?|13.11 m|18.29 m|6.75 m|20 m',
+'1|Berapakah bilangan pemain setiap pasukan softball?|9|11|7|6',
+'1|Pemain bertahan yang berada di belakang tapak rumah ialah…|penangkap|pembaling|pemain luar|pelari',
+'1|Pasukan menyerang menghantar pemukul…|seorang demi seorang|dua sekaligus|semua serentak|tiga orang',
+'2|Bagaimanakah pembaling softball membaling?|Bawah lengan seperti kincir|Atas bahu|Dengan dua tangan|Sambil melompat',
+'2|Bola yang melalui zon strike dikira…|strike|bola|larian|keluar terus',
+'2|Pemukul menghayun tetapi tidak kena bola. Ini dikira…|strike|bola|selamat|home run',
+'3|Berapa strike menyebabkan pemukul keluar?|3|2|4|5',
+'3|Balingan di luar zon strike yang tidak dihayun dikira…|bola|strike|keluar|larian',
+'3|Berapa "bola" membolehkan pemukul berjalan terus ke tapak 1?|4|3|2|5',
+'4|Selepas memukul, pemukul mesti…|melepaskan kayu dan lari ke tapak 1|lari ke tapak 3|membawa kayu sambil lari|menunggu bola ditangkap',
+'4|Pelari yang sampai ke tapak sebelum bola dikira…|selamat|keluar|strike|bola',
+'5|Pelari bergerak mengikut arah…|lawan jam: 1 → 2 → 3 → rumah|ikut jam: 3 → 2 → 1|bebas|terus ke rumah',
+'5|Pelari yang selamat sampai ke tapak rumah memberi…|1 larian|2 larian|4 larian|1 strike',
+'5|Bola yang melepasi pagar dipanggil…|home run|strike|foul|bola',
+'6|Bola tinggi yang ditangkap sebelum menyentuh tanah menyebabkan…|pemukul keluar|1 larian|pemukul berjalan|strike',
+'6|Selepas berapa "keluar" pasukan bertukar peranan?|3|2|4|9',
+'7|Berapakah bilangan inning dalam permainan softball?|7|9|5|3'],
+pingpong: [
+'0|Berapakah ketinggian meja tenis meja?|76 cm|1 m|50 cm|90 cm',
+'0|Berapakah tinggi jaring tenis meja?|15.25 cm|30 cm|10 cm|1.55 m',
+'0|Berapakah diameter bola tenis meja?|40 mm|60 mm|25 mm|70 mm',
+'0|Bola tenis meja dipukul menggunakan…|bet|raket bertali|kayu|tangan',
+'1|Genggaman "shakehand" bermaksud memegang bet seperti…|bersalam|memegang pen|memegang cawan|menggenggam bola',
+'1|Genggaman "penhold" bermaksud memegang bet seperti…|memegang pen|bersalam|memegang payung|memegang buku',
+'2|Semasa servis, bola mesti dilambung sekurang-kurangnya…|16 cm|5 cm|50 cm|1 m',
+'2|Bola servis tenis meja mesti dipukul di mana?|Belakang garisan hujung meja|Atas jaring|Sisi meja|Di bawah meja',
+'2|Semasa servis, bola mesti melantun…|sekali di meja sendiri, kemudian di meja lawan|terus di meja lawan|dua kali di meja sendiri|di lantai dahulu',
+'3|Pukulan depan dalam tenis meja dipanggil…|forehand|backhand|smash|servis',
+'3|Pukulan kilas (backhand) dihayun dari…|hadapan badan|belakang kepala|bawah meja|sisi kaki',
+'4|Selepas servis, bola mesti dipulangkan selepas melantun berapa kali di meja sendiri?|Sekali|Dua kali|Tiga kali|Tidak melantun',
+'4|Jika pemain gagal memulangkan bola dengan betul…|lawan mendapat 1 mata|servis diulang|kedua-duanya dapat mata|permainan tamat',
+'5|Servis tenis meja bertukar setiap…|2 mata|5 mata|1 mata|10 mata',
+'5|Servis yang menyentuh jaring tetapi masuk dikira…|LET (ulang)|mata kepada penerima|mata kepada pembuat servis|kesalahan',
+'5|Bolehkah tangan bebas menyentuh meja semasa rali?|Tidak boleh|Boleh|Boleh jika penat|Boleh semasa servis',
+'6|Satu permainan tenis meja dimenangi dengan berapa mata?|11|21|15|25',
+'6|Apabila skor 10–10 (deuce), pemain mesti mendahului…|2 mata|1 mata|3 mata|5 mata',
+'6|Semasa deuce, servis bertukar setiap…|1 mata|2 mata|5 mata|tidak bertukar',
+'7|Perlawanan "terbaik daripada 5 permainan" dimenangi dengan memenangi…|3 permainan dahulu|5 permainan|2 permainan|4 permainan'],
+keranjang: [
+'0|Berapakah ukuran gelanggang bola keranjang?|28 m × 15 m|18 m × 9 m|40 m × 20 m|100 m × 64 m',
+'0|Berapakah ketinggian gelung bola keranjang?|3.05 m|2.44 m|2 m|4 m',
+'1|Berapakah bilangan pemain setiap pasukan di gelanggang bola keranjang?|5|6|7|11',
+'1|Kedudukan pemain bola keranjang ialah…|2 pengawal, 2 penyerang, 1 pemain tengah|3 penyerang, 2 pertahanan|1 penjaga gol, 4 penyerang|5 pengawal',
+'1|Bilakah pemain simpanan bola keranjang boleh ditukar?|Semasa permainan berhenti|Hanya pada separuh masa|Tidak boleh ditukar|Semasa bola di udara',
+'2|Bola keranjang dibawa dengan…|melantunkannya menggunakan satu tangan|memegang dengan dua tangan sambil lari|menendang|membaling ke atas',
+'2|Berjalan sambil memegang bola dipanggil kesalahan…|larian|lantunan berganda|foul|3 saat',
+'2|Melantun semula selepas memegang bola dengan dua tangan dipanggil…|lantunan berganda|larian|balingan bebas|lay-up',
+'3|Hantaran dada ditolak dari paras…|dada|kepala|lutut|pinggang',
+'3|Hantaran yang dilantun ke lantai sebelum sampai kepada rakan ialah…|hantaran lantun|hantaran dada|hantaran atas kepala|lay-up',
+'3|Kelebihan hantaran lantun ialah…|sukar dipintas lawan|paling laju|paling tinggi|tidak perlu tangan',
+'4|Jaringan dari dalam garisan 3 mata bernilai…|2 mata|1 mata|3 mata|4 mata',
+'4|Contoh cara menjaring dengan melompat ialah…|lay-up|hantaran dada|lantunan|pivot',
+'5|Jaringan dari luar garisan 3 mata bernilai…|3 mata|2 mata|1 mata|4 mata',
+'5|Garisan 3 mata berjarak kira-kira berapa dari gelung?|6.75 m|3.05 m|9 m|4.6 m',
+'6|Balingan bebas diberi apabila pemain…|dikasari (foul) semasa membaling|membuat larian|keluar gelanggang|menjaring 3 mata',
+'6|Setiap balingan bebas yang masuk bernilai…|1 mata|2 mata|3 mata|tiada mata',
+'7|Perlawanan bola keranjang dimainkan berapa suku masa?|4 × 10 minit|2 × 45 minit|3 × 20 minit|2 × 30 minit',
+'7|Jika keputusan seri, apakah yang berlaku?|Masa tambahan 5 minit|Sepakan penalti|Lambungan syiling|Seri sahaja',
+'7|Bagaimanakah pasukan bola keranjang menang?|Mengumpul mata paling banyak|Paling banyak hantaran|Paling sedikit foul|Paling banyak lantunan'],
+bolasepak: [
+'0|Berapakah diameter (jejari) bulatan tengah padang bola sepak?|9.15 m|16.5 m|5.5 m|11 m',
+'0|Berapakah ukuran gol bola sepak?|7.32 m × 2.44 m|3 m × 2 m|5 m × 2 m|10 m × 3 m',
+'0|Kotak penalti bola sepak berukuran…|16.5 m dari garisan gol|9.15 m|6 m|20 m',
+'1|Berapakah bilangan pemain setiap pasukan bola sepak?|11|9|7|6',
+'1|Siapakah satu-satunya pemain yang boleh menyentuh bola dengan tangan?|Penjaga gol dalam kotak penaltinya|Kapten|Penyerang|Pemain tengah',
+'2|Permainan bola sepak bermula dengan…|sepak mula di tengah padang|sepakan penjuru|balingan ke dalam|sepakan gol',
+'2|Bahagian kaki yang digunakan untuk hantaran pendek yang tepat ialah…|bahagian dalam kaki|tumit|kekura kaki|hujung kasut',
+'3|Menggelecek yang baik bermaksud…|bola sentiasa dekat dengan sentuhan kecil|sepak bola jauh ke depan|bawa bola dengan tangan|tunduk melihat bola sahaja',
+'3|Semasa menggelecek, pemain patut…|angkat kepala untuk melihat rakan dan lawan|tutup mata|berhenti selalu|membelakangkan gol',
+'4|Gol dikira apabila…|keseluruhan bola melepasi garisan gol antara tiang dan bawah palang|separuh bola melepasi garisan|bola mengenai tiang|bola menyentuh jaring luar',
+'4|Bahagian kaki untuk rembatan yang kuat ialah…|kekura kaki|bahagian dalam kaki|tumit|lutut',
+'5|Penjaga gol mempertahankan gol dengan…|menangkap atau menepis bola|menendang lawan|berdiri di tengah padang|memegang tiang',
+'5|Di manakah penjaga gol boleh menggunakan tangan?|Dalam kotak penaltinya sendiri|Di seluruh padang|Di separuh padang lawan|Di bulatan tengah',
+'6|Bola keluar garisan tepi diganti dengan…|balingan ke dalam dua tangan atas kepala|sepakan penjuru|sepakan bebas|sepak mula',
+'6|Bola keluar garisan gol oleh pihak bertahan memberi…|sepakan penjuru|sepakan gol|balingan ke dalam|penalti',
+'6|Kesalahan kasar boleh dikenakan…|kad kuning atau kad merah|kad hijau|mata tambahan|balingan bebas',
+'7|Perlawanan bola sepak dewasa dimainkan…|2 separuh masa × 45 minit|4 suku × 10 minit|2 × 20 minit|3 × 30 minit',
+'7|Jika seri dalam pertandingan kalah mati, boleh diadakan…|sepakan penalti|balingan bebas|lambungan syiling sahaja|ulang esok',
+'7|Pasukan bola sepak menang dengan…|menjaringkan gol paling banyak|paling banyak hantaran|paling banyak sepakan penjuru|paling sedikit kad',
+'1|Kedudukan pemain bola sepak termasuk…|penjaga gol, pertahanan, tengah, penyerang|pengumpan, libero|tekong, apit|pivot, sayap sahaja'],
+takraw: [
+'0|Berapakah ukuran gelanggang sepak takraw?|13.4 m × 6.1 m|18 m × 9 m|28 m × 15 m|20 m × 10 m',
+'0|Berapakah tinggi jaring sepak takraw (lelaki)?|1.52 m|1.55 m|2.43 m|1 m',
+'0|Di manakah tekong berdiri semasa servis?|Bulatan servis|Suku bulatan|Garisan tengah|Luar gelanggang',
+'1|Berapakah bilangan pemain dalam satu regu sepak takraw?|3|2|4|6',
+'1|Pemain yang membuat servis dalam sepak takraw dipanggil…|tekong|apit kiri|apit kanan|libero',
+'1|Apit kiri dan apit kanan berdiri di…|suku bulatan dekat jaring|bulatan servis|belakang gelanggang|luar garisan',
+'2|Siapakah yang melambung bola kepada tekong semasa servis?|Apit|Pengadil|Tekong lawan|Penjaga garisan',
+'2|Semasa servis, tekong mesti mengekalkan…|sebelah kaki dalam bulatan servis|kedua-dua kaki di udara|tangan di atas kepala|duduk',
+'3|Berapakah sentuhan maksimum bagi setiap pasukan sepak takraw?|3|2|4|5',
+'3|Bahagian badan yang TIDAK boleh menyentuh bola takraw ialah…|tangan|kaki|kepala|dada',
+'3|Urutan sentuhan biasa dalam sepak takraw ialah…|terima, umpan, rejam|rejam, terima, umpan|servis, servis, servis|umpan, umpan, umpan',
+'4|Rejaman sepak takraw juga dikenali sebagai…|libas atau gunting|lob|bump|dropshot',
+'4|Rejaman dibuat dengan…|melompat tinggi dan menyepak bola ke bawah|membaling bola|menanduk ke atas|menolak bola dengan dada',
+'5|Pemain sepak takraw tidak boleh…|menyentuh jaring|menggunakan kepala|melompat|menyepak bola',
+'5|Bola yang jatuh di atas garisan dikira…|MASUK|KELUAR|ulang|kesalahan',
+'5|Bolehkah pemain melintasi garisan tengah?|Tidak boleh|Boleh|Boleh jika tekong|Boleh semasa servis',
+'6|Satu set sepak takraw dimenangi dengan berapa mata?|21|25|15|11',
+'6|Jika 20–20, set diteruskan sehingga beza 2 mata atau mencapai…|25 mata|30 mata|21 mata|22 mata',
+'7|Perlawanan sepak takraw ialah terbaik daripada…|3 set|5 set|2 set|7 set',
+'7|Set ketiga (tie-break) sepak takraw dimainkan sehingga…|15 mata|21 mata|11 mata|25 mata'],
+badminton: [
+'0|Berapakah ukuran gelanggang badminton (beregu)?|13.4 m × 6.1 m|18 m × 9 m|13.4 m × 5.18 m|20 m × 10 m',
+'0|Berapakah lebar gelanggang badminton perseorangan?|5.18 m|6.1 m|4 m|9 m',
+'0|Berapakah tinggi jaring badminton di tiang?|1.55 m|1.52 m|2.43 m|1 m',
+'0|Garisan servis pendek berada berapa jauh dari jaring?|1.98 m|1 m|3 m|0.5 m',
+'1|Genggaman depan badminton dibuat seperti…|berjabat tangan|memegang pen|menggenggam penumbuk|memegang cawan',
+'1|Dalam genggaman kilas, ibu jari ditekan pada…|bahagian lebar pemegang|kepala raket|tali raket|hujung pemegang',
+'2|Servis badminton mesti dipukul dari bawah paras…|pinggang|bahu|kepala|lutut',
+'2|Servis badminton mesti dihantar secara…|pepenjuru ke petak servis lawan|lurus ke depan|ke petak sendiri|ke luar gelanggang',
+'2|Semasa servis, kaki pemain mestilah…|kedua-dua kaki di atas lantai|melompat|sebelah kaki diangkat|di luar petak',
+'3|Pukulan lob (clear) dihantar…|tinggi dan jauh ke garisan belakang lawan|perlahan dekat jaring|laju ke bawah|ke luar gelanggang',
+'3|Tujuan pukulan lob ialah…|memberi masa kembali ke tengah gelanggang|menamatkan rali dengan cepat|membuat servis|mengelak jaring',
+'4|Pukulan badminton yang paling laju dan curam ke bawah ialah…|smash (rejaman)|lob|dropshot|servis',
+'4|Untuk smash yang kuat, pemain biasanya…|melompat dan memukul dari atas|memukul dari bawah pinggang|memukul perlahan|berdiri dekat jaring sahaja',
+'5|Pukulan perlahan supaya bulu tangkis jatuh betul-betul selepas jaring ialah…|dropshot / netting|smash|lob|drive',
+'5|Mengapa pukulan dekat jaring berkesan?|Sukar dikejar lawan|Paling laju|Paling tinggi|Tidak boleh dipulangkan langsung',
+'6|Satu set badminton dimenangi dengan berapa mata?|21|25|15|11',
+'6|Jika skor 20–20, pemain mesti mendahului berapa mata?|2|1|3|5',
+'6|Pada skor 29–29, mata ke berapa memenangi set?|30|31|35|29',
+'7|Perlawanan badminton ialah terbaik daripada berapa set?|3|5|2|7',
+'7|Berapa set perlu dimenangi untuk menjadi juara badminton?|2|3|1|4'],
+frisbee: [
+'0|Berapakah ukuran padang ultimate frisbee?|100 m × 37 m|100 m × 64 m|70 m × 50 m|40 m × 20 m',
+'0|Berapakah panjang zon akhir (end zone) setiap hujung?|18 m|10 m|25 m|5 m',
+'0|Berapakah panjang kawasan main antara dua zon akhir?|64 m|100 m|50 m|37 m',
+'1|Berapakah bilangan pemain setiap pasukan frisbee di padang?|7|6|11|5',
+'1|Pemain yang mengawal dan membaling cakera dipanggil…|handler|cutter|tekong|pivot',
+'1|Pemain yang berlari ke ruang kosong untuk menerima cakera dipanggil…|cutter|handler|libero|penjaga',
+'2|Balingan yang menghayun cakera dari seberang badan ialah…|backhand (kilas)|forehand|tolakan|lambungan',
+'2|Balingan forehand (flick) dibuat dengan…|memetik cakera dari sisi badan dengan dua jari|menghayun dari seberang badan|menendang cakera|membaling dengan dua tangan',
+'3|Tangkapan "pancake" dibuat dengan…|menepuk cakera di antara dua tapak tangan|sebelah tangan sahaja|kaki|dada',
+'3|Mengapa tangkapan pancake digalakkan?|Cara paling selamat menangkap cakera|Paling cantik|Paling laju|Wajib oleh pengadil',
+'4|Pemain yang memegang cakera boleh…|berpusing pada satu kaki (pivot) sahaja|berlari bebas|berjalan 3 langkah|melompat ke depan',
+'4|Pertahanan mengira dari 1 hingga berapa sebelum cakera mesti dibaling?|10|5|3|20',
+'4|Apa yang tidak boleh dilakukan oleh pemain yang memegang cakera?|Berlari membawa cakera|Pivot|Membaling|Melihat rakan',
+'5|Bagaimanakah satu mata diperoleh dalam ultimate frisbee?|Menangkap cakera di dalam zon akhir lawan|Membaling ke gol|Menyentuh garisan tengah|Membuat 10 hantaran',
+'5|Jika cakera jatuh atau dipintas…|milikan bertukar kepada lawan|pasukan sama baling semula|mata kepada pembaling|permainan berhenti',
+'6|Siapakah yang membuat panggilan kesalahan dalam ultimate?|Pemain sendiri dengan jujur|Pengadil utama|Jurulatih|Penonton',
+'6|Bolehkah sentuhan badan berlaku dengan sengaja dalam ultimate?|Tidak boleh|Boleh|Boleh semasa menyerang|Boleh di zon akhir',
+'6|Konsep hormat-menghormati dalam ultimate dipanggil…|Spirit of the Game|Fair Play Cup|Pivot|Stall count',
+'7|Pasukan yang pertama mencapai berapa mata menang?|15|21|11|25',
+'7|Jika masa tamat sebelum 15 mata, pemenang ialah pasukan…|dengan mata terbanyak|dengan hantaran terbanyak|yang membaling dahulu|lawan'],
+rugbysentuh: [
+'0|Berapakah ukuran padang rugby sentuh dalam simulasi?|70 m × 50 m|100 m × 64 m|40 m × 20 m|100 m × 37 m',
+'0|Kawasan di belakang garisan cuba dipanggil…|zon cuba (in-goal)|kotak penalti|zon akhir 18 m|bulatan D',
+'1|Berapakah bilangan pemain setiap pasukan rugby sentuh di padang?|6|7|11|15',
+'1|Bolehkah pemain simpanan rugby sentuh ditukar sepanjang permainan?|Boleh|Tidak boleh|Hanya pada separuh masa|Hanya jika cedera',
+'2|Ke arah manakah bola rugby boleh dihantar?|Ke sisi atau ke belakang|Ke hadapan sahaja|Ke mana-mana|Ke atas sahaja',
+'2|Jika bola dihantar ke hadapan…|milikan bertukar kepada lawan|dapat 1 mata|ulang hantaran|tiada kesan',
+'3|Bagaimanakah pertahanan menghentikan pembawa bola dalam rugby sentuh?|Menyentuh dengan ringan menggunakan tangan|Menekel|Menolak|Menarik baju',
+'3|Selepas disentuh, pembawa bola meletakkan bola di tanah dan melangkahinya. Ini dipanggil…|rollball|try|scrum|lineout',
+'3|Selepas sentuhan, pertahanan mesti berundur sejauh…|5 m|10 m|1 m|20 m',
+'4|Berapakah had sentuhan bagi pasukan menyerang?|6|3|4|10',
+'4|Selepas sentuhan ke-6…|milikan bola bertukar kepada lawan|pasukan dapat 1 mata|permainan tamat|bola dibaling semula',
+'5|Apakah nama jaringan dalam rugby sentuh?|Cuba (try)|Gol|Home run|Touchdown 6 mata',
+'5|Satu cuba (try) bernilai…|1 mata|3 mata|5 mata|2 mata',
+'5|Cuba dikira apabila pembawa bola…|meletakkan bola di tanah dalam zon cuba|membaling ke tiang|menyentuh garisan tengah|menendang bola',
+'6|Tekel dalam rugby sentuh…|tidak dibenarkan|dibenarkan|dibenarkan sekali|wajib',
+'6|Sentuhan dalam rugby sentuh mestilah…|ringan|kuat|dengan kaki|dengan bahu',
+'6|Bola terjatuh daripada tangan pembawa menyebabkan…|milikan bertukar|1 mata kepada lawan|rollball percuma|tiada apa-apa',
+'7|Perlawanan rugby sentuh dalam simulasi dimainkan…|2 separuh masa × 20 minit|4 × 10 minit|2 × 45 minit|3 × 15 minit',
+'7|Pasukan rugby sentuh menang dengan…|menjaringkan cuba paling banyak|paling banyak sentuhan|paling sedikit kesalahan|paling banyak hantaran',
+'2|Hantaran yang betul dalam rugby sentuh ialah…|hantaran sisi atau belakang|hantaran ke hadapan jauh|tendang ke hadapan|baling ke atas'],
+bolabaling: [
+'0|Berapakah ukuran gelanggang bola baling?|40 m × 20 m|28 m × 15 m|18 m × 9 m|100 m × 64 m',
+'0|Berapakah ukuran gol bola baling?|3 m lebar × 2 m tinggi|7.32 m × 2.44 m|5 m × 2 m|2 m × 1 m',
+'0|Kawasan gol bola baling berjarak…|6 m|9 m|7 m|3 m',
+'0|Garisan balingan bebas bola baling berada pada jarak…|9 m|6 m|7 m|12 m',
+'1|Berapakah bilangan pemain setiap pasukan bola baling di gelanggang?|7|6|5|11',
+'1|Pemain luar bola baling termasuk…|pemain sayap, belakang, tengah dan pivot|tekong dan apit|handler dan cutter|pengumpan dan libero',
+'2|Bola baling dilantun menggunakan…|sebelah tangan|dua tangan serentak|kaki|kepala',
+'2|Berapakah langkah maksimum selepas memegang bola?|3|2|4|5',
+'2|Berapa lamakah pemain boleh memegang bola?|Maksimum 3 saat|Maksimum 10 saat|Tiada had|Maksimum 1 saat',
+'3|Jenis hantaran dalam bola baling termasuk…|atas bahu, lantun dan sisi|bump dan set|lob dan smash|forehand dan backhand',
+'3|Tujuan hantaran pantas ialah…|mencari ruang kosong untuk menjaring|melambatkan permainan|membuang masa|mengelak kawasan gol',
+'4|Rejaman lompat dibuat dengan melompat dari…|luar garisan 6 m|dalam kawasan gol|garisan tengah|belakang gol',
+'4|Bolehkah pemain berada di udara di atas kawasan gol semasa membaling?|Boleh, jika melompat dari luar 6 m|Tidak boleh langsung|Boleh jika berjalan masuk|Hanya penjaga gol',
+'5|Siapakah yang boleh berada dalam kawasan gol?|Penjaga gol sahaja|Semua pemain|Penyerang sahaja|Kapten',
+'5|Bolehkah pemain luar menyentuh bola dengan kaki?|Tidak boleh|Boleh|Boleh jika sengaja|Boleh di kawasan gol',
+'5|Perbuatan yang dilarang dalam bola baling ialah…|menolak, menarik atau merampas bola dari tangan lawan|menghantar bola|melantun bola|melompat',
+'6|Balingan 7 meter diberi apabila…|peluang jelas menjaring dihalang secara salah|bola keluar gelanggang|pemain membuat 3 langkah|penjaga gol menangkap bola',
+'6|Semasa balingan 7 meter, pembaling berhadapan dengan…|penjaga gol sahaja|semua pemain lawan|dua pertahanan|tiada sesiapa',
+'7|Perlawanan bola baling dewasa dimainkan…|2 separuh masa × 30 minit|4 × 10 minit|2 × 45 minit|3 × 20 minit',
+'7|Pasukan bola baling menang dengan…|jaringan terbanyak|hantaran terbanyak|paling sedikit langkah|balingan 7 m terbanyak'],
+mikroskop: [
+'0|Bahagian mikroskop yang paling dekat dengan mata ialah…|kanta mata|kanta objektif|pentas|cermin',
+'0|Slaid diletakkan di atas…|pentas|kanta mata|pelaras halus|tapak',
+'0|Bahagian yang memantulkan cahaya ke spesimen ialah…|cermin / lampu|kanta mata|pelaras kasar|klip',
+'0|Pelaras kasar dan pelaras halus digunakan untuk…|memfokus imej|menukar warna|memegang slaid|membesarkan cahaya',
+'1|Contoh spesimen nipis yang mudah disediakan ialah…|epidermis bawang|batu|kayu tebal|syiling',
+'1|Kaca penutup diturunkan pada sudut…|45°|90°|0°|180°',
+'1|Mengapa kaca penutup diturunkan perlahan-lahan?|Supaya tiada gelembung udara|Supaya slaid panas|Supaya spesimen kering|Supaya cepat siap',
+'1|Apakah yang diletakkan bersama spesimen di atas slaid?|Setitis air|Garam|Minyak masak|Pasir',
+'2|Slaid di atas pentas dikepit menggunakan…|klip|pita pelekat|gam|tangan',
+'2|Kanta objektif yang digunakan dahulu ialah…|kuasa paling rendah|kuasa paling tinggi|mana-mana sahaja|tanpa kanta',
+'2|Mengapa cermin atau lampu dilaraskan?|Supaya cahaya terang menyinari spesimen|Supaya slaid tidak jatuh|Supaya imej berwarna|Supaya kanta bersih',
+'3|Pelaras yang digunakan DAHULU untuk memfokus ialah…|pelaras kasar|pelaras halus|cermin|klip',
+'3|Pelaras halus digunakan untuk…|mendapat imej yang tajam|mengangkat pentas jauh|membersihkan kanta|menukar kanta objektif',
+'3|Imej yang dilihat melalui mikroskop cahaya adalah…|terbalik|sama arah|berwarna pelangi|tiga dimensi',
+'4|Pembesaran imej dikira dengan…|kanta mata × kanta objektif|kanta mata + kanta objektif|kanta objektif − kanta mata|kanta mata ÷ kanta objektif',
+'4|Jika kanta mata 10× dan kanta objektif 40×, pembesarannya ialah…|400×|50×|30×|4×',
+'4|Lebih besar pembesaran, kawasan yang dilihat menjadi…|lebih kecil|lebih besar|sama|hilang',
+'5|Cara yang betul membawa mikroskop ialah…|dua tangan: satu di lengan, satu di tapak|satu tangan pada tiub|memegang pentas|menarik kanta mata',
+'5|Kanta mikroskop dibersihkan menggunakan…|kertas kanta|tisu biasa|baju|air paip',
+'5|Mengapa cermin mikroskop tidak boleh dihalakan ke matahari?|Boleh merosakkan mata|Mikroskop cair|Imej jadi berwarna|Slaid pecah'],
+sel: [
+'0|Apakah unit asas yang membina semua benda hidup?|Sel|Atom|Tisu|Organ',
+'0|Alat yang diperlukan untuk melihat sel ialah…|mikroskop|teleskop|kanta tangan sahaja|termometer',
+'1|Bahagian yang mengawal semua aktiviti sel ialah…|nukleus|sitoplasma|membran sel|vakuol',
+'1|Bahagian sel haiwan yang menghasilkan tenaga melalui respirasi sel ialah…|mitokondria|kloroplas|dinding sel|vakuol',
+'1|Lapisan nipis yang membalut sel haiwan ialah…|membran sel|dinding sel|kloroplas|nukleus',
+'1|Bahan seperti jeli di dalam sel tempat tindak balas berlaku ialah…|sitoplasma|nukleus|vakuol|membran',
+'2|Bahagian yang memberi bentuk tetap kepada sel tumbuhan ialah…|dinding sel|membran sel|nukleus|sitoplasma',
+'2|Kloroplas mengandungi … untuk fotosintesis.|klorofil|kanji|air|oksigen',
+'2|Vakuol sel tumbuhan berisi…|sap sel|darah|udara|minyak',
+'2|Saiz vakuol dalam sel tumbuhan biasanya…|besar|tiada|sangat kecil|banyak dan kecil',
+'3|Struktur yang hanya terdapat pada sel tumbuhan ialah…|dinding sel dan kloroplas|nukleus dan membran|sitoplasma dan mitokondria|membran dan sitoplasma',
+'3|Bentuk sel haiwan biasanya…|tidak tetap|tetap segi empat|segi tiga|sentiasa bulat sempurna',
+'3|Struktur yang ada pada KEDUA-DUA sel haiwan dan sel tumbuhan ialah…|nukleus|kloroplas|dinding sel|vakuol besar',
+'4|Sekumpulan sel yang sama membentuk…|tisu|organ|sistem|organisma',
+'4|Tisu yang bergabung membentuk…|organ|sel|sistem|atom',
+'4|Susunan organisasi sel yang betul ialah…|sel → tisu → organ → sistem → organisma|organ → sel → tisu → sistem|tisu → sel → organ|sistem → organ → sel',
+'4|Jantung ialah contoh…|organ|sel|tisu|sistem',
+'5|Organisma yang terdiri daripada satu sel sahaja dipanggil…|unisel|multisel|tisu|organ',
+'5|Contoh organisma unisel ialah…|amoeba|kucing|pokok mangga|manusia',
+'5|Contoh organisma multisel ialah…|manusia|amoeba|paramesium|yis'],
+jirim: [
+'0|Susunan zarah dalam pepejal adalah…|rapat dan teratur|jauh dan rawak|rapat tetapi bebas bergerak|tiada zarah',
+'0|Zarah pepejal hanya boleh…|bergetar|bergerak bebas|bergerak laju secara rawak|hilang',
+'0|Zarah dalam keadaan gas adalah…|sangat jauh dan bergerak laju secara rawak|rapat dan bergetar|tersusun rapi|tidak bergerak',
+'0|Zarah cecair adalah…|rapat tetapi bebas bergerak|jauh dan laju|tersusun dan bergetar sahaja|tidak bergerak',
+'1|Peleburan ialah perubahan…|pepejal kepada cecair|cecair kepada gas|gas kepada cecair|cecair kepada pepejal',
+'1|Takat lebur ais ialah…|0 °C|100 °C|−10 °C|37 °C',
+'1|Semasa peleburan, haba…|diserap|dibebaskan|tidak berubah|hilang',
+'2|Takat didih air ialah…|100 °C|0 °C|50 °C|37 °C',
+'2|Pendidihan ialah perubahan…|cecair kepada gas|gas kepada cecair|pepejal kepada cecair|pepejal kepada gas',
+'2|Penyejatan berbeza daripada pendidihan kerana penyejatan berlaku…|pada sebarang suhu di permukaan cecair|hanya pada 100 °C|di dalam pepejal|hanya pada waktu malam',
+'3|Kondensasi ialah perubahan…|gas kepada cecair|cecair kepada gas|pepejal kepada gas|cecair kepada pepejal',
+'3|Contoh kondensasi dalam kehidupan harian ialah…|titisan air di luar gelas berisi ais|ais cair|baju kering|lilin terbakar',
+'3|Semasa kondensasi, haba…|dibebaskan|diserap|bertambah dalam zarah|tidak berubah',
+'4|Pemejalwapan ialah perubahan…|pepejal terus kepada gas|cecair kepada gas|gas kepada cecair|cecair kepada pepejal',
+'4|Contoh bahan yang mengalami pemejalwapan ialah…|ubat gegat (naftalena)|garam|gula|besi',
+'4|Proses gas terus menjadi pepejal dipanggil…|pemendapan|pembekuan|kondensasi|peleburan',
+'5|Pembekuan ialah perubahan…|cecair kepada pepejal|pepejal kepada cecair|gas kepada cecair|pepejal kepada gas',
+'5|Proses yang MENYERAP haba ialah…|peleburan|pembekuan|kondensasi|pemendapan',
+'5|Proses yang MEMBEBASKAN haba ialah…|pembekuan|peleburan|pendidihan|pemejalwapan',
+'5|Semasa perubahan keadaan jirim, jisim jirim…|tidak berubah|bertambah|berkurang|hilang'],
+cahaya: [
+'0|Cahaya bergerak dalam…|garis lurus|garis melengkung|bulatan|zig-zag',
+'0|Bayang-bayang terbentuk apabila cahaya dihalang oleh…|objek legap|objek lut sinar|kaca jernih|udara',
+'0|Di manakah bayang-bayang terbentuk?|Di belakang objek legap|Di hadapan lampu|Di dalam lampu|Di atas objek',
+'1|Cermin rata dipanggil…|cermin satah|kanta cembung|prisma|cermin cekung',
+'1|Hukum pantulan menyatakan bahawa…|sudut tuju = sudut pantulan|sudut tuju > sudut pantulan|sudut pantulan sentiasa 90°|tiada hubungan',
+'1|Sudut tuju dan sudut pantulan diukur dari…|garis normal|permukaan cermin|lampu|siling',
+'1|Jika sudut tuju ialah 40°, sudut pantulan ialah…|40°|50°|80°|90°',
+'2|Pembiasan berlaku apabila cahaya…|bergerak dari satu medium ke medium lain|dipantulkan cermin|dihalang objek|padam',
+'2|Apabila cahaya bergerak dari udara ke air, ia membengkok…|ke arah normal|menjauhi normal|ke atas|tidak membengkok',
+'2|Apabila cahaya masuk ke dalam air, lajunya…|berkurang|bertambah|sama|menjadi sifar',
+'2|Contoh kesan pembiasan dalam kehidupan ialah…|pensel kelihatan bengkok dalam air|bayang-bayang|gema|pelangi di cermin satah',
+'3|Alat yang menyebarkan cahaya putih kepada tujuh warna ialah…|prisma|cermin satah|kanta mata|lampu suluh',
+'3|Berapakah bilangan warna dalam spektrum cahaya?|7|3|5|10',
+'3|Warna pertama dalam spektrum (urutan) ialah…|merah|ungu|hijau|biru',
+'3|Pelangi terbentuk kerana cahaya disebarkan oleh…|titisan air|awan gelap|debu|angin',
+'4|Warna primer cahaya ialah…|merah, hijau, biru|merah, kuning, biru|kuning, sian, magenta|hitam, putih, kelabu',
+'4|Merah + hijau menghasilkan…|kuning|sian|magenta|putih',
+'4|Hijau + biru menghasilkan…|sian|kuning|magenta|ungu',
+'4|Merah + biru menghasilkan…|magenta|sian|kuning|hijau',
+'4|Gabungan ketiga-tiga warna primer cahaya menghasilkan…|putih|hitam|kelabu|coklat'],
+debunga: [
+'0|Organ pembiakan jantan bunga ialah…|stamen|pistil|kelopak|sepal',
+'0|Stamen terdiri daripada…|anter dan filamen|stigma dan stil|ovari dan ovul|kelopak dan sepal',
+'0|Organ pembiakan betina bunga ialah…|pistil|stamen|anter|filamen',
+'0|Bahagian pistil yang menerima debunga ialah…|stigma|ovari|anter|filamen',
+'0|Ovul terdapat di dalam…|ovari|anter|stigma|filamen',
+'1|Pendebungaan ialah pemindahan debunga dari … ke …|anter ke stigma|stigma ke anter|ovari ke ovul|daun ke akar',
+'1|Pendebungaan kendiri berlaku…|pada bunga yang sama atau pokok yang sama|antara dua pokok berlainan|tanpa debunga|di akar',
+'1|Pendebungaan antara dua pokok berlainan dipanggil…|pendebungaan kacuk|pendebungaan kendiri|persenyawaan|percambahan',
+'2|Contoh agen pendebungaan ialah…|serangga, angin, burung dan air|batu dan tanah|cahaya sahaja|manusia sahaja',
+'2|Ciri bunga yang didebungakan oleh serangga ialah…|berwarna terang, wangi dan ada nektar|kecil tanpa warna|tiada bau|di bawah tanah',
+'3|Selepas debunga di atas stigma, ia membentuk…|tiub debunga|biji benih|buah|akar',
+'3|Tiub debunga tumbuh melalui … ke ovul.|stil|filamen|kelopak|sepal',
+'3|Persenyawaan berlaku apabila…|nukleus jantan bercantum dengan ovum|debunga jatuh ke tanah|kelopak gugur|lebah menghisap nektar',
+'4|Selepas persenyawaan, ovul berkembang menjadi…|biji|buah|daun|bunga baharu',
+'4|Selepas persenyawaan, ovari berkembang menjadi…|buah|biji|akar|kelopak',
+'4|Apakah yang berlaku kepada kelopak selepas persenyawaan?|Layu dan gugur|Menjadi buah|Menjadi biji|Bertambah besar',
+'5|Biji benih memerlukan … untuk bercambah.|air, udara dan suhu sesuai|tanah liat sahaja|gelap sepenuhnya|garam',
+'5|Bahagian yang tumbuh dahulu semasa percambahan ialah…|akar|pucuk|daun|bunga',
+'5|Gas daripada udara yang diperlukan untuk percambahan ialah…|oksigen|karbon dioksida|nitrogen sahaja|hidrogen',
+'5|Pucuk anak benih tumbuh ke arah…|cahaya|bawah tanah|air sahaja|graviti'],
+respirasi: [
+'0|Udara memasuki sistem respirasi melalui…|hidung|trakea dahulu|alveolus|esofagus',
+'0|Urutan laluan udara yang betul ialah…|hidung → trakea → bronkus → bronkiol → alveolus|hidung → bronkiol → trakea → alveolus|trakea → hidung → alveolus|alveolus → bronkus → hidung',
+'0|Fungsi rongga hidung termasuk…|menapis, melembapkan dan memanaskan udara|mencerna makanan|mengepam darah|menghasilkan tenaga',
+'0|Pertukaran gas berlaku di…|alveolus|trakea|hidung|bronkus',
+'1|Semasa menarik nafas, diafragma…|mengecut dan mendatar|mengendur dan melengkung ke atas|tidak bergerak|bergerak ke kepala',
+'1|Semasa menarik nafas, tulang rusuk bergerak…|ke atas dan ke luar|ke bawah dan ke dalam|tidak bergerak|ke kiri',
+'1|Semasa menarik nafas, isi padu rongga toraks…|bertambah|berkurang|sama|hilang',
+'1|Semasa menarik nafas, tekanan udara dalam rongga toraks…|berkurang|bertambah|sama|sangat tinggi',
+'2|Semasa menghembus nafas, otot interkosta luar…|mengendur|mengecut|terkoyak|tidak berubah',
+'2|Semasa menghembus nafas, diafragma…|mengendur dan melengkung ke atas|mengecut dan mendatar|bergerak ke bawah|hilang',
+'2|Semasa menghembus nafas, tekanan dalam rongga toraks…|bertambah|berkurang|sifar|tidak berubah',
+'3|Gas yang meresap dari alveolus ke dalam darah ialah…|oksigen|karbon dioksida|nitrogen|wap air',
+'3|Gas yang meresap dari darah ke alveolus ialah…|karbon dioksida|oksigen|hidrogen|helium',
+'3|Oksigen diangkut dalam darah oleh…|hemoglobin|plasma sahaja|platlet|sel darah putih',
+'3|Ciri dinding alveolus ialah…|setebal satu sel dan lembap|tebal dan kering|berotot tebal|keras seperti tulang',
+'4|Persamaan respirasi sel ialah glukosa + oksigen →|karbon dioksida + air + tenaga|oksigen + glukosa|kanji + air|nitrogen + tenaga',
+'4|Respirasi sel berlaku di dalam…|mitokondria|kloroplas|nukleus|vakuol',
+'5|Bahan dalam asap rokok yang menyebabkan kanser peparu ialah…|tar|oksigen|air|vitamin',
+'5|Bahan dalam rokok yang menyebabkan ketagihan ialah…|nikotin|tar|karbon dioksida|nitrogen',
+'5|Karbon monoksida dalam asap rokok…|mengurangkan oksigen dalam darah|menambah oksigen|menguatkan peparu|tiada kesan'],
+darah: [
+'0|Organ yang mengepam darah ke seluruh badan ialah…|jantung|peparu|hati|ginjal',
+'0|Komponen sistem peredaran darah ialah…|jantung, salur darah dan darah|peparu dan trakea|perut dan usus|otak dan saraf',
+'1|Berapakah bilangan ruang dalam jantung manusia?|4|2|3|6',
+'1|Ruang jantung yang mempunyai dinding paling tebal ialah…|ventrikel kiri|atrium kanan|atrium kiri|ventrikel kanan',
+'1|Mengapa dinding ventrikel kiri paling tebal?|Mengepam darah ke seluruh badan|Menyimpan darah|Menerima darah dari peparu|Kerana kecil',
+'1|Fungsi injap dalam jantung ialah…|menghalang darah mengalir balik|mengepam udara|menghasilkan darah|menapis darah',
+'1|Dinding yang memisahkan bahagian kanan dan kiri jantung ialah…|septum|injap|aorta|vena kava',
+'2|Ventrikel kanan mengepam darah ke peparu melalui…|arteri pulmonari|aorta|vena pulmonari|vena kava',
+'2|Darah beroksigen dari peparu kembali ke jantung melalui…|vena pulmonari|arteri pulmonari|aorta|vena kava',
+'2|Darah dari peparu masuk ke ruang jantung…|atrium kiri|atrium kanan|ventrikel kanan|ventrikel kiri',
+'3|Ventrikel kiri mengepam darah beroksigen melalui…|aorta|vena kava|arteri pulmonari|vena pulmonari',
+'3|Darah terdeoksigen dari badan kembali ke atrium kanan melalui…|vena kava|aorta|vena pulmonari|arteri pulmonari',
+'3|Darah melalui jantung dua kali dalam satu kitaran lengkap. Ini dipanggil…|peredaran ganda dua|peredaran tunggal|respirasi|pencernaan',
+'4|Salur darah yang membawa darah DARI jantung ialah…|arteri|vena|kapilari|limfa',
+'4|Salur darah yang mempunyai injap ialah…|vena|arteri|kapilari|aorta',
+'4|Salur darah yang dindingnya setebal satu sel ialah…|kapilari|arteri|vena|aorta',
+'4|Arteri mempunyai dinding … dan tekanan darah …|tebal, tinggi|nipis, rendah|nipis, tinggi|tebal, rendah',
+'5|Semasa bersenam, kadar denyutan nadi…|meningkat|menurun|berhenti|tidak berubah',
+'5|Kadar nadi normal remaja semasa rehat ialah kira-kira…|60 hingga 100 denyutan seminit|10 hingga 20|150 hingga 200|200 hingga 300',
+'5|Mengapa jantung berdenyut lebih laju semasa bersenam?|Otot memerlukan lebih banyak oksigen dan tenaga|Badan menjadi sejuk|Darah berkurang|Peparu berhenti'],
+logam: [
+'0|Logam paling reaktif dalam siri kereaktifan ialah…|kalium|aurum|kuprum|ferum',
+'0|Logam paling kurang reaktif dalam siri ialah…|aurum (emas)|kalium|natrium|magnesium',
+'0|Simbol bagi ferum (besi) ialah…|Fe|F|Fr|Ir',
+'0|Simbol bagi kuprum ialah…|Cu|Co|Kp|C',
+'0|Antara berikut, yang manakah lebih reaktif?|Magnesium|Kuprum|Argentum|Aurum',
+'1|Natrium bertindak balas dengan air sejuk dan membebaskan gas…|hidrogen|oksigen|karbon dioksida|nitrogen',
+'1|Logam yang TIDAK bertindak balas dengan air ialah…|kuprum|natrium|kalium|kalsium',
+'1|Natrium + air menghasilkan natrium hidroksida dan…|hidrogen|oksigen|garam|klorin',
+'2|Magnesium terbakar dalam oksigen dengan nyalaan…|putih yang sangat terang|biru malap|tiada nyalaan|hijau gelap',
+'2|Hasil pembakaran magnesium dalam oksigen ialah…|magnesium oksida|magnesium klorida|karbon dioksida|air',
+'2|Apabila dipanaskan dalam oksigen, kuprum…|menjadi hitam|meletup|terbakar terang|cair serta-merta',
+'2|Logam + oksigen →|oksida logam|garam + air|hidrogen|karbon dioksida',
+'3|Karbon terletak di antara … dalam siri kereaktifan.|aluminium dan zink|kalium dan natrium|kuprum dan argentum|ferum dan stanum',
+'3|Logam yang KURANG reaktif daripada karbon boleh diekstrak dengan…|pemanasan oksida logam bersama karbon|elektrolisis sahaja|air|cahaya matahari',
+'4|Besi diekstrak dalam…|relau bagas|bikar|tabung uji|reaktor nuklear',
+'4|Bahan mentah dalam relau bagas ialah…|bijih besi, kok dan batu kapur|aluminium, air dan garam|emas, perak dan kuprum|pasir dan simen',
+'4|Gas yang menurunkan ferum oksida kepada besi ialah…|karbon monoksida|oksigen|hidrogen|nitrogen',
+'4|Batu kapur dalam relau bagas menyingkirkan bendasing sebagai…|sanga|besi lebur|gas|kok',
+'5|Aluminium diekstrak melalui…|elektrolisis leburan bijihnya|pemanasan dengan karbon|tindak balas dengan air|penapisan',
+'5|Mengapa aluminium tidak boleh diekstrak dengan karbon?|Aluminium lebih reaktif daripada karbon|Aluminium tidak wujud|Karbon terlalu mahal|Aluminium cecair'],
+litar: [
+'0|Alat yang mengukur arus elektrik ialah…|ammeter|voltmeter|perintang|suis',
+'0|Alat yang mengukur voltan ialah…|voltmeter|ammeter|mentol|fius',
+'0|Simbol bulatan dengan tanda X di dalamnya mewakili…|mentol|ammeter|sel kering|perintang',
+'0|Simbol segi empat tepat dalam litar mewakili…|perintang|mentol|suis|sel',
+'1|Arus elektrik ialah kadar aliran…|cas|air|cahaya|haba',
+'1|Elektron mengalir dari terminal…|negatif ke positif|positif ke negatif|tengah ke hujung|tidak bergerak',
+'1|Arah arus konvensional ialah dari terminal…|positif ke negatif|negatif ke positif|positif ke positif|tiada arah',
+'1|Arus hanya mengalir dalam litar yang…|tertutup|terbuka|putus|tanpa sel',
+'2|Dalam litar bersiri, arus pada setiap titik adalah…|sama|berbeza|sifar|bertambah',
+'2|Dalam litar bersiri, voltan sel…|dibahagikan antara mentol|sama pada setiap mentol|bertambah dua kali|hilang',
+'2|Jika satu mentol dalam litar bersiri rosak…|semua mentol padam|mentol lain lebih terang|tiada kesan|hanya mentol itu padam',
+'3|Dalam litar selari, voltan merentasi setiap cabang adalah…|sama|berbeza|sifar|dibahagi dua',
+'3|Dalam litar selari, jumlah arus ialah…|I = I₁ + I₂|I = I₁ × I₂|I₁ = I₂ sentiasa|I = 0',
+'3|Jika satu mentol dalam litar selari rosak…|mentol lain masih menyala|semua padam|litar meletup|voltan menjadi sifar',
+'3|Pendawaian rumah menggunakan litar…|selari|bersiri|terbuka|tanpa wayar',
+'4|Hukum Ohm menyatakan…|V = I × R|V = I + R|I = V × R|R = V × I',
+'4|Jika V = 6 V dan R = 2 Ω, arus I ialah…|3 A|12 A|8 A|4 A',
+'4|Graf V melawan I bagi konduktor ohm ialah…|garis lurus melalui asalan|lengkung|bulatan|garis mendatar',
+'5|Alat yang memutuskan litar apabila arus terlalu tinggi ialah…|fius atau pemutus litar|mentol|voltmeter|suis lampu',
+'5|Wayar bumi berfungsi untuk…|mengalirkan arus bocor ke bumi|menambah voltan|menyalakan mentol|mengukur arus'],
+jana: [
+'0|Arus elektrik teraruh apabila gegelung berputar dalam…|medan magnet|air|udara panas|cahaya',
+'0|Alat yang mengesan arus teraruh dalam simulasi ialah…|galvanometer|termometer|barometer|voltmeter digital',
+'0|Cara menambah arus yang dijana ialah…|memutar lebih laju atau guna magnet lebih kuat|memutar lebih perlahan|membuang magnet|memanaskan gegelung',
+'1|Di stesen hidro, turbin diputar oleh…|air|arang batu|angin sahaja|matahari',
+'1|Stesen jana kuasa terma membakar … untuk menghasilkan stim.|arang batu atau gas|air|pasir|uranium',
+'1|Turbin di stesen jana kuasa memutar…|penjana|transformer|pencawang|mentol',
+'1|Panel suria menukar … terus kepada elektrik.|cahaya|bunyi|haba bumi|angin',
+'2|Transformer injak naik berfungsi untuk…|menaikkan voltan|menurunkan voltan|menyimpan elektrik|menjana arus',
+'2|Mengapa voltan dinaikkan sebelum penghantaran?|Arus kecil dan kehilangan tenaga berkurang|Supaya kabel panas|Supaya elektrik lebih mahal|Supaya arus besar',
+'2|Voltan penghantaran di Malaysia boleh mencapai…|132 kV hingga 500 kV|240 V|12 V|1 kV',
+'3|Rangkaian kabel penghantaran yang menghubungkan stesen jana kuasa dan pengguna ialah…|Grid Nasional|transformer|penjana|pencawang rumah',
+'3|Kelebihan Grid Nasional ialah…|bekalan boleh disalur dari stesen lain jika satu rosak|elektrik percuma|tiada kabel|voltan sentiasa 240 V',
+'4|Transformer injak turun terdapat di…|pencawang|stesen hidro sahaja|dalam mentol|dalam bateri',
+'4|Voltan bekalan elektrik di rumah di Malaysia ialah…|240 V|11 kV|500 kV|12 V',
+'4|Transformer injak turun berfungsi untuk…|menurunkan voltan|menaikkan voltan|menjana elektrik|menyimpan tenaga',
+'5|Tenaga elektrik (kWj) dikira dengan…|kuasa (kW) × masa (jam)|voltan × arus × masa|kuasa + masa|kuasa ÷ masa',
+'5|Penyaman udara 1.5 kW digunakan 4 jam. Tenaga yang digunakan ialah…|6 kWj|5.5 kWj|2.67 kWj|60 kWj',
+'5|Kos elektrik dikira dengan…|tenaga (kWj) × tarif|kuasa × voltan|masa × voltan|tarif ÷ masa',
+'5|Jika tenaga 6 kWj dan tarif RM0.22 sekWj, kosnya ialah…|RM1.32|RM6.22|RM0.22|RM13.20',
+'5|Cara menjimatkan elektrik ialah…|tutup suis bila tidak digunakan|biarkan lampu menyala|buka peti sejuk lama-lama|cas telefon sepanjang malam']
+};
+
+/* Tugasan simulasi: tonton → kuiz 3 soalan rawak (daripada 20) → ✅ + RP (sekali bagi setiap simulasi, bila-bila masa).
+   Murid: tanda disimpan di peranti & keputusan dihantar kepada guru (guru beri RP). Guru: pilih kumpulan yang menjawab. Awam: tanda sahaja. */
+const SIM_RP = 10;
+const simOkKey = id => (MURID ? (MURID.pack && MURID.pack.awam ? 'awam' : (MURID.me ? MURID.me.i : 'x')) : 'guru') + '|' + id;
+function simOk(id){ if (!MURID) return !!(S.simOk && S.simOk[id]); try { return !!JSON.parse(localStorage.getItem('rk_sim_ok') || '{}')[simOkKey(id)]; } catch(e){ return false; } }
+function simOkSet(id){ if (!MURID){ S.simOk = S.simOk || {}; S.simOk[id] = todayKey(); save(); return; }
+  try { const m = JSON.parse(localStorage.getItem('rk_sim_ok') || '{}'); m[simOkKey(id)] = todayKey(); localStorage.setItem('rk_sim_ok', JSON.stringify(m)); } catch(e){} }
+/* guru: beri RP kepada murid yang selesai (sekali sahaja bagi setiap simulasi) */
+function simCredit(sid, id){
+  if (!stu(sid)) return false; S.simDone = S.simDone || {}; const m = S.simDone[sid] = S.simDone[sid] || {};
+  if (m[id]) return false; m[id] = todayKey(); S.arena = S.arena || {}; S.arena.rp = S.arena.rp || {}; S.arena.rp[sid] = (S.arena.rp[sid] || 0) + SIM_RP; return true;
+}
+const simDoneCount = id => { const cls = S.ui.activeClassId; return (S.students || []).filter(st => (!cls || st.classId === cls) && S.simDone && S.simDone[st.id] && S.simDone[st.id][id]).length; };
 /* ---------- tab SIMULASI ---------- */
 function viewSim(){                                  /* semua simulasi dipapar terus — tiada pilihan kelas / subjek */
   let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(245,224,138,.18),rgba(20,28,38,.9))">' +
     '<div style="font-size:40px;line-height:1">🎬</div><div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#F5E08A">SIMULASI</div>' +
-    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Animasi tutorial untuk PdP — tayang di projektor, jeda, ulang dan lompat antara babak.</div></div>';
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Animasi tutorial untuk PdP — tayang di projektor, jeda, ulang dan lompat antara babak. <b style="color:#FDE68A">Tugasan:</b> tonton hingga habis, jawab 3 soalan rawak dan dapatkan ✅ + ' + SIM_RP + ' RP.</div></div>';
   h += '<div class="grid gap-3 mt-3" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">' + SIM_LIB.map(x => '<button class="panel clip p-3 w-full text-left flex items-center gap-3" data-act="sim-play" data-id="' + x.id + '">' +
       '<div style="font-size:42px;line-height:1">' + x.ico + '</div><div class="flex-1 min-w-0"><div class="text-[11px] text-muted tracking-widest">' + esc(x.subjLabel) + ' · ' + x.scenes.length + ' BABAK · ' + Math.round(x.dur) + ' SAAT</div>' +
-      '<div class="font-bold text-[16px] mt-1">' + esc(x.title) + '</div><div class="text-[12px] text-muted mt-1 leading-snug">' + esc(x.desc) + '</div></div>' +
-      '<i class="fa-solid fa-circle-play text-[30px]" style="color:#F5E08A"></i></button>').join('') + '</div>';
+      '<div class="font-bold text-[16px] mt-1">' + esc(x.title) + '</div><div class="text-[12px] text-muted mt-1 leading-snug">' + esc(x.desc) + '</div>' +
+      '<div class="text-[11px] mt-1" style="color:' + (simOk(x.id) ? '#4ADE80' : '#94A3B8') + '">' + (simOk(x.id) ? '✅ Tugasan selesai' : '📝 Tonton & jawab kuiz · +' + SIM_RP + ' RP') +
+      (!MURID && simDoneCount(x.id) ? ' · <span style="color:#FDE68A">👥 ' + simDoneCount(x.id) + ' murid selesai</span>' : '') + '</div></div>' +
+      (simOk(x.id) ? '<div style="position:relative"><i class="fa-solid fa-circle-play text-[30px]" style="color:#F5E08A"></i><span style="position:absolute;right:-8px;top:-10px;font-size:18px">✅</span></div>' : '<i class="fa-solid fa-circle-play text-[30px]" style="color:#F5E08A"></i>') + '</button>').join('') + '</div>';
   return h;
 }
 
@@ -13470,7 +13930,9 @@ function simPlay(id){
         '<span id="simTime" class="num" style="font-size:12px;min-width:74px;text-align:right">0:00</span>' +
         '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="spd" id="simSpd">1×</button>' +
         '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="voice" id="simVo" title="Suara penerangan"></button>' +
-        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="fs" id="simFs" title="Skrin penuh"><i class="fa-solid fa-expand"></i></button></div></div>';
+        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="qz" id="simQb" title="Kuiz"><i class="fa-solid fa-clipboard-question"></i></button>' +
+        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="fs" id="simFs" title="Skrin penuh"><i class="fa-solid fa-expand"></i></button></div></div>' +
+    '<div id="simQz" style="position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,14,.78);overflow:auto"></div>';
   document.body.appendChild(root); lockBody(); orientFree();
   const cv = root.querySelector('#simCv'), g = cv.getContext('2d'), bar = root.querySelector('#simBar'), chs = root.querySelector('#simCh');
   const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -13499,7 +13961,8 @@ function simPlay(id){
     if (playing && voiceOn){ const k = sceneAt(t); if (k !== spokenK){ spokenK = k; speak(k); } }
     if (playing){ const t0 = t, k = sceneAt(t), nx = sim.scenes[k + 1], stop = (nx ? nx.t0 : sim.dur) - .02;
       t += dt * spd; if (talking && t > stop) t = Math.max(t0, stop);       /* tunggu suara habis sebelum babak seterusnya */
-      if (t >= sim.dur){ t = sim.dur - .001; setPlay(false); } drawnT = -1;
+      if (QZ.rev != null && (k !== QZ.rev || (t >= stop && !talking))){ t = Math.min(t, stop); setPlay(false); QZ.rev = null; qzAsk(); }   /* tamat tonton semula babak → kembali ke soalan */
+      if (t >= sim.dur){ t = sim.dur - .001; setPlay(false); if (!QZ.seen){ QZ.seen = true; qzIntro(); } } drawnT = -1;
       (sim.sfx || []).forEach(([at, id]) => { if (at > t0 && at <= t) audPlay(id); }); }      // bunyi hanya semasa dimainkan (bukan bila diseret)
     draw(); requestAnimationFrame(frame); };
   function cl(v, a, b){ return Math.max(a, Math.min(b, v)); }
@@ -13511,6 +13974,7 @@ function simPlay(id){
     if (a === 'ch') return seek(sim.scenes[+b.dataset.i].t0);
     if (a === 'spd'){ spd = spd === 1 ? .5 : spd === .5 ? 1.5 : 1; b.textContent = spd + '×'; }
     if (a === 'fs'){ fsOn ? fsExit() : fsEnter(); return; }
+    if (a === 'qz'){ if (QZ.seen || simOk(sim.id)) qzIntro(); else toast('📝 Tonton simulasi hingga habis dahulu untuk membuka kuiz.'); return; }
     if (a === 'voice'){ voiceOn = !voiceOn; S.config.simVoice = voiceOn ? 1 : 0; save(); voBtn(); if (!voiceOn) hush(); else spokenK = -1; } });
   /* ---- skrin penuh: cuba Fullscreen API + kunci landskap; jika tidak disokong (cth. iPhone) kanvas dipusing 90° dengan CSS.
      Keluar automatik bila telefon dipusing kembali ke potret (sensor graviti / orientasi tetingkap). ---- */
@@ -13540,13 +14004,72 @@ function simPlay(id){
     if (!fromSys && fsReal && fsEl() && !ORIENT_FS){ try { const p = (d.exitFullscreen || d.webkitExitFullscreen).call(d); p && p.catch && p.catch(() => {}); } catch(e){} }
     fsReal = false; if (ORIENT_FS || fsEl()) try { so.lock('any').catch(() => {}); } catch(e){}
   }
+  /* ---------- kuiz tugasan: 3 soalan rawak daripada 20; salah → tonton semula babak berkaitan → jawab semula ---------- */
+  const QB = (SIM_Q[sim.id] || []).map(x => x.split('|')).filter(a => a.length >= 6).map(a => ({ k: Math.min(+a[0] || 0, sim.scenes.length - 1), q: a[1], ok: a[2], w: a.slice(3) }));
+  const QZ = { seen: false, list: null, i: 0, rev: null, opts: null, lock: false, miss: 0 }, qzEl = root.querySelector('#simQz');
+  const qzCard = (h, col) => { qzEl.innerHTML = '<div class="panel clip p-5 w-full" style="max-width:600px;border-color:' + (col || '#F5E08A') + ';background:linear-gradient(180deg,#1E293B,#0F172A)">' + h + '</div>'; qzEl.style.display = 'flex'; hush(); };
+  const qzHide = () => { qzEl.style.display = 'none'; qzEl.innerHTML = ''; };
+  const qzBtn = (a, label, cls) => '<button class="btn ' + (cls || 'btn-o') + ' clip-s flex-1 !py-3 text-[14px] font-bold" data-qz="' + a + '">' + label + '</button>';
+  function qzIntro(){
+    if (!QB.length) return;
+    const done = simOk(sim.id);
+    qzCard('<div class="text-center"><div style="font-size:44px">' + (done ? '✅' : '📝') + '</div><div class="font-bold text-[20px] mt-1" style="color:#F5E08A">KUIZ SIMULASI</div>' +
+      '<div class="text-[14px] mt-2 leading-relaxed">' + esc(sim.title) + '<br>Jawab <b>3 soalan rawak</b> berdasarkan simulasi tadi.' + (done ? '<br><span style="color:#4ADE80">Tugasan ini sudah selesai — ini latihan sahaja.</span>' : '<br>Semua betul = <b style="color:#4ADE80">✅ selesai</b> + <b style="color:#FB923C">' + SIM_RP + ' RP</b>.') +
+      '<br><span class="text-muted text-[12px]">Salah? Kamu boleh tonton semula babak berkaitan dan cuba lagi.</span></div></div>' +
+      '<div class="flex gap-2 mt-4">' + qzBtn('replay', '🔁 Tonton semula', 'btn') + qzBtn('start', '▶ MULA KUIZ') + '</div>');
+  }
+  function qzStart(){ QZ.list = QB.slice().sort(() => Math.random() - .5).slice(0, 3); QZ.i = 0; QZ.miss = 0; qzAsk(); }
+  function qzAsk(){
+    const q = QZ.list[QZ.i]; QZ.lock = false; QZ.opts = [q.ok].concat(q.w).sort(() => Math.random() - .5);
+    qzCard('<div class="flex items-center gap-2 text-[12px] font-bold tracking-widest" style="color:#93C5FD"><span>📝 SOALAN ' + (QZ.i + 1) + ' / 3</span><span class="flex-1"></span>' +
+      QZ.list.map((x, j) => '<span style="width:12px;height:12px;border-radius:50%;background:' + (j < QZ.i ? '#22C55E' : j === QZ.i ? '#F5E08A' : '#334155') + '"></span>').join('') + '</div>' +
+      '<div class="font-bold text-[19px] mt-3 leading-snug">' + esc(q.q) + '</div><div class="grid gap-2 mt-4">' +
+      QZ.opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px]" data-qo="' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o) + '</button>').join('') + '</div><div id="simQm" class="mt-3"></div>');
+  }
+  function qzPick(j, b){
+    if (QZ.lock) return; QZ.lock = true; const q = QZ.list[QZ.i], ok = QZ.opts[j] === q.ok;
+    if (ok){ b.style.background = '#15803D'; b.style.borderColor = '#4ADE80'; sfx('hi'); vibrate(15);
+      setTimeout(() => { QZ.i++; if (QZ.i >= QZ.list.length) qzFinish(); else qzAsk(); }, 900); return; }
+    QZ.miss++; b.style.background = '#991B1B'; b.style.borderColor = '#F87171'; sfx('low'); vibrate(40);
+    qzEl.querySelectorAll('[data-qo]').forEach(x => x.disabled = true);
+    const sc = sim.scenes[q.k];
+    qzEl.querySelector('#simQm').innerHTML = '<div class="text-[14px]" style="color:#FCA5A5">❌ Belum tepat. Jawapan ada dalam <b>babak ' + (q.k + 1) + ': ' + esc(sc.n) + '</b>. Tonton semula babak itu, kemudian jawab soalan yang sama.</div>' +
+      '<div class="flex gap-2 mt-3">' + qzBtn('rev', '🔁 Tonton babak ' + (q.k + 1)) + '</div>';
+  }
+  function qzFinish(){
+    const first = !simOk(sim.id); simOkSet(sim.id); sfx('myth'); vibrate([30, 40, 30]);
+    let note = '', pick = '';
+    if (!first) note = 'Latihan selesai — tugasan ini sudah ditanda sebelum ini.';
+    else if (MURID && MURID.pack && MURID.pack.awam) note = '🌍 Mod Awam: tanda ✅ disimpan di peranti ini sahaja (tiada RP).';
+    else if (MURID && MURID.me){ const q = (() => { try { return JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){ return []; } })();
+      q.push({ k: 'sim', s: MURID.me.i, sim: sim.id, t: Date.now() }); try { localStorage.setItem('rk_murid_q', JSON.stringify(q.slice(-50))); } catch(e){} muridFlush();
+      note = '📲 Keputusan dihantar kepada guru: <b style="color:#FB923C">+' + SIM_RP + ' RP</b>.'; }
+    else { const tm = classTeams(); note = 'Rekod RP untuk kumpulan yang menjawab (setiap murid sekali bagi simulasi ini):';
+      pick = '<div class="grid grid-cols-2 gap-2 mt-3">' + tm.map(g => '<button class="btn clip-s !py-2 text-[13px]" data-qt="' + g.id + '">' + esc(g.name) + '</button>').join('') + '</div>' + (tm.length ? '' : '<div class="text-muted text-[12px] mt-2">Tiada kumpulan dalam kelas ini.</div>'); }
+    qzCard('<div class="text-center"><div style="font-size:56px">✅</div><div class="font-bold text-[22px]" style="color:#4ADE80">SIMULASI SELESAI!</div>' +
+      '<div class="text-[14px] mt-1">' + esc(sim.title) + ' · 3/3 betul' + (QZ.miss ? ' (' + QZ.miss + ' kali tonton semula)' : ' pada cubaan pertama 🌟') + '</div>' +
+      '<div class="text-[13px] mt-3 leading-relaxed">' + note + '</div></div>' + pick + '<div class="flex gap-2 mt-4">' + qzBtn('close', 'Tutup', 'btn') + qzBtn('list', '🎬 Simulasi lain') + '</div>', '#4ADE80');
+  }
+  qzEl.addEventListener('click', e => {
+    const o = e.target.closest('[data-qo]'); if (o && !o.disabled) return qzPick(+o.dataset.qo, o);
+    const tb = e.target.closest('[data-qt]');
+    if (tb && !tb.disabled){ const tm = teamOf(tb.dataset.qt); let n = 0; if (tm) tm.members.forEach(st => { if (simCredit(st.id, sim.id)) n++; }); save(true);
+      tb.disabled = true; tb.innerHTML = '✅ ' + esc(tm ? tm.name : '') + ' <small>(+' + SIM_RP + ' RP × ' + n + ')</small>'; toast(n ? '🎬 ' + n + ' murid mendapat +' + SIM_RP + ' RP.' : 'Murid kumpulan ini sudah menerima RP simulasi ini.'); return; }
+    const b = e.target.closest('[data-qz]'); if (!b) return; const a = b.dataset.qz; sfx('flip');
+    if (a === 'start') return qzStart();
+    if (a === 'replay'){ qzHide(); seek(0); setPlay(true); return; }
+    if (a === 'rev'){ const q = QZ.list[QZ.i]; qzHide(); QZ.rev = q.k; seek(sim.scenes[q.k].t0); setPlay(true); return; }
+    if (a === 'close') return qzHide();
+    if (a === 'list'){ close(); if (S.ui.tab === 'sim') renderTab(); }
+  });
   cv.addEventListener('click', () => setPlay(!playing));                      // ketik skrin = jeda / main
   bar.addEventListener('input', () => { seek(+bar.value); });
   const onKey = e => { if (e.key === ' '){ e.preventDefault(); setPlay(!playing); } else if (e.key === 'ArrowRight') seek(t + 5); else if (e.key === 'ArrowLeft') seek(t - 5); else if (e.key === 'Escape') close(); };
   window.addEventListener('keydown', onKey);
-  function close(){ alive = false; hush(); fsExit(); window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
+  function close(){ alive = false; hush(); fsExit(); if (S.ui.tab === 'sim') setTimeout(renderTab, 50); window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
   window.SIM_SEEK = seek;                                                     // untuk ujian / tangkapan skrin
   window.SIM_SAY = k => sayTxt(sim.scenes[k]);
+  window.SIM_QZ = QZ;                                                          // untuk ujian
   voBtn();
   requestAnimationFrame(frame);
 }
@@ -16671,6 +17194,8 @@ async function muridRecvStart(){
       if (st){ const o1 = st.iconUrl, o2 = st.bannerUrl; if (v.ic) st.iconUrl = v.ic; if (v.bn) st.bannerUrl = v.bn;
         [o1, o2].forEach(u => { if (u && u !== st.iconUrl && u !== st.bannerUrl) fbDeleteUrl(u); });
         toast('📸 ' + st.name + ' menukar gambar profil & banner.'); if (S.ui.tab === 'students') renderTab(); } }
+    else if (v && v.k === 'sim' && !S.murid.done.includes(key)){ const st = stu(v.s), sm = SIM_LIB.find(x => x.id === v.sim);
+      if (st && sm && simCredit(st.id, sm.id)){ toast('🎬 ' + st.name + ' selesai tugasan simulasi ' + sm.title + ' (+' + SIM_RP + ' RP).'); if (S.ui.tab === 'sim' || S.ui.tab === 'students') renderTab(); } }
     else if (v && !S.murid.done.includes(key) && muridApply(v)){ got++; clearTimeout(toastT); toastT = setTimeout(() => { toast('📲 ' + got + ' keputusan game murid direkod ke PBD.'); got = 0; if (S.ui.tab === 'report' || S.ui.tab === 'students') renderTab(); }, 1200); }
     S.murid.done.push(key); S.murid.done = S.murid.done.slice(-300); save();
     d.remove(d.ref(FB.db, base + '/' + key)).catch(() => {});
