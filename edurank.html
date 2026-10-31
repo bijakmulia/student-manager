@@ -4371,7 +4371,7 @@ function bgmTarget(){
   if (!bgmOn()) return null;
   const s = bgmScene();
   if (bgmSrc(s)) return s;
-  return (s === 'stor' || s === 'duel') && bgmSrc('menu') ? 'menu' : null;   // game 3D tanpa muzik aset: guna bunyi enjinnya sendiri
+  return (s === 'stor' || s === 'duel' || s === 'klinik') && bgmSrc('menu') ? 'menu' : null;   /* Klinik: lagu latar EduRank sehingga bgm_klinik dimasukkan */   // game 3D tanpa muzik aset: guna bunyi enjinnya sendiri
 }
 async function bgmSwitch(src){
   const a = audCtx(); if (!a) return;
