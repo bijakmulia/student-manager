@@ -1026,6 +1026,8 @@ function renderTab(){
   else if (t==='msc') m.innerHTML = muridShowcase();
   else m.innerHTML = viewSettings();
   if (MURID) $$('#main [data-act="km-join"], #main [data-act="qbank"]').forEach(e => e.remove());   /* versi murid: solo sahaja */
+  { const cx = $('#ctxClass') && $('#ctxClass').parentElement, noCtx = t === 'sim';     /* Simulasi tidak bergantung pada kelas / subjek */
+    if (cx) cx.style.display = noCtx ? 'none' : ''; m.style.paddingTop = noCtx ? 'calc(62px + var(--safe-t))' : 'calc(104px + var(--safe-t))'; }
   if (typeof LOBBY !== 'undefined' && LOBBY && LOBBY.repaint) LOBBY.repaint();     // menu game terbuka: segarkan (cth. selepas buka pack)
 }
 function renderContext(){
@@ -11678,20 +11680,14 @@ function simKit(cam0, opt){
 })();
 
 /* ---------- tab SIMULASI ---------- */
-function viewSim(){
-  const subs = S.subjects || [], sel = S.ui.simSubj || S.ui.activeSubjectId || (subs[0] || {}).id || '';
-  const sj = subs.find(s => s.id === sel), name = sj ? sj.name : '';
-  const list = sel === '*' ? SIM_LIB : SIM_LIB.filter(x => x.subj.test(name));
-  const chip = (id, label, on) => '<button class="btn clip-s !py-2 !px-3 text-[12px] ' + (on ? 'btn-o' : '') + '" data-act="sim-subj" data-id="' + id + '">' + esc(label) + '</button>';
+function viewSim(){                                  /* semua simulasi dipapar terus — tiada pilihan kelas / subjek */
   let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(245,224,138,.18),rgba(20,28,38,.9))">' +
     '<div style="font-size:40px;line-height:1">🎬</div><div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#F5E08A">SIMULASI</div>' +
-    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Animasi tutorial untuk PdP — tayang di projektor, jeda, ulang dan lompat antara babak. Pilih subjek di bawah.</div></div>' +
-    '<div class="lbl mt-3">SUBJEK</div><div class="flex flex-wrap gap-2 mt-2">' + subs.map(s => chip(s.id, s.name, s.id === sel)).join('') + chip('*', 'Semua', sel === '*') + '</div>';
-  h += list.length ? list.map(x => '<button class="panel clip p-3 mt-3 w-full text-left flex items-center gap-3" data-act="sim-play" data-id="' + x.id + '">' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Animasi tutorial untuk PdP — tayang di projektor, jeda, ulang dan lompat antara babak.</div></div>';
+  h += '<div class="grid gap-3 mt-3" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">' + SIM_LIB.map(x => '<button class="panel clip p-3 w-full text-left flex items-center gap-3" data-act="sim-play" data-id="' + x.id + '">' +
       '<div style="font-size:42px;line-height:1">' + x.ico + '</div><div class="flex-1 min-w-0"><div class="text-[11px] text-muted tracking-widest">' + esc(x.subjLabel) + ' · ' + x.scenes.length + ' BABAK · ' + Math.round(x.dur) + ' SAAT</div>' +
       '<div class="font-bold text-[16px] mt-1">' + esc(x.title) + '</div><div class="text-[12px] text-muted mt-1 leading-snug">' + esc(x.desc) + '</div></div>' +
-      '<i class="fa-solid fa-circle-play text-[30px]" style="color:#F5E08A"></i></button>').join('')
-    : '<div class="panel clip p-4 mt-3 text-center text-muted text-[13px]">Belum ada simulasi untuk <b>' + esc(name || 'subjek ini') + '</b>.<br>Simulasi tersedia: ' + SIM_LIB.map(x => x.ico + ' ' + esc(x.title) + ' (' + x.subjLabel + ')').join(', ') + '.</div>';
+      '<i class="fa-solid fa-circle-play text-[30px]" style="color:#F5E08A"></i></button>').join('') + '</div>';
   return h;
 }
 
