@@ -10262,6 +10262,258 @@ const SIM_LIB = [];
       [37.6, 'sim_kr_pukul'], [39.6, 'sim_sorak'], [44.05, 'sim_kr_wiket'], [44.2, 'sim_sorak'], [48.1, 'sim_kr_pukul'], [50.2, 'sim_sorak'], [66.4, 'sim_sorak']] });
 })();
 
+/* ---------- SOFTBALL (PJK) ---------- */
+(() => {
+  /* kamera di belakang tapak rumah (home di asal), padang ke arah -z. Tapak 18.29 m, bulatan pembaling 13.11 m. */
+  const CAM = { y: 14, z: 22, ly: 0, lz: -18, F: 900 }, TH = Math.atan2(CAM.y - CAM.ly, CAM.z - CAM.lz), CS = Math.cos(TH), SN = Math.sin(TH);
+  const P = (x, y, z) => { const vx = x, vy = y - CAM.y, vz = z - CAM.z, d = -vy * SN - vz * CS, sy = vy * CS - vz * SN;
+    return { X: SIM_W / 2 + CAM.F * vx / d, Y: SIM_H / 2 - CAM.F * sy / d, s: CAM.F / d }; };
+  const L = (a, b, u) => a + (b - a) * u, cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  const ease = u => u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2, seg = (t, a, b) => cl((t - a) / (b - a), 0, 1);
+  const arc = (a, b, h, u) => ({ x: L(a.x, b.x, u), y: L(a.y, b.y, u) + 4 * h * u * (1 - u), z: L(a.z, b.z, u) });
+  const D = 12.93, BASES = [{ x: 0, z: 0 }, { x: D, z: -D }, { x: 0, z: -2 * D }, { x: -D, z: -D }];   // home, 1, 2, 3
+  const PIT = { x: 0, z: -13.11 }, COL = { A: '#1D4ED8', B: '#DC2626' };
+  const along = u => { u = cl(u, 0, 4); const i = Math.min(3, Math.floor(u)), f = u - i, a = BASES[i], b = BASES[(i + 1) % 4]; return { x: L(a.x, b.x, f), z: L(a.z, b.z, f) }; };   // laluan larian ikut tapak
+  const scenes = [
+    { n: 'Padang', d: 8, title: ['Padang ', 'berlian', ''], goal: 'Kenal pasti tapak & bulatan pembaling',
+      cap: 'Padang softball berbentuk berlian. Ada tapak rumah (home) dan tapak 1, 2 dan 3, setiap satu 18.29 m. Pembaling membaling dari bulatan 13.11 m dari tapak rumah.' },
+    { n: 'Pemain', d: 8, title: ['Siapa di ', 'padang', '?'], goal: 'Kenal peranan setiap pemain',
+      cap: 'Setiap pasukan ada 9 pemain. Pasukan bertahan: pembaling, penangkap, 4 pemain tapak dan 3 pemain luar. Pasukan menyerang menghantar pemukul seorang demi seorang.' },
+    { n: 'Balingan', d: 8, title: ['Langkah 1: ', 'Balingan', ''], goal: 'Baling bawah lengan ke zon strike',
+      cap: 'Pembaling membaling secara bawah lengan (lengan berpusing seperti kincir). Bola yang melalui zon strike, atau dihayun tetapi tidak kena, dikira STRIKE.' },
+    { n: 'Strike & Bola', d: 10, title: ['Strike ', '& bola', ''], goal: 'Fahami kiraan strike dan bola',
+      cap: '3 strike = pemukul KELUAR. Balingan di luar zon strike yang tidak dihayun = BOLA. 4 bola = pemukul berjalan terus ke tapak 1.' },
+    { n: 'Pukul & Lari', d: 8, title: ['Langkah 2: ', 'Pukul & lari', ''], goal: 'Pukul bola ke kawasan sah & lari',
+      cap: 'Pemukul memukul bola ke kawasan sah (di antara garisan foul), lepaskan kayu pemukul dan berlari ke tapak 1. Sampai sebelum bola = SELAMAT.' },
+    { n: 'Mendapat Larian', d: 10, title: ['Mendapat ', 'larian', ''], goal: 'Lari mengelilingi semua tapak',
+      cap: 'Pelari bergerak ikut arah lawan jam: tapak 1 → 2 → 3 → rumah. Setiap pelari yang selamat sampai ke tapak rumah = 1 larian. Home run: bola melepasi pagar, semua pelari mendapat larian.' },
+    { n: 'Cara Keluar', d: 10, title: ['Pemukul ', 'keluar', '!'], goal: 'Kenal cara pemain dikeluarkan',
+      cap: 'Bola tinggi yang ditangkap sebelum menyentuh tanah = keluar. Bola sampai ke tapak 1 sebelum pelari = keluar. Selepas 3 keluar, pasukan bertukar peranan.' },
+    { n: 'Inning & Menang', d: 8, title: ['Cara ', 'menang', ''], goal: 'Fahami inning & keputusan',
+      cap: 'Permainan ada 7 inning. Dalam setiap inning, kedua-dua pasukan memukul sekali sehingga 3 keluar. Pasukan dengan larian terbanyak selepas 7 inning MENANG.' }
+  ];
+  let T0 = 0; scenes.forEach(sc => { sc.t0 = T0; T0 += sc.d; });
+
+  const poly = (g, pts, fill, stroke, lw) => { g.beginPath(); pts.forEach((p, i) => { const q = P(p[0], p[1], p[2]); i ? g.lineTo(q.X, q.Y) : g.moveTo(q.X, q.Y); }); g.closePath();
+    if (fill){ g.fillStyle = fill; g.fill(); } if (stroke){ g.strokeStyle = stroke; g.lineWidth = lw || 3; g.stroke(); } };
+  const line = (g, a, b, w, c) => { const p = P(...a), q = P(...b); g.beginPath(); g.moveTo(p.X, p.Y); g.lineTo(q.X, q.Y); g.strokeStyle = c || '#fff'; g.lineWidth = w || 3; g.stroke(); };
+  function field(g){
+    const sky = g.createLinearGradient(0, 0, 0, SIM_H); sky.addColorStop(0, '#CFE8F7'); sky.addColorStop(.3, '#EAF5FB'); sky.addColorStop(.31, '#5FA845'); sky.addColorStop(1, '#4B8F38');
+    g.fillStyle = sky; g.fillRect(0, 0, SIM_W, SIM_H);
+    const out = [[0, 0, 0]]; for (let k = 0; k <= 30; k++){ const a = Math.PI / 4 - k / 30 * Math.PI / 2; out.push([Math.sin(a) * 61, 0, -Math.cos(a) * 61]); }
+    poly(g, out, '#6CB84F');                                                                            // kawasan sah (fair)
+    for (let k = 1; k < 8; k++) poly(g, [[0, 0, 0], [Math.sin(Math.PI / 4 - k * .19) * 61, 0, -Math.cos(Math.PI / 4 - k * .19) * 61], [Math.sin(Math.PI / 4 - k * .19 - .09) * 61, 0, -Math.cos(Math.PI / 4 - k * .19 - .09) * 61]], 'rgba(255,255,255,.05)');
+    const fp = out.slice(1); g.beginPath(); fp.forEach((p, i) => { const a = P(p[0], 0, p[2]), b = P(p[0], 1.8, p[2]); i ? g.lineTo(b.X, b.Y) : g.moveTo(b.X, b.Y); });
+    fp.slice().reverse().forEach(p => { const a = P(p[0], 0, p[2]); g.lineTo(a.X, a.Y); }); g.closePath(); g.fillStyle = '#1E3A8A'; g.fill();          // pagar
+    // tanah berlian (infield)
+    const dirt = []; for (let k = 0; k <= 24; k++){ const a = Math.PI / 4 + .12 - k / 24 * (Math.PI / 2 + .24); dirt.push([Math.sin(a) * 25, 0, -Math.cos(a) * 25]); }
+    poly(g, [[0, 0, 2.5]].concat(dirt), '#C8945C');
+    poly(g, [[0, 0, -1.2], [D - 1.2, 0, -D], [0, 0, -2 * D + 1.2], [-D + 1.2, 0, -D]], '#6CB84F');                     // rumput dalam
+    [[1, 1], [-1, 1]].forEach(([sx]) => line(g, [0, 0, 0], [sx * Math.sin(Math.PI / 4) * 61, 0, -Math.cos(Math.PI / 4) * 61], 3));   // garisan foul
+    const pc = []; for (let k = 0; k < 24; k++){ const a = k / 24 * Math.PI * 2; pc.push([PIT.x + Math.cos(a) * 2.44, 0, PIT.z + Math.sin(a) * 2.44]); } poly(g, pc, '#D4A06A', '#fff', 2);
+    line(g, [-.3, .01, PIT.z], [.3, .01, PIT.z], 5);                                                   // plat pembaling
+    BASES.slice(1).forEach(b => poly(g, [[b.x - .25, .02, b.z], [b.x, .02, b.z - .25], [b.x + .25, .02, b.z], [b.x, .02, b.z + .25]], '#fff', '#94A3B8', 1));
+    poly(g, [[-.22, .02, .1], [.22, .02, .1], [.22, .02, -.12], [0, .02, -.3], [-.22, .02, -.12]], '#fff', '#94A3B8', 1);   // plat rumah
+    [-1, 1].forEach(s => poly(g, [[s * .45, .01, .6], [s * 1.35, .01, .6], [s * 1.35, .01, -1.2], [s * .45, .01, -1.2]], null, '#fff', 2));   // kotak pemukul
+  }
+  /* pemain: pose = stand | bat | swing | pitch | crouch | field | catch | throw | run | cheer | out */
+  function player(g, pl){
+    const f = P(pl.x, pl.y || 0, pl.z), s = f.s / 55, dir = pl.face || 1, col = pl.team === 'A' ? COL.A : COL.B;
+    if (f.s <= 0) return;
+    g.save(); g.globalAlpha = pl.a == null ? 1 : pl.a;
+    const sh = P(pl.x, 0, pl.z); g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(sh.X, sh.Y, 30 * s, 8 * s, 0, 0, 7); g.fill();
+    if (pl.ring){ const pu = .5 + .5 * Math.sin(pl.ring * 6); g.strokeStyle = '#FACC15'; g.lineWidth = 4 * s; g.beginPath(); g.ellipse(sh.X, sh.Y, (42 + 8 * pu) * s, (12 + 3 * pu) * s, 0, 0, 7); g.stroke(); }
+    const crouch = pl.pose === 'crouch' ? 40 : pl.pose === 'bat' || pl.pose === 'field' ? 12 : 0;
+    const hip = { x: f.X, y: f.Y - (88 - crouch) * s }, neck = { x: f.X + dir * (crouch ? 6 : 0) * s, y: f.Y - (150 - crouch * 1.3) * s };
+    const limb = (a, b, c, w, cc) => { g.strokeStyle = cc; g.lineWidth = w * s; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); if (c) g.lineTo(c.x, c.y); g.stroke(); };
+    const step = pl.walk ? Math.sin(pl.walk * 12) * 18 : 0, kn = crouch ? 20 : 6, pants = pl.team === 'A' ? '#E2E8F0' : '#F1F5F9';
+    limb(hip, { x: hip.x + dir * (kn + step) * s, y: hip.y + 44 * s }, { x: hip.x + (step + 4) * dir * s, y: f.Y - 4 * s }, 15, pants);
+    limb(hip, { x: hip.x + dir * (kn - step) * s, y: hip.y + 44 * s }, { x: hip.x - (step - 4) * dir * s, y: f.Y - 4 * s }, 15, '#CBD5E1');
+    g.fillStyle = col; g.beginPath(); g.roundRect(neck.x - 22 * s, neck.y, 44 * s, hip.y - neck.y + 8 * s, 10 * s); g.fill();
+    g.fillStyle = '#fff'; g.font = '800 ' + Math.round(20 * s) + 'px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; if (pl.num) g.fillText(pl.num, neck.x, neck.y + 30 * s);
+    const sh1 = { x: neck.x, y: neck.y + 8 * s }, A = (dx, dy, ex, ey) => limb(sh1, { x: sh1.x + dir * dx * s, y: sh1.y + dy * s }, { x: sh1.x + dir * ex * s, y: sh1.y + ey * s }, 11, '#C98B62');
+    const bat = (ax, ay, ang) => { g.save(); g.translate(sh1.x + dir * ax * s, sh1.y + ay * s); g.rotate(dir * ang); g.fillStyle = '#334155'; g.beginPath(); g.roundRect(-3 * s, -64 * s, 9 * s, 66 * s, 4 * s); g.fill(); g.restore(); };
+    const glove = (ex, ey) => { g.fillStyle = '#92400E'; g.beginPath(); g.arc(sh1.x + dir * ex * s, sh1.y + ey * s, 8 * s, 0, 7); g.fill(); };
+    const p = pl.p || 0;
+    switch (pl.pose){
+      case 'bat': A(-8, 6, 8, -16); A(-4, 8, 10, -14); bat(9, -14, -.5); break;
+      case 'swing': { const a = -.5 + p * 3.0; A(Math.cos(a) * 14, 4, Math.cos(a) * 30, 10 - Math.sin(a) * 10); bat(Math.cos(a) * 30, 10 - Math.sin(a) * 10, a + 1.0); break; }
+      case 'pitch': { const a = Math.PI / 2 - p * Math.PI * 2; A(-14, 26, -16, 50); A(Math.cos(a) * 30, Math.sin(a) * 30 + 6, Math.cos(a) * 62, Math.sin(a) * 62 + 6); break; }
+      case 'crouch': A(22, 18, 40, 10); A(14, 22, 30, 30); glove(42, 8); g.fillStyle = '#334155'; g.fillRect(neck.x - 18 * s, neck.y - 40 * s, 36 * s, 26 * s); break;
+      case 'field': A(20, 30, 32, 52); A(14, 32, 30, 54); glove(32, 54); break;
+      case 'catch': A(12, -34, 18, -66); A(-4, -34, 4, -66); glove(18, -66); break;
+      case 'throw': A(-20, -20, -36, -46); A(16, 24, 30, 30); glove(30, 30); break;
+      case 'reach': A(30, 2, 60, -6); A(-10, 28, -12, 54); glove(60, -6); break;
+      case 'cheer': A(20, -34, 34, -64); A(-20, -34, -34, -64); break;
+      case 'out': A(10, 30, 6, 60); A(-6, 30, -10, 58); break;
+      case 'run': { const sw = Math.sin((pl.walk || 0) * 12); A(14 * sw, 30, 24 * sw, 50); A(-14 * sw, 30, -24 * sw, 50); break; }
+      default: A(8, 30, 10, 60); A(-6, 30, -4, 60);
+    }
+    g.fillStyle = '#C98B62'; g.beginPath(); g.arc(neck.x, neck.y - 20 * s, 19 * s, 0, 7); g.fill();
+    if (pl.helmet){ g.fillStyle = '#1E3A8A'; g.beginPath(); g.arc(neck.x, neck.y - 23 * s, 21 * s, Math.PI, 0); g.fill(); g.fillRect(neck.x + (dir > 0 ? 6 : -26) * s, neck.y - 25 * s, 20 * s, 5 * s); }
+    else { g.fillStyle = pl.team === 'B' ? '#B91C1C' : '#1F2937'; g.beginPath(); g.arc(neck.x, neck.y - 26 * s, 19 * s, Math.PI * 1.05, Math.PI * 1.95); g.fill(); g.fillRect(neck.x + (dir > 0 ? 4 : -22) * s, neck.y - 31 * s, 18 * s, 5 * s); }
+    if (pl.tag){ g.font = '800 ' + Math.round(19 * Math.max(.85, s)) + 'px system-ui,sans-serif'; const w = g.measureText(pl.tag).width + 20, ty = neck.y - 70 * s - 30;
+      g.fillStyle = 'rgba(15,23,42,.85)'; g.beginPath(); g.roundRect(neck.x - w / 2, ty, w, 30, 15); g.fill(); g.fillStyle = '#FDE68A'; g.fillText(pl.tag, neck.x, ty + 15); }
+    g.restore();
+  }
+  function ball(g, b, trail){
+    if (!b) return;
+    if (trail && trail.length > 1){ g.save(); g.setLineDash([10, 12]); g.strokeStyle = 'rgba(250,204,21,.95)'; g.lineWidth = 4; g.beginPath();
+      trail.forEach((p, i) => { const q = P(p.x, p.y, p.z); i ? g.lineTo(q.X, q.Y) : g.moveTo(q.X, q.Y); }); g.stroke(); g.restore(); }
+    const sh = P(b.x, 0, b.z); g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(sh.X, sh.Y, Math.max(4, 10 * sh.s / 40), Math.max(2, 3 * sh.s / 40), 0, 0, 7); g.fill();
+    const q = P(b.x, b.y, b.z), r = Math.max(7, .15 * q.s);
+    g.fillStyle = '#FDE047'; g.beginPath(); g.arc(q.X, q.Y, r, 0, 7); g.fill(); g.strokeStyle = '#DC2626'; g.lineWidth = 1.5; g.beginPath(); g.arc(q.X - r * .5, q.Y, r * .7, -1, 1); g.stroke(); g.beginPath(); g.arc(q.X + r * .5, q.Y, r * .7, 2.1, 4.2); g.stroke();
+  }
+  function tagAt(g, x, y, z, text, dx, dy, a){
+    if (a <= 0) return; const p = P(x, y, z); g.save(); g.globalAlpha = a;
+    g.strokeStyle = '#0F172A'; g.lineWidth = 2; g.beginPath(); g.moveTo(p.X, p.Y); g.lineTo(p.X + dx, p.Y + dy); g.stroke();
+    g.fillStyle = '#0F172A'; g.beginPath(); g.arc(p.X, p.Y, 5, 0, 7); g.fill();
+    g.font = '700 25px system-ui,sans-serif'; const w = g.measureText(text).width + 24; g.fillStyle = 'rgba(255,255,255,.95)';
+    g.beginPath(); g.roundRect(p.X + dx - w / 2, p.Y + dy - 20, w, 40, 10); g.fill(); g.strokeStyle = '#0F172A'; g.stroke();
+    g.fillStyle = '#0F172A'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, p.X + dx, p.Y + dy); g.restore();
+  }
+  function bigText(g, text, col, a, y){ if (a <= 0) return; g.save(); g.globalAlpha = a; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.font = '900 ' + Math.round(70 + 14 * (1 - a)) + 'px system-ui,sans-serif';
+    g.lineWidth = 10; g.strokeStyle = '#fff'; g.strokeText(text, SIM_W / 2, y || 300); g.fillStyle = col; g.fillText(text, SIM_W / 2, y || 300); g.restore(); }
+  const wrap = (g, text, maxW) => { const out = []; let cur = ''; text.split(' ').forEach(w => { const tt = cur ? cur + ' ' + w : w; if (g.measureText(tt).width > maxW && cur){ out.push(cur); cur = w; } else cur = tt; }); if (cur) out.push(cur); return out; };
+  function hud(g, k, lt, st){
+    const sc = scenes[k];
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    g.font = '600 24px ui-monospace,Consolas,monospace'; g.fillStyle = '#475569'; g.fillText(String(k + 1).padStart(2, '0') + ' / 08 · PJK · SOFTBALL · ' + sc.n.toUpperCase(), 48, 58);
+    g.font = '800 58px Georgia,"Times New Roman",serif'; let x = 48; const y = 124, ta = cl(lt / .6, 0, 1);
+    g.save(); g.globalAlpha = ta; g.translate(0, (1 - ta) * 14);
+    sc.title.forEach((part, i) => { if (!part) return; const w = g.measureText(part).width; if (i === 1){ g.fillStyle = '#F5E08A'; g.fillRect(x - 6, y - 46, w + 12, 58); } g.fillStyle = '#1F2937'; g.fillText(part, x, y); x += w; }); g.restore();
+    g.font = '700 24px system-ui,sans-serif'; const goal = '🎯 ' + sc.goal, gw = g.measureText(goal).width + 30;
+    g.fillStyle = 'rgba(15,23,42,.85)'; g.beginPath(); g.roundRect(48, 148, gw, 42, 21); g.fill(); g.fillStyle = '#FDE68A'; g.fillText(goal, 63, 177);
+    g.textAlign = 'center'; g.font = '800 24px system-ui,sans-serif';
+    g.fillStyle = '#1F2937'; g.beginPath(); g.roundRect(SIM_W - 228, 34, 180, 48, 24); g.fill(); g.fillStyle = '#F5E08A'; g.fillText('LANGKAH ' + (k + 1) + '/8', SIM_W - 138, 67);
+    const sx = SIM_W - 288, sy = 96; g.fillStyle = 'rgba(255,255,255,.94)'; g.beginPath(); g.roundRect(sx, sy, 240, 96, 14); g.fill();
+    g.font = '900 28px system-ui,sans-serif'; g.fillStyle = COL.A; g.fillText('A ' + st.ra, sx + 70, sy + 36); g.fillStyle = '#94A3B8'; g.fillText(':', sx + 120, sy + 34); g.fillStyle = COL.B; g.fillText(st.rb + ' B', sx + 170, sy + 36);
+    g.font = '800 18px system-ui,sans-serif'; g.fillStyle = '#334155'; g.fillText('BOLA ' + st.bl + ' · STRIKE ' + st.sk, sx + 120, sy + 62);
+    const dots = [0, 1, 2].map(i => i < st.out ? '●' : '○').join(' '); g.fillStyle = '#DC2626'; g.fillText('KELUAR ' + dots, sx + 120, sy + 86);
+    g.font = '600 30px system-ui,sans-serif'; const lines = wrap(g, sc.cap, SIM_W - 300), ch = lines.length * 40 + 30, cy = SIM_H - 34 - ch;
+    g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.roundRect(120, cy, SIM_W - 240, ch, 18); g.fill(); g.strokeStyle = 'rgba(15,23,42,.12)'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = '#334155'; lines.forEach((l, i) => g.fillText(l, SIM_W / 2, cy + 48 + i * 40));
+    g.fillStyle = 'rgba(15,23,42,.15)'; g.fillRect(0, SIM_H - 8, SIM_W, 8); g.fillStyle = '#F59E0B'; g.fillRect(0, SIM_H - 8, SIM_W * cl(lt / sc.d, 0, 1), 8);
+  }
+
+  function cast(){
+    return {
+      bat: { team: 'A', num: 2, x: -.95, z: -.3, face: 1, pose: 'bat', helmet: true },
+      pit: { team: 'B', num: 1, x: PIT.x, z: PIT.z, face: 1, pose: 'stand' },
+      cat: { team: 'B', num: 2, x: 0, z: 1.3, face: -1, pose: 'crouch' },
+      b1: { team: 'B', num: 3, x: D - 1.5, z: -D - 1.2, face: -1, pose: 'field' }, b2: { team: 'B', num: 4, x: 5.5, z: -21.5, face: -1, pose: 'field' },
+      ss: { team: 'B', num: 6, x: -5.5, z: -21.5, face: 1, pose: 'field' }, b3: { team: 'B', num: 5, x: -D + 1.5, z: -D - 1.2, face: 1, pose: 'field' },
+      lf: { team: 'B', num: 7, x: -22, z: -42, face: 1, pose: 'field' }, cf: { team: 'B', num: 8, x: 0, z: -50, face: 1, pose: 'field' }, rf: { team: 'B', num: 9, x: 22, z: -42, face: -1, pose: 'field' }
+    };
+  }
+  const REL = { x: .35, y: 1.0, z: PIT.z + .6 }, MITT = { x: .1, y: .85, z: .95 }, HIT = { x: -.3, y: 1.0, z: -.4 };
+  function pitchBall(lt, t0, target){ const u = seg(lt, t0, t0 + .55); return arc(REL, target || MITT, .25, u); }
+
+  function render(g, t){
+    let k = 0; while (k < scenes.length - 1 && t >= scenes[k + 1].t0) k++;
+    const sc = scenes[k], lt = t - sc.t0, c = cast(); let b = null, trail = null; const st = { ra: 0, rb: 0, bl: 0, sk: 0, out: 0 }, tags = [], big = [], extra = [];
+    const windup = (t0) => { c.pit.pose = lt < t0 ? 'stand' : 'pitch'; c.pit.p = seg(lt, t0, t0 + .7); };
+    if (k === 0){
+      Object.values(c).forEach(p => p.a = .3);
+      tags.push([0, 0, 0, 'Tapak rumah (home)', -170, 50, seg(lt, .6, 1.1)], [D, 0, -D, 'Tapak 1', 110, 10, seg(lt, 1.4, 1.9)], [0, 0, -2 * D, 'Tapak 2', 0, -60, seg(lt, 2, 2.5)],
+        [-D, 0, -D, 'Tapak 3', -110, 10, seg(lt, 2.6, 3.1)], [D / 2, 0, -D / 2, '18.29 m antara tapak', 190, 40, seg(lt, 3.6, 4.1)], [PIT.x, 0, PIT.z, 'Bulatan pembaling · 13.11 m', 260, -30, seg(lt, 4.8, 5.3)],
+        [30, 0, -30, 'Garisan foul', 70, -60, seg(lt, 6, 6.5)]);
+    } else if (k === 1){
+      Object.values(c).forEach(p => p.a = .45);
+      [['bat', 'Pemukul', .4], ['pit', 'Pembaling', 1.4], ['cat', 'Penangkap', 2.4], ['b1', 'Pemain tapak', 3.4], ['ss', 'Pemain tapak', 3.8], ['cf', 'Pemain luar', 4.8], ['lf', 'Pemain luar', 5.1]]
+        .forEach(([id, n, at]) => { const p = c[id]; p.a = 1; if (lt > at){ p.tag = n; p.ring = lt; } });
+      big.push(['9 lawan 9', '#1F2937', seg(lt, 5.8, 6.3), 260]);
+    } else if (k === 2){
+      windup(.6); c.pit.ring = lt; c.pit.tag = lt > 1 ? 'Bawah lengan' : 'Pembaling';
+      b = lt < 1.3 ? { x: c.pit.x + .3, y: 1.0, z: c.pit.z + .2 } : pitchBall(lt, 1.3); if (lt >= 1.3) trail = Array.from({ length: 12 }, (_, i) => arc(REL, MITT, .25, i / 11));
+      if (lt > 1.9){ st.sk = 1; big.push(['STRIKE!', '#DC2626', seg(lt, 1.9, 2.3), 280]); }
+      tags.push([0, 1.0, -.1, 'Zon strike: atas plat, paras ketiak ke lutut', 260, -40, seg(lt, 3, 3.5)]);
+    } else if (k === 3){
+      st.sk = 1;
+      const P1 = { x: 1.2, y: .9, z: .9 };                                      // luar zon → BOLA
+      if (lt < 3){ windup(.2); b = lt < .9 ? { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 } : pitchBall(lt, .9, P1); if (lt > 1.5){ st.bl = 1; big.push(['BOLA 1', '#16A34A', seg(lt, 1.5, 1.9), 280]); } }
+      else if (lt < 6){ const l2 = lt - 3; st.bl = 1; c.pit.pose = l2 < .2 ? 'stand' : 'pitch'; c.pit.p = seg(l2, .2, .9); b = l2 < .9 ? { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 } : arc(REL, MITT, .25, seg(l2, .9, 1.45));
+        c.bat.pose = l2 < 1.2 ? 'bat' : 'swing'; c.bat.p = seg(l2, 1.2, 1.5); if (l2 > 1.5){ st.sk = 2; big.push(['STRIKE 2 (hayun tak kena)', '#DC2626', seg(l2, 1.5, 1.9), 280]); } }
+      else { const l3 = lt - 6; st.bl = 1; st.sk = 2; c.pit.pose = l3 < .2 ? 'stand' : 'pitch'; c.pit.p = seg(l3, .2, .9); b = l3 < .9 ? { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 } : arc(REL, MITT, .25, seg(l3, .9, 1.45));
+        c.bat.pose = l3 < 1.2 ? 'bat' : l3 < 2.2 ? 'swing' : 'out'; c.bat.p = seg(l3, 1.2, 1.5); if (l3 > 1.5){ st.sk = 3; st.out = 1; big.push(['STRIKE 3 — KELUAR!', '#DC2626', seg(l3, 1.5, 1.9), 280]); } }
+    } else if (k === 4){
+      st.out = 1; c.bat.num = 5;
+      windup(.1); const E = { x: 17, y: .1, z: -33 };
+      if (lt < .8) b = lt < .8 && lt > .3 ? arc(REL, HIT, .2, seg(lt, .3, .8)) : { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 };
+      else { const u = seg(lt, .8, 2.6); b = { x: L(HIT.x, E.x, ease(u)), y: Math.max(.1, 1 - u * 4), z: L(HIT.z, E.z, ease(u)) }; trail = [HIT, E]; }
+      c.bat.pose = lt < .7 ? 'bat' : lt < 1.0 ? 'swing' : 'run'; c.bat.p = seg(lt, .7, .95);
+      if (lt >= 1.0){ const r = seg(lt, 1.0, 3.6), q = along(r); c.bat.x = q.x; c.bat.z = q.z; c.bat.walk = r < 1 ? lt : 0; c.bat.face = 1; if (r >= 1) c.bat.pose = 'stand'; c.bat.ring = lt; }
+      c.rf.x = L(22, 17.5, seg(lt, 1, 2.6)); c.rf.z = L(-42, -34, seg(lt, 1, 2.6)); c.rf.walk = lt < 2.6 ? lt : 0; c.rf.pose = lt < 2.6 ? 'run' : 'throw';
+      if (lt > 2.6) b = { x: c.rf.x - .3, y: 1.6, z: c.rf.z };
+      if (lt > 3.6){ big.push(['SELAMAT di tapak 1!', '#16A34A', seg(lt, 3.6, 4), 280]); }
+      tags.push([D, 0, -D, 'Lari terus ke tapak 1', 150, 70, seg(lt, 1.3, 1.7) * (1 - seg(lt, 3.4, 3.6))]);
+    } else if (k === 5){
+      st.out = 1; c.bat.num = 8; const run1 = { team: 'A', num: 5, x: D, z: -D, face: 1, pose: 'stand', helmet: true }; extra.push(run1);
+      windup(.1); const E = { x: -6, y: .1, z: -72 };
+      if (lt < .8) b = lt > .3 ? arc(REL, HIT, .2, seg(lt, .3, .8)) : { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 };
+      else { const u = seg(lt, .8, 3.4); b = arc(HIT, E, 16, u); trail = Array.from({ length: 24 }, (_, i) => arc(HIT, E, 16, i / 23)); }
+      c.bat.pose = lt < .7 ? 'bat' : lt < 1.0 ? 'swing' : 'run'; c.bat.p = seg(lt, .7, .95);
+      if (lt > 3.2) big.push(['HOME RUN!', '#7C3AED', seg(lt, 3.2, 3.6) * (1 - seg(lt, 6.4, 6.8)), 280]);
+      const r1 = 1 + 3 * seg(lt, 1.1, 5.4), rb = 4 * seg(lt, 1.0, 8.2);
+      const q1 = along(r1); run1.x = q1.x; run1.z = q1.z; run1.pose = r1 < 4 ? 'run' : 'cheer'; run1.walk = lt; run1.ring = r1 < 4 ? lt : 0;
+      if (lt >= 1.0){ const q = along(rb); c.bat.x = q.x; c.bat.z = q.z; c.bat.walk = rb < 4 ? lt : 0; c.bat.pose = rb < 4 ? 'run' : 'cheer'; c.bat.ring = rb < 4 ? lt : 0; }
+      st.ra = (r1 >= 4 ? 1 : 0) + (rb >= 4 ? 1 : 0);
+      if (r1 >= 4 && lt < 7.4) run1.tag = '+1 larian'; if (rb >= 4) { c.bat.tag = '+1 larian'; big.push(['+2 LARIAN', '#16A34A', seg(lt, 8.2, 8.6), 280]); }
+      c.cf.pose = 'catch'; c.lf.pose = 'stand'; c.rf.pose = 'stand';
+      tags.push([0, 0, -2 * D, 'Lawan arah jam: 1 → 2 → 3 → rumah', 0, -70, seg(lt, 1.6, 2) * (1 - seg(lt, 6.5, 7))]);
+    } else if (k === 6){
+      st.ra = 2;
+      if (lt < 4.8){                                                     // bola tinggi ditangkap
+        st.out = 1; c.bat.num = 9; windup(.1); const C2 = { x: -20, y: 2.1, z: -38 };
+        if (lt < .8) b = lt > .3 ? arc(REL, HIT, .2, seg(lt, .3, .8)) : { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 };
+        else { const u = seg(lt, .8, 3.0); b = arc(HIT, C2, 14, u); trail = Array.from({ length: 22 }, (_, i) => arc(HIT, C2, 14, i / 21)); }
+        c.bat.pose = lt < .7 ? 'bat' : lt < 1 ? 'swing' : 'run'; c.bat.p = seg(lt, .7, .95); if (lt >= 1){ const q = along(seg(lt, 1, 3.6) * .8); c.bat.x = q.x; c.bat.z = q.z; c.bat.walk = lt; }
+        c.lf.x = L(-22, -20.2, seg(lt, 1, 2.8)); c.lf.z = L(-42, -38, seg(lt, 1, 2.8)); c.lf.walk = lt < 2.8 ? lt : 0; c.lf.pose = lt < 2.8 ? 'run' : 'catch'; c.lf.ring = lt;
+        if (lt > 3.0){ b = { x: c.lf.x + .1, y: 2.1, z: c.lf.z }; st.out = 2; c.bat.pose = 'out'; big.push(['DITANGKAP — KELUAR!', '#DC2626', seg(lt, 3.0, 3.4), 280]); }
+      } else {                                                           // dihantar ke tapak 1
+        const l2 = lt - 4.8; st.out = 2; c.bat.num = 1; c.pit.pose = l2 < .1 ? 'stand' : 'pitch'; c.pit.p = seg(l2, .1, .8);
+        const G = { x: -5.2, y: .3, z: -20.5 }, B1 = { x: D - .3, y: 1.2, z: -D };
+        if (l2 < .8) b = l2 > .3 ? arc(REL, HIT, .2, seg(l2, .3, .8)) : { x: c.pit.x + .3, y: 1, z: c.pit.z + .2 };
+        else if (l2 < 1.9){ const u = seg(l2, .8, 1.9); b = { x: L(HIT.x, G.x, u), y: Math.max(.1, 1 - u * 3), z: L(HIT.z, G.z, u) }; trail = [HIT, G]; }
+        else { const u = seg(l2, 2.2, 3.1); b = l2 < 2.2 ? { ...G, y: 1.2 } : arc({ ...G, y: 1.4 }, B1, 1.2, u); trail = Array.from({ length: 14 }, (_, i) => arc({ ...G, y: 1.4 }, B1, 1.2, i / 13)); }
+        c.ss.pose = l2 < 1.9 ? 'field' : l2 < 2.4 ? 'throw' : 'stand'; c.ss.ring = l2; c.ss.tag = l2 > 1.9 && l2 < 3.5 ? 'Hantar ke tapak 1' : '';
+        c.b1.x = D - .4; c.b1.z = -D - .3; c.b1.pose = l2 > 2.6 ? 'reach' : 'field'; c.b1.face = -1;
+        c.bat.pose = l2 < .7 ? 'bat' : l2 < 1 ? 'swing' : 'run'; c.bat.p = seg(l2, .7, .95); if (l2 >= 1){ const q = along(seg(l2, 1.0, 3.6) * .96); c.bat.x = q.x; c.bat.z = q.z; c.bat.walk = l2; }
+        if (l2 > 3.1){ st.out = 3; c.bat.pose = 'out'; big.push(['KELUAR DI TAPAK 1!', '#DC2626', seg(l2, 3.1, 3.5), 280]); }
+        if (l2 > 4.0) big.push(['3 KELUAR — BERTUKAR!', '#1F2937', seg(l2, 4.0, 4.4), 380]);
+      }
+    } else if (k === 7){ st.ra = 6; st.rb = 4; st.out = 3; Object.values(c).forEach(p => { if (p.team === 'A'){ p.pose = 'cheer'; p.y = Math.abs(Math.sin(lt * 6 + p.num)) * .25; } }); }
+    // lukis
+    field(g);
+    const all = Object.values(c).concat(extra).sort((a, b2) => a.z - b2.z);
+    all.forEach(p => { if (b && p.z >= b.z && !b.__d){ ball(g, b, trail); b.__d = 1; } player(g, p); });
+    if (b && !b.__d) ball(g, b, trail);
+    tags.forEach(a => tagAt(g, ...a));
+    big.forEach(a => bigText(g, ...a));
+    if (k === 7){
+      g.fillStyle = 'rgba(234,245,251,.82)'; g.fillRect(0, 0, SIM_W, SIM_H);
+      const inA = [2, 0, 1, 0, 0, 3, 0], inB = [0, 1, 0, 2, 0, 0, 1], x0 = 480, cw = 88, y0 = 250, a = seg(lt, .4, 1);
+      g.save(); g.globalAlpha = a; g.fillStyle = 'rgba(255,255,255,.96)'; g.beginPath(); g.roundRect(x0 - 290, y0, 1060, 210, 18); g.fill();
+      g.textAlign = 'center'; g.font = '700 24px system-ui,sans-serif'; g.fillStyle = '#64748B';
+      for (let i = 0; i < 7; i++) g.fillText(String(i + 1), x0 + i * cw, y0 + 46); g.fillText('JUMLAH', x0 + 7 * cw + 40, y0 + 46);
+      [[inA, 'A', COL.A, 110], [inB, 'B', COL.B, 170]].forEach(([arr, n, col, yy]) => { g.fillStyle = col; g.font = '900 32px system-ui,sans-serif'; g.fillText('Pasukan ' + n, x0 - 175, y0 + yy);
+        arr.forEach((v, i) => { const show = lt > 1 + i * .35; if (show) g.fillText(String(v), x0 + i * cw, y0 + yy); });
+        if (lt > 3.6) g.fillText(String(arr.reduce((p, q) => p + q, 0)), x0 + 7 * cw + 40, y0 + yy); });
+      g.restore();
+      g.textAlign = 'center'; g.font = '700 28px system-ui,sans-serif'; g.fillStyle = '#334155';
+      [['3 keluar = pasukan bertukar memukul', 4.0], ['7 inning setiap perlawanan', 4.6], ['Larian terbanyak MENANG', 5.2]].forEach(([s2, a0], i) => { const aa = seg(lt, a0, a0 + .4); if (aa){ g.globalAlpha = aa; g.fillText(s2, SIM_W / 2, 510 + i * 40); g.globalAlpha = 1; } });
+      if (lt > 5.8){ g.font = '900 60px Georgia,serif'; g.fillStyle = COL.A; g.globalAlpha = seg(lt, 5.8, 6.2); g.fillText('🏆 PASUKAN A MENANG 6 – 4', SIM_W / 2, 660); g.globalAlpha = 1; }
+    }
+    hud(g, k, lt, st);
+  }
+  SIM_LIB.push({ id: 'softball', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🥎', title: 'Permainan Softball',
+    desc: 'Tutorial asas: padang berlian, peranan pemain, balingan bawah lengan, strike & bola, pukul & lari, larian & home run, cara keluar, inning dan cara menang.',
+    scenes, dur: T0, render,
+    sfx: [[16 + 1.3, 'sim_sb_baling'], [16 + 1.85, 'sim_sb_tangkap'], [24 + .9, 'sim_sb_baling'], [24 + 1.45, 'sim_sb_tangkap'], [27 + .9, 'sim_sb_baling'], [27 + 1.45, 'sim_sb_tangkap'],
+      [30 + .9, 'sim_sb_baling'], [30 + 1.45, 'sim_sb_tangkap'], [34 + .8, 'sim_sb_pukul'], [37.6, 'sim_sorak'], [42 + .8, 'sim_sb_pukul'], [45.2, 'sim_sorak'], [50.2, 'sim_sorak'],
+      [52 + .8, 'sim_sb_pukul'], [55.0, 'sim_sb_tangkap'], [56.8 + .8, 'sim_sb_pukul'], [56.8 + 3.1, 'sim_sb_tangkap'], [68.0, 'sim_sorak']] });
+})();
+
 /* ---------- tab SIMULASI ---------- */
 function viewSim(){
   const subs = S.subjects || [], sel = S.ui.simSubj || S.ui.activeSubjectId || (subs[0] || {}).id || '';
