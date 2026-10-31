@@ -107,6 +107,8 @@
     { "id": "sim_bk_lantun",  "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Basketball dribbling bounce on an indoor wooden court, deep thud with slight echo" },
     { "id": "sim_bk_jaring",  "g": "Simulasi", "k": "sfx", "s": 1, "p": "Basketball swishing through the net, soft swish, indoor gym" },
     { "id": "sim_bs_sepak",   "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Football (soccer) ball kicked hard on grass, solid thump, outdoor stadium" },
+    { "id": "sim_st_sepak",   "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Rattan sepak takraw ball kicked by foot, hollow woody crack, indoor court" },
+    { "id": "sim_bd_pukul",   "g": "Simulasi", "k": "sfx", "s": 0.5, "p": "Badminton racket hitting shuttlecock, crisp light thwack, indoor hall" },
     { "id": "bgm_klinik",     "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Calm warm friendly clinic background music for a kids educational game, soft marimba and light piano, gentle caring mood, relaxed 90 BPM, seamless loop, instrumental" },
     { "id": "bgm_menu",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Cheerful inspiring school game main menu theme, bright piano and light orchestra, warm and friendly, seamless loop, instrumental, 100 BPM" },
     { "id": "bgm_stor",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Upbeat cozy shop management game music, light marimba, ukulele and bouncy bass with subtle Malaysian gamelan bells, seamless loop, instrumental, 110 BPM" },

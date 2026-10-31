@@ -11306,6 +11306,9 @@ function simKit(cam0, opt){
       case 'run': { const sw = Math.sin((pl.walk || 0) * 12); A(14 * sw, 30, 24 * sw, 50); hand = A(-14 * sw, 30, -24 * sw, 50); break; }
       default: A(8, 30, 10, 60); hand = A(-6, 30, -4, 60);
     }
+    if (pl.raket && hand){ const ang = (pl.rk || -.6) * dir, rx = hand.x + Math.sin(ang) * 46 * s, ry = hand.y - Math.cos(ang) * 46 * s;
+      g.strokeStyle = '#334155'; g.lineWidth = 3 * s; g.beginPath(); g.moveTo(hand.x, hand.y); g.lineTo(hand.x + Math.sin(ang) * 26 * s, hand.y - Math.cos(ang) * 26 * s); g.stroke();
+      g.strokeStyle = '#0EA5E9'; g.lineWidth = 3 * s; g.beginPath(); g.ellipse(rx, ry, 11 * s, 16 * s, ang, 0, 7); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1; g.stroke(); }
     if (pl.bet && hand){ g.fillStyle = '#B91C1C'; g.beginPath(); g.ellipse(hand.x + dir * 8 * s, hand.y - 6 * s, 11 * s, 13 * s, .3, 0, 7); g.fill(); g.fillStyle = '#7C2D12'; g.fillRect(hand.x - 3 * s, hand.y - 1 * s, 6 * s, 10 * s); }
     if (pl.gloves){ g.fillStyle = '#16A34A'; [[30, 44], [-52, -22]].forEach(() => {}); }
     g.fillStyle = '#C98B62'; g.beginPath(); g.arc(neck.x, neck.y - 20 * s, 19 * s, 0, 7); g.fill();
@@ -11324,6 +11327,11 @@ function simKit(cam0, opt){
       g.beginPath(); g.moveTo(q.X - r, q.Y); g.lineTo(q.X + r, q.Y); g.moveTo(q.X, q.Y - r); g.lineTo(q.X, q.Y + r); g.stroke(); g.beginPath(); g.arc(q.X, q.Y, r, 0, 7); g.stroke(); }
     else if (opt.ball === 'sepak'){ g.fillStyle = '#fff'; g.beginPath(); g.arc(q.X, q.Y, r, 0, 7); g.fill(); g.strokeStyle = '#111827'; g.lineWidth = 1.5; g.stroke();
       g.fillStyle = '#111827'; g.beginPath(); g.arc(q.X, q.Y, r * .38, 0, 7); g.fill(); [0, 1.26, 2.51, 3.77, 5.03].forEach(a => { g.beginPath(); g.arc(q.X + Math.cos(a) * r * .78, q.Y + Math.sin(a) * r * .78, r * .2, 0, 7); g.fill(); }); }
+    else if (opt.ball === 'takraw'){ g.fillStyle = '#F59E0B'; g.beginPath(); g.arc(q.X, q.Y, r, 0, 7); g.fill(); g.strokeStyle = '#78350F'; g.lineWidth = 1.4;
+      for (let k = 0; k < 6; k++){ const a = k / 6 * Math.PI; g.beginPath(); g.ellipse(q.X, q.Y, r, r * .35, a, 0, 7); g.stroke(); } }
+    else if (opt.ball === 'shuttle'){ const tip = { x: q.X + 10 * Math.sign(b.vx || 1), y: q.Y }; g.fillStyle = '#fff'; g.beginPath(); g.moveTo(q.X - 12, q.Y - 9); g.lineTo(q.X - 12, q.Y + 9); g.lineTo(q.X + 2, q.Y + 4); g.lineTo(q.X + 2, q.Y - 4); g.closePath(); g.fill(); g.strokeStyle = '#94A3B8'; g.lineWidth = 1; g.stroke(); g.fillStyle = '#F59E0B'; g.beginPath(); g.arc(q.X + 5, q.Y, 5, 0, 7); g.fill(); }
+    else if (opt.ball === 'cakera'){ g.fillStyle = '#F8FAFC'; g.beginPath(); g.ellipse(q.X, q.Y, r * 1.6, r * .6, -.15, 0, 7); g.fill(); g.strokeStyle = '#0EA5E9'; g.lineWidth = 2.5; g.stroke(); g.beginPath(); g.ellipse(q.X, q.Y, r * .9, r * .3, -.15, 0, 7); g.stroke(); }
+    else if (opt.ball === 'rugby'){ g.fillStyle = '#F8FAFC'; g.beginPath(); g.ellipse(q.X, q.Y, r * 1.5, r * .95, -.4, 0, 7); g.fill(); g.strokeStyle = '#B91C1C'; g.lineWidth = 2; g.stroke(); g.beginPath(); g.moveTo(q.X - r * .5, q.Y + r * .2); g.lineTo(q.X + r * .5, q.Y - r * .2); g.stroke(); }
     else { g.fillStyle = '#FFF7ED'; g.beginPath(); g.arc(q.X, q.Y, r, 0, 7); g.fill(); g.strokeStyle = '#F97316'; g.lineWidth = 1.5; g.stroke(); }
   }
   function tagAt(g, x, y, z, text, dx, dy, a){
@@ -11357,9 +11365,13 @@ function simKit(cam0, opt){
     g.fillStyle = '#334155'; lines.forEach((l, i) => g.fillText(l, SIM_W / 2, cy + 48 + i * 40));
     g.fillStyle = 'rgba(15,23,42,.15)'; g.fillRect(0, SIM_H - 8, SIM_W, 8); g.fillStyle = '#F59E0B'; g.fillRect(0, SIM_H - 8, SIM_W * cl(lt / sc.d, 0, 1), 8);
   }
+  /* senarai peraturan muncul satu demi satu di tengah skrin */
+  function rules(g, items, lt, y0){ g.save(); items.forEach((r, i) => { const a = seg(lt, .6 + i * 1.7, 1 + i * 1.7); if (a <= 0) return; g.globalAlpha = a; g.font = '700 30px system-ui,sans-serif';
+    const w = g.measureText(r).width + 40, y = (y0 || 240) + i * 62; g.fillStyle = 'rgba(15,23,42,.88)'; g.beginPath(); g.roundRect(SIM_W / 2 - w / 2, y, w, 48, 24); g.fill();
+    g.fillStyle = '#FDE68A'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(r, SIM_W / 2, y + 24); }); g.restore(); }
   const sceneOf = (scenes, t) => { let k = 0; while (k < scenes.length - 1 && t >= scenes[k + 1].t0) k++; return k; };
   const timeline = scenes => { let T0 = 0; scenes.forEach(sc => { sc.t0 = T0; T0 += sc.d; }); return T0; };
-  return { P, useCam, L, cl, ease, seg, arc, mv, poly, line, ring, player, ball, tagAt, bigText, hud, sceneOf, timeline };
+  return { P, useCam, L, cl, ease, seg, arc, mv, poly, line, ring, player, ball, tagAt, bigText, hud, sceneOf, timeline, rules };
 }
 
 /* ---------- PING PONG / TENIS MEJA (PJK) ---------- */
@@ -11679,6 +11691,354 @@ function simKit(cam0, opt){
     sfx: [[15.6, 'sim_wisel'], [16.7, 'sim_bs_sepak'], [32.1, 'sim_bs_sepak'], [33.3, 'sim_sorak'], [41.1, 'sim_bs_sepak'], [57.4, 'sim_wisel'], [62, 'sim_wisel'], [63, 'sim_sorak']] });
 })();
 
+/* ---------- gelanggang jaring (sepak takraw & badminton): x = panjang ±6.7 m, z = lebar ±3.05 m ---------- */
+function netCourt(K, g, opt){
+  const { poly, line, ring } = K, bg = g.createLinearGradient(0, 0, 0, SIM_H);
+  bg.addColorStop(0, opt.sky || '#E0F2FE'); bg.addColorStop(.36, opt.sky2 || '#F0F9FF'); bg.addColorStop(.37, opt.floor || '#15803D'); bg.addColorStop(1, opt.floor2 || '#166534');
+  g.fillStyle = bg; g.fillRect(0, 0, SIM_W, SIM_H);
+  poly(g, [[-6.7, 0, -3.05], [6.7, 0, -3.05], [6.7, 0, 3.05], [-6.7, 0, 3.05]], opt.court || '#2563EB', '#fff', 3);
+  (opt.lines || []).forEach(l => line(g, l[0], l[1], 2.5));
+  (opt.rings || []).forEach(r => ring(g, ...r));
+  const nh = opt.net;
+  line(g, [0, 0, -3.35], [0, nh + .05, -3.35], 6, '#334155'); line(g, [0, 0, 3.35], [0, nh + .05, 3.35], 6, '#334155');
+  poly(g, [[0, nh - .7, -3.3], [0, nh - .7, 3.3], [0, nh, 3.3], [0, nh, -3.3]], 'rgba(15,23,42,.35)', '#fff', 2);
+  line(g, [0, nh, -3.3], [0, nh, 3.3], 4, '#fff');
+}
+
+/* ---------- SEPAK TAKRAW (PJK) ---------- */
+(() => {
+  const K = simKit({ y: 6, z: 12.5, ly: .9, lz: 0, F: 900 }, { label: 'SEPAK TAKRAW', col: { A: '#DC2626', B: '#0EA5E9' }, ball: 'takraw' });
+  const { seg, arc, L, player, ball, tagAt, bigText, hud, sceneOf, timeline, rules } = K;
+  const NET = 1.52, SC = 4.25;
+  const scenes = [
+    { n: 'Gelanggang', d: 8, title: ['Kenali ', 'gelanggang', ''], goal: 'Kenal pasti jaring, bulatan servis & suku bulatan',
+      cap: 'Gelanggang sepak takraw berukuran 13.4 m × 6.1 m. Jaring setinggi 1.52 m (lelaki). Setiap gelanggang ada bulatan servis dan dua suku bulatan berhampiran jaring.' },
+    { n: 'Pemain', d: 7, title: ['Pemain ', 'satu regu', ''], goal: 'Kenal tekong, apit kiri & apit kanan',
+      cap: 'Satu regu ada 3 pemain: TEKONG (penyepak servis, di bulatan servis), APIT KIRI dan APIT KANAN (berdiri dalam suku bulatan berhampiran jaring).' },
+    { n: 'Servis', d: 8, title: ['Langkah 1: ', 'Servis', ''], goal: 'Servis bola melepasi jaring',
+      cap: 'Apit melambung bola kepada tekong. Tekong menyepak bola melepasi jaring dengan sebelah kaki kekal di dalam bulatan servis.' },
+    { n: 'Menerima & Mengumpan', d: 9, title: ['Langkah 2: ', 'Mengumpan', ''], goal: 'Maksimum 3 sentuhan',
+      cap: 'Pasukan penerima boleh menyentuh bola paling banyak 3 kali menggunakan kaki, kepala, dada atau badan — bukan tangan. Sentuhan biasanya: terima, umpan, rejam.' },
+    { n: 'Rejaman', d: 8, title: ['Langkah 3: ', 'Rejaman', ''], goal: 'Rejam bola ke gelanggang lawan',
+      cap: 'Rejaman (libas / gunting): pemain melompat tinggi berhampiran jaring dan menyepak bola dengan kuat ke bawah, ke gelanggang lawan.' },
+    { n: 'Peraturan Asas', d: 9, title: ['Peraturan ', 'asas', ''], goal: 'Ingat peraturan utama',
+      cap: 'Tangan tidak boleh menyentuh bola. Pemain tidak boleh menyentuh jaring atau melintasi garisan tengah. Maksimum 3 sentuhan setiap pasukan. Bola atas garisan dikira MASUK.' },
+    { n: 'Sistem Mata', d: 8, title: ['Sistem ', 'mata', ''], goal: 'Fahami sistem mata rali',
+      cap: 'Setiap rali = 1 mata. Satu set dimenangi dengan 21 mata dengan beza 2 mata; jika 20–20, set diteruskan sehingga beza 2 mata atau mencapai 25 mata.' },
+    { n: 'Cara Menang', d: 8, title: ['Cara ', 'menang', ''], goal: 'Menang 2 set dahulu',
+      cap: 'Perlawanan terbaik daripada 3 set. Regu yang menang 2 set dahulu MENANG. Set ketiga (tie-break) dimainkan sehingga 15 mata.' }
+  ];
+  const T0 = timeline(scenes);
+  const court = g => netCourt(K, g, { net: NET, court: '#16A34A', floor: '#1E3A8A', floor2: '#172554',
+    lines: [[[0, 0, -3.05], [0, 0, 3.05]]], rings: [[-SC, .01, 0, .3, '#fff', 3], [SC, .01, 0, .3, '#fff', 3], [0, .01, -3.05, .9, '#fff', 3, 0, Math.PI], [0, .01, 3.05, .9, '#fff', 3, Math.PI, Math.PI * 2]] });
+  const cast = () => ({ A: [{ team: 'A', num: 1, x: -SC, z: 0, face: 1, pose: 'ready' }, { team: 'A', num: 2, x: -1.3, z: 1.9, face: 1, pose: 'ready' }, { team: 'A', num: 3, x: -1.3, z: -1.9, face: 1, pose: 'ready' }],
+    B: [{ team: 'B', num: 1, x: SC, z: 0, face: -1, pose: 'ready' }, { team: 'B', num: 2, x: 1.3, z: -1.9, face: -1, pose: 'ready' }, { team: 'B', num: 3, x: 1.3, z: 1.9, face: -1, pose: 'ready' }] });
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0, c = cast(); let b = null, trail = null; const st = { a: 0, b: 0, l2: 'SET 1' }, tags = [], big = [];
+    const all = c.A.concat(c.B), tA = c.A[0], aL = c.A[1], tB = c.B[0], bL = c.B[1], bR = c.B[2];
+    if (k === 0){
+      all.forEach(p => p.a = .3);
+      tags.push([-6.7, 0, 3.05, '13.4 m', 140, 60, seg(lt, .5, 1)], [-6.7, 0, 0, '6.1 m', -90, 0, seg(lt, 1.3, 1.8)], [0, NET, -3, 'Jaring 1.52 m', 60, -100, seg(lt, 2.2, 2.7)],
+        [-SC, 0, 0, 'Bulatan servis', -60, 110, seg(lt, 3.2, 3.7)], [0, 0, 3.05, 'Suku bulatan', 150, 70, seg(lt, 4.2, 4.7)]);
+    } else if (k === 1){
+      all.forEach(p => p.a = .45); [[tA, 'Tekong', .5], [aL, 'Apit kiri', 2], [c.A[2], 'Apit kanan', 3.5]].forEach(([p, n, at]) => { if (lt > at){ p.a = 1; p.tag = n; p.ring = lt; } });
+    } else if (k === 2){
+      const hand = { x: aL.x - .3, y: 1.5, z: aL.z }, top = { x: tA.x + .4, y: 1.2, z: tA.z + .1 }, land = { x: SC - .8, y: .15, z: .8 };
+      aL.pose = lt > .5 && lt < 1.2 ? 'pass' : 'ready';
+      if (lt < .6) b = hand; else if (lt < 1.8) b = arc(hand, top, .9, seg(lt, .6, 1.8)); else { const u = seg(lt, 1.8, 3.2); b = arc(top, land, 2.2, u); trail = [0, .2, .4, .6, .8, 1].map(v => arc(top, land, 2.2, v * u)); }
+      tA.pose = lt > 1.5 && lt < 2.3 ? 'kick' : 'ready'; tA.p = seg(lt, 1.5, 1.9);
+      tags.push([tA.x, 0, tA.z, 'Satu kaki dalam bulatan', -60, 110, seg(lt, 2, 2.4)], [aL.x, 1.6, aL.z, 'Lambungan apit', 40, -90, seg(lt, .4, .8) * (lt < 2 ? 1 : 0)]);
+    } else if (k === 3){
+      const pts = [{ x: SC - .8, y: .4, z: .8 }, { x: 2.2, y: 2.6, z: .2 }, { x: 1.2, y: 2.8, z: -1.6 }, { x: .6, y: 2.4, z: -1.5 }];
+      const segs = [[.3, 1.9], [2.2, 3.8], [4.1, 5.6]];
+      b = pts[0]; segs.forEach(([a0, a1], i) => { if (lt >= a0) b = lt < a1 ? arc(pts[i], pts[i + 1], .9, seg(lt, a0, a1)) : pts[i + 1]; });
+      tB.pose = lt < 1 ? 'kick' : 'ready'; tB.p = seg(lt, .1, .5); bL.pose = lt > 2 && lt < 2.6 ? 'kick' : 'ready'; bL.p = seg(lt, 2, 2.4);
+      ['Sentuhan 1: terima', 'Sentuhan 2: umpan', 'Sentuhan 3: rejam'].forEach((n, i) => tags.push([pts[i + 1].x, pts[i + 1].y, pts[i + 1].z, n, i === 1 ? 140 : -120, -70, seg(lt, segs[i][0] + .3, segs[i][0] + .7) * (lt < segs[i][1] + .9 ? 1 : 0)]));
+    } else if (k === 4){
+      const jump = Math.sin(seg(lt, 1, 2.2) * Math.PI) * .9; bR.x = .8; bR.z = .2; bR.y = jump; bR.pose = lt > 1.4 ? 'kick' : 'jump'; bR.p = seg(lt, 1.5, 1.9);
+      const top = { x: .7, y: 2.6, z: .2 }, land = { x: -3, y: .1, z: 1.2 };
+      if (lt < 1.6) b = arc({ x: 2, y: 1.5, z: .5 }, top, .6, seg(lt, .2, 1.6)); else { const u = seg(lt, 1.6, 2.1); b = arc(top, land, .1, u); trail = [0, .25, .5, .75, 1].map(v => arc(top, land, .1, v * u)); }
+      c.A[2].pose = lt > 1.8 ? 'out' : 'ready';
+      if (lt > 2.2){ st.b = 1; big.push(['REJAMAN! +1', '#0EA5E9', seg(lt, 2.2, 2.6)]); }
+    } else if (k === 5){
+      all.forEach(p => p.a = .45); st.a = 3; st.b = 2;
+      g.__rules = ['✋ Tangan tidak boleh menyentuh bola', '🕸️ Tidak boleh sentuh jaring', '↔️ Tidak boleh melintas garisan tengah', '3️⃣ Maksimum 3 sentuhan setiap pasukan'];
+    } else if (k === 6){
+      st.a = Math.min(20, Math.floor(lt * 3)); st.b = Math.min(19, Math.floor(lt * 2.8)); st.l2 = 'SASARAN 21 · BEZA 2';
+      if (lt > 6.4){ st.a = 21; st.b = 19; st.l3 = 'SET 1: A'; c.A.forEach(p => p.pose = 'cheer'); }
+      b = arc({ x: -SC, y: .4, z: 0 }, { x: SC, y: .3, z: 0 }, 2.4, (lt % 1.6) / 1.6);
+    } else {
+      st.a = 2; st.b = 1; st.l2 = 'SET (TERBAIK 3)'; st.l3 = '21-19 · 18-21 · 15-12';
+      c.A.forEach(p => { p.pose = 'cheer'; p.y = Math.abs(Math.sin(lt * 4 + p.num)) * .3; }); c.B.forEach(p => p.pose = 'stand');
+      big.push(['🏆 REGU A MENANG 2–1', '#DC2626', seg(lt, 1, 1.5)]);
+    }
+    court(g);
+    all.slice().sort((p, q) => p.z - q.z).forEach(p => player(g, p));
+    ball(g, b, trail, .14);
+    tags.forEach(x => tagAt(g, ...x));
+    if (k === 5) rules(g, g.__rules, lt);
+    big.forEach(([tx, col, a]) => bigText(g, tx, col, a, 320));
+    hud(g, scenes, k, lt, st);
+  }
+  SIM_LIB.push({ id: 'takraw', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🦶', title: 'Permainan Sepak Takraw',
+    desc: 'Tutorial asas: gelanggang, tekong & apit, servis, 3 sentuhan, rejaman, peraturan, sistem 21 mata dan cara menang.',
+    scenes, dur: T0, render, sfx: [[16.9, 'sim_st_sepak'], [33.6, 'sim_st_sepak'], [42.5, 'sim_st_sepak'], [43.2, 'sim_sorak']] });
+})();
+
+/* ---------- BADMINTON (PJK) ---------- */
+(() => {
+  const K = simKit({ y: 6, z: 12.5, ly: .9, lz: 0, F: 900 }, { label: 'BADMINTON', col: { A: '#9333EA', B: '#EA580C' }, ball: 'shuttle' });
+  const { seg, arc, L, player, ball, tagAt, bigText, hud, sceneOf, timeline, rules } = K;
+  const NET = 1.55;
+  const scenes = [
+    { n: 'Gelanggang', d: 8, title: ['Kenali ', 'gelanggang', ''], goal: 'Kenal pasti garisan & jaring',
+      cap: 'Gelanggang badminton berukuran 13.4 m × 6.1 m untuk beregu (5.18 m lebar untuk perseorangan). Jaring setinggi 1.55 m di tiang. Garisan servis pendek 1.98 m dari jaring.' },
+    { n: 'Genggaman', d: 7, title: ['Cara ', 'memegang', ' raket'], goal: 'Kenal genggaman depan & kilas',
+      cap: 'Genggaman depan: pegang raket seperti berjabat tangan. Genggaman kilas: ibu jari ditekan pada bahagian lebar pemegang untuk pukulan kilas.' },
+    { n: 'Servis', d: 8, title: ['Langkah 1: ', 'Servis', ''], goal: 'Servis yang sah',
+      cap: 'Pukul bulu tangkis dari bawah paras pinggang, dari petak servis kepada petak servis lawan secara PEPENJURU. Kedua-dua kaki mesti di atas lantai semasa servis.' },
+    { n: 'Pukulan Lob', d: 8, title: ['Pukulan ', 'lob', ' (clear)'], goal: 'Pukul tinggi ke belakang',
+      cap: 'Pukulan lob (clear): pukul bulu tangkis tinggi dan jauh ke garisan belakang lawan untuk memberi masa kembali ke tengah gelanggang.' },
+    { n: 'Rejaman', d: 8, title: ['Pukulan ', 'rejam', ' (smash)'], goal: 'Pukul laju ke bawah',
+      cap: 'Rejaman (smash): lompat dan pukul bulu tangkis dengan kuat dan curam ke bawah ke gelanggang lawan. Pukulan paling laju untuk mendapat mata.' },
+    { n: 'Pukulan Dekat Jaring', d: 8, title: ['Pukulan ', 'dekat jaring', ''], goal: 'Jatuhkan dekat jaring',
+      cap: 'Pukulan dropshot / netting: pukul perlahan supaya bulu tangkis jatuh betul-betul selepas jaring di gelanggang lawan — sukar dikejar.' },
+    { n: 'Sistem Mata', d: 8, title: ['Sistem ', 'mata', ''], goal: 'Fahami 21 mata rali',
+      cap: 'Setiap rali = 1 mata. Satu set dimenangi dengan 21 mata. Jika 20–20, pemain mesti mendahului 2 mata; pada 29–29, mata ke-30 menang set.' },
+    { n: 'Cara Menang', d: 8, title: ['Cara ', 'menang', ''], goal: 'Menang 2 set dahulu',
+      cap: 'Perlawanan terbaik daripada 3 set. Pemain atau pasangan yang memenangi 2 set dahulu ialah JUARA.' }
+  ];
+  const T0 = timeline(scenes);
+  const court = g => netCourt(K, g, { net: NET, court: '#0F766E', floor: '#7C2D12', floor2: '#5B2310', sky: '#F1F5F9', sky2: '#E2E8F0',
+    lines: [[[0, 0, 0], [6.7, 0, 0]], [[0, 0, 0], [-6.7, 0, 0]], [[1.98, 0, -3.05], [1.98, 0, 3.05]], [[-1.98, 0, -3.05], [-1.98, 0, 3.05]], [[-6.7, 0, -2.59], [6.7, 0, -2.59]], [[-6.7, 0, 2.59], [6.7, 0, 2.59]], [[5.94, 0, -3.05], [5.94, 0, 3.05]], [[-5.94, 0, -3.05], [-5.94, 0, 3.05]]] });
+  const cast = () => ({ A: { team: 'A', num: '', x: -3.6, z: .9, face: 1, pose: 'ready', raket: true }, B: { team: 'B', num: '', x: 3.6, z: -.9, face: -1, pose: 'ready', raket: true } });
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0, c = cast(); let b = null, trail = null; const st = { a: 0, b: 0, l2: 'SET 1' }, tags = [], big = [];
+    const A = c.A, B = c.B, fly = (from, to, h, u, tr) => { b = arc(from, to, h, u); b.vx = to.x - from.x; if (tr) trail = [0, .2, .4, .6, .8, 1].map(v => arc(from, to, h, v * u)); };
+    if (k === 0){
+      A.a = B.a = .3;
+      tags.push([-6.7, 0, 3.05, '13.4 m', 140, 60, seg(lt, .5, 1)], [-6.7, 0, 0, '6.1 m beregu', -110, 0, seg(lt, 1.3, 1.8)], [-6.7, 0, -2.59, '5.18 m perseorangan', -150, -60, seg(lt, 2.1, 2.6)],
+        [0, NET, -3.1, 'Jaring 1.55 m', 60, -100, seg(lt, 3, 3.5)], [1.98, 0, 2, 'Garisan servis pendek', 140, 70, seg(lt, 4, 4.5)]);
+    } else if (k === 1){
+      A.pose = 'fh'; A.p = .5 + .5 * Math.sin(lt * 2); A.tag = lt > .5 ? 'Genggaman depan' : ''; A.ring = lt > .5 ? lt : 0;
+      B.pose = 'bh'; B.p = .5 + .5 * Math.sin(lt * 2 + 1); B.tag = lt > 3 ? 'Genggaman kilas' : ''; B.ring = lt > 3 ? lt : 0; B.rk = .9;
+    } else if (k === 2){
+      A.x = -2.5; A.z = 1.4; A.pose = 'serve'; A.p = seg(lt, 1, 1.4); A.rk = 2.4;
+      const from = { x: -2.2, y: .9, z: 1.4 }, to = { x: 4.2, y: .1, z: -1.6 };
+      if (lt < 1.3) b = { x: -2.2, y: .9, z: 1.4 }; else fly(from, to, 1.6, seg(lt, 1.3, 2.8), true);
+      tags.push([-2.2, .9, 1.4, 'Bawah paras pinggang', -140, 60, seg(lt, .4, .8)], [3.2, 0, -1.6, 'Pepenjuru ke petak lawan', 120, 90, seg(lt, 2.4, 2.8)]);
+    } else if (k === 3){
+      B.pose = 'fh'; B.p = seg(lt, .5, .9); const from = { x: 3.4, y: 2, z: -.9 }, to = { x: -6.2, y: .2, z: .4 };
+      if (lt < .8) b = from; else fly(from, to, 5.5, seg(lt, .8, 3.2), true);
+      A.x = L(-3.6, -5.6, seg(lt, 1.2, 2.8)); A.pose = lt > 2 ? 'run' : 'ready'; A.walk = lt;
+      tags.push([-6, 0, .4, 'Jatuh di garisan belakang', 80, -90, seg(lt, 2.8, 3.2)]);
+    } else if (k === 4){
+      A.y = Math.sin(seg(lt, .8, 2) * Math.PI) * .7; A.pose = lt > 1.2 ? 'fh' : 'jump'; A.p = seg(lt, 1.3, 1.7); A.rk = -2.6;
+      const top = { x: -3.2, y: 3.1, z: .9 }, land = { x: 3, y: .05, z: -1.8 };
+      if (lt < 1.4) fly({ x: 2, y: 2.5, z: 0 }, top, 1.5, seg(lt, 0, 1.4)); else fly(top, land, .05, seg(lt, 1.4, 1.9), true);
+      B.pose = lt > 1.9 ? 'out' : 'ready';
+      if (lt > 2){ st.a = 1; big.push(['SMASH! +1', '#9333EA', seg(lt, 2, 2.4)]); }
+    } else if (k === 5){
+      st.a = 1; B.x = 1.6; B.z = -.4; B.pose = 'fh'; B.p = seg(lt, .6, 1); const from = { x: 1.2, y: 1.4, z: -.4 }, to = { x: -.5, y: .05, z: .3 };
+      if (lt < .9) b = from; else fly(from, to, .45, seg(lt, .9, 2.1), true);
+      A.x = L(-3.6, -1.4, seg(lt, 1.2, 2.4)); A.pose = 'run'; A.walk = lt;
+      tags.push([-.5, 0, .3, 'Jatuh dekat jaring', -130, 80, seg(lt, 2.1, 2.5)]);
+      if (lt > 2.6){ st.b = 1; }
+    } else if (k === 6){
+      st.a = Math.min(20, Math.floor(lt * 3)); st.b = Math.min(20, Math.floor(lt * 2.9)); st.l2 = 'SASARAN 21';
+      if (lt > 5){ st.a = 20; st.b = 20; st.l3 = '20–20: BEZA 2'; }
+      if (lt > 6.6){ st.a = 22; st.b = 20; st.l3 = 'SET 1: A'; A.pose = 'cheer'; }
+      fly({ x: -3.6, y: 1.2, z: .9 }, { x: 3.6, y: 1.2, z: -.9 }, 3, (lt % 1.6) / 1.6);
+    } else {
+      st.a = 2; st.b = 0; st.l2 = 'SET (TERBAIK 3)'; st.l3 = '22-20 · 21-17';
+      A.pose = 'cheer'; A.y = Math.abs(Math.sin(lt * 4)) * .3; B.pose = 'stand';
+      big.push(['🏆 PEMAIN A JUARA!', '#9333EA', seg(lt, 1, 1.5)]);
+    }
+    court(g);
+    [B, A].forEach(p => player(g, p));
+    ball(g, b, trail, .1);
+    tags.forEach(x => tagAt(g, ...x));
+    big.forEach(([tx, col, a]) => bigText(g, tx, col, a, 320));
+    hud(g, scenes, k, lt, st);
+  }
+  SIM_LIB.push({ id: 'badminton', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🏸', title: 'Permainan Badminton',
+    desc: 'Tutorial asas: gelanggang, genggaman raket, servis pepenjuru, pukulan lob, rejaman, pukulan dekat jaring, sistem 21 mata dan cara menang.',
+    scenes, dur: T0, render, sfx: [[16.3, 'sim_bd_pukul'], [23.5, 'sim_bd_pukul'], [32.5, 'sim_bd_pukul'], [33.1, 'sim_sorak'], [39.6, 'sim_bd_pukul']] });
+})();
+
+/* ---------- padang (frisbee & rugby sentuh): x = panjang, z = lebar ---------- */
+function longField(K, g, o){
+  const { poly, line } = K, bg = g.createLinearGradient(0, 0, 0, SIM_H);
+  bg.addColorStop(0, '#BAE6FD'); bg.addColorStop(.26, '#E0F2FE'); bg.addColorStop(.27, '#3F8F3A'); bg.addColorStop(1, '#2F7A2B');
+  g.fillStyle = bg; g.fillRect(0, 0, SIM_W, SIM_H);
+  const X = o.X, Z = o.Z, E = o.E;
+  for (let i = 0; i < 10; i++){ const x0 = -X + i * X / 5; poly(g, [[x0, 0, -Z], [x0 + X / 5, 0, -Z], [x0 + X / 5, 0, Z], [x0, 0, Z]], i % 2 ? '#4CA244' : '#56B04D'); }
+  [-1, 1].forEach(sd => poly(g, [[sd * (X - E), 0, -Z], [sd * X, 0, -Z], [sd * X, 0, Z], [sd * (X - E), 0, Z]], o.ez || 'rgba(250,204,21,.35)', '#fff', 3));
+  poly(g, [[-X, 0, -Z], [X, 0, -Z], [X, 0, Z], [-X, 0, Z]], null, '#fff', 3);
+  (o.lines || []).forEach(l => line(g, l[0], l[1], 2.5));
+}
+
+/* ---------- FRISBEE ULTIMATE (PJK) ---------- */
+(() => {
+  const CAMS = { far: { y: 42, z: 62, ly: 0, lz: -2, F: 820 } }, near = (x, z) => ({ x, y: 11, z: (z || 0) + 26, ly: 1, lz: (z || 0) - 2, F: 950 });
+  const K = simKit(CAMS.far, { label: 'FRISBEE', col: { A: '#0891B2', B: '#DB2777' }, ball: 'cakera' });
+  const { useCam, seg, arc, L, player, ball, tagAt, bigText, hud, sceneOf, timeline, rules } = K;
+  const X = 50, Z = 18.5, E = 18;
+  const scenes = [
+    { n: 'Padang', d: 8, title: ['Kenali ', 'padang', ''], goal: 'Kenal pasti padang & zon akhir',
+      cap: 'Padang ultimate frisbee berukuran 100 m × 37 m: kawasan main 64 m dan zon akhir (end zone) 18 m di setiap hujung.' },
+    { n: 'Pemain', d: 7, title: ['Pemain ', '7 orang', ''], goal: 'Kenal handler & cutter',
+      cap: 'Setiap pasukan ada 7 pemain di padang. Handler mengawal dan membaling cakera; cutter berlari ke ruang kosong untuk menerima cakera.' },
+    { n: 'Balingan', d: 8, title: ['Langkah 1: ', 'Balingan', ''], goal: 'Baling cakera kepada rakan',
+      cap: 'Balingan kilas (backhand): hayun cakera dari seberang badan. Balingan depan (forehand / flick): petik cakera dari sisi badan dengan dua jari.' },
+    { n: 'Menangkap', d: 8, title: ['Langkah 2: ', 'Menangkap', ''], goal: 'Tangkap dengan dua tangan',
+      cap: 'Tangkapan "pancake": tepuk cakera di antara dua tapak tangan — atas dan bawah. Ini cara paling selamat untuk menangkap cakera.' },
+    { n: 'Pivot & Kiraan', d: 9, title: ['Pivot ', '& kiraan 10', ''], goal: 'Jangan lari bawa cakera',
+      cap: 'Pemain yang memegang cakera TIDAK BOLEH berlari — hanya boleh berpusing (pivot) pada satu kaki. Pertahanan mengira 1 hingga 10; cakera mesti dibaling sebelum kiraan 10.' },
+    { n: 'Mendapat Mata', d: 8, title: ['Mendapat ', 'mata', ''], goal: 'Tangkap dalam zon akhir',
+      cap: 'Satu mata diperoleh apabila pemain MENANGKAP cakera di dalam zon akhir lawan. Jika cakera jatuh atau dipintas, milikan bertukar kepada lawan.' },
+    { n: 'Semangat Permainan', d: 9, title: ['Semangat ', 'permainan', ''], goal: 'Main adil tanpa sentuhan',
+      cap: 'Ultimate dimainkan tanpa pengadil — pemain sendiri membuat panggilan kesalahan dengan jujur. Tiada sentuhan badan dan sentiasa hormati lawan (Spirit of the Game).' },
+    { n: 'Cara Menang', d: 8, title: ['Cara ', 'menang', ''], goal: 'Mata terbanyak menang',
+      cap: 'Pasukan pertama yang mencapai 15 mata (atau mata terbanyak apabila masa tamat) MENANG perlawanan.' }
+  ];
+  const T0 = timeline(scenes);
+  const field = g => longField(K, g, { X, Z, E });
+  const FA = [[-28, -10], [-28, 10], [-18, 0], [-10, -14], [-8, 12], [-2, -4], [4, 6]], FB = FA.map(([x, z]) => [-x + 3, -z + 1]);
+  const cast = () => ({ A: FA.map(([x, z], i) => ({ team: 'A', num: i + 1, x, z, face: 1, pose: 'ready' })), B: FB.map(([x, z], i) => ({ team: 'B', num: i + 1, x, z, face: -1, pose: 'ready', hair: '#78350F' })) });
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0, c = cast(); let b = null, trail = null; const st = { a: 0, b: 0, l2: 'SASARAN 15 MATA' }, tags = [], big = [];
+    useCam(k === 2 ? near(-12, -2) : k === 3 ? near(-4, 2) : k === 4 ? near(-14, 0) : k === 5 ? near(36, 0) : CAMS.far);
+    const all = c.A.concat(c.B);
+    if (k === 0){
+      all.forEach(p => p.a = .25);
+      tags.push([0, 0, Z, '100 m', 0, 60, seg(lt, .5, 1)], [-X, 0, 0, '37 m', -90, 0, seg(lt, 1.2, 1.7)], [X - 9, 0, 0, 'Zon akhir 18 m', -40, -100, seg(lt, 2.2, 2.7)], [0, 0, -6, 'Kawasan main 64 m', 0, -90, seg(lt, 3.2, 3.7)]);
+    } else if (k === 1){
+      all.forEach(p => p.a = .4); [[2, 'Handler', .5], [5, 'Cutter', 2.2], [6, 'Cutter', 3.4]].forEach(([i, n, at]) => { if (lt > at){ const p = c.A[i]; p.a = 1; p.tag = n; p.ring = lt; } });
+    } else if (k === 2){
+      const h = c.A[2], r = c.A[3]; h.x = -18; h.z = 0; r.x = L(-10, -6, seg(lt, 0, 1.5)); r.z = -6; r.pose = 'run'; r.walk = lt;
+      const throwAt = (t0, from, to) => { const u = seg(lt, t0, t0 + 1.4); if (lt >= t0 && lt < t0 + 1.5){ b = arc(from, to, .8, u); trail = [0, .2, .4, .6, .8, 1].map(v => arc(from, to, .8, v * u)); } };
+      h.pose = lt < 1.2 ? 'pass' : 'ready'; b = { x: -17.4, y: 1.1, z: .3 };
+      throwAt(.8, { x: -17.4, y: 1.1, z: .3 }, { x: -6.6, y: 1.2, z: -6 });
+      if (lt > 2.3){ b = { x: -6.6, y: 1.2, z: -6 }; r.pose = 'pass'; }
+      if (lt > 4.2){ r.pose = 'pass'; throwAt(4.4, { x: -6.6, y: 1.2, z: -6 }, { x: 2, y: 1.2, z: 4 }); if (lt > 5.9) b = { x: 2, y: 1.2, z: 4 }; c.A[6].x = 2.4; c.A[6].z = 4; }
+      tags.push([-18, 1.6, 0, 'Balingan kilas (backhand)', -60, -100, seg(lt, .6, 1) * (lt < 4 ? 1 : 0)], [-6.6, 1.6, -6, 'Balingan depan (forehand)', 60, -100, seg(lt, 4.2, 4.6)]);
+    } else if (k === 3){
+      const r = c.A[5]; r.x = L(-6, -1, seg(lt, 0, 2)); r.z = 2; r.pose = lt < 2 ? 'run' : 'pass'; r.walk = lt;
+      const from = { x: -16, y: 1.2, z: 1 }, to = { x: -.5, y: 1.3, z: 2 }; b = lt < 2.4 ? arc(from, to, 1.2, seg(lt, .6, 2.4)) : to;
+      tags.push([-.5, 1.4, 2, 'Tangkapan pancake 👏', 60, -110, seg(lt, 2.4, 2.8)]);
+    } else if (k === 4){
+      const h = c.A[2], d = c.B[4]; h.x = -14; h.z = 0; h.face = 1; h.pose = 'pass'; d.x = -12.4; d.z = .4; d.pose = 'ready'; d.face = -1;
+      h.face = Math.sin(lt * 1.5) > 0 ? 1 : -1; b = { x: h.x + .5 * h.face, y: 1.1, z: .3 };
+      const n = Math.min(10, Math.floor(lt / .7) + 1); d.tag = 'Kiraan ' + n; tags.push([h.x, 0, h.z, 'Pivot pada satu kaki', -150, 70, seg(lt, .5, .9)]);
+      if (lt > 7) big.push(['✖ JANGAN LARI BAWA CAKERA', '#DC2626', seg(lt, 7, 7.4)]);
+    } else if (k === 5){
+      const r = c.A[6]; r.x = L(28, 40, seg(lt, 0, 2.3)); r.z = 3; r.pose = lt < 2.3 ? 'run' : 'jump'; r.walk = lt;
+      const from = { x: 22, y: 1.2, z: -2 }, to = { x: 40, y: 1.6, z: 3 }; c.A[5].x = 22; c.A[5].z = -2; c.A[5].pose = lt < .8 ? 'pass' : 'ready';
+      b = lt < 2.4 ? arc(from, to, 1.5, seg(lt, .6, 2.4)) : to;
+      if (lt > 2.5){ st.a = 1; big.push(['+1 MATA!', '#0891B2', seg(lt, 2.5, 2.9)]); }
+      tags.push([40, 0, -6, 'Zon akhir', 60, 90, seg(lt, .4, .8)]);
+    } else if (k === 6){
+      all.forEach(p => p.a = .45); st.a = 4; st.b = 3;
+      g.__rules = ['🙅 Tiada sentuhan badan', '🗣️ Tiada pengadil — panggil kesalahan sendiri', '🤝 Hormati lawan & main adil', '👏 Spirit of the Game'];
+    } else {
+      st.a = 15; st.b = 12; st.l2 = 'TAMAT'; c.A.forEach(p => { p.pose = 'cheer'; p.y = Math.abs(Math.sin(lt * 4 + p.num)) * .6; }); c.B.forEach(p => p.pose = 'stand');
+      big.push(['🏆 PASUKAN A MENANG 15–12', '#0891B2', seg(lt, 1, 1.5)]);
+    }
+    field(g);
+    all.slice().sort((p, q) => p.z - q.z).forEach(p => player(g, p));
+    ball(g, b, trail, .14);
+    tags.forEach(x => tagAt(g, ...x));
+    if (k === 6) rules(g, g.__rules, lt);
+    big.forEach(([tx, col, a]) => bigText(g, tx, col, a, 330));
+    hud(g, scenes, k, lt, st);
+  }
+  SIM_LIB.push({ id: 'frisbee', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🥏', title: 'Permainan Frisbee (Ultimate)',
+    desc: 'Tutorial asas: padang & zon akhir, 7 pemain, balingan kilas & depan, tangkapan pancake, pivot & kiraan 10, mendapat mata, semangat permainan dan cara menang.',
+    scenes, dur: T0, render, sfx: [[46.5, 'sim_sorak'], [62, 'sim_sorak']] });
+})();
+
+/* ---------- RUGBY SENTUH (PJK) ---------- */
+(() => {
+  const CAMS = { far: { y: 40, z: 60, ly: 0, lz: -2, F: 860 } }, near = (x, z) => ({ x, y: 11, z: (z || 0) + 26, ly: 1, lz: (z || 0) - 2, F: 950 });
+  const K = simKit(CAMS.far, { label: 'RUGBY SENTUH', col: { A: '#16A34A', B: '#F59E0B' }, ball: 'rugby' });
+  const { useCam, seg, arc, L, player, ball, tagAt, bigText, hud, sceneOf, timeline, rules } = K;
+  const X = 40, Z = 25, E = 5;
+  const scenes = [
+    { n: 'Padang', d: 8, title: ['Kenali ', 'padang', ''], goal: 'Kenal pasti garisan cuba',
+      cap: 'Padang rugby sentuh berukuran 70 m × 50 m dengan zon cuba (in-goal) di setiap hujung, di belakang garisan cuba.' },
+    { n: 'Pemain', d: 7, title: ['Pemain ', '6 orang', ''], goal: 'Kenal bilangan pemain',
+      cap: 'Setiap pasukan ada 6 pemain di padang dan beberapa pemain simpanan yang boleh ditukar sepanjang permainan.' },
+    { n: 'Hantaran', d: 8, title: ['Langkah 1: ', 'Hantaran', ''], goal: 'Hantar ke sisi atau belakang',
+      cap: 'Bola hanya boleh dihantar ke SISI atau ke BELAKANG. Hantaran ke hadapan tidak dibenarkan — milikan bertukar kepada lawan.' },
+    { n: 'Sentuhan', d: 9, title: ['Langkah 2: ', 'Sentuhan', ''], goal: 'Sentuh pembawa bola',
+      cap: 'Pertahanan menyentuh pembawa bola dengan ringan menggunakan tangan — TIADA tekel. Pembawa bola berhenti, meletakkan bola di tanah dan melangkahinya (rollball) untuk menyambung.' },
+    { n: '6 Sentuhan', d: 8, title: ['Had ', '6 sentuhan', ''], goal: 'Jaringkan sebelum 6 sentuhan',
+      cap: 'Setiap pasukan menyerang mempunyai 6 sentuhan untuk menjaringkan cuba. Selepas sentuhan ke-6, milikan bola bertukar kepada pasukan lawan.' },
+    { n: 'Cuba (Try)', d: 8, title: ['Menjaringkan ', 'cuba', ''], goal: 'Letak bola dalam zon cuba',
+      cap: 'Cuba (try): pembawa bola melepasi garisan cuba dan meletakkan bola di tanah dalam zon cuba = 1 MATA.' },
+    { n: 'Peraturan Asas', d: 9, title: ['Peraturan ', 'asas', ''], goal: 'Main selamat tanpa tekel',
+      cap: 'Tiada tekel atau tolakan. Pertahanan mesti berundur 5 m selepas sentuhan (onside). Sentuhan mesti ringan. Hantaran ke hadapan dan bola terjatuh menukar milikan.' },
+    { n: 'Cara Menang', d: 8, title: ['Cara ', 'menang', ''], goal: 'Cuba terbanyak menang',
+      cap: 'Perlawanan dimainkan 2 separuh masa × 20 minit. Pasukan yang menjaringkan cuba paling banyak MENANG.' }
+  ];
+  const T0 = timeline(scenes);
+  const field = g => longField(K, g, { X, Z, E, ez: 'rgba(255,255,255,.18)', lines: [[[0, 0, -Z], [0, 0, Z]], [[-20, 0, -Z], [-20, 0, Z]], [[20, 0, -Z], [20, 0, Z]]] });
+  const FA = [[-18, -14], [-16, -5], [-15, 4], [-16, 13], [-25, -5], [-25, 6]], FB = FA.map(([x, z]) => [-x - 4, -z]);
+  const cast = () => ({ A: FA.map(([x, z], i) => ({ team: 'A', num: i + 1, x, z, face: 1, pose: 'ready' })), B: FB.map(([x, z], i) => ({ team: 'B', num: i + 1, x, z, face: -1, pose: 'ready', hair: '#78350F' })) });
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0, c = cast(); let b = null, trail = null; const st = { a: 0, b: 0, l2: 'SENTUHAN 0/6' }, tags = [], big = [];
+    useCam(k === 2 ? near(-12, 0) : k === 3 ? near(-4, 0) : k === 5 ? near(30, 0) : k === 4 ? near(4, 0) : CAMS.far);
+    const all = c.A.concat(c.B);
+    if (k === 0){
+      all.forEach(p => p.a = .25);
+      tags.push([0, 0, -Z, '70 m', 0, -70, seg(lt, .5, 1)], [-X, 0, 0, '50 m', -90, 0, seg(lt, 1.2, 1.7)], [X - E, 0, -8, 'Garisan cuba', -60, -90, seg(lt, 2.2, 2.7)], [X - 2, 0, 8, 'Zon cuba', 60, 90, seg(lt, 3.2, 3.7)]);
+    } else if (k === 1){
+      all.forEach(p => p.a = .4); c.A.forEach((p, i) => { if (lt > .4 + i * .9){ p.a = 1; p.ring = lt; p.tag = 'Pemain ' + (i + 1); } });
+    } else if (k === 2){
+      const p1 = c.A[2], p2 = c.A[1]; p1.x = L(-15, -10, seg(lt, 0, 1.6)); p1.z = 4; p2.x = L(-17, -13, seg(lt, 0, 2)); p2.z = -1; p1.pose = p2.pose = 'run'; p1.walk = p2.walk = lt;
+      const from = { x: -9.6, y: 1.1, z: 4 }, to = { x: -12.6, y: 1.1, z: -1 };
+      if (lt < 1.6) b = { x: p1.x + .4, y: 1.1, z: p1.z }; else if (lt < 3) b = arc(from, to, .6, seg(lt, 1.6, 3)); else b = { x: p2.x + .4, y: 1.1, z: p2.z };
+      p1.pose = lt > 1.4 && lt < 2 ? 'pass' : p1.pose;
+      tags.push([-11, 1.4, 1.5, 'Ke belakang / sisi ✔', 0, -110, seg(lt, 2, 2.4)]);
+      if (lt > 4.8){ const f2 = { x: -12.6, y: 1.1, z: -1 }, t2 = { x: -6, y: 1.1, z: -4 }; b = lt < 6 ? arc(f2, t2, .5, seg(lt, 5, 6)) : { x: -6, y: .1, z: -4 }; big.push(['✖ HANTARAN KE HADAPAN', '#DC2626', seg(lt, 6, 6.4)]); }
+    } else if (k === 3){
+      const r = c.A[2], d = c.B[2]; r.x = L(-12, -2, seg(lt, 0, 2.6)); r.z = 1; r.pose = lt < 2.6 ? 'run' : 'out'; r.walk = lt; d.x = -1; d.z = 1.6; d.face = -1; d.pose = lt > 2.2 && lt < 3.2 ? 'pass' : 'ready';
+      b = lt < 3.4 ? { x: r.x + .4, y: lt < 2.6 ? 1.1 : L(1.1, .15, seg(lt, 2.6, 3.4)), z: r.z } : { x: r.x + .2, y: .15, z: r.z };
+      if (lt > 2.5) st.l2 = 'SENTUHAN 1/6';
+      tags.push([d.x, 1.5, d.z, 'Sentuh ringan — tiada tekel', 40, -110, seg(lt, 2.4, 2.8)], [r.x, 0, r.z, 'Rollball: letak & langkahi bola', -150, 80, seg(lt, 3.6, 4)]);
+      if (lt > 4.6){ d.x = L(-1, 4, seg(lt, 4.6, 6.4)); d.pose = 'run'; d.walk = lt; tags.push([d.x, 0, d.z, 'Pertahanan berundur 5 m', 120, 70, seg(lt, 5, 5.4)]); }
+    } else if (k === 4){
+      const n = Math.min(6, Math.floor(lt / 1.05) + 1); st.l2 = 'SENTUHAN ' + n + '/6';
+      const r = c.A[2]; r.x = L(-6, 10, seg(lt, 0, 6.2)); r.z = 1; r.pose = 'run'; r.walk = lt; b = { x: r.x + .4, y: 1.1, z: r.z };
+      c.B[2].x = r.x + 1.4; c.B[2].z = 1.5; c.B[2].pose = 'pass';
+      if (lt > 6.4){ st.l3 = 'PERTUKARAN MILIKAN'; big.push(['6 SENTUHAN → BOLA KEPADA B', '#F59E0B', seg(lt, 6.4, 6.8)]); }
+    } else if (k === 5){
+      st.l2 = 'SENTUHAN 3/6'; const r = c.A[3]; r.x = L(26, 37.5, seg(lt, .2, 2.6)); r.z = 2; r.pose = lt < 2.6 ? 'run' : 'out'; r.walk = lt;
+      b = lt < 2.6 ? { x: r.x + .4, y: 1.1, z: r.z } : { x: 37.9, y: L(1.1, .15, seg(lt, 2.6, 3.1)), z: 2 };
+      tags.push([X - E, 0, -4, 'Garisan cuba', -60, -90, seg(lt, .3, .7)]);
+      if (lt > 3.1){ st.a = 1; big.push(['CUBA! +1', '#16A34A', seg(lt, 3.1, 3.5)]); }
+    } else if (k === 6){
+      all.forEach(p => p.a = .45); st.a = 1;
+      g.__rules = ['🚫 Tiada tekel atau tolakan', '↩️ Pertahanan berundur 5 m (onside)', '✋ Sentuhan mesti ringan', '➡️ Hantaran ke hadapan = tukar milikan'];
+    } else {
+      st.a = 7; st.b = 5; st.l2 = 'TAMAT · 2 × 20 MINIT'; st.l3 = 'SEPARUH MASA 4–2';
+      c.A.forEach(p => { p.pose = 'cheer'; p.y = Math.abs(Math.sin(lt * 4 + p.num)) * .6; }); c.B.forEach(p => p.pose = 'stand');
+      big.push(['🏆 PASUKAN A MENANG 7–5', '#16A34A', seg(lt, 1, 1.5)]);
+    }
+    field(g);
+    all.slice().sort((p, q) => p.z - q.z).forEach(p => player(g, p));
+    ball(g, b, trail, .2);
+    tags.forEach(x => tagAt(g, ...x));
+    if (k === 6) rules(g, g.__rules, lt);
+    big.forEach(([tx, col, a]) => bigText(g, tx, col, a, 330));
+    hud(g, scenes, k, lt, st);
+  }
+  SIM_LIB.push({ id: 'rugbysentuh', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🏉', title: 'Permainan Rugby Sentuh',
+    desc: 'Tutorial asas: padang & zon cuba, 6 pemain, hantaran ke sisi/belakang, sentuhan & rollball, had 6 sentuhan, menjaringkan cuba, peraturan dan cara menang.',
+    scenes, dur: T0, render, sfx: [[33.5, 'sim_wisel'], [49.1, 'sim_sorak'], [57, 'sim_wisel'], [58, 'sim_sorak']] });
+})();
+
 /* ---------- tab SIMULASI ---------- */
 function viewSim(){                                  /* semua simulasi dipapar terus — tiada pilihan kelas / subjek */
   let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(245,224,138,.18),rgba(20,28,38,.9))">' +
@@ -11708,7 +12068,8 @@ function simPlay(id){
         '<input id="simBar" type="range" min="0" max="' + sim.dur + '" step="0.05" value="0" style="flex:1;accent-color:#F59E0B">' +
         '<span id="simTime" class="num" style="font-size:12px;min-width:74px;text-align:right">0:00</span>' +
         '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="spd" id="simSpd">1×</button>' +
-        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="voice" id="simVo" title="Suara penerangan"></button></div></div>';
+        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="voice" id="simVo" title="Suara penerangan"></button>' +
+        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="fs" id="simFs" title="Skrin penuh"><i class="fa-solid fa-expand"></i></button></div></div>';
   document.body.appendChild(root); lockBody(); orientFree();
   const cv = root.querySelector('#simCv'), g = cv.getContext('2d'), bar = root.querySelector('#simBar'), chs = root.querySelector('#simCh');
   const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -11748,12 +12109,15 @@ function simPlay(id){
     if (a === 'next') return seek(sim.scenes[Math.min(sim.scenes.length - 1, k + 1)].t0);
     if (a === 'ch') return seek(sim.scenes[+b.dataset.i].t0);
     if (a === 'spd'){ spd = spd === 1 ? .5 : spd === .5 ? 1.5 : 1; b.textContent = spd + '×'; }
+    if (a === 'fs'){ const d = document, on = d.fullscreenElement || d.webkitFullscreenElement;          /* tayangan skrin penuh (projektor) */
+      try { if (on) (d.exitFullscreen || d.webkitExitFullscreen).call(d); else (root.requestFullscreen || root.webkitRequestFullscreen).call(root); } catch(e){ toast('Skrin penuh tidak disokong pada peranti ini.', null, true); }
+      setTimeout(() => { const o = d.fullscreenElement || d.webkitFullscreenElement; b.innerHTML = '<i class="fa-solid fa-' + (o ? 'compress' : 'expand') + '"></i>'; }, 300); return; }
     if (a === 'voice'){ voiceOn = !voiceOn; S.config.simVoice = voiceOn ? 1 : 0; save(); voBtn(); if (!voiceOn) hush(); else spokenK = -1; } });
   cv.addEventListener('click', () => setPlay(!playing));                      // ketik skrin = jeda / main
   bar.addEventListener('input', () => { seek(+bar.value); });
   const onKey = e => { if (e.key === ' '){ e.preventDefault(); setPlay(!playing); } else if (e.key === 'ArrowRight') seek(t + 5); else if (e.key === 'ArrowLeft') seek(t - 5); else if (e.key === 'Escape') close(); };
   window.addEventListener('keydown', onKey);
-  function close(){ alive = false; hush(); window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
+  function close(){ alive = false; hush(); try { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d); } catch(e){} window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
   window.SIM_SEEK = seek;                                                     // untuk ujian / tangkapan skrin
   window.SIM_SAY = k => sayTxt(sim.scenes[k]);
   voBtn();
