@@ -6949,6 +6949,10 @@ const KM_WIN_CSS = `
 @keyframes kw4{0%{opacity:0;transform:translate3d(0,0,-200cqh) rotateZ(calc(var(--i) * 8deg)) scale(.4)}12%{opacity:1}28%{transform:translate3d(0,0,40cqh) rotateZ(calc(var(--i) * 4deg)) scale(1.3)}40%{transform:translate3d(calc(var(--fx) * 1.9),calc(var(--i) * 4cqh - 6cqh),25cqh) rotateZ(calc(var(--fr) * 3.5)) scale(1.2)}58%{transform:translate3d(var(--fx),0,14cqh) rotateZ(var(--fr)) scale(1.12)}86%{opacity:1;transform:translate3d(var(--fx),-1cqh,16cqh) rotateZ(var(--fr)) scale(1.14)}100%{opacity:0;transform:translate3d(var(--fx),0,170cqh) rotateZ(var(--fr)) scale(2)}}
 @keyframes kw5{0%{opacity:0;transform:translate3d(calc(var(--fx) * 4),45cqh,-420cqh) rotateY(620deg) rotateZ(90deg)}10%{opacity:1}40%{transform:translate3d(var(--fx),-2cqh,60cqh) rotateY(0) rotateZ(var(--fr)) scale(1.3)}50%{transform:translate3d(var(--fx),0,10cqh) rotateZ(var(--fr)) scale(1.05)}90%{opacity:1;transform:translate3d(var(--fx),-1cqh,12cqh) rotateZ(var(--fr)) scale(1.07)}100%{opacity:0;transform:translate3d(var(--fx),0,170cqh) rotateZ(var(--fr)) scale(1.9)}}
 `;
+/* nama kombo → fail suara juruhebah (assets/sfx/km_v_<kunci>.mp3); tiada fail = senyap */
+const kmVoiceKey = c => { c = String(c || '');
+  return /DIRAJA/i.test(c) ? 'diraja' : /BOM/.test(c) ? 'bom' : /^Empat/.test(c) ? 'kuad' : /Trio.*\+.*Pasangan/.test(c) ? 'penuh' :
+    /Turutan Elemen/.test(c) ? 'elemen' : /Turutan/.test(c) ? 'turutan' : /^Trio/.test(c) ? 'trio' : /^Pasangan/.test(c) ? 'pasangan' : /^Tunggal/.test(c) ? 'tunggal' : 'meja'; };
 function kmWinFx(stage, w){                               // w = { cards:[id], combo, name, av, mine }
   if (!stage || !w || !w.cards || !w.cards.length) return 0;
   kmStyle();
@@ -6982,6 +6986,8 @@ function kmWinFx(stage, w){                               // w = { cards:[id], c
   if (kind === 2) S(250, 'km_whoosh', 'swing');
   S(T.hit * 1000, kind === 4 ? 'km_bom' : 'km_hentam', kind === 4 ? 'burst' : 'impact');
   S(T.hit * 1000 + 120, kind === 5 ? 'km_lima' : 'km_menang', 'myth');
+  const vk = kmVoiceKey(w.combo);                                    // juruhebah menjerit nama kombo (fail km_v_<jenis>.mp3)
+  setTimeout(() => kmSafe(() => { if (!audPlay('km_v_' + vk, 1.2)) audPlay('km_v_meja', 1.2); }), T.hit * 1000 + 220);
   setTimeout(() => kmSafe(() => vibrate(kind >= 4 ? [80, 40, 120] : [60])), T.hit * 1000);
   setTimeout(() => el.remove(), total * 1000 + 100);
   }
