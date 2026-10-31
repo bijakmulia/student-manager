@@ -71,6 +71,14 @@
     { "id": "km_lima",        "g": "Tangga Ilmon", "k": "sfx", "s": 3.5, "p": "Legendary five-card ultimate combo victory, rising orchestral power surge with choir-like synth swell, thunder boom and golden sparkle shower, epic anime card game" },
     { "id": "km_bom",         "g": "Tangga Ilmon", "k": "sfx", "s": 2, "p": "Huge magical bomb explosion when four cards burst apart, heavy boom with crackling energy and debris whoosh, epic anime card game" },
 
+    { "id": "sim_wisel",      "g": "Simulasi", "k": "sfx", "s": 1, "p": "Referee whistle in an indoor sports hall, one short sharp blast, slight hall reverb" },
+    { "id": "sim_servis",     "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Volleyball serve, a firm open-palm hit on a leather volleyball, crisp pop with slight indoor gym echo" },
+    { "id": "sim_bump",       "g": "Simulasi", "k": "sfx", "s": 0.5, "p": "Volleyball forearm pass, a soft dull thump of a ball bouncing off forearms, indoor gym" },
+    { "id": "sim_set",        "g": "Simulasi", "k": "sfx", "s": 0.4, "p": "Volleyball overhead set, a light quick fingertip tap on a ball, soft and clean, indoor gym" },
+    { "id": "sim_spike",      "g": "Simulasi", "k": "sfx", "s": 0.7, "p": "Powerful volleyball spike, a loud hard slap of a palm smashing the ball, sharp crack with a whoosh, indoor gym" },
+    { "id": "sim_pantul",     "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Volleyball bouncing hard on a wooden gym floor, one loud bounce then a smaller second bounce" },
+    { "id": "sim_sorak",      "g": "Simulasi", "k": "sfx", "s": 3, "p": "Excited school crowd cheering and clapping in an indoor sports hall after a point is scored" },
+
     { "id": "bgm_menu",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Cheerful inspiring school game main menu theme, bright piano and light orchestra, warm and friendly, seamless loop, instrumental, 100 BPM" },
     { "id": "bgm_stor",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Upbeat cozy shop management game music, light marimba, ukulele and bouncy bass with subtle Malaysian gamelan bells, seamless loop, instrumental, 110 BPM" },
     { "id": "bgm_duel",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Energetic anime card battle music, driving drums, electric guitar and orchestral hits, heroic, seamless loop, instrumental, 140 BPM" },

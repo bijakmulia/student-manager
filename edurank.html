@@ -9988,7 +9988,9 @@ const SIM_LIB = [];
   }
   SIM_LIB.push({ id: 'voli', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🏐', title: 'Permainan Bola Tampar',
     desc: 'Tutorial asas: gelanggang, kedudukan & putaran, servis, hantaran dasar, umpan, rejaman & sekatan, peraturan dan sistem mata.',
-    scenes, dur: T0, render });
+    scenes, dur: T0, render,
+    /* bunyi pada saat aksi (fail assets/sfx/sim_*.mp3; senyap jika tiada) */
+    sfx: [[17.2, 'sim_wisel'], [19.75, 'sim_servis'], [24.6, 'sim_bump'], [30.5, 'sim_set'], [37.7, 'sim_spike'], [38.2, 'sim_pantul'], [38.5, 'sim_sorak'], [39.4, 'sim_wisel'], [60.2, 'sim_wisel'], [60.4, 'sim_sorak']] });
 })();
 
 /* ---------- tab SIMULASI ---------- */
@@ -10038,7 +10040,9 @@ function simPlay(id){
   const setPlay = v => { playing = v; root.querySelector('#simPlayB').innerHTML = '<i class="fa-solid fa-' + (v ? 'pause' : 'play') + '"></i>'; last = performance.now(); };
   const seek = x => { t = cl(x, 0, sim.dur - .001); drawnT = -1; draw(); };
   const frame = now => { if (!alive) return; const dt = Math.min(.1, (now - last) / 1000); last = now;
-    if (playing){ t += dt * spd; if (t >= sim.dur){ t = sim.dur - .001; setPlay(false); } drawnT = -1; } draw(); requestAnimationFrame(frame); };
+    if (playing){ const t0 = t; t += dt * spd; if (t >= sim.dur){ t = sim.dur - .001; setPlay(false); } drawnT = -1;
+      (sim.sfx || []).forEach(([at, id]) => { if (at > t0 && at <= t) audPlay(id); }); }      // bunyi hanya semasa dimainkan (bukan bila diseret)
+    draw(); requestAnimationFrame(frame); };
   function cl(v, a, b){ return Math.max(a, Math.min(b, v)); }
   root.addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; const a = b.dataset.s, k = sceneAt(t);
     if (a === 'x') return close();
