@@ -8334,8 +8334,12 @@ const KL_ASSETS = [
   { id:'pesakit_l_risau', r:'2:3', p:'Malaysian teenage schoolboy about 14 years old in white school shirt, worried and shy expression, hand on the back of his neck, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
   { id:'pesakit_l_gembira', r:'2:3', p:'Malaysian teenage schoolboy about 14 years old in white school shirt, relieved happy smile, giving a thumbs up, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
   { id:'pesakit_p_risau', r:'2:3', p:'Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, worried and shy expression, hands together, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
-  { id:'pesakit_p_gembira', r:'2:3', p:'Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, relieved happy smile, waving, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' }
+  { id:'pesakit_p_gembira', r:'2:3', p:'Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, relieved happy smile, waving, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
+  { id:'muka_l', r:'1:1', tpl:1, p:'Use the attached template image EXACTLY as the layout guide: same 1:1 square canvas, the face oval fills the beige oval at the same position and size, eyes, nose and mouth at the same places, ears at the sides. The areas inside the green dashed circles must be plain smooth clear skin with no hair, no hijab, no hands, no shadows, no pimples and no marks. Remove all guide lines and green circles in the final picture. Close-up front view portrait of the same Malaysian teenage schoolboy, short neat black hair, white school shirt collar, calm slightly worried expression, looking straight ahead, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 1:1 square' },
+  { id:'muka_p', r:'1:1', tpl:1, p:'Use the attached template image EXACTLY as the layout guide: same 1:1 square canvas, the face oval fills the beige oval at the same position and size, eyes, nose and mouth at the same places, ears at the sides. The areas inside the green dashed circles must be plain smooth clear skin with no hair, no hijab, no hands, no shadows, no pimples and no marks. Remove all guide lines and green circles in the final picture. Close-up front view portrait of the same Malaysian teenage schoolgirl wearing a white school hijab that frames the face but does NOT cover the forehead circles or cheeks, calm slightly worried expression, looking straight ahead, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 1:1 square' }
 ];
+/* zon jerawat pada gambar muka_l / muka_p (% kanvas) — sama dengan tools/template/templat_muka.png */
+const KL_MUKA = [[42, 31], [58, 29], [31, 59], [69, 59], [35, 70], [65, 70], [50, 85]];
 function klProbe(){
   if (KL_PROBED) return KL_PROBED;
   KL_PROBED = fetch('assets/klinik/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
@@ -8459,7 +8463,7 @@ function klAva(g, mood, look){
 }
 const klPatImg = (g, mood, look) => {
   const id = 'pesakit_' + (g === 'P' ? 'p' : 'l') + '_' + (mood === 'gembira' ? 'gembira' : 'risau');
-  return KL_HAVE.has(id) && !(look === 'jerawat' && mood !== 'gembira') ? '<img src="' + KL_HAVE.get(id) + '" alt="" draggable="false">' : klAva(g, mood, look);   // jerawat: lukisan app supaya bintik kelihatan
+  return KL_HAVE.has(id) && !(look === 'jerawat' && mood !== 'gembira' && !KL_HAVE.has('muka_' + (g === 'P' ? 'p' : 'l'))) ? '<img src="' + KL_HAVE.get(id) + '" alt="" draggable="false">' : klAva(g, mood, look);   // jerawat: lukisan app supaya bintik kelihatan
 };
 let KL_CSS = false;
 function klStyle(){
@@ -8494,7 +8498,7 @@ function klStyle(){
   '.kl-go:disabled{opacity:.4}.kl-fb{border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px;line-height:1.45;animation:klPop .3s}.kl-fb.ok{background:#14532D;border:1px solid #4ADE80}.kl-fb.no{background:#451A1A;border:1px solid #F87171}' +
   '.kl-msg{min-height:22px;font-weight:800;font-size:14px;color:#FDE68A;margin:6px 0}' +
   '.kl-face{position:relative;width:min(100%,330px);aspect-ratio:1;margin:4px auto;touch-action:none;cursor:pointer}.kl-face svg{width:100%;height:100%}' +
-  '.kl-face .dirt{position:absolute;inset:8% 14% 6%;border-radius:45%;background:radial-gradient(circle,#A16207aa,#78350F88);pointer-events:none;transition:opacity .15s}' +
+  '.kl-face img{width:100%;height:100%;display:block;pointer-events:none}.kl-face.art .dirt{inset:18% 22% 10%;border-radius:50%}.kl-face.art .kl-spot{width:7%;height:7%;margin:-3.5% 0 0 -3.5%}.kl-face .dirt{position:absolute;inset:8% 14% 6%;border-radius:45%;background:radial-gradient(circle,#A16207aa,#78350F88);pointer-events:none;transition:opacity .15s}' +
   '.kl-spot{position:absolute;width:9%;height:9%;margin:-4.5% 0 0 -4.5%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FCA5A5,#DC2626 60%,#991B1B);border:0;box-shadow:0 0 0 3px #FEE2E255;cursor:pointer;transition:all .3s}' +
   '.kl-spot.done{background:radial-gradient(circle,#FDF2F8,#F9A8D4);transform:scale(.6);box-shadow:none}.kl-spot.bad{transform:scale(1.5);background:radial-gradient(circle,#B91C1C,#7F1D1D)}' +
   '.kl-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.kl-tools button{background:#1E293B;border:2px solid #334155;border-radius:12px;color:#fff;font-weight:800;padding:8px 12px;font-size:14px;cursor:pointer}.kl-tools button.on{border-color:#34D399;background:#134E4A}' +
@@ -8525,7 +8529,7 @@ function klRun(team){
   let pool = KL_CASES.filter(c => (cfg.jenis === 'semua' || (cfg.jenis === 'fizikal') === (c.t === 'f')) && (cfg.sens || !c.sens) && (cfg.jantina === 'campur' || !c.g || c.g === cfg.jantina));
   if (!pool.length) pool = KL_CASES.filter(c => !c.sens);
   const N = +cfg.n || 6, queue = [];
-  while (queue.length < N){ klShuf(pool).forEach(c => { if (queue.length < N && (!queue.length || queue[queue.length - 1].id !== c.id)) queue.push(c); }); }
+  while (queue.length < N){ klShuf(pool).forEach(c => { if (queue.length < N && (pool.length < 2 || !queue.length || queue[queue.length - 1].id !== c.id)) queue.push(c); }); }
   const usedNm = new Set();
   const pats = queue.map(c => { const g = c.g || (cfg.jantina !== 'campur' ? cfg.jantina : Math.random() < .5 ? 'L' : 'P');
     const nm = klShuf(KL_NAMES[g]).find(n => !usedNm.has(n)) || KL_NAMES[g][0]; usedNm.add(nm); return { c, g, nm, age: 13 + Math.floor(Math.random() * 4) }; });
@@ -8577,11 +8581,11 @@ function klRun(team){
   const mgDone = (pts, maxp) => { P.max += maxp; P.pts += pts; add(pts); sfx('myth'); pat('gembira'); say('Terima kasih, doktor! Rasa lebih baik.'); setTimeout(() => { if (!over) pharmacy(); }, 1300); };
   /* mini-game: jerawat — cuci muka, kemudian sapu krim pada setiap jerawat (jangan picit!) */
   function mgAcne(){
-    const spots = [[30, 46], [70, 44], [44, 30], [60, 62], [34, 64], [66, 28], [50, 52]];
+    const art = KL_HAVE.get('muka_' + (P.g === 'P' ? 'p' : 'l')), spots = art ? KL_MUKA : [[30, 46], [70, 44], [44, 30], [60, 62], [34, 64], [66, 28], [50, 52]];   /* gambar muka ikut templat: jerawat di zon templat */
     let tool = 'cuci', clean = 0, done = 0, mis = 0;
     pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Rawat jerawat ' + esc(P.nm)) +
       '<div class="kl-tools"><button data-t="cuci" class="on">🧼 Pencuci muka</button><button data-t="krim">🧴 Krim jerawat</button><button data-t="picit">🤏 Picit</button></div><div class="kl-msg" id="klMsg">Gosok muka dengan pencuci sehingga bersih.</div>' +
-      '<div class="kl-face" id="klFace">' + klFace(P.g) + '<div class="dirt" id="klDirt"></div>' + spots.map(([x, y], i) => '<button class="kl-spot" data-s="' + i + '" style="left:' + x + '%;top:' + y + '%"></button>').join('') + '</div>';
+      '<div class="kl-face' + (art ? ' art' : '') + '" id="klFace">' + (art ? '<img src="' + art + '" alt="" draggable="false">' : klFace(P.g)) + '<div class="dirt" id="klDirt"></div>' + spots.map(([x, y], i) => '<button class="kl-spot" data-s="' + i + '" style="left:' + x + '%;top:' + y + '%"></button>').join('') + '</div>';
     const m = t => $k('#klMsg').innerHTML = t, face = $k('#klFace');
     pan().querySelector('.kl-tools').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; tool = b.dataset.t; pan().querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === b)); sfx('flip');
       m(tool === 'cuci' ? 'Gosok muka dengan pencuci.' : tool === 'krim' ? 'Ketik setiap jerawat untuk sapu krim.' : 'Hmm… betul ke nak picit?'); };
@@ -8761,7 +8765,7 @@ const ST_SHELF_ROWS = {
   sukan1: [['bet_pingpong', 'kayu_hoki', 'pelindung_kaki'], ['pelindung_lutut', 'raket_tenis', 'raket_badminton'], ['sarung_tinju', 'kasut_larian'], ['botol_air', 'topi_keledar', 'wisel']],
   sukan2: [['bola_sepak', 'bola_tampar', 'bola_keranjang'], ['bola_jaring', 'bola_takraw', 'bola_hoki', 'bola_tenis'], ['sarung_gol', 'jersi', 'seluar_sukan'], ['tali_lompat', 'tikar_yoga']],
   makan:  [['yogurt', 'alpukat', 'air_kelapa'], ['tembikai', 'brokoli', 'betik'], ['pisang', 'oren', 'epal'], ['telur_rebus', 'salad', 'air_kosong']],
-  jus:    [['tauhu', 'ikan_bakar', 'ayam_panggang'], ['j_susu', 'j_yogurt', 'j_kelapa', 'j_pisang'], ['j_tembikai', 'j_oren', 'mangga', 'strawberi'], ['bayam', 'timun', 'chia', 'madu']]
+  jus:    [['tauhu', 'ikan_bakar', 'ayam_panggang'], ['j_susu', 'nanas', 'j_kelapa', 'j_pisang'], ['j_tembikai', 'j_oren', 'mangga', 'strawberi'], ['bayam', 'timun', 'lobak', 'madu']]
 };
 const ST_SPOT = {}; Object.entries(ST_SHELF_ROWS).forEach(([sh, rows]) => rows.forEach((r, lv) => r.forEach((id, k) => ST_SPOT[id] = { sh, lv, k, n: r.length })));
 const ST_TAGS = { k:['🍚','Karbohidrat'], p:['🍗','Protein'], l:['🥑','Lemak sihat'], v:['🥦','Vitamin & serat'], h:['💧','Cecair'], x:['⚠️','Tidak sihat'] };
@@ -8822,7 +8826,7 @@ const ST_ITEMS = [
   ['ikan_bakar','Ikan Bakar','🐟','sejuk','p',9,['dapur',7],'a grilled fish on a banana leaf with lime'],
   // ---- RAK BAHAN JUS BLEND (tg 'j'): img = guna gambar barang lain yang sama; col = warna lapisan dalam blender ----
   ['j_susu','Susu','🥛','jus','j',2,null,'','susu','#F7F4EC'],
-  ['j_yogurt','Yogurt','🫙','jus','j',2,null,'','yogurt','#FFF3D6'],
+  ['nanas','Nanas','🍍','jus','j',2,null,'a whole ripe golden pineapple with green leafy crown'],
   ['j_kelapa','Air Kelapa','🥥','jus','j',2,null,'','air_kelapa','#E9F5D2'],
   ['j_pisang','Pisang','🍌','jus','j',1,null,'','pisang','#F6DE6E'],
   ['j_tembikai','Tembikai','🍉','jus','j',2,null,'','tembikai','#F0525C'],
@@ -8831,25 +8835,25 @@ const ST_ITEMS = [
   ['strawberi','Strawberi','🍓','jus','j',2,null,'three bright red strawberries with green tops'],
   ['bayam','Bayam','🥬','jus','j',1,null,'a small bunch of fresh green spinach leaves'],
   ['timun','Timun','🥒','jus','j',1,null,'a fresh green cucumber with a few round slices'],
-  ['chia','Biji Chia','⚫','jus','j',2,null,'a small glass jar of tiny black chia seeds with a wooden scoop'],
+  ['lobak','Lobak Merah','🥕','jus','j',1,null,'two fresh orange carrots with green leafy tops'],
   ['madu','Madu','🍯','jus','j',2,null,'a small honey jar with a wooden honey dipper dripping golden honey']
 ].map(([id, n, e, sh, tg, p, prep, d, img, col]) => ({ id, n, e, sh: ST_SPOT[id] ? ST_SPOT[id].sh : null, tg, p, prep, d, img, col }))
   .filter(i => i.sh).map(i => Object.assign(i, { z: ST_SHELVES.find(s => s[0] === i.sh)[2] }));
 /* tin bahan jus (aset tin_<id>): gambar pada pembalut, warna latar pembalut */
-const ST_TIN = [['j_susu', 'a glass of fresh white milk with a milk splash', 'light sky-blue'], ['j_yogurt', 'a small bowl of creamy white yogurt', 'light blue'],
+const ST_TIN = [['j_susu', 'a glass of fresh white milk with a milk splash', 'light sky-blue'], ['nanas', 'a whole ripe golden pineapple with a green crown', 'light blue'],
   ['j_kelapa', 'a green young coconut cut open showing white flesh', 'light green'], ['j_pisang', 'a bunch of ripe yellow bananas', 'light blue'],
   ['j_tembikai', 'a juicy red watermelon slice with black seeds', 'light green'], ['j_oren', 'a whole orange and a half orange slice', 'light green'],
   ['mangga', 'a ripe yellow-orange mango with a green leaf', 'light green'], ['strawberi', 'three bright red strawberries with green tops', 'cream white'],
   ['bayam', 'a bunch of fresh green spinach leaves', 'cream white'], ['timun', 'a green cucumber with a few round slices', 'cream white'],
-  ['chia', 'a heap of tiny black chia seeds on a wooden spoon', 'cream white'], ['madu', 'a golden honeycomb with dripping golden honey', 'light blue']];
-const ST_COL = { j_susu:'#F7F4EC', j_yogurt:'#FFF3D6', j_kelapa:'#E9F5D2', j_pisang:'#F6DE6E', j_tembikai:'#F0525C', j_oren:'#FF9F2E', mangga:'#FFC233', strawberi:'#E8384F', bayam:'#3F9D3F', timun:'#A6D86E', chia:'#5B5B5B', madu:'#E3A21A' };
-/* 5 resipi JUS BLEND SIHAT: bahan (tanpa mengira susunan), warna jus siap, huraian gelas (prompt aset jus_<id>) */
+  ['lobak', 'two fresh orange carrots with green leafy tops', 'cream white'], ['madu', 'a golden honeycomb with dripping golden honey', 'light blue']];
+const ST_COL = { j_susu:'#F7F4EC', nanas:'#F7D046', j_kelapa:'#E9F5D2', j_pisang:'#F6DE6E', j_tembikai:'#F0525C', j_oren:'#FF9F2E', mangga:'#FFC233', strawberi:'#E8384F', bayam:'#3F9D3F', timun:'#A6D86E', lobak:'#F28C28', madu:'#E3A21A' };
+/* 5 resipi JUS BLEND SIHAT (3 bahan setiap satu): bahan (tanpa mengira susunan), warna jus siap, huraian gelas (prompt aset jus_<id>) */
 const ST_JUS = [
-  ['tembikai_chia', 'Jus Tembikai Chia', ['j_susu', 'j_tembikai', 'chia', 'j_pisang'], '#F59AA2', 'a deep red watermelon milk smoothie (red, not pink) sprinkled with tiny black chia seeds, a watermelon wedge on the rim'],
-  ['hijau_segar', 'Jus Hijau Segar', ['bayam', 'timun', 'j_kelapa', 'madu'], '#8CC63F', 'a bright green spinach and cucumber juice with a cucumber slice on the rim'],
-  ['mangga_sunrise', 'Smoothie Mangga Sunrise', ['mangga', 'j_oren', 'j_yogurt', 'madu'], '#FFB13B', 'a golden mango orange smoothie with a mango cube and orange slice on the rim'],
-  ['strawberi_pisang', 'Smoothie Strawberi Pisang', ['strawberi', 'j_pisang', 'j_yogurt', 'j_susu'], '#F48FA6', 'a creamy deep red strawberry banana smoothie (red, not pink) with a strawberry on the rim'],
-  ['tropika_kelapa', 'Jus Tropika Kelapa', ['j_oren', 'mangga', 'j_kelapa', 'chia'], '#FFCB5C', 'a light orange tropical coconut juice with chia seeds and a small paper umbrella']
+  ['tembikai_chia', 'Jus Tembikai Susu', ['j_susu', 'j_tembikai', 'j_pisang'], '#F59AA2', 'a deep red watermelon milk smoothie (red, not pink), a watermelon wedge on the rim'],
+  ['hijau_segar', 'Jus Hijau Segar', ['bayam', 'timun', 'madu'], '#8CC63F', 'a bright green spinach and cucumber juice with a cucumber slice on the rim'],
+  ['mangga_sunrise', 'Smoothie Mangga Sunrise', ['mangga', 'j_oren', 'lobak'], '#FFA62B', 'a golden mango orange carrot juice with a mango cube and orange slice on the rim'],
+  ['strawberi_pisang', 'Smoothie Strawberi Pisang', ['strawberi', 'j_pisang', 'j_susu'], '#F48FA6', 'a creamy deep red strawberry banana smoothie (red, not pink) with a strawberry on the rim'],
+  ['tropika_kelapa', 'Jus Tropika Kelapa', ['j_kelapa', 'nanas', 'madu'], '#FFD86B', 'a light golden pineapple coconut juice with a pineapple wedge and a small paper umbrella']
 ].map(([id, n, ings, col, d]) => ({ id, n, ings, col, d }));
 /* kalori sehidang (anggaran, kcal) */
 const ST_KCAL = { pisang:105, epal:95, oren:60, tembikai:85, betik:120, brokoli:55, salad:150, alpukat:160, jus_oren:110, smoothie:250,
@@ -9723,13 +9727,13 @@ function storRun(team, mp){
     });
   }
   /* Blender (logik LAPISAN): setiap bahan = satu lapisan warna dari bawah; bila cukup resipi → dikisar jadi satu warna */
-  const BL_MAX = 5;
+  const BL_MAX = 3;
   function paintBl(pour){
     const L2 = $s('#stBlL'), r = bl.r;
     if (r || bl.blending){
       const col = r ? r.col : (jusOf(bl.blending) || {}).col;
       L2.innerHTML = '<i class="mix' + (bl.blending ? ' spin' : '') + '" style="height:' + (bl.ings.length / BL_MAX * 100) + '%;background:' + col + '"></i>';
-    } else L2.innerHTML = bl.ings.map((id, j) => '<i class="' + (pour && j === bl.ings.length - 1 ? 'pour' : '') + (id === 'chia' ? ' seed' : '') + '" style="height:' + (100 / BL_MAX) + '%;background:' + ST_COL[id] + '"></i>').join('');
+    } else L2.innerHTML = bl.ings.map((id, j) => '<i class="' + (pour && j === bl.ings.length - 1 ? 'pour' : '') + '' + '" style="height:' + (100 / BL_MAX) + '%;background:' + ST_COL[id] + '"></i>').join('');
     $s('#stBl').classList.toggle('ready', !!r);
     $s('#stBl').classList.toggle('busy', !!bl.blending);
     $s('#stBlN').textContent = r ? '✓ ' + r.n : bl.blending ? 'MENGISAR…' : bl.ings.length ? bl.ings.length + ' bahan' : 'BLENDER';
@@ -9845,7 +9849,7 @@ function storRun(team, mp){
           msg('🥤 ' + esc(r.n) + ' siap atas kaunter! Seret jus kepada pelanggan.', '#86EFAC', 1800);
         } else { bl.r = r; paintBl(); msg('🥤 ' + esc(r.n) + ' siap — kaunter penuh, jus kekal dalam blender.', '#FDE68A', 1800); }
       }, 1500);
-    } else if (bl.ings.length >= 4) msg('Kombinasi ini bukan resipi jus — seret blender ke tong sampah.', '#FCA5A5', 1800);
+    } else if (bl.ings.length >= 3) msg('Kombinasi ini bukan resipi jus — seret blender ke tong sampah.', '#FCA5A5', 1800);
   }
   function giveJus(z, i, ti, quiet){
     const x = tray[ti], c = cust[z][i]; if (!x || !c || c.leaving) return false;

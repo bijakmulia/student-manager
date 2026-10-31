@@ -1,5 +1,6 @@
 ASET KLINIK REMAJA (pilihan) — jana dengan ChatGPT / Gemini, simpan dengan nama fail TEPAT dalam folder assets/klinik.
 Latar magenta dibuang automatik oleh auto-push. Tanpa gambar, game guna watak yang dilukis app.
+muka_l & muka_p: LAMPIRKAN tools/template/templat_muka.png bersama prompt (zon jerawat mesti kulit licin).
 
 1. bg_klinik.png  (3:2)
 Bright cheerful school health clinic room interior for teenagers, cartoon game background, examination bed with curtain, doctor desk with computer, health posters on pastel mint walls, window with daylight, medicine cabinet, clean and friendly, no people, no text, flat vector style, 3:2 landscape
@@ -21,3 +22,9 @@ Malaysian teenage schoolgirl about 14 years old in white school hijab and light 
 
 7. pesakit_p_gembira.png  (2:3)
 Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, relieved happy smile, waving, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait
+
+8. muka_l.png  (1:1, lampir templat_muka.png)
+Use the attached template image EXACTLY as the layout guide: same 1:1 square canvas, the face oval fills the beige oval at the same position and size, eyes, nose and mouth at the same places, ears at the sides. The areas inside the green dashed circles must be plain smooth clear skin with no hair, no hijab, no hands, no shadows, no pimples and no marks. Remove all guide lines and green circles in the final picture. Close-up front view portrait of the same Malaysian teenage schoolboy, short neat black hair, white school shirt collar, calm slightly worried expression, looking straight ahead, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 1:1 square
+
+9. muka_p.png  (1:1, lampir templat_muka.png)
+Use the attached template image EXACTLY as the layout guide: same 1:1 square canvas, the face oval fills the beige oval at the same position and size, eyes, nose and mouth at the same places, ears at the sides. The areas inside the green dashed circles must be plain smooth clear skin with no hair, no hijab, no hands, no shadows, no pimples and no marks. Remove all guide lines and green circles in the final picture. Close-up front view portrait of the same Malaysian teenage schoolgirl wearing a white school hijab that frames the face but does NOT cover the forehead circles or cheeks, calm slightly worried expression, looking straight ahead, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 1:1 square
