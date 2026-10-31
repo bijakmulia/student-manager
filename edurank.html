@@ -1009,6 +1009,7 @@ function renderTab(){
   else if (t==='report') m.innerHTML = viewReport();
   else if (t==='msc') m.innerHTML = muridShowcase();
   else m.innerHTML = viewSettings();
+  if (MURID) $$('#main [data-act="km-join"], #main [data-act="qbank"]').forEach(e => e.remove());   /* versi murid: solo sahaja */
   if (typeof LOBBY !== 'undefined' && LOBBY && LOBBY.repaint) LOBBY.repaint();     // menu game terbuka: segarkan (cth. selepas buka pack)
 }
 function renderContext(){
@@ -5812,6 +5813,11 @@ const GAME_LOBBY = {
     main: () => {
       const K = komboLb(), all = classTeams(), seats = kmSeats(K, all);
       const b = (on, a, label) => '<button class="' + (on ? 'on' : '') + '" data-lb="' + a + '">' + label + '</button>';
+      if (MURID){ K.multi = false;
+        return '<div class="km-lh"><span class="i">🪜</span><b>TANGGA ILMON</b><span class="sp"></span><button data-lb="how" title="Cara main">📖</button><button data-act="snd" title="Bunyi">🔊</button><button data-lb="exit" title="Keluar">✕</button></div>' +
+          '<div class="lb-sec">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah', 'Mudah'], ['sederhana', 'Sederhana'], ['sukar', 'Sukar']].map(([k, l]) => b(K.lvl === k, 'kml:' + k, l)).join('') + '</div>' +
+          '<div class="lb-note">Kamu lawan 3 robot. Markah PBD: Mudah ×0.8 · Sederhana ×1 · <b>Sukar ×1.2</b></div>' +
+          '<button class="lb-btn go" data-lb="kmgo">▶ MULA</button>'; }
       const top = '<div class="km-lh"><span class="i">🪜</span><b>TANGGA ILMON</b><span class="sp"></span><button data-lb="how" title="Cara main">📖</button><button data-act="snd" title="Bunyi">🔊</button><button data-lb="set" title="Tetapan">⚙️</button><button data-lb="exit" title="Keluar">✕</button></div>';
       const mode = '<div class="lb-seg">' + b(!K.multi, 'kmm:0', '📺 1 peranti') + b(K.multi, 'kmm:1', '📱 Banyak peranti') + '</div>';
       if (all.length < 4) return top + mode + '<div class="lb-note" style="color:#FCA5A5;margin-top:10px;font-size:12px">⚠️ Perlu <b>4 kumpulan</b> (yang ada ahli) dalam kelas ini — sekarang ada <b>' + all.length + '</b>.</div>' +
@@ -5976,13 +5982,14 @@ function gameLobby(k){
     if (view === 'main' && def.full){ h = def.main(); }
     else if (view === 'main'){
       h = head() + '<div class="lb-d">' + def.desc + '</div>' + loadHtml() + todayQNotice() + (def.main ? def.main() : '') +
-        def.starts.map(([label], i) => '<button class="lb-btn go" data-lb="go' + i + '"' + (ready ? '' : ' disabled') + '>' + label + '</button>').join('') +
-        (def.noTeam ? '' : '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>') +
+        (MURID ? def.starts.slice(0, 1) : def.starts).map(([label], i) => '<button class="lb-btn go" data-lb="go' + i + '"' + (ready ? '' : ' disabled') + '>' + (MURID ? '▶ MULA' : label) + '</button>').join('') +
+        (MURID && /^[pl]$/.test(def.cfg().watak || '') ? '<button class="lb-btn" data-lb="mwat">🧍 Watak<span class="r">' + (def.cfg().watak === 'l' ? 'Lelaki' : 'Perempuan') + ' ›</span></button>' : '') +
+        (def.noTeam || MURID ? '' : '<button class="lb-btn" data-lb="team">👥 Pemain<span class="r">' + (t ? teamAvatar(t.id, 22) + '<span>' + esc(t.name) + '</span>' : '<span>pilih</span>') + ' ›</span></button>') +
         (def.menu || []).map(([v, label, r]) => '<button class="lb-btn" data-lb="' + v + '">' + label + '<span class="r">' + r + '</span></button>').join('') +
-        '<button class="lb-btn" data-lb="set">⚙️ Tetapan<span class="r">tahap & masa ›</span></button>' +
+        (MURID ? '' : '<button class="lb-btn" data-lb="set">⚙️ Tetapan<span class="r">tahap & masa ›</span></button>') +
         '<button class="lb-btn" data-lb="how">📖 Cara Main<span class="r">›</span></button>' +
         '<button class="lb-btn" data-act="snd">🔊 Bunyi<span class="r">' + (bgmOn() ? 'lagu hidup' : 'lagu mati') + ' · ' + Math.round(masterVol() * 100) + '% ›</span></button>' +
-        '<button class="lb-btn x" data-lb="exit">✕ Keluar</button>' + lvNote();
+        '<button class="lb-btn x" data-lb="exit">✕ Keluar</button>' + (MURID ? '' : lvNote());
     } else if (view === 'team'){
       h = '<div class="lb-h"><button data-lb="back">‹</button>PILIH KUMPULAN</div><div class="lb-scroll">' + classTeams().map(g =>
         '<button class="lb-team' + (g.id === o.team ? ' on' : '') + '" data-lt="' + g.id + '">' + teamAvatar(g.id, 34) +
@@ -6020,6 +6027,7 @@ function gameLobby(k){
     if (b.dataset.ls){ const cfg = def.cfg(); cfg[b.dataset.ls] = b.dataset.ln === '1' ? +b.dataset.lv : b.dataset.lv; save(); paint(); return; }
     const a = b.dataset.lb;
     if (a === 'back'){ view = 'main'; return paint(); }
+    if (a === 'mwat'){ const c = def.cfg(); c.watak = c.watak === 'l' ? 'p' : 'l'; return paint(); }   /* versi murid: tukar watak lelaki / perempuan */
     if (def.views && def.views[a]){ view = a; return paint(); }
     if (def.act && def.act(a, b, ctx)) return;
     if (a === 'team' || a === 'set' || a === 'how'){ view = a; return paint(); }
@@ -14345,8 +14353,11 @@ async function muridDb(){
   }
   return KM_APP;
 }
+const KM_LVL_X = { mudah: .8, sederhana: 1, sukar: 1.2 };          /* tahap robot Tangga Ilmon → pemberat ketepatan PBD */
+const muridAcc = v => Math.min(1, (+v.r || 0) / v.n * ((v.x && KM_LVL_X[v.x.lvl]) || 1));
 function muridResult(game, right, asked, extra){
   if (!asked || !MURID || !MURID.me) return 0;
+  if (game === 'tangga') extra = Object.assign({}, extra, { lvl: komboLb().lvl || 'sederhana' });
   if (MURID.pack && MURID.pack.awam){ setTimeout(() => toast('🌍 Mod Awam: main saje-saje, markah tidak direkod.'), 900); return 0; }
   const dayKey = MURID.me.i + '|' + (S.ui.activeSubjectId || '') + '|' + todayKey();
   let days = {}; try { days = JSON.parse(localStorage.getItem('rk_murid_day') || '{}'); } catch(e){}
@@ -14358,7 +14369,7 @@ function muridResult(game, right, asked, extra){
   const q = (() => { try { return JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){ return []; } })();
   q.push(rec); try { localStorage.setItem('rk_murid_q', JSON.stringify(q.slice(-50))); } catch(e){}
   muridFlush();
-  return calcTP(accRate(right / asked));
+  return calcTP(accRate(muridAcc(rec)));
 }
 /* hantar baris gilir (kekal dalam peranti jika tiada internet; dihantar semula kemudian) */
 async function muridFlush(){
@@ -14390,7 +14401,7 @@ async function muridRecvStart(){
 }
 function muridApply(v){
   const st = stu(v.s), sj = v.sj; if (!st || !sj || !v.n || !S.subjects.some(x => x.id === sj)) return false;
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(v.d) ? v.d : todayKey(), rate = accRate(v.r / v.n), grp = (S.groups || []).find(g => g.classId === st.classId && (g.members || []).includes(st.id));
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(v.d) ? v.d : todayKey(), rate = accRate(muridAcc(v)), grp = (S.groups || []).find(g => g.classId === st.classId && (g.members || []).includes(st.id));
   S.records[st.id] = S.records[st.id] || {}; S.records[st.id][sj] = S.records[st.id][sj] || {};
   const rec = S.records[st.id][sj][date] || { metricScores:{}, metricCount:0, totalScore:0, touchCount:0 };
   rec.games = rec.games || [];
