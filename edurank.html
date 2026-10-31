@@ -8361,8 +8361,8 @@ const KL_CASES = [
   { id:'bau', t:'f', g:'', look:'bau', nm:'Bau badan', topik:'Kebersihan diri',
     cerita:['Lepas kelas PJ, kawan-kawan jauhkan diri dari saya…', 'Mereka kata saya bau badan. Saya rasa sedih sangat.'],
     dx:['Bau badan — peluh & bakteria kerana kebersihan kurang', 'Penyakit jantung', 'Kurang tidur'],
-    game:'susun', steps:['🚿 Mandi selepas bersukan', '🧼 Sabun ketiak & celah badan', '🧻 Lap badan hingga kering', '🧴 Pakai deodoran', '👕 Pakai baju yang bersih'],
-    trap:['🌸 Sembur minyak wangi tanpa mandi', 'Minyak wangi hanya menutup bau — bakteria masih ada. Mandi dahulu!'],
+    game:'pilih', ptitle:'Pilih SEMUA rutin kebersihan yang betul', good:['🚿 Mandi selepas bersukan', '🧼 Sabun ketiak & celah badan', '🧻 Lap badan hingga kering', '🧴 Pakai deodoran', '👕 Pakai baju yang bersih'],
+    bad:['🌸 Sembur minyak wangi tanpa mandi', '👚 Pakai semula baju semalam', '💧 Mandi tanpa sabun'],
     tips:['Mandi sekurang-kurangnya 2 kali sehari dan selepas bersukan.', 'Sabun bahagian ketiak, leher dan celah badan.', 'Pakai deodoran dan baju yang bersih serta kering.', 'Tukar stokin & pakaian dalam setiap hari.'] },
   { id:'senggugut', t:'f', g:'P', look:'senggugut', nm:'Senggugut', topik:'Kesihatan reproduktif',
     cerita:['Doktor, setiap kali datang haid, perut saya sakit sangat…', 'Saya tak boleh fokus dalam kelas dan rasa nak menangis.'],
@@ -8378,8 +8378,8 @@ const KL_CASES = [
   { id:'tidur', t:'f', g:'', look:'letih', nm:'Kurang tidur', topik:'Gaya hidup sihat',
     cerita:['Saya selalu mengantuk dalam kelas, doktor…', 'Malam-malam saya main telefon sampai pukul 2 pagi.'],
     dx:['Kurang tidur — guna gajet lewat malam', 'Penyakit kencing manis', 'Malas sejak lahir'],
-    game:'susun', steps:['📵 Simpan telefon 1 jam sebelum tidur', '🚿 Mandi & bersihkan diri', '📖 Baca buku atau ulang kaji ringan', '💡 Tutup lampu', '😴 Tidur sebelum 10.30 malam'],
-    trap:['☕ Minum kopi pekat waktu malam', 'Kafein membuatkan otak terus berjaga — susah nak tidur!'],
+    game:'pilih', ptitle:'Pilih SEMUA tabiat tidur yang betul', good:['📵 Simpan telefon 1 jam sebelum tidur', '🚿 Mandi & bersihkan diri', '📖 Baca buku atau ulang kaji ringan', '💡 Tutup lampu', '😴 Tidur sebelum 10.30 malam'],
+    bad:['☕ Minum kopi pekat waktu malam', '📱 Main telefon di atas katil', '🎮 Main game sampai lewat malam'],
     tips:['Remaja perlukan 8–10 jam tidur setiap malam.', 'Simpan gajet sekurang-kurangnya 1 jam sebelum tidur.', 'Tidur & bangun pada waktu yang sama setiap hari.', 'Elak kafein (kopi, minuman tenaga) pada waktu petang & malam.'] },
   { id:'sarapan', t:'f', g:'', look:'pening', nm:'Pening tidak bersarapan', topik:'Pemakanan sihat',
     cerita:['Saya jarang sarapan sebab tak sempat…', 'Pukul 10 pagi saya pening, lemah dan tangan menggigil.'],
@@ -8547,7 +8547,11 @@ function klRun(team){
   const $k = s => root.querySelector(s), pan = () => $k('#klPan');
   const hud = () => { $k('#klN').textContent = 'Pesakit ' + Math.min(idx + 1, N) + '/' + N; $k('#klSc').textContent = score; };
   const add = (n, ok) => { score += n; hud(); if (ok != null){ asked++; if (ok) right++; } };
-  const say = t => { $k('#klBub').innerHTML = t ? '<div class="kl-bub">' + t + '</div>' : ''; };
+  let typeT = null;
+  const say = t => { clearInterval(typeT); $k('#klBub').innerHTML = t ? '<div class="kl-bub">' + t + '</div>' : ''; };
+  /* pesakit bercakap: teks ditaip huruf demi huruf sambil suara gumam (lelaki lebih rendah, perempuan lebih tinggi) */
+  const talk = txt => { say('<span></span>'); const sp = $k('#klBub span'); let n = 0; klBabble(txt, P.g);
+    typeT = setInterval(() => { n += 2; sp.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(typeT); }, 32); };
   const pat = (mood, cls) => { const e = $k('#klPat'); e.className = 'kl-pat' + (cls ? ' ' + cls : ''); e.innerHTML = klPatImg(P.g, mood, P.c.look) + '<div class="kl-name">' + esc(P.nm) + ' · ' + P.age + ' thn</div>'; };
   const meter = v => { $k('#klMeter').innerHTML = v == null ? '' : '<div class="kl-meter">💚 RASA SELAMAT<div class="b"><i style="width:' + Math.round(v * 100) + '%"></i></div></div>'; };
   const head = (step, h) => '<div class="kl-step">' + step + '</div><div class="kl-h">' + h + '</div>';
@@ -8561,7 +8565,7 @@ function klRun(team){
     pan().innerHTML = head('PESAKIT BAHARU', '🚪 ' + esc(P.nm) + ' masuk ke klinik…') + '<div style="color:#94A3B8;font-size:14px">' + (P.g === 'P' ? 'Pelajar perempuan' : 'Pelajar lelaki') + ', ' + P.age + ' tahun. Dengar ceritanya dengan teliti.</div>';
     snd('kl_masuk', 'hi');
     let k = 0;
-    const line = () => { say(esc(P.c.cerita[k])); k++; if (k < P.c.cerita.length) setTimeout(() => { if (P && !over) line(); }, 1900); else setTimeout(() => { if (!over) go('Diagnos ➜', diagnose); }, 600); };
+    const line = () => { talk(P.c.cerita[k]); k++; if (k < P.c.cerita.length) setTimeout(() => { if (P && !over) line(); }, 1900); else setTimeout(() => { if (!over) go('Diagnos ➜', diagnose); }, 600); };
     setTimeout(line, 650);
   }
   function diagnose(){
@@ -8577,8 +8581,8 @@ function klRun(team){
       go(P.c.t === 'e' ? 'Mula sesi nasihat ➜' : 'Mula rawatan ➜', treat);
     };
   }
-  function treat(){ say(''); const g = P.c.t === 'e' ? 'dialog' : P.c.game; ({ jerawat: mgAcne, susun: mgOrder, pilih: () => mgPick(P.c.good, P.c.bad, 'LANGKAH 2 · RAWATAN', P.c.id === 'sarapan' ? 'Pilih sarapan sihat untuk ' + esc(P.nm) : 'Pilih SEMUA cara rawatan yang selamat', pharmacy), berus: mgBrush, dialog: mgTalk })[g](); }
-  const mgDone = (pts, maxp) => { P.max += maxp; P.pts += pts; add(pts); sfx('myth'); pat('gembira'); say('Terima kasih, doktor! Rasa lebih baik.'); setTimeout(() => { if (!over) pharmacy(); }, 1300); };
+  function treat(){ say(''); const g = P.c.t === 'e' ? 'dialog' : P.c.game; ({ jerawat: mgAcne, pilih: () => mgPick(P.c.good, P.c.bad, 'LANGKAH 2 · RAWATAN', P.c.ptitle || (P.c.id === 'sarapan' ? 'Pilih sarapan sihat untuk ' + esc(P.nm) : 'Pilih SEMUA cara rawatan yang selamat'), pharmacy), berus: mgBrush, dialog: mgTalk })[g](); }
+  const mgDone = (pts, maxp) => { P.max += maxp; P.pts += pts; add(pts); sfx('myth'); pat('gembira'); talk('Terima kasih, doktor! Rasa lebih baik.'); setTimeout(() => { if (!over) pharmacy(); }, 1300); };
   /* mini-game: jerawat — cuci muka, kemudian sapu krim pada setiap jerawat (jangan picit!) */
   function mgAcne(){
     const art = KL_HAVE.get('muka_' + (P.g === 'P' ? 'p' : 'l')), spots = art ? KL_MUKA : [[30, 46], [70, 44], [44, 30], [60, 62], [34, 64], [66, 28], [50, 52]];   /* gambar muka ikut templat: jerawat di zon templat */
@@ -8602,20 +8606,7 @@ function klRun(team){
       s.classList.add('done'); done++; sfx('flip');
       if (done === spots.length){ m('✅ Semua jerawat dirawat!'); mgDone(Math.max(10, 40 - mis * 10), 40); } });
   }
-  /* mini-game: susun rutin mengikut urutan */
-  function mgOrder(){
-    const st = P.c.steps, cards = klShuf(st.concat([P.c.trap[0]]));
-    let k = 0, mis = 0;
-    pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Susun rutin yang betul untuk ' + esc(P.nm)) + '<div class="kl-msg" id="klMsg">Ketik langkah mengikut urutan (1 → ' + st.length + ').</div>' +
-      '<div class="kl-slots">' + st.map((_, i) => '<div id="klSl' + i + '">' + (i + 1) + '.</div>').join('') + '</div>' +
-      '<div class="kl-grid">' + cards.map((t, i) => '<button class="kl-opt" data-o="' + i + '">' + esc(t) + '</button>').join('') + '</div>';
-    pan().onclick = e => { const b = e.target.closest('[data-o]'); if (!b || b.disabled) return; const t = cards[+b.dataset.o];
-      if (t === P.c.trap[0]){ mis++; b.classList.add('no', 'kl-shake'); b.disabled = true; sfx('low'); return $k('#klMsg').innerHTML = '❌ ' + esc(P.c.trap[1]); }
-      if (t !== st[k]){ mis++; b.classList.remove('kl-shake'); void b.offsetWidth; b.classList.add('kl-shake'); sfx('low'); return $k('#klMsg').innerHTML = '🤔 Bukan langkah ' + (k + 1) + '. Fikir semula urutannya.'; }
-      const sl = $k('#klSl' + k); sl.textContent = (k + 1) + '. ' + t; sl.classList.add('f'); b.disabled = true; b.style.visibility = 'hidden'; k++; sfx('flip');
-      if (k === st.length){ pan().onclick = null; $k('#klMsg').innerHTML = '✅ Rutin lengkap!'; mgDone(Math.max(10, 40 - mis * 8), 40); } };
-  }
-  /* pilih semua yang betul (rawatan senggugut, sarapan sihat, siapa boleh bantu) */
+  /* pilih semua yang betul (rawatan senggugut, rutin mandi & tidur, sarapan sihat, siapa boleh bantu) */
   function mgPick(good, bad, step, title, then, isHelp){
     const items = klShuf(good.map(t => [t, 1]).concat(bad.map(t => [t, 0]))), on = new Set();
     pan().innerHTML = head(step, title) + '<div class="kl-msg" id="klMsg">Ketik untuk pilih (' + good.length + ' jawapan betul), kemudian tekan SIAP.</div>' +
@@ -8628,7 +8619,7 @@ function klRun(team){
       const full = hit === good.length && !wrong, pts = Math.max(0, Math.round(40 * (hit - wrong) / good.length));
       $k('#klMsg').innerHTML = full ? '✅ Sempurna!' : '🟩 Garisan hijau = pilihan betul yang tertinggal · 🟥 merah = tidak sesuai.';
       if (isHelp){ add(0, full); P.max += 20; P.pts += full ? 20 : Math.round(pts / 2); score += full ? 20 : Math.round(pts / 2); hud(); sfx(full ? 'myth' : 'low'); if (full) meter(1); setTimeout(() => go('Seterusnya ➜', then), 400); }
-      else { P.max += 40; P.pts += pts; add(pts); sfx(full ? 'myth' : 'low'); pat('gembira'); say(full ? 'Terima kasih, doktor! Saya cuba buat begitu.' : 'Baik doktor, saya akan ingat yang betul.'); setTimeout(() => go('Seterusnya ➜', then), 400); }
+      else { P.max += 40; P.pts += pts; add(pts); sfx(full ? 'myth' : 'low'); pat('gembira'); talk(full ? 'Terima kasih, doktor! Saya cuba buat begitu.' : 'Baik doktor, saya akan ingat yang betul.'); setTimeout(() => go('Seterusnya ➜', then), 400); }
     });
   }
   /* mini-game: berus gigi — gosok setiap zon */
@@ -8649,9 +8640,9 @@ function klRun(team){
   function mgTalk(){
     let r = 0; meter(P.safe);
     const round = () => {
-      if (r >= P.c.talk.length){ say('Siapa yang boleh saya minta tolong?'); return mgPick(P.c.help.map(k => KL_HELP[k]), P.c.nohelp.map(k => KL_HELP[k]), 'LANGKAH 3 · RUJUKAN', 'Siapa boleh bantu ' + esc(P.nm) + '?', pharmacy, true); }
+      if (r >= P.c.talk.length){ talk('Siapa yang boleh saya minta tolong?'); return mgPick(P.c.help.map(k => KL_HELP[k]), P.c.nohelp.map(k => KL_HELP[k]), 'LANGKAH 3 · RUJUKAN', 'Siapa boleh bantu ' + esc(P.nm) + '?', pharmacy, true); }
       const [line, good, bads] = P.c.talk[r], opts = klShuf([[good, 1]].concat(bads.map(t => [t, 0])));
-      say(esc(line));
+      talk(line);
       pan().innerHTML = head('LANGKAH 2 · SESI NASIHAT (' + (r + 1) + '/' + P.c.talk.length + ')', 'Apakah respons terbaik doktor?') + opts.map(([t], i) => '<button class="kl-opt" data-r="' + i + '">💬 ' + esc(t) + '</button>').join('') + '<div id="klFb"></div>';
       P.max += 20;
       pan().onclick = e => { const b = e.target.closest('[data-r]'); if (!b) return; pan().onclick = null; const ok = opts[+b.dataset.r][1];
@@ -8678,7 +8669,7 @@ function klRun(team){
   }
   function prescribe(){
     const f = P.max ? P.pts / P.max : 0, st = f >= .85 ? 3 : f >= .55 ? 2 : 1; stars += st;
-    pat('gembira'); say(P.c.t === 'e' ? 'Terima kasih sebab dengar cerita saya, doktor.' : 'Terima kasih doktor! Saya akan ikut nasihat ni.');
+    pat('gembira'); talk(P.c.t === 'e' ? 'Terima kasih sebab dengar cerita saya, doktor.' : 'Terima kasih doktor! Saya akan ikut nasihat ni.');
     pan().innerHTML = head('PRESKRIPSI', '📋 Nasihat untuk ' + esc(P.nm)) +
       '<div class="kl-rx"><span class="st">' + '⭐'.repeat(st) + '<span style="opacity:.25">' + '⭐'.repeat(3 - st) + '</span></span><h4>' + esc(P.c.nm) + '</h4><ul>' + P.c.tips.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' +
       (P.c.t === 'e' ? '<div class="hp">Saluran bantuan: ' + P.c.help.map(k => esc(KL_HELP[k])).join(' · ') + '</div>' : '') + '</div>';
@@ -8702,7 +8693,7 @@ function klRun(team){
     confettiBurst($k('#klEnd'), 60);
   }
   function quit(){
-    if (!KLINIK) return; KLINIK = null; root.remove(); unlockBody();
+    if (!KLINIK) return; KLINIK = null; clearInterval(typeT); root.remove(); unlockBody();
     if (S.ui.tab === 'arena') renderTab();
   }
   root.addEventListener('click', e => {
@@ -8712,6 +8703,23 @@ function klRun(team){
     gameConfirm(null, null, asked, right).then(ok => { if (!ok) return; if (asked) finish(); else quit(); });
   });
   hud(); next();
+}
+/* suara gumam pesakit (gaya game): fail kl_cakap_l / kl_cakap_p jika ada, jika tidak bunyi suku kata disintesis */
+function klBabble(txt, g){
+  if (!SFX_ON) return;
+  if (audPlay('kl_cakap_' + (g === 'P' ? 'p' : 'l'), .9)) return;
+  try {
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    SFX_CTX = SFX_CTX || new C(); const a = SFX_CTX, t0 = a.currentTime + .02, base = g === 'P' ? 300 : 175;
+    const n = Math.min(22, Math.max(4, Math.round(String(txt).replace(/[^a-z]/gi, '').length / 3)));
+    const lp = a.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1800; lp.connect(audSfx(a));
+    for (let i = 0; i < n; i++){
+      const t = t0 + i * .085, o = a.createOscillator(), gn = a.createGain(), f = base * (.85 + ((i * 7) % 5) * .09);
+      o.type = 'triangle'; o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * (i % 2 ? .9 : 1.12), t + .07);
+      gn.gain.setValueAtTime(.0001, t); gn.gain.linearRampToValueAtTime(.09, t + .012); gn.gain.exponentialRampToValueAtTime(.0001, t + .075);
+      o.connect(gn); gn.connect(lp); o.start(t); o.stop(t + .08);
+    }
+  } catch(e){}
 }
 /* muka dekat (mini-game jerawat) */
 function klFace(g){
@@ -9235,7 +9243,7 @@ const ST_CSS = `
 .st-cu .who img{object-position:bottom}
 .st-cu.in{animation:stIn .5s ease-out}
 @keyframes stIn{0%{transform:translateY(40%);opacity:0}100%{transform:none;opacity:1}}
-.st-cu.out{transform:translateY(60%);opacity:0;transition:all .6s}
+.st-cu.out{transform:translateY(60%);opacity:0;visibility:hidden;pointer-events:none;transition:all .6s}
 .st-cu.mad .who{filter:sepia(1) saturate(4) hue-rotate(-40deg)}
 .st-cu.no{animation:stNo .4s}
 @keyframes stNo{20%,60%{transform:translateX(-.8cqw)}40%,80%{transform:translateX(.8cqw)}}
@@ -9645,7 +9653,7 @@ function storRun(team, mp){
     if (z === 's'){                                     // peralatan sukan: atlet, terus diserah
       const a = pick(ATH), n = 1 + Math.floor(Math.random() * L.max);
       const need = a.kit.slice().sort(() => Math.random() - .5).slice(0, Math.min(n, a.kit.length));
-      return { who: stPerson(a.id), z, need, got: [], tx: pick(['Saya perlukan peralatan ini!', 'Ada stok ini?', 'Untuk latihan petang ini.', 'Perlawanan esok!']) };
+      return { who: stPerson(a.id), z, need, got: [], tx: pick(['Saya nak pinjam ni.', 'Boleh saya sewa ni?', 'Nak sewa untuk latihan petang.', 'Pinjam sekejap, nanti saya pulang!', 'Sewa satu untuk perlawanan esok.']) };   /* atlet MENYEWA peralatan */
     }
     const who = stPerson(pick(Math.random() < .6 ? ST_ATH.map(a => a.id) : ST_ORG.map(o => o.id)));
     if (Math.random() < .65){                           // jus blend sihat
@@ -9837,6 +9845,7 @@ function storRun(team, mp){
   function addIng(id){
     const it = ST_IT[id];
     if (bl.r || bl.blending) return msg('Jus sudah siap — seret blender kepada pelanggan (atau ke tong sampah).', '#FDE68A', 1600);
+    if (bl.r) return msg('Jus dah siap — seret blender kepada pelanggan dahulu.', '#FDE68A', 1400);
     if (bl.ings.length >= BL_MAX) return msg('Blender penuh! Seret blender ke tong sampah.', '#FCA5A5', 1500);
     if (stock[id] <= 0) return;
     stock[id]--; bl.ings.push(id); snd('stor_ambil', 'flip'); flyTo(id, shelfPos(id), BL_AT); walk(86); paintShelves(); paintBl(true);
@@ -9846,10 +9855,8 @@ function storRun(team, mp){
       setTimeout(() => {
         if (over || !root.isConnected || bl.blending !== r.id) return;
         bl.blending = false;
-        if (tray.length < TRAY_MAX){                     // jus siap terus dituang ke gelas atas kaunter; blender kosong semula
-          bl.ings = []; tray.push({ jus: r.id }); paintBl(); paintTray();
-          msg('🥤 ' + esc(r.n) + ' siap atas kaunter! Seret jus kepada pelanggan.', '#86EFAC', 1800);
-        } else { bl.r = r; paintBl(); msg('🥤 ' + esc(r.n) + ' siap — kaunter penuh, jus kekal dalam blender.', '#FDE68A', 1800); }
+        bl.r = r; paintBl();                             /* jus siap kekal dalam blender: seret blender terus kepada pelanggan */
+        msg('🥤 ' + esc(r.n) + ' siap! Seret blender kepada pelanggan.', '#86EFAC', 1800);
       }, 1500);
     } else if (bl.ings.length >= 3) msg('Kombinasi ini bukan resipi jus — seret blender ke tong sampah.', '#FCA5A5', 1800);
   }
@@ -10066,7 +10073,13 @@ function storRun(team, mp){
     }
     return null;
   };
+  const cancelDrag = () => {
+    liftOff(); setHome(null); if (!drag) return; const d = drag; drag = null;
+    if (d.me) d.me.classList.remove('drag'); if (d.g) d.g.remove(); if (d.src) d.src.classList.remove('lifted'); if (d.hot) d.hot.classList.remove('st-hot');
+  };
+  const touchEnd = () => setTimeout(() => { if (drag) cancelDrag(); }, 80);
   root.addEventListener('pointerdown', e => {
+    if (drag) cancelDrag();                              /* seretan lama tersangkut: lepaskan dahulu */
     if (over || call) return;
     const SEL = '[data-it],[data-tr],[data-ss],[data-bl],[data-bin],.st-tray';
     let src = e.target.closest(SEL);
@@ -10192,7 +10205,9 @@ function storRun(team, mp){
   };
   window.addEventListener('pointerup', endDrag);
   window.addEventListener('pointercancel', endDrag);
-  const unDrag = () => { window.removeEventListener('pointerup', endDrag); window.removeEventListener('pointercancel', endDrag); };
+  window.addEventListener('touchend', touchEnd); window.addEventListener('touchcancel', touchEnd); window.addEventListener('blur', cancelDrag);
+  const unDrag = () => { cancelDrag(); window.removeEventListener('pointerup', endDrag); window.removeEventListener('pointercancel', endDrag);
+    window.removeEventListener('touchend', touchEnd); window.removeEventListener('touchcancel', touchEnd); window.removeEventListener('blur', cancelDrag); };
   hud(); paintTray(); paintStn(); paintShelves(); paintBl(); paintBin();
   msg('KEDAI DIBUKA! 🏪', '#FACC15', 1600);
 }
