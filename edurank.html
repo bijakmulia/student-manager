@@ -787,6 +787,7 @@ async function fbInit(){
     if (!proceed){ FB.on = false; setSyncIcon('off'); return; }
     FB.on = true;
     setSyncIcon('on');
+    muridRecvStart();
     d.onValue(d.ref(FB.db, 'ipbd/v12'), snap => {
       const v = snap.val();
       if (!v || v.clientId === CLIENT_ID) return;
@@ -8306,6 +8307,7 @@ function blendRec(rec){
 }
 /* Simpan hasil game sebagai PBD untuk setiap ahli pasukan. Pulangkan TP. */
 function gameToPBD(teamId, game, right, asked, extra){
+  if (MURID) return muridResult(game, right, asked, extra);   /* versi murid: dihantar kepada guru */
   const t = teamOf(teamId), sj = S.ui.activeSubjectId;
   if (!t || !sj || !asked) return 0;
   const date = todayKey(), rate = accRate(right / asked), gid = uid('gm');
@@ -8330,7 +8332,7 @@ function gameDel(sid, sj, date, gameId){
   if (!rec.games.length) delete rec.games;
   if (!blendRec(rec)){ delete S.records[sid][sj][date]; if (!Object.keys(S.records[sid][sj]).length) delete S.records[sid][sj]; }
 }
-const gameLine = g => (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' betul (' + Math.round(g.r / g.n * 100) + '%) → TP' + calcTP(g.rate) + (g.tn ? ' · ' + g.tn : '');
+const gameLine = g => (g.m ? '📲 ' : '') + (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' betul (' + Math.round(g.r / g.n * 100) + '%) → TP' + calcTP(g.rate) + (g.tn ? ' · ' + g.tn : '');
 
 /* ============ TAB GAME ============
    Tiga permainan, semuanya tanpa aset untuk dimuat naik: Kad Koleksi
@@ -14315,10 +14317,77 @@ function muridShareModal(){
       b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menerbit...';
       if (m && m.kod !== kod) await unpublishMurid(m.token, m.kod);
       S.murid = { on: true, token: m ? m.token : newToken(), kod, title: ($('#muT', bd).value || '').trim() || 'EduRank' }; save(true);
-      try { await publishMurid(); toast('Versi murid diterbitkan.'); closeModal(id); renderTab(); setTimeout(muridShareModal, 220); }
+      try { await publishMurid(); muridRecvStart(); toast('Versi murid diterbitkan.'); closeModal(id); renderTab(); setTimeout(muridShareModal, 220); }
       catch(err){ b.disabled = false; b.textContent = 'Cuba Lagi'; toast('Gagal menerbit: semak Security Rules (ipbd_share).', null, true); }
     }
   });
+}
+
+/* ---------- keputusan game murid → PBD guru ----------
+   Murid: setiap keputusan (betul/soalan) ditolak ke ipbd_share/<laluan pakej>_r.
+   Guru: peranti guru mendengar laluan itu, merekod TP ke rekod PBD murid
+   tersebut pada tarikh dimainkan, kemudian memadam keputusan dari awan.     */
+async function muridDb(){
+  if (!KM_APP.db){
+    const [a, dd, au] = await Promise.all([import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js'), import('https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js'), import('https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js')]);
+    const app = a.initializeApp(MURID_CFG, 'kombo'); await au.signInAnonymously(au.getAuth(app));
+    KM_APP.d = dd; KM_APP.db = dd.getDatabase(app);
+  }
+  return KM_APP;
+}
+function muridResult(game, right, asked, extra){
+  if (!asked || !MURID || !MURID.me) return 0;
+  const dayKey = MURID.me.i + '|' + (S.ui.activeSubjectId || '') + '|' + todayKey();
+  let days = {}; try { days = JSON.parse(localStorage.getItem('rk_murid_day') || '{}'); } catch(e){}
+  if (days[dayKey]){ setTimeout(() => toast('🎮 Latihan sahaja — markah hari ini untuk subjek ini sudah direkod. Cuba lagi esok!'), 900); return 0; }
+  days = Object.fromEntries(Object.entries(days).filter(([k]) => k.slice(-10) >= todayKey().slice(0, 8) + '01'));   /* buang rekod lama */
+  days[dayKey] = 1; try { localStorage.setItem('rk_murid_day', JSON.stringify(days)); } catch(e){}
+  setTimeout(() => toast('✅ Markah hari ini dihantar kepada guru (sekali sehari).'), 900);
+  const rec = { s: MURID.me.i, sj: S.ui.activeSubjectId || '', d: todayKey(), g: game, r: right, n: asked, t: Date.now(), x: JSON.parse(JSON.stringify(extra || {})) };
+  const q = (() => { try { return JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){ return []; } })();
+  q.push(rec); try { localStorage.setItem('rk_murid_q', JSON.stringify(q.slice(-50))); } catch(e){}
+  muridFlush();
+  return calcTP(accRate(right / asked));
+}
+/* hantar baris gilir (kekal dalam peranti jika tiada internet; dihantar semula kemudian) */
+async function muridFlush(){
+  if (!MURID || MURID.flushing) return; MURID.flushing = true;
+  try {
+    let q = []; try { q = JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){}
+    if (!q.length) return;
+    const K = await muridDb(), base = (await muridPath(MURID.p.t, MURID.kod)) + '_r';
+    while (q.length){ await K.d.set(K.d.push(K.d.ref(K.db, 'ipbd_share/' + base)), q[0]); q.shift(); try { localStorage.setItem('rk_murid_q', JSON.stringify(q)); } catch(e){} }
+  } catch(e){ console.warn('hantar keputusan murid', e); }
+  finally { MURID.flushing = false; }
+}
+let MURID_RX = null;
+async function muridRecvStart(){
+  if (MURID || !FB.on || !S.murid || !S.murid.on) return;
+  const base = 'ipbd_share/' + (await muridPath(S.murid.token, S.murid.kod)) + '_r';
+  if (MURID_RX && MURID_RX.base === base) return;
+  if (MURID_RX) try { MURID_RX.off(); } catch(e){}
+  const d = FB.mod.d, ref = d.ref(FB.db, base);
+  let got = 0, toastT = 0;
+  const off = d.onChildAdded(ref, snap => {
+    const v = snap.val(), key = snap.key;
+    S.murid.done = S.murid.done || [];
+    if (v && !S.murid.done.includes(key) && muridApply(v)){ got++; clearTimeout(toastT); toastT = setTimeout(() => { toast('📲 ' + got + ' keputusan game murid direkod ke PBD.'); got = 0; if (S.ui.tab === 'report' || S.ui.tab === 'students') renderTab(); }, 1200); }
+    S.murid.done.push(key); S.murid.done = S.murid.done.slice(-300); save();
+    d.remove(d.ref(FB.db, base + '/' + key)).catch(() => {});
+  });
+  MURID_RX = { base, off };
+}
+function muridApply(v){
+  const st = stu(v.s), sj = v.sj; if (!st || !sj || !v.n || !S.subjects.some(x => x.id === sj)) return false;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(v.d) ? v.d : todayKey(), rate = accRate(v.r / v.n), grp = (S.groups || []).find(g => g.classId === st.classId && (g.members || []).includes(st.id));
+  S.records[st.id] = S.records[st.id] || {}; S.records[st.id][sj] = S.records[st.id][sj] || {};
+  const rec = S.records[st.id][sj][date] || { metricScores:{}, metricCount:0, totalScore:0, touchCount:0 };
+  rec.games = rec.games || [];
+  if (rec.games.some(x => x.m)) return false;               /* sekali sehari bagi setiap subjek */
+  rec.games.push(Object.assign({ id: uid('gm'), g: v.g, r: +v.r || 0, n: +v.n, rate, team: grp ? grp.id : '', tn: grp ? grp.name : '', t: v.t || Date.now(), m: 1 }, v.x || {}));
+  blendRec(rec); stampTopic(rec, st.classId, sj, date); rec.updatedAt = Date.now();
+  S.records[st.id][sj][date] = rec;
+  return true;
 }
 
 /* ---------- aplikasi murid ---------- */
@@ -14435,6 +14504,7 @@ function muridApp(me){
   bgmInit(); audProbe(); kadProbe();
   $$('.navbtn').forEach(b => b.classList.toggle('on', b.dataset.nav === S.ui.tab));
   renderAll(); $('#ctxClass').disabled = true;
+  muridFlush(); window.addEventListener('online', muridFlush);
   /* pakej terkini setiap kali app dibuka semula (soalan / kumpulan baharu daripada guru) */
   document.addEventListener('visibilitychange', async () => { if (document.hidden || !MURID) return;
     try { const pk = await muridFetch(MURID.p.t, MURID.kod, MURID.p.f.databaseURL); if (pk && pk.u !== MURID.pack.u && !document.querySelector('.lb,#klRoot,#stRoot,#kmRoot,#kmJoin,#runRoot,#escRoot')){ const s2 = pk.st.find(x => x.i === me.i); if (s2 && (!s2.p || s2.p === (JSON.parse(localStorage.getItem('rk_murid_me') || '{}').ph))){ MURID.pack = pk; muridApp(s2); } } } catch(e){} });
