@@ -83,6 +83,7 @@
     { "id": "bgm_stor",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Upbeat cozy shop management game music, light marimba, ukulele and bouncy bass with subtle Malaysian gamelan bells, seamless loop, instrumental, 110 BPM" },
     { "id": "bgm_duel",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Energetic anime card battle music, driving drums, electric guitar and orchestral hits, heroic, seamless loop, instrumental, 140 BPM" },
     { "id": "bgm_run",        "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Fast fun endless runner game music, bright chiptune pop with a catchy synth lead, seamless loop, instrumental, 150 BPM" },
+    { "id": "bgm_kad",        "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Mystical strategic card game music, magical fantasy world, light orchestral strings with harp, soft celesta sparkles and gentle hand percussion, curious and focused but upbeat, seamless loop, instrumental, 105 BPM" },
     { "id": "bgm_esc",        "g": "Muzik Latar", "k": "bgm", "s": 75, "p": "Dark eerie haunted school ambient music, slow detuned piano, low drones and cold pads, tense, seamless loop, instrumental" }
   ]
 }
