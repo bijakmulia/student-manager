@@ -11266,20 +11266,37 @@ function simPlay(id){
         '<button class="btn clip-s !px-3 !py-2" data-s="next"><i class="fa-solid fa-forward-step"></i></button>' +
         '<input id="simBar" type="range" min="0" max="' + sim.dur + '" step="0.05" value="0" style="flex:1;accent-color:#F59E0B">' +
         '<span id="simTime" class="num" style="font-size:12px;min-width:74px;text-align:right">0:00</span>' +
-        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="spd" id="simSpd">1×</button></div></div>';
+        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="spd" id="simSpd">1×</button>' +
+        '<button class="btn clip-s !px-2 !py-2 text-[12px]" data-s="voice" id="simVo" title="Suara penerangan"></button></div></div>';
   document.body.appendChild(root); lockBody(); orientFree();
   const cv = root.querySelector('#simCv'), g = cv.getContext('2d'), bar = root.querySelector('#simBar'), chs = root.querySelector('#simCh');
   const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   chs.innerHTML = sim.scenes.map((s, i) => '<button class="btn clip-s !py-1 !px-2 text-[11px]" data-s="ch" data-i="' + i + '" style="white-space:nowrap;flex:none">' + (i + 1) + '. ' + esc(s.n) + '</button>').join('');
   let t = 0, playing = true, spd = 1, last = performance.now(), alive = true, drawnT = -1;
+  let voiceOn = S.config.simVoice !== 0, spokenK = -1, talking = false, talkTok = 0;
+  const voBtn = () => { root.querySelector('#simVo').innerHTML = '<i class="fa-solid fa-' + (voiceOn ? 'volume-high' : 'volume-xmark') + '"></i>'; };
+  const sayTxt = sc => ((sc.title ? sc.title.join('') : sc.n) + '. ' + sc.cap).replace(/·/g, ', ').replace(/(\d)\s*×\s*(\d)/g, '$1 darab $2').replace(/×/g, ' darab ')
+    .replace(/(\d+(?:\.\d+)?)\s?m\b/g, '$1 meter').replace(/(\d)\s*[–-]\s*(\d)/g, '$1 hingga $2').replace(/\s+/g, ' ');
+  const hush = () => { talkTok++; talking = false; klHush(); };
+  const speak = k => {                                                     /* suara Bahasa Melayu peranti (sama seperti dialog Klinik), perlahan sedikit */
+    hush(); if (!voiceOn || !SFX_ON || !('speechSynthesis' in window)) return;
+    const pick = klVoiceFor('L'); if (!pick) return;
+    try { const u = new SpeechSynthesisUtterance(sayTxt(sim.scenes[k])), tok = talkTok;
+      u.voice = pick.v; u.lang = pick.v.lang; u.rate = .92; u.pitch = 1; u.volume = clamp(masterVol() * sfxVol(), 0, 1);
+      const done = () => { if (tok === talkTok) talking = false; };
+      u.onend = u.onerror = done; setTimeout(done, 4000 + u.text.length * 120);
+      talking = true; speechSynthesis.speak(u); } catch(e){ talking = false; } };
   const sceneAt = x => { let k = 0; while (k < sim.scenes.length - 1 && x >= sim.scenes[k + 1].t0) k++; return k; };
   const draw = () => { if (t === drawnT) return; drawnT = t; g.clearRect(0, 0, SIM_W, SIM_H); try { sim.render(g, t); } catch(e){ console.error(e); }
     bar.value = t; root.querySelector('#simTime').textContent = fmt(t) + ' / ' + fmt(sim.dur);
     const k = sceneAt(t); chs.querySelectorAll('[data-s=ch]').forEach((b, i) => b.classList.toggle('btn-o', i === k)); };
-  const setPlay = v => { playing = v; root.querySelector('#simPlayB').innerHTML = '<i class="fa-solid fa-' + (v ? 'pause' : 'play') + '"></i>'; last = performance.now(); };
-  const seek = x => { t = cl(x, 0, sim.dur - .001); drawnT = -1; draw(); };
+  const setPlay = v => { playing = v; root.querySelector('#simPlayB').innerHTML = '<i class="fa-solid fa-' + (v ? 'pause' : 'play') + '"></i>'; last = performance.now(); if (!v){ hush(); spokenK = -1; } };
+  const seek = x => { t = cl(x, 0, sim.dur - .001); drawnT = -1; hush(); spokenK = -1; draw(); };
   const frame = now => { if (!alive) return; const dt = Math.min(.1, (now - last) / 1000); last = now;
-    if (playing){ const t0 = t; t += dt * spd; if (t >= sim.dur){ t = sim.dur - .001; setPlay(false); } drawnT = -1;
+    if (playing && voiceOn){ const k = sceneAt(t); if (k !== spokenK){ spokenK = k; speak(k); } }
+    if (playing){ const t0 = t, k = sceneAt(t), nx = sim.scenes[k + 1], stop = (nx ? nx.t0 : sim.dur) - .02;
+      t += dt * spd; if (talking && t > stop) t = Math.max(t0, stop);       /* tunggu suara habis sebelum babak seterusnya */
+      if (t >= sim.dur){ t = sim.dur - .001; setPlay(false); } drawnT = -1;
       (sim.sfx || []).forEach(([at, id]) => { if (at > t0 && at <= t) audPlay(id); }); }      // bunyi hanya semasa dimainkan (bukan bila diseret)
     draw(); requestAnimationFrame(frame); };
   function cl(v, a, b){ return Math.max(a, Math.min(b, v)); }
@@ -11289,13 +11306,16 @@ function simPlay(id){
     if (a === 'prev') return seek(t - sim.scenes[k].t0 > 1 ? sim.scenes[k].t0 : sim.scenes[Math.max(0, k - 1)].t0);
     if (a === 'next') return seek(sim.scenes[Math.min(sim.scenes.length - 1, k + 1)].t0);
     if (a === 'ch') return seek(sim.scenes[+b.dataset.i].t0);
-    if (a === 'spd'){ spd = spd === 1 ? .5 : spd === .5 ? 1.5 : 1; b.textContent = spd + '×'; } });
+    if (a === 'spd'){ spd = spd === 1 ? .5 : spd === .5 ? 1.5 : 1; b.textContent = spd + '×'; }
+    if (a === 'voice'){ voiceOn = !voiceOn; S.config.simVoice = voiceOn ? 1 : 0; save(); voBtn(); if (!voiceOn) hush(); else spokenK = -1; } });
   cv.addEventListener('click', () => setPlay(!playing));                      // ketik skrin = jeda / main
   bar.addEventListener('input', () => { seek(+bar.value); });
   const onKey = e => { if (e.key === ' '){ e.preventDefault(); setPlay(!playing); } else if (e.key === 'ArrowRight') seek(t + 5); else if (e.key === 'ArrowLeft') seek(t - 5); else if (e.key === 'Escape') close(); };
   window.addEventListener('keydown', onKey);
-  function close(){ alive = false; window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
+  function close(){ alive = false; hush(); window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
   window.SIM_SEEK = seek;                                                     // untuk ujian / tangkapan skrin
+  window.SIM_SAY = k => sayTxt(sim.scenes[k]);
+  voBtn();
   requestAnimationFrame(frame);
 }
 
