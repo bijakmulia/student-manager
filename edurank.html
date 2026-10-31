@@ -4192,7 +4192,7 @@ function audPlay(id, vol){
     if (!d) return;
     const src = a.createBufferSource(), g = a.createGain();
     src.buffer = d.buf; g.gain.value = Math.min(1.5, vol == null ? 1 : vol) * 0.9 * (d.norm || 1);
-    src.connect(g); g.connect(audOut(a)); src.start(0, d.ls);
+    src.connect(g); g.connect(audSfx(a)); src.start(0, d.ls);
   });
   return true;
 }
@@ -4212,11 +4212,11 @@ function sfx(type){
       o.type = typ || 'sine'; o.frequency.setValueAtTime(f1, t);
       o.frequency.exponentialRampToValueAtTime(Math.max(40, f2), t + dur);
       g.gain.setValueAtTime(vol || 0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      o.connect(g); g.connect(audOut(a)); o.start(t); o.stop(t + dur);
+      o.connect(g); g.connect(audSfx(a)); o.start(t); o.stop(t + dur);
     };
     if (type === 'tear'){ const n = a.createBufferSource(); const b = a.createBuffer(1, a.sampleRate*0.25, a.sampleRate);
       const d = b.getChannelData(0); for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) * 0.35;
-      n.buffer = b; const g = a.createGain(); g.gain.value = 0.5; n.connect(g); g.connect(audOut(a)); n.start(); }
+      n.buffer = b; const g = a.createGain(); g.gain.value = 0.5; n.connect(g); g.connect(audSfx(a)); n.start(); }
     else if (type === 'flip') beep(520, 300, 0.09, 'triangle', 0.08);
     else if (type === 'low') beep(300, 180, 0.12, 'square', 0.06);
     else if (type === 'hi'){ beep(660, 990, 0.35, 'sine', 0.14); setTimeout(()=>beep(880, 1320, 0.45, 'sine', 0.12), 120); }
@@ -4230,7 +4230,7 @@ function sfx(type){
       const f = a.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(900, t);
       f.frequency.exponentialRampToValueAtTime(2600, t+0.16);
       const g = a.createGain(); g.gain.value = 0.5;
-      n.connect(f); f.connect(g); g.connect(audOut(a)); n.start();
+      n.connect(f); f.connect(g); g.connect(audSfx(a)); n.start();
     }
     else if (type === 'impact'){                      // hentaman kena
       beep(220, 60, 0.18, 'square', 0.18);
@@ -4238,7 +4238,7 @@ function sfx(type){
       const d = b.getChannelData(0);
       for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/d.length,3) * 0.6;
       n.buffer = b; const g = a.createGain(); g.gain.value = 0.45;
-      n.connect(g); g.connect(audOut(a)); n.start();
+      n.connect(g); g.connect(audSfx(a)); n.start();
     }
     else if (type === 'shoot'){                       // tali busur / lontaran dilepaskan
       beep(170, 80, 0.16, 'triangle', 0.16);
@@ -4249,7 +4249,7 @@ function sfx(type){
       const f = a.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(3200, t);
       f.frequency.exponentialRampToValueAtTime(1200, t+0.1);
       const g = a.createGain(); g.gain.value = 0.35;
-      n.connect(f); f.connect(g); g.connect(audOut(a)); n.start();
+      n.connect(f); f.connect(g); g.connect(audSfx(a)); n.start();
     }
     else if (type === 'statup') beep(760, 1240, 0.12, 'triangle', 0.1);     // nombor stat naik
     else if (type === 'cardup'){ beep(380, 980, 0.3, 'triangle', 0.13); setTimeout(()=>beep(620,1500,0.35,'sine',0.1), 110); }
@@ -4274,6 +4274,13 @@ function audOut(a){
   if (!a.__master){ const g = a.createGain(); g.gain.value = masterVol(); g.connect(a.destination); a.__master = g; AUD_OUTS.push(g); }
   return a.__master;
 }
+function audSfx(a){                                            // semua bunyi efek & bunyi enjin game → saluran ini → kelantangan utama
+  if (!a) return null;
+  if (!a.__sfx){ const g = a.createGain(); g.gain.value = sfxVol(); g.connect(audOut(a)); a.__sfx = g; AUD_SFX.push(g); }
+  return a.__sfx;
+}
+const AUD_SFX = [];
+function sfxApply(){ AUD_SFX.forEach(g => { try { g.gain.setTargetAtTime(sfxVol(), g.context.currentTime, .05); } catch(e){} }); }
 function masterApply(){
   AUD_OUTS.forEach(g => { try { g.gain.setTargetAtTime(masterVol(), g.context.currentTime, .05); } catch(e){} });
   if (BGM.el) try { BGM.el.volume = bgmVol() * masterVol(); } catch(e){}
@@ -4346,10 +4353,11 @@ function audBuf(src){
 }
 
 const BGM = { id:null, src:null, node:null, gain:null, el:null, preview:null, unlocked:false, tok:0 };
-function bgmVol(){
-  const v = S && S.config ? S.config.bgmVol : undefined;
-  return (v === undefined || v === null || isNaN(+v)) ? 0.6 : clamp(+v, 0, 100) / 100;
-}
+const volCfg = (k, d) => { const v = S && S.config ? S.config[k] : undefined; return (v === undefined || v === null || isNaN(+v)) ? d : clamp(+v, 0, 100) / 100; };
+const volMenu = () => volCfg('bgmVol', .6);       // Lagu Latar EduRank (sebelum masuk game / simulasi)
+const volGame = () => volCfg('gameVol', .6);      // lagu dalam game
+const sfxVol  = () => volCfg('sfxVol', 1);        // bunyi efek
+function bgmVol(){ return !BGM.k || BGM.k === 'menu' ? volMenu() : volGame(); }   // ikut lagu yang sedang dimainkan
 const bgmOn = () => !(S && S.config && S.config.bgmOn === 0);
 /* Skrin mana sedang dipaparkan? Pentas lakonan dekat di atas papan, papan
    di atas menu. */
@@ -4427,7 +4435,7 @@ function bgmTick(){
   if (BGM.preview && !document.querySelector('[data-bgm-sec]')) BGM.preview = null;
   const k = bgmTarget();
   const id = bgmId(k);
-  if (id !== BGM.id){ BGM.id = id; bgmSwitch(k ? bgmSrc(k) : null); }
+  if (id !== BGM.id){ BGM.id = id; BGM.k = k; bgmSwitch(k ? bgmSrc(k) : null); }
 }
 function bgmInit(){
   /* Pelayar hanya membenarkan bunyi selepas sentuhan pertama pengguna. */
@@ -4451,13 +4459,14 @@ function bgmInit(){
     const t = $('#bgmVolT'); if (t) t.textContent = e.target.value + '%';
     bgmApplyVol();
   });
+  const VOLS = { masterVol: () => masterApply(), gameVol: () => bgmApplyVol(), sfxVol: () => sfxApply() };
   document.addEventListener('input', e => {
-    if (!e.target || e.target.id !== 'masterVol') return;
-    S.config.masterVol = +e.target.value;
-    const t = $('#masterVolT'); if (t) t.textContent = e.target.value + '%';
-    masterApply();
+    const id = e.target && e.target.id; if (!VOLS[id]) return;
+    S.config[id] = +e.target.value;
+    const t = $('#' + id + 'T'); if (t) t.textContent = e.target.value + '%';
+    VOLS[id]();
   });
-  document.addEventListener('change', e => { if (e.target && (e.target.id === 'bgmVol' || e.target.id === 'masterVol')) save(true); });
+  document.addEventListener('change', e => { if (e.target && (e.target.id === 'bgmVol' || VOLS[e.target.id])) save(true); });
   SFX_ON = !(S.config && S.config.sfxOn === 0);
   setInterval(bgmTick, 400);
 }
@@ -4508,56 +4517,26 @@ async function bgmDel(k){
 }
 /* panel bunyi ringkas: kelantangan utama · lagu latar hidup/mati + kelantangan · bunyi efek hidup/mati */
 function soundCtlHtml(){
-  const mv = Math.round(masterVol() * 100), on = bgmOn(), bv = Math.round(bgmVol() * 100);
-  return '<div data-snd="1"><div class="lbl">🔊 KELANTANGAN UTAMA <span class="num" id="masterVolT">' + mv + '%</span></div>' +
-      '<input id="masterVol" type="range" min="0" max="100" step="5" value="' + mv + '" style="width:100%;accent-color:#F59E0B">' +
-      '<div class="text-[10px] text-muted">Mengawal SEMUA bunyi: lagu latar, bunyi efek dan bunyi dalam setiap game.</div>' +
-      '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-2 text-[12px]' + (on ? ' btn-o' : '') + '" data-act="bgm-on">' +
-        (on ? '<i class="fa-solid fa-music"></i> LAGU LATAR: HIDUP' : '<i class="fa-solid fa-volume-xmark"></i> LAGU LATAR: MATI') + '</button>' +
-      '<button class="btn clip-s flex-1 !py-2 text-[12px]' + (SFX_ON ? ' btn-o' : '') + '" data-act="sfx-on">' +
-        (SFX_ON ? '<i class="fa-solid fa-bell"></i> BUNYI EFEK: HIDUP' : '<i class="fa-solid fa-bell-slash"></i> BUNYI EFEK: MATI') + '</button></div>' +
-      '<div class="lbl mt-3">KELANTANGAN LAGU LATAR <span class="num" id="bgmVolT">' + bv + '%</span></div>' +
-      '<input id="bgmVol" type="range" min="0" max="100" step="5" value="' + bv + '" style="width:100%"></div>';
+  const pc = v => Math.round(v * 100), on = bgmOn();
+  const row = (id, ico, label, v, note, col) => '<div class="mt-3"><div class="lbl">' + ico + ' ' + label + ' <span class="num" id="' + id + 'T">' + pc(v) + '%</span></div>' +
+    '<input id="' + id + '" type="range" min="0" max="100" step="5" value="' + pc(v) + '" style="width:100%;accent-color:' + col + '">' + (note ? '<div class="text-[10px] text-muted">' + note + '</div>' : '') + '</div>';
+  return '<div data-snd="1">' +
+    row('masterVol', '🔊', 'KELANTANGAN UTAMA', masterVol(), 'Mengawal SEMUA bunyi dalam app dan setiap game.', '#F59E0B').replace('<div class="mt-3">', '<div>') +
+    '<div class="flex gap-2 mt-3"><button class="btn clip-s flex-1 !py-2 text-[12px]' + (on ? ' btn-o' : '') + '" data-act="bgm-on">' +
+      (on ? '<i class="fa-solid fa-music"></i> MUZIK: HIDUP' : '<i class="fa-solid fa-volume-xmark"></i> MUZIK: MATI') + '</button>' +
+    '<button class="btn clip-s flex-1 !py-2 text-[12px]' + (SFX_ON ? ' btn-o' : '') + '" data-act="sfx-on">' +
+      (SFX_ON ? '<i class="fa-solid fa-bell"></i> BUNYI EFEK: HIDUP' : '<i class="fa-solid fa-bell-slash"></i> BUNYI EFEK: MATI') + '</button></div>' +
+    row('bgmVol', '🏠', 'LAGU LATAR EDURANK', volMenu(), 'Lagu semasa app dibuka, sebelum masuk mana-mana game atau simulasi.', '#38BDF8') +
+    row('gameVol', '🎮', 'LAGU GAME', volGame(), 'Lagu di dalam game (Tangga Ilmon, Stor, Larian, Seram…).', '#A78BFA') +
+    row('sfxVol', '🔔', 'BUNYI EFEK', sfxVol(), 'Bunyi kad, langkah, servis, sorakan dan lain-lain.', '#4ADE80') +
+  '</div>';
 }
 function soundPanel(){
   const id = openModal({ center: true, icon: 'fa-volume-high', title: 'Bunyi', body: '<div id="sndBox">' + soundCtlHtml() + '</div>', footer: '<button class="btn btn-o clip-s flex-1" data-close="1">Siap</button>' });
   return id;
 }
-function bgmSettingsHtml(){
-  const on = bgmOn(), vol = Math.round(bgmVol() * 100);
-  return '<div data-bgm-sec="1">' + soundCtlHtml() + '<div style="display:none">' +
-    '<div class="flex items-center gap-2">' +
-      '<button class="btn clip-s !px-3 !py-2 text-[12px]' + (on ? ' btn-o' : '') + '" data-act="bgm-on">' +
-        (on ? '<i class="fa-solid fa-music"></i> MUZIK HIDUP' : '<i class="fa-solid fa-volume-xmark"></i> MUZIK MATI') + '</button>' +
-      '<div class="flex-1"><div class="lbl">KELANTANGAN <span class="num" id="bgmVolT">' + vol + '%</span></div>' +
-        '<input id="bgmVol0" type="range" min="0" max="100" step="5" value="' + vol + '" style="width:100%"></div>' +
-    '</div></div>' +
-    BGM_SLOTS.map(sl => {
-      const r = (S.bgm || {})[sl.k] || {}, own = !!bgmOwn(sl.k), has = !!bgmSrc(sl.k), pv = BGM.preview === sl.k;
-      const def = BGM_DEF[sl.k], cached = !!PHOTOS['bgmdef:' + sl.k];
-      const line = own
-        ? esc(r.name || 'Lagu') + (r.dur ? ' \u00b7 ' + (+r.dur).toFixed(1) + ' s' : '')
-        : (has && def ? 'Lalai: ' + def.name + (cached ? ' \u00b7 tersimpan dalam peranti' : ' \u00b7 dimuat turun bila dimainkan') : sl.hint);
-      return '<div class="panel clip-s p-2 mt-2 flex items-center gap-2">' +
-        '<i class="fa-solid ' + sl.ico + ' ' + (has ? 'text-cyan' : 'text-muted') + '" style="width:18px;text-align:center"></i>' +
-        '<div class="flex-1 min-w-0"><div class="text-[12px] font-bold">' + sl.name + '</div>' +
-          '<div class="text-[10px] ' + (own ? 'text-cyan' : 'text-muted') + ' truncate">' + line + '</div></div>' +
-        (has ? '<button class="btn clip-s !px-2 !py-1 text-[11px]' + (pv ? ' btn-o' : '') + '" data-act="bgm-play" data-id="' + sl.k + '">' +
-               '<i class="fa-solid ' + (pv ? 'fa-stop' : 'fa-play text-cyan') + '"></i></button>' : '') +
-        '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="bgm-up" data-id="' + sl.k + '"><i class="fa-solid fa-upload text-cyan"></i></button>' +
-        (own ? '<button class="btn clip-s !px-2 !py-1 text-[11px]" data-act="bgm-del" data-id="' + sl.k + '" title="Buang \u2014 kembali ke lagu lalai">' +
-               '<i class="fa-solid fa-rotate-left text-[#E23B3B]"></i></button>' : '') +
-      '</div>';
-    }).join('') +
-    '<button class="btn clip-s w-full mt-2 text-[11px]' + (bgmDefOn() ? '' : ' btn-o') + '" data-act="bgm-def">' +
-      (bgmDefOn() ? '<i class="fa-solid fa-compact-disc text-cyan"></i> Lagu lalai EduRank: HIDUP' : '<i class="fa-solid fa-ban"></i> Lagu lalai EduRank: MATI') + '</button>' +
-    '<div class="text-[10px] text-muted leading-snug mt-2">Lagu berulang <b>tanpa sela</b> — app memainkannya terus daripada memori, ' +
-      'bukan pemain audio biasa yang meninggalkan jeda kecil setiap pusingan. Senyap di awal dan hujung fail (biasa pada MP3) dibuang sendiri. ' +
-      'Paling baik: lagu <b>OGG atau WAV</b> pendek yang memang direka untuk gelung. Had 8 MB setiap lagu.</div>' +
-    '<div class="text-[10px] text-muted leading-snug mt-1">Lagu lalai dimuat turun daripada Suno pada kali pertama ia dimainkan, ' +
-      'kemudian disimpan dalam peranti \u2014 selepas itu ia dimainkan serta-merta walaupun tanpa internet. ' +
-      'Lagu yang anda muat naik sentiasa menggantikan lagu lalai; butang <i class="fa-solid fa-rotate-left"></i> mengembalikan lagu lalai.</div>' +
-  '</div>';
+function bgmSettingsHtml(){                                   // lagu dimasukkan melalui folder assets/sfx di komputer (tiada muat naik dalam app)
+  return '<div data-bgm-sec="1"><div id="sndBox">' + soundCtlHtml() + '</div></div>';
 }
 function confettiBurst(host, n){
   const colors = ['#FF5A3C','#FFD76A','#00F0FF','#C084FC','#4ADE80','#FFFFFF'];
@@ -10605,7 +10584,7 @@ function runGame(THREE, sid, ac, mp, spec){
   /* ---------- bunyi ---------- */
   const A = (() => {
     if (!ac) return null;
-    const out = ac.createGain(); out.gain.value = .7; out.connect(audOut(ac));
+    const out = ac.createGain(); out.gain.value = .7; out.connect(audSfx(ac));
     const tone = (type, f0, f1, dur, vol, delay) => { const t = ac.currentTime + (delay || 0), o = ac.createOscillator(), g = ac.createGain();
       o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
@@ -12051,7 +12030,7 @@ function escRun(THREE, sid, ac, lvl, mp){
   /* ---------- bunyi (WebAudio, dijana) ---------- */
   const A = (() => {
     if (!ac) return null;
-    const out = ac.createGain(); out.gain.value = .75; out.connect(audOut(ac));
+    const out = ac.createGain(); out.gain.value = .75; out.connect(audSfx(ac));
     const nodes = [];
     const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
     const dg = ac.createGain(); dg.gain.value = .07; lp.connect(dg); dg.connect(out);
