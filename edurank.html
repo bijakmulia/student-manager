@@ -12078,7 +12078,7 @@ function simKit(cam0, opt){
   function hud(g, scenes, k, lt, st){
     const sc = scenes[k], N = scenes.length;
     g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-    g.font = '600 24px ui-monospace,Consolas,monospace'; g.fillStyle = '#475569'; g.fillText(String(k + 1).padStart(2, '0') + ' / ' + String(N).padStart(2, '0') + ' · PJK · ' + opt.label + ' · ' + sc.n.toUpperCase(), 48, 58);
+    g.font = '600 24px ui-monospace,Consolas,monospace'; g.fillStyle = '#475569'; g.fillText(String(k + 1).padStart(2, '0') + ' / ' + String(N).padStart(2, '0') + ' · ' + (opt.subj || 'PJK') + ' · ' + opt.label + ' · ' + sc.n.toUpperCase(), 48, 58);
     g.font = '800 58px Georgia,"Times New Roman",serif'; let x = 48; const y = 124, ta = cl(lt / .6, 0, 1);
     g.save(); g.globalAlpha = ta; g.translate(0, (1 - ta) * 14);
     sc.title.forEach((part, i) => { if (!part) return; const w = g.measureText(part).width; if (i === 1){ g.fillStyle = '#F5E08A'; g.fillRect(x - 6, y - 46, w + 12, 58); } g.fillStyle = '#1F2937'; g.fillText(part, x, y); x += w; });
@@ -12766,6 +12766,677 @@ function longField(K, g, o){
   SIM_LIB.push({ id: 'rugbysentuh', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🏉', title: 'Permainan Rugby Sentuh',
     desc: 'Tutorial asas: padang & zon cuba, 6 pemain, hantaran ke sisi/belakang, sentuhan & rollball, had 6 sentuhan, menjaringkan cuba, peraturan dan cara menang.',
     scenes, dur: T0, render, sfx: [[33.5, 'sim_wisel'], [49.1, 'sim_sorak'], [57, 'sim_wisel'], [58, 'sim_sorak']] });
+})();
+
+/* ---------- BOLA BALING (PJK) ---------- */
+(() => {
+  const CAMS = { far: { y: 26, z: 38, ly: 0, lz: -1, F: 900 } }, near = (x, z) => ({ x, y: 7.5, z: (z || 0) + 16, ly: 1, lz: (z || 0) - 1, F: 950 });
+  const K = simKit(CAMS.far, { label: 'BOLA BALING', col: { A: '#2563EB', B: '#DC2626' }, ball: 'baling' });
+  const { useCam, seg, arc, L, poly, line, ring, player, ball, tagAt, bigText, hud, sceneOf, timeline, rules } = K;
+  const X = 20, Z = 10;
+  const scenes = [
+    { n: 'Gelanggang', d: 8, title: ['Kenali ', 'gelanggang', ''], goal: 'Kenal pasti kawasan gol & garisan',
+      cap: 'Gelanggang bola baling berukuran 40 m × 20 m. Gol 3 m lebar dan 2 m tinggi. Kawasan gol 6 m, garisan balingan bebas 9 m dan tanda balingan 7 m.' },
+    { n: 'Pemain', d: 7, title: ['Pemain ', '7 orang', ''], goal: 'Kenal kedudukan pemain',
+      cap: 'Setiap pasukan ada 7 pemain di gelanggang: 1 penjaga gol dan 6 pemain luar — pemain sayap, pemain belakang, pemain tengah dan pemain pivot.' },
+    { n: 'Mengelecek & Langkah', d: 8, title: ['Langkah 1: ', 'Mengelecek', ''], goal: 'Ingat 3 langkah & 3 saat',
+      cap: 'Lantun bola dengan sebelah tangan sambil bergerak. Selepas memegang bola, pemain hanya boleh membuat maksimum 3 langkah dan memegang bola maksimum 3 saat.' },
+    { n: 'Hantaran', d: 8, title: ['Langkah 2: ', 'Hantaran', ''], goal: 'Hantar bola dengan tepat',
+      cap: 'Hantaran atas bahu, hantaran lantun dan hantaran sisi digunakan untuk menggerakkan bola dengan pantas dan mencari ruang kosong untuk menjaring.' },
+    { n: 'Menjaring', d: 8, title: ['Langkah 3: ', 'Menjaring', ''], goal: 'Rejaman lompat ke gol',
+      cap: 'Rejaman lompat: pemain melompat dari luar garisan 6 m dan membaling bola ke gol sebelum mendarat. Pemain boleh berada di udara di atas kawasan gol.' },
+    { n: 'Peraturan Asas', d: 9, title: ['Peraturan ', 'asas', ''], goal: 'Elak kesalahan',
+      cap: 'Hanya penjaga gol boleh berada dalam kawasan gol. Bola tidak boleh disentuh dengan kaki (kecuali penjaga gol). Tiada tolakan, tarikan atau memukul bola dari tangan lawan.' },
+    { n: 'Balingan 7 Meter', d: 8, title: ['Balingan ', '7 meter', ''], goal: 'Fahami balingan penalti',
+      cap: 'Balingan 7 meter diberi apabila peluang jelas menjaring dihalang secara salah. Pembaling berdiri di belakang garisan 7 m dan berhadapan seorang penjaga gol sahaja.' },
+    { n: 'Cara Menang', d: 8, title: ['Cara ', 'menang', ''], goal: 'Jaringan terbanyak menang',
+      cap: 'Perlawanan dimainkan 2 separuh masa × 30 minit (masa lebih pendek untuk murid sekolah). Pasukan dengan jaringan terbanyak MENANG.' }
+  ];
+  const T0 = timeline(scenes);
+  function court(g){
+    const bg = g.createLinearGradient(0, 0, 0, SIM_H); bg.addColorStop(0, '#CBD5E1'); bg.addColorStop(.3, '#E2E8F0'); bg.addColorStop(.31, '#92400E'); bg.addColorStop(1, '#78350F');
+    g.fillStyle = bg; g.fillRect(0, 0, SIM_W, SIM_H);
+    poly(g, [[-X - 2, 0, -Z - 2], [X + 2, 0, -Z - 2], [X + 2, 0, Z + 2], [-X - 2, 0, Z + 2]], '#B45309');
+    poly(g, [[-X, 0, -Z], [X, 0, -Z], [X, 0, Z], [-X, 0, Z]], '#2563EB', '#fff', 3);
+    [-1, 1].forEach(sd => {
+      const pts = []; for (let k = 0; k <= 30; k++){ const a = -Math.PI / 2 + Math.PI * k / 30; pts.push([sd * (X - Math.cos(a) * 6), 0, Math.sin(a) * 7.5]); }
+      poly(g, pts, '#F59E0B', '#fff', 3);
+      ring(g, sd * X, .01, 0, 9, 'rgba(255,255,255,.75)', 2, sd > 0 ? Math.PI / 2 : -Math.PI / 2, sd > 0 ? Math.PI * 1.5 : Math.PI / 2);
+      line(g, [sd * (X - 7), 0, -.5], [sd * (X - 7), 0, .5], 4);
+      line(g, [sd * X, 0, -1.5], [sd * X, 2, -1.5], 6, '#F8FAFC'); line(g, [sd * X, 0, 1.5], [sd * X, 2, 1.5], 6, '#F8FAFC'); line(g, [sd * X, 2, -1.5], [sd * X, 2, 1.5], 6, '#F8FAFC');
+      poly(g, [[sd * X, 2, -1.5], [sd * (X + 1), 1.4, -1.5], [sd * (X + 1), 1.4, 1.5], [sd * X, 2, 1.5]], 'rgba(255,255,255,.25)', 'rgba(255,255,255,.6)', 1);
+    });
+    line(g, [0, 0, -Z], [0, 0, Z], 3);
+  }
+  const FA = [[-19, 0], [-12, -8], [-10, -3], [-9, 3], [-12, 8], [-5, -1], [-6, 5]], FB = FA.map(([x, z]) => [-x, -z]);
+  const cast = () => ({ A: FA.map(([x, z], i) => ({ team: 'A', num: i + 1, x, z, face: 1, pose: i ? 'ready' : 'keeper' })), B: FB.map(([x, z], i) => ({ team: 'B', num: i + 1, x, z, face: -1, pose: i ? 'ready' : 'keeper', hair: '#78350F' })) });
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0, c = cast(); let b = null, trail = null; const st = { a: 0, b: 0, l2: 'SEPARUH MASA 1' }, tags = [], big = [];
+    useCam(k === 2 ? near(-4, 0) : k === 3 ? near(2, 0) : k === 4 || k === 6 ? near(12, 0) : CAMS.far);
+    const all = c.A.concat(c.B);
+    if (k === 0){
+      all.forEach(p => p.a = .25);
+      tags.push([0, 0, Z, '40 m', 0, 60, seg(lt, .4, .9)], [-X, 0, Z * .6, '20 m', -100, 40, seg(lt, 1.1, 1.6)], [X - 4, 0, -3, 'Kawasan gol 6 m', 60, -110, seg(lt, 2, 2.5)],
+        [X - 9, 0, 4, 'Garisan 9 m', -60, 100, seg(lt, 3, 3.5)], [X - 7, 0, 0, 'Tanda 7 m', -150, -60, seg(lt, 4, 4.5)], [X, 2, 1.5, 'Gol 3 m × 2 m', 120, -80, seg(lt, 5, 5.5)]);
+    } else if (k === 1){
+      all.forEach(p => p.a = .4);
+      [[0, 'Penjaga gol', .4], [1, 'Sayap kiri', 1.3], [4, 'Sayap kanan', 2.2], [2, 'Pemain belakang', 3.1], [5, 'Pemain tengah', 4], [6, 'Pivot', 4.9]].forEach(([i, n, at]) => { if (lt > at){ const p = c.A[i]; p.a = 1; p.tag = n; p.ring = lt; } });
+    } else if (k === 2){
+      const p = c.A[5]; p.x = L(-9, 3, seg(lt, 0, 3.6)); p.z = 0; p.pose = lt < 3.6 ? 'dribble' : 'run'; p.walk = lt;
+      if (lt < 3.6) b = { x: p.x + .5, y: .15 + Math.abs(Math.sin(lt * 5)) * .85, z: .3 };
+      else { const s3 = Math.min(3, Math.floor((lt - 3.6) / .7) + 1); p.x = 3 + Math.min(lt - 3.6, 2.1) * 1.2; b = { x: p.x + .3, y: 1.2, z: .3 }; p.pose = 'run';
+        if (lt < 6.2) big.push(['LANGKAH ' + s3, '#2563EB', 1]); else big.push(['✋ BERHENTI / HANTAR', '#DC2626', seg(lt, 6.2, 6.5)]); }
+      tags.push([p.x, 1.4, 0, 'Lantun dengan sebelah tangan', 60, -120, seg(lt, .4, .8) * (lt < 3.6 ? 1 : 0)]);
+    } else if (k === 3){
+      const pp = [c.A[2], c.A[5], c.A[6], c.A[3]]; pp[0].x = -3; pp[0].z = -4; pp[1].x = 1; pp[1].z = 0; pp[2].x = 6; pp[2].z = 3; pp[3].x = 2; pp[3].z = 5;
+      const legs = [[pp[0], pp[1], .4, 'Hantaran atas bahu', .8], [pp[1], pp[2], 2.4, 'Hantaran lantun', .1], [pp[2], pp[3], 4.4, 'Hantaran sisi', .5]];
+      b = { x: pp[0].x + .4, y: 1.4, z: pp[0].z };
+      legs.forEach(([a, c2, t0, n, h]) => { if (lt >= t0){ const f = { x: a.x + .4, y: 1.4, z: a.z }, to = { x: c2.x, y: 1.3, z: c2.z }, u = seg(lt, t0, t0 + 1.1);
+        if (h < .2 && u < 1){ const mid = { x: (f.x + to.x) / 2, y: .1, z: (f.z + to.z) / 2 }; b = u < .5 ? arc(f, mid, 0, u * 2) : arc(mid, to, .2, u * 2 - 1); }
+        else b = arc(f, to, h, u); a.pose = lt < t0 + .5 ? 'pass' : 'ready'; tags.push([to.x, 1.6, to.z, n, 0, -110, seg(lt, t0 + .2, t0 + .5) * (lt < t0 + 2 ? 1 : 0)]); } });
+    } else if (k === 4){
+      const p = c.A[6], gk = c.B[0]; p.x = L(11, 13.6, seg(lt, 0, 1.2)); p.z = 1; p.y = Math.sin(seg(lt, 1, 2.2) * Math.PI) * .9; p.pose = lt < 1 ? 'run' : 'jump'; p.walk = lt;
+      gk.x = 19.3; gk.z = L(0, -1, seg(lt, 1.6, 2)); gk.pose = 'keeper';
+      const from = { x: 14.6, y: 2.2, z: 1 }, to = { x: 20.6, y: 1.3, z: .9 };
+      if (lt < 1.6) b = { x: p.x + .3, y: 1.4 + p.y, z: 1 }; else { const u = seg(lt, 1.6, 2.1); b = arc(from, to, .2, u); trail = [0, .25, .5, .75, 1].map(v => arc(from, to, .2, v * u)); }
+      tags.push([16, 0, 4, 'Lompat dari luar 6 m', 100, 70, seg(lt, .8, 1.2)]);
+      if (lt > 2.2){ st.a = 1; big.push(['GOL! +1', '#2563EB', seg(lt, 2.2, 2.6)]); }
+    } else if (k === 5){
+      all.forEach(p => p.a = .45); st.a = 6; st.b = 5;
+      g.__rules = ['🧤 Hanya penjaga gol dalam kawasan gol', '🦶 Tidak boleh sentuh bola dengan kaki', '3️⃣ Maks 3 langkah & 3 saat pegang bola', '🚫 Tiada tolak, tarik atau rampas dari tangan'];
+    } else if (k === 6){
+      st.a = 6; st.b = 5; const p = c.A[3], gk = c.B[0]; p.x = 13; p.z = 0; p.pose = lt > .8 && lt < 1.5 ? 'pass' : 'ready'; gk.x = 19.2; gk.z = L(0, .9, seg(lt, 1.2, 1.6));
+      all.forEach(q => { if (q !== p && q !== gk){ q.a = .35; if (q.team === 'A') q.x = Math.min(q.x, 10); else q.x = Math.min(q.x, 10.5); } });
+      const from = { x: 13.4, y: 1.8, z: 0 }, to = { x: 20.6, y: .6, z: -1.1 };
+      if (lt < 1.2) b = { x: 13.4, y: 1.8, z: 0 }; else { const u = seg(lt, 1.2, 1.7); b = arc(from, to, .1, u); trail = [0, .25, .5, .75, 1].map(v => arc(from, to, .1, v * u)); }
+      tags.push([13, 0, 0, 'Di belakang garisan 7 m', -120, 90, seg(lt, .2, .6)]);
+      if (lt > 1.8){ st.a = 7; big.push(['GOL PENALTI!', '#2563EB', seg(lt, 1.8, 2.2)]); }
+    } else {
+      st.a = 25; st.b = 22; st.l2 = 'TAMAT'; st.l3 = '2 × 30 MINIT';
+      c.A.forEach(p => { p.pose = 'cheer'; p.y = Math.abs(Math.sin(lt * 4 + p.num)) * .6; }); c.B.forEach(p => p.pose = 'stand');
+      big.push(['🏆 PASUKAN A MENANG 25–22', '#2563EB', seg(lt, 1, 1.5)]);
+    }
+    court(g);
+    all.slice().sort((p, q) => p.z - q.z).forEach(p => player(g, p));
+    ball(g, b, trail, .12);
+    tags.forEach(x => tagAt(g, ...x));
+    if (k === 5) rules(g, g.__rules, lt);
+    big.forEach(([tx, col, a]) => bigText(g, tx, col, a, 330));
+    hud(g, scenes, k, lt, st);
+  }
+  SIM_LIB.push({ id: 'bolabaling', subj: /pjk|pendidikan jasmani|jasmani|sukan/i, subjLabel: 'PJK', ico: '🤾', title: 'Permainan Bola Baling',
+    desc: 'Tutorial asas: gelanggang & kawasan gol, 7 pemain, mengelecek & 3 langkah, hantaran, rejaman lompat, peraturan, balingan 7 meter dan cara menang.',
+    scenes, dur: T0, render, sfx: [[33.2, 'sim_sorak'], [48.4, 'sim_wisel'], [49.9, 'sim_sorak'], [64.5, 'sim_sorak']] });
+})();
+
+/* ============ SIMULASI SAINS (diagram 2D) ============
+   sciKit: HUD & pemasa babak dari simKit + alat lukisan skrin (x,y piksel pada kanvas 1600×900).
+   Kawasan lukisan: x 80–1520, y 205–700 (tajuk di atas, kapsyen di bawah). */
+function sciKit(label, subj){
+  const K = simKit({ y: 5, z: 10, ly: 0, lz: 0, F: 900 }, { label, subj, col: { A: '#0EA5E9', B: '#F97316' } });
+  const A = Object.assign({}, K);
+  A.bg = (g, c1, c2) => { const gr = g.createLinearGradient(0, 0, 0, SIM_H); gr.addColorStop(0, c1 || '#F8FAFC'); gr.addColorStop(1, c2 || '#E0F2FE'); g.fillStyle = gr; g.fillRect(0, 0, SIM_W, SIM_H);
+    g.strokeStyle = 'rgba(14,116,144,.07)'; g.lineWidth = 1; for (let x = 0; x < SIM_W; x += 40){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, SIM_H); g.stroke(); } for (let y = 0; y < SIM_H; y += 40){ g.beginPath(); g.moveTo(0, y); g.lineTo(SIM_W, y); g.stroke(); } };
+  A.tag = (g, x, y, text, dx, dy, a) => { if (!(a > 0)) return; g.save(); g.globalAlpha = Math.min(1, a);
+    g.strokeStyle = '#0F172A'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + dx, y + dy); g.stroke(); g.fillStyle = '#0F172A'; g.beginPath(); g.arc(x, y, 5, 0, 7); g.fill();
+    g.font = '700 24px system-ui,sans-serif'; const w = g.measureText(text).width + 24; g.fillStyle = 'rgba(255,255,255,.97)'; g.beginPath(); g.roundRect(x + dx - w / 2, y + dy - 19, w, 38, 10); g.fill(); g.strokeStyle = '#0F172A'; g.stroke();
+    g.fillStyle = '#0F172A'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x + dx, y + dy); g.restore(); };
+  A.arrow = (g, x1, y1, x2, y2, col, w, a) => { if (a === 0) return; g.save(); g.globalAlpha = a == null ? 1 : a; g.strokeStyle = g.fillStyle = col || '#0F172A'; g.lineWidth = w || 4;
+    const an = Math.atan2(y2 - y1, x2 - x1), h = 10 + (w || 4) * 2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2 - Math.cos(an) * h * .6, y2 - Math.sin(an) * h * .6); g.stroke();
+    g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - Math.cos(an - .45) * h, y2 - Math.sin(an - .45) * h); g.lineTo(x2 - Math.cos(an + .45) * h, y2 - Math.sin(an + .45) * h); g.closePath(); g.fill(); g.restore(); };
+  A.txt = (g, s, x, y, o) => { o = o || {}; g.save(); g.globalAlpha = o.a == null ? 1 : o.a; g.font = (o.w || 700) + ' ' + (o.size || 26) + 'px ' + (o.serif ? 'Georgia,serif' : 'system-ui,sans-serif');
+    g.textAlign = o.al || 'center'; g.textBaseline = 'middle'; if (o.stroke){ g.lineWidth = o.stroke; g.strokeStyle = o.sc || '#fff'; g.strokeText(s, x, y); } g.fillStyle = o.col || '#0F172A'; g.fillText(s, x, y); g.restore(); };
+  A.box = (g, x, y, w, h, r, fill, stroke, lw) => { g.beginPath(); g.roundRect(x, y, w, h, r || 0); if (fill){ g.fillStyle = fill; g.fill(); } if (stroke){ g.strokeStyle = stroke; g.lineWidth = lw || 3; g.stroke(); } };
+  A.circ = (g, x, y, r, fill, stroke, lw) => { g.beginPath(); g.arc(x, y, Math.max(.1, r), 0, 7); if (fill){ g.fillStyle = fill; g.fill(); } if (stroke){ g.strokeStyle = stroke; g.lineWidth = lw || 3; g.stroke(); } };
+  A.pill = (g, s, x, y, bg, fg, size, a) => { if (a === 0) return; g.save(); g.globalAlpha = a == null ? 1 : a; g.font = '800 ' + (size || 24) + 'px system-ui,sans-serif'; const w = g.measureText(s).width + 30, h = (size || 24) + 20;
+    g.fillStyle = bg || '#0F172A'; g.beginPath(); g.roundRect(x - w / 2, y - h / 2, w, h, h / 2); g.fill(); g.fillStyle = fg || '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, x, y + 1); g.restore(); };
+  A.rnd = i => { const v = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return v - Math.floor(v); };
+  /* zarah jirim dalam kotak: mode 0 pepejal (bergetar), 1 cecair (bergerak perlahan, rapat), 2 gas (laju, jauh) */
+  A.parts = (g, x, y, w, h, mode, t, col, n) => { const R = A.rnd, r = 13; n = n || (mode === 2 ? 14 : 30);
+    for (let i = 0; i < n; i++){ let px, py;
+      if (mode === 0){ const cols = 6, cx = i % cols, cy = Math.floor(i / cols); px = x + 30 + cx * (w - 60) / (cols - 1) + Math.sin(t * 22 + i) * 2.5; py = y + h - 24 - cy * 28 + Math.cos(t * 19 + i * 2) * 2.5; }
+      else if (mode === 1){ px = x + r + ((R(i) * (w - 2 * r) + t * 30 * (R(i + 9) - .5)) % (w - 2 * r) + (w - 2 * r)) % (w - 2 * r); py = y + h - r - (R(i + 3) * (h * .55)) + Math.sin(t * 2 + i) * 4; }
+      else { const tw = (v, L2) => { const m = ((v % (2 * L2)) + 2 * L2) % (2 * L2); return m < L2 ? m : 2 * L2 - m; };
+        px = x + r + tw(R(i) * w + t * 220 * (R(i + 5) + .3), w - 2 * r); py = y + r + tw(R(i + 2) * h + t * 200 * (R(i + 7) + .3), h - 2 * r); }
+      A.circ(g, px, py, r, col || '#38BDF8', '#0C4A6E', 2); } };
+  return A;
+}
+const SAINS_RX = /sains|science/i;
+
+/* ---------- T1: MIKROSKOP CAHAYA ---------- */
+(() => {
+  const K = sciKit('MIKROSKOP', 'SAINS T1'), { seg, L, ease, hud, sceneOf, timeline, rules, bg, tag, arrow, txt, box, circ, pill, bigText } = K;
+  const scenes = [
+    { n: 'Bahagian Mikroskop', d: 10, title: ['Bahagian ', 'mikroskop', ''], goal: 'Namakan bahagian utama', cap: 'Mikroskop cahaya membesarkan objek seni. Bahagian utamanya: kanta mata, kanta objektif, pentas, pelaras kasar, pelaras halus dan cermin atau lampu.' },
+    { n: 'Sediakan Slaid', d: 9, title: ['Langkah 1: ', 'Sediakan slaid', ''], goal: 'Elak gelembung udara', cap: 'Letak spesimen nipis (contoh: epidermis bawang) di atas slaid kaca dengan setitis air. Turunkan kaca penutup perlahan-lahan pada sudut 45° supaya tiada gelembung udara.' },
+    { n: 'Letak di Pentas', d: 8, title: ['Langkah 2: ', 'Letak di pentas', ''], goal: 'Mula dengan kuasa rendah', cap: 'Letak slaid di atas pentas dan kepit dengan klip. Pusingkan kanta objektif kuasa paling rendah ke kedudukan. Laraskan cermin atau lampu supaya cahaya terang.' },
+    { n: 'Memfokus', d: 9, title: ['Langkah 3: ', 'Memfokus', ''], goal: 'Guna pelaras kasar, kemudian halus', cap: 'Pusing pelaras kasar sehingga imej kelihatan, kemudian pelaras halus untuk imej yang tajam. Imej yang dilihat adalah terbalik.' },
+    { n: 'Pembesaran', d: 8, title: ['Kira ', 'pembesaran', ''], goal: 'Pembesaran = kanta mata × kanta objektif', cap: 'Pembesaran imej = pembesaran kanta mata × pembesaran kanta objektif. Contoh: 10× × 40× = 400×. Lebih besar pembesaran, lebih kecil kawasan yang dilihat.' },
+    { n: 'Penjagaan', d: 9, title: ['Menjaga ', 'mikroskop', ''], goal: 'Guna dengan selamat', cap: 'Bawa mikroskop dengan dua tangan. Jangan halakan cermin terus ke matahari. Bersihkan kanta dengan kertas kanta sahaja dan simpan di tempat kering.' }
+  ];
+  const T0 = timeline(scenes);
+  /* mikroskop (pandangan sisi), asas di (x, y) */
+  function scope(g, x, y, s, slideIn, tubeDy, rot){
+    g.save(); g.translate(x, y); g.scale(s, s);
+    box(g, -120, -30, 240, 34, 12, '#334155'); box(g, 40, -330, 46, 310, 20, '#475569');                      /* tapak & lengan */
+    box(g, -110, -150, 170, 18, 4, '#1E293B'); box(g, -70, -166, 18, 16, 3, '#94A3B8'); box(g, 0, -166, 18, 16, 3, '#94A3B8');   /* pentas & klip */
+    if (slideIn != null) box(g, -100 + slideIn, -158, 130, 8, 2, 'rgba(186,230,253,.95)', '#0EA5E9', 2);
+    g.save(); g.translate(0, tubeDy || 0);
+    box(g, -38, -420, 46, 170, 8, '#64748B'); box(g, -46, -470, 62, 54, 10, '#1F2937');                                /* tiub & kanta mata */
+    g.save(); g.translate(-15, -250); g.rotate(rot || 0); box(g, -50, -10, 100, 22, 10, '#334155');
+    [[-36, 46, '#F59E0B'], [0, 62, '#22C55E'], [36, 40, '#EF4444']].forEach(([ox, h, c]) => box(g, ox - 9, 10, 18, h * .7, 4, c)); g.restore();
+    g.restore();
+    circ(g, 64, -120, 24, '#94A3B8', '#334155', 4); circ(g, 64, -120, 12, '#CBD5E1'); circ(g, 64, -60, 16, '#94A3B8', '#334155', 4);   /* pelaras kasar & halus */
+    g.save(); g.translate(-15, -70); g.rotate(-.35); box(g, -34, -6, 68, 12, 6, '#E2E8F0', '#64748B', 3); g.restore();                  /* cermin */
+    g.restore();
+  }
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g);
+    if (k === 0){ scope(g, 640, 690, 1.05);
+      [[600, 220, 'Kanta mata', -230, 0, .4], [610, 450, 'Kanta objektif', -250, 30, 1.6], [560, 525, 'Pentas', -230, 40, 2.8], [707, 564, 'Pelaras kasar', 210, -30, 4], [707, 627, 'Pelaras halus', 210, 30, 5.2], [624, 616, 'Cermin / lampu', -260, 70, 6.4]]
+        .forEach(([x, y, n, dx, dy, at]) => tag(g, x, y, n, dx, dy, seg(lt, at, at + .4)));
+      txt(g, '🔬', 1150, 420, { size: 140, a: seg(lt, 7.4, 8) });
+    } else if (k === 1){
+      const cx = 800, cy = 470; box(g, cx - 330, cy - 40, 660, 80, 6, 'rgba(186,230,253,.9)', '#0EA5E9', 3);
+      const drop = seg(lt, .4, 1.2); circ(g, cx, cy - 10 - (1 - drop) * 160, 22 * (drop < 1 ? .7 : 1), 'rgba(56,189,248,.7)');
+      if (lt > 1.4){ g.save(); g.globalAlpha = seg(lt, 1.4, 2); for (let i = 0; i < 6; i++) box(g, cx - 90 + i * 30, cy - 34, 28, 22, 2, 'rgba(250,204,21,.35)', '#A16207', 2); g.restore(); tag(g, cx - 60, cy - 24, 'Epidermis bawang', -200, -130, seg(lt, 2, 2.4)); }
+      const ang = L(-45, 0, ease(seg(lt, 3.6, 6))) * Math.PI / 180; g.save(); g.translate(cx - 120, cy - 42); g.rotate(ang); box(g, 0, -6, 240, 8, 2, 'rgba(255,255,255,.85)', '#0EA5E9', 2); g.restore();
+      if (lt > 3) { g.save(); g.strokeStyle = '#0F172A'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath(); g.arc(cx - 120, cy - 42, 90, -Math.PI / 4, 0); g.stroke(); g.restore(); txt(g, '45°', cx - 10, cy - 90, { size: 28, a: seg(lt, 3, 3.4) * (lt < 6 ? 1 : 0) }); }
+      tag(g, cx + 60, cy - 46, 'Kaca penutup', 220, -90, seg(lt, 3.2, 3.6)); tag(g, cx - 300, cy, 'Slaid kaca', -80, 120, seg(lt, .2, .6));
+      if (lt > 6.4) pill(g, '✔ Tiada gelembung udara', cx, 640, '#15803D', '#fff', 26, seg(lt, 6.4, 6.8));
+    } else if (k === 2){
+      const rot = L(0, .7, ease(seg(lt, 3.4, 5))); scope(g, 700, 690, 1.05, L(-420, 0, ease(seg(lt, .4, 2.4))), 0, rot);
+      tag(g, 630, 520, 'Kepit dengan klip', 260, -60, seg(lt, 2.4, 2.8)); tag(g, 640, 450, 'Kuasa rendah dahulu (4×)', -300, -40, seg(lt, 5, 5.4));
+      for (let i = 0; i < 5; i++){ const u = ((lt * .8 + i * .2) % 1); g.fillStyle = 'rgba(250,204,21,' + (.8 * (1 - u)) + ')'; g.beginPath(); g.arc(L(684, 690, u), L(616, 520, u), 6, 0, 7); g.fill(); }
+      tag(g, 684, 616, 'Cahaya dipantul ke spesimen', -300, 70, seg(lt, 6, 6.4));
+    } else if (k === 3){
+      const dy = L(-80, 0, ease(seg(lt, .5, 3))); scope(g, 480, 690, .95, 0, dy);
+      arrow(g, 560, 570, 560, 520, '#DC2626', 5, lt < 3 ? 1 : 0); tag(g, 541, 576, lt < 4.5 ? 'Pelaras kasar' : 'Pelaras halus', -170, -70, 1);
+      const blur = lt < 3 ? L(14, 4, seg(lt, .5, 3)) : L(4, 0, seg(lt, 4.5, 6.5)); circ(g, 1100, 450, 210, '#FEF9C3', '#0F172A', 10);
+      g.save(); g.beginPath(); g.arc(1100, 450, 205, 0, 7); g.clip(); g.filter = 'blur(' + blur.toFixed(1) + 'px)';
+      for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++){ const x = 930 + c * 95 + (r % 2) * 30, y = 290 + r * 70; box(g, x, y, 90, 64, 4, 'rgba(250,204,21,.4)', '#92400E', 3); circ(g, x + 30 + (c % 2) * 25, y + 30, 9, '#7C2D12'); }
+      g.filter = 'none'; g.restore();
+      txt(g, blur > 1 ? 'Kabur…' : '✔ Imej tajam', 1100, 690, { size: 30, col: blur > 1 ? '#64748B' : '#15803D' });
+    } else if (k === 4){
+      const u = seg(lt, .4, 1.4); pill(g, 'Kanta mata 10×', 420, 330, '#1F2937', '#FDE68A', 34, u); txt(g, '×', 640, 330, { size: 60, a: seg(lt, 1.4, 1.8) });
+      pill(g, 'Kanta objektif 40×', 870, 330, '#16A34A', '#fff', 34, seg(lt, 1.8, 2.4)); txt(g, '=', 1100, 330, { size: 60, a: seg(lt, 2.6, 3) });
+      txt(g, Math.round(L(0, 400, seg(lt, 3, 4.4))) + '×', 1270, 330, { size: 80, w: 900, col: '#DC2626', a: seg(lt, 3, 3.2) });
+      [[4, 520, 330], [10, 800, 210], [40, 1080, 110]].forEach(([m, x, cells], i) => { const a = seg(lt, 4.6 + i * .8, 5 + i * .8); if (!a) return; g.save(); g.globalAlpha = a;
+        circ(g, x, 545, 110, '#FEF9C3', '#0F172A', 6); g.beginPath(); g.arc(x, 545, 106, 0, 7); g.clip(); const sz = cells / 4;
+        for (let r = -3; r <= 3; r++) for (let c = -3; c <= 3; c++) box(g, x + c * sz * 1.4 - sz * .7, 545 + r * sz - sz / 2, sz * 1.35, sz * .95, 2, 'rgba(250,204,21,.35)', '#92400E', 2); g.restore();
+        txt(g, 'Objektif ' + m + '×', x, 680, { size: 24, a }); });
+    } else {
+      const items = ['🤲 Bawa dengan dua tangan: lengan & tapak', '☀️ Jangan halakan cermin ke matahari', '🧻 Bersihkan kanta dengan kertas kanta sahaja', '🔽 Simpan dengan kanta kuasa rendah & bertutup'];
+      rules(g, items, lt, 260); txt(g, '🔬', 1420, 600, { size: 110 });
+    }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'mikroskop', subj: SAINS_RX, subjLabel: 'SAINS T1', ico: '🔬', title: 'Menggunakan Mikroskop Cahaya', desc: 'Bahagian mikroskop, menyediakan slaid (elak gelembung udara), meletak slaid, memfokus, mengira pembesaran dan penjagaan mikroskop.', scenes, dur: T0, render });
+})();
+
+/* ---------- T1: SEL HAIWAN & SEL TUMBUHAN ---------- */
+(() => {
+  const K = sciKit('SEL', 'SAINS T1'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill, rnd } = K;
+  const scenes = [
+    { n: 'Unit Asas Hidupan', d: 8, title: ['Sel: ', 'unit asas', ' hidupan'], goal: 'Semua hidupan terdiri daripada sel', cap: 'Sel ialah unit asas yang membina semua benda hidup. Sel sangat kecil dan hanya boleh dilihat menggunakan mikroskop.' },
+    { n: 'Sel Haiwan', d: 10, title: ['Struktur ', 'sel haiwan', ''], goal: 'Namakan bahagian sel haiwan', cap: 'Sel haiwan mempunyai membran sel, sitoplasma, nukleus dan mitokondria. Nukleus mengawal semua aktiviti sel; mitokondria menghasilkan tenaga melalui respirasi sel.' },
+    { n: 'Sel Tumbuhan', d: 10, title: ['Struktur ', 'sel tumbuhan', ''], goal: 'Namakan bahagian sel tumbuhan', cap: 'Sel tumbuhan juga ada dinding sel yang memberi bentuk tetap, kloroplas yang mengandungi klorofil untuk fotosintesis dan vakuol besar berisi sap sel.' },
+    { n: 'Perbezaan', d: 9, title: ['Bandingkan ', 'dua sel', ''], goal: 'Kenal pasti perbezaan utama', cap: 'Hanya sel tumbuhan mempunyai dinding sel dan kloroplas. Vakuol sel tumbuhan besar, manakala sel haiwan tiada vakuol atau vakuolnya kecil.' },
+    { n: 'Organisasi Sel', d: 9, title: ['Organisasi ', 'sel', ''], goal: 'Sel → tisu → organ → sistem → organisma', cap: 'Sel yang sama membentuk tisu. Tisu bergabung membentuk organ, organ membentuk sistem dan sistem-sistem membentuk organisma.' },
+    { n: 'Unisel & Multisel', d: 8, title: ['Unisel ', '& multisel', ''], goal: 'Bezakan organisma unisel dan multisel', cap: 'Organisma unisel terdiri daripada satu sel sahaja (amoeba, paramesium, yis). Organisma multisel terdiri daripada banyak sel (manusia, pokok, kucing).' }
+  ];
+  const T0 = timeline(scenes);
+  function animalCell(g, x, y, s, t){ g.save(); g.translate(x, y); g.scale(s, s); g.beginPath();
+    for (let k = 0; k <= 60; k++){ const a = k / 60 * Math.PI * 2, r = 190 + Math.sin(a * 3 + t) * 10 + Math.cos(a * 5) * 8; k ? g.lineTo(Math.cos(a) * r * 1.15, Math.sin(a) * r) : g.moveTo(Math.cos(a) * r * 1.15, Math.sin(a) * r); }
+    g.closePath(); g.fillStyle = '#FBCFE8'; g.fill(); g.strokeStyle = '#BE185D'; g.lineWidth = 6; g.stroke();
+    circ(g, -20, -10, 62, '#A855F7', '#6B21A8', 4); circ(g, -10, -18, 18, '#581C87');
+    [[110, 70, .4], [-120, 90, -.6], [80, -110, 1.1]].forEach(([mx, my, r]) => { g.save(); g.translate(mx, my); g.rotate(r); g.beginPath(); g.ellipse(0, 0, 38, 18, 0, 0, 7); g.fillStyle = '#FB923C'; g.fill(); g.strokeStyle = '#9A3412'; g.lineWidth = 3; g.stroke();
+      g.beginPath(); g.moveTo(-28, 0); for (let i = 0; i < 6; i++) g.lineTo(-24 + i * 10, i % 2 ? -10 : 10); g.stroke(); g.restore(); });
+    g.restore(); }
+  function plantCell(g, x, y, s){ g.save(); g.translate(x, y); g.scale(s, s);
+    box(g, -230, -170, 460, 340, 18, '#BBF7D0', '#15803D', 14); box(g, -216, -156, 432, 312, 12, '#DCFCE7', '#22C55E', 4);
+    box(g, -110, -100, 250, 190, 60, 'rgba(147,197,253,.6)', '#2563EB', 3);
+    circ(g, -160, -80, 40, '#A855F7', '#6B21A8', 4); circ(g, -165, -86, 12, '#581C87');
+    [[-170, 60], [-150, 120], [180, -110], [180, 0], [170, 110], [40, 130], [-40, -130], [90, -130]].forEach(([cx, cy], i) => { g.beginPath(); g.ellipse(cx, cy, 26, 14, i, 0, 7); g.fillStyle = '#16A34A'; g.fill(); g.strokeStyle = '#14532D'; g.lineWidth = 2; g.stroke(); });
+    g.restore(); }
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#FDF4FF', '#ECFEFF');
+    if (k === 0){
+      const z = ease(seg(lt, 1, 5)), s = L(1, 7, z); txt(g, '🌿', 520, 450, { size: 200 * Math.max(.2, 1 - z * .9), a: 1 - seg(lt, 3, 4) });
+      g.save(); g.globalAlpha = seg(lt, 2.5, 3.5); for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) box(g, 700 + c * 120, 260 + r * 100, 112, 92, 6, '#DCFCE7', '#15803D', 5); g.restore();
+      pill(g, 'Sel = unit asas hidupan', 1060, 680, '#0F172A', '#FDE68A', 30, seg(lt, 4.5, 5));
+      txt(g, '🔍', 420 + s * 10, 330, { size: 100, a: 1 - seg(lt, 3, 4) });
+    } else if (k === 1){ animalCell(g, 760, 450, 1.05, t);
+      [[760, 250, 'Membran sel', 330, -20, .5], [870, 560, 'Sitoplasma', 300, 70, 2], [740, 430, 'Nukleus', -330, -90, 3.5], [886, 520, 'Mitokondria', 280, -60, 5]].forEach(([x, y, n, dx, dy, at]) => tag(g, x, y, n, dx, dy, seg(lt, at, at + .4)));
+      pill(g, 'Nukleus = pusat kawalan sel', 760, 670, '#6B21A8', '#fff', 24, seg(lt, 6.5, 7));
+    } else if (k === 2){ plantCell(g, 760, 450, 1.05);
+      [[515, 300, 'Dinding sel', -150, -70, .5], [544, 470, 'Membran sel', -200, 60, 1.6], [790, 440, 'Vakuol (sap sel)', 0, -200, 2.8], [949, 334, 'Kloroplas', 220, -50, 4], [592, 366, 'Nukleus', -160, 140, 5.2], [990, 500, 'Sitoplasma', 200, 70, 6.4]]
+        .forEach(([x, y, n, dx, dy, at]) => tag(g, x, y, n, dx, dy, seg(lt, at, at + .4)));
+    } else if (k === 3){
+      animalCell(g, 330, 400, .55, t); plantCell(g, 1270, 400, .55); txt(g, 'Sel haiwan', 330, 560, { size: 28 }); txt(g, 'Sel tumbuhan', 1270, 560, { size: 28 });
+      [['Dinding sel', '✖', '✔'], ['Kloroplas', '✖', '✔'], ['Vakuol', 'kecil / tiada', 'besar'], ['Bentuk', 'tidak tetap', 'tetap']].forEach(([n, a2, b2], i) => { const a = seg(lt, .6 + i * 1.6, 1 + i * 1.6), y = 280 + i * 92;
+        box(g, 600, y - 34, 400, 70, 16, 'rgba(255,255,255,' + (.9 * a) + ')', a ? '#0F172A' : null, 2); txt(g, n, 800, y, { size: 28, a, w: 800 });
+        txt(g, a2, 520, y, { size: 26, a, col: a2 === '✖' ? '#DC2626' : '#0F172A' }); txt(g, b2, 1080, y, { size: 26, a, col: b2 === '✔' ? '#15803D' : '#0F172A' }); });
+    } else if (k === 4){
+      const st = [['🟩', 'Sel'], ['▦', 'Tisu'], ['🫀', 'Organ'], ['🫁', 'Sistem'], ['🧍', 'Organisma']];
+      st.forEach(([ic, n], i) => { const a = seg(lt, .4 + i * 1.3, .9 + i * 1.3), x = 230 + i * 285; if (!a) return; g.save(); g.globalAlpha = a; g.translate(x, 430); g.scale(L(.6, 1, ease(a)), L(.6, 1, ease(a)));
+        circ(g, 0, 0, 105, '#fff', '#0EA5E9', 6); txt(g, ic, 0, -8, { size: 92 }); g.restore(); pill(g, n, x, 570, '#0F172A', '#FDE68A', 28, a); if (i) arrow(g, x - 220, 430, x - 125, 430, '#0EA5E9', 6, a); });
+    } else {
+      txt(g, 'UNISEL', 430, 260, { size: 36, w: 900, col: '#0EA5E9' }); txt(g, 'MULTISEL', 1170, 260, { size: 36, w: 900, col: '#F97316' });
+      g.save(); g.translate(430, 450); g.beginPath(); for (let k2 = 0; k2 <= 50; k2++){ const a = k2 / 50 * 7, r = 110 + Math.sin(a * 4 + t * 2) * 22; k2 ? g.lineTo(Math.cos(a) * r, Math.sin(a) * r * .8) : g.moveTo(Math.cos(a) * r, Math.sin(a) * r * .8); }
+      g.fillStyle = 'rgba(167,243,208,.8)'; g.fill(); g.strokeStyle = '#047857'; g.lineWidth = 4; g.stroke(); circ(g, -10, 0, 26, '#A855F7', '#6B21A8', 3); g.restore(); tag(g, 430, 450, 'Amoeba (1 sel)', 0, 170, seg(lt, 1, 1.4));
+      [['🧍', 1000], ['🌳', 1170], ['🐈', 1340]].forEach(([e, x], i) => txt(g, e, x, 450, { size: 130, a: seg(lt, 2 + i * .7, 2.5 + i * .7) }));
+      pill(g, 'Berjuta-juta sel', 1170, 600, '#F97316', '#fff', 26, seg(lt, 4.4, 4.8));
+    }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'sel', subj: SAINS_RX, subjLabel: 'SAINS T1', ico: '🧫', title: 'Sel Haiwan & Sel Tumbuhan', desc: 'Sel sebagai unit asas hidupan, struktur sel haiwan dan sel tumbuhan, perbezaan, organisasi sel hingga organisma, serta unisel & multisel.', scenes, dur: T0, render });
+})();
+
+/* ---------- T1: PERUBAHAN KEADAAN JIRIM ---------- */
+(() => {
+  const K = sciKit('JIRIM', 'SAINS T1'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill, parts } = K;
+  const scenes = [
+    { n: 'Tiga Keadaan', d: 9, title: ['Tiga ', 'keadaan', ' jirim'], goal: 'Bandingkan susunan zarah', cap: 'Zarah pepejal tersusun rapat dan hanya bergetar. Zarah cecair rapat tetapi bebas bergerak. Zarah gas sangat jauh antara satu sama lain dan bergerak laju secara rawak.' },
+    { n: 'Peleburan', d: 9, title: ['Peleburan ', '(pepejal → cecair)', ''], goal: 'Haba diserap', cap: 'Apabila dipanaskan, zarah pepejal menyerap haba, bergetar lebih kuat dan terlepas dari susunan tetap. Ais melebur pada 0 °C menjadi air.' },
+    { n: 'Pendidihan', d: 9, title: ['Pendidihan ', '(cecair → gas)', ''], goal: 'Haba diserap', cap: 'Air mendidih pada 100 °C. Zarah menyerap haba dan mendapat tenaga yang cukup untuk bebas menjadi wap. Penyejatan pula berlaku pada sebarang suhu di permukaan cecair.' },
+    { n: 'Kondensasi', d: 8, title: ['Kondensasi ', '(gas → cecair)', ''], goal: 'Haba dibebaskan', cap: 'Apabila wap air menyentuh permukaan sejuk, zarah kehilangan haba dan bergerak perlahan lalu menjadi titisan air. Contoh: titisan air di luar gelas berisi ais.' },
+    { n: 'Pemejalwapan', d: 8, title: ['Pemejal', 'wapan', ''], goal: 'Pepejal → gas terus', cap: 'Sesetengah bahan bertukar terus daripada pepejal kepada gas tanpa menjadi cecair, contohnya ubat gegat (naftalena) dan ais kering. Proses sebaliknya dipanggil pemendapan.' },
+    { n: 'Kitar Perubahan', d: 9, title: ['Rumusan ', 'perubahan keadaan', ''], goal: 'Serap haba vs bebas haba', cap: 'Peleburan, pendidihan dan pemejalwapan menyerap haba. Pembekuan, kondensasi dan pemendapan membebaskan haba. Jisim jirim tidak berubah semasa perubahan keadaan.' }
+  ];
+  const T0 = timeline(scenes);
+  const thermo = (g, x, y, v, max) => { box(g, x - 14, y - 220, 28, 230, 14, '#fff', '#334155', 3); circ(g, x, y + 16, 24, '#EF4444', '#334155', 3); box(g, x - 7, y - 200 * (v / max) - 4, 14, 200 * (v / max) + 20, 7, '#EF4444'); txt(g, Math.round(v) + ' °C', x + 80, y - 200 * (v / max), { size: 26, w: 800, col: '#DC2626' }); };
+  const flame = (g, x, y, t, s) => { for (let i = 0; i < 3; i++){ const h = (60 + Math.sin(t * 12 + i) * 10) * (s || 1); g.fillStyle = ['#F97316', '#FACC15', '#FEF3C7'][i]; g.beginPath(); g.moveTo(x - 26 + i * 8, y); g.quadraticCurveTo(x, y - h * (1 - i * .25) * 1.4, x + 26 - i * 8, y); g.fill(); } };
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g);
+    if (k === 0){ [['PEPEJAL', 0, '#60A5FA'], ['CECAIR', 1, '#22D3EE'], ['GAS', 2, '#F472B6']].forEach(([n, m, c], i) => { const x = 200 + i * 430, a = seg(lt, .3 + i * 1.8, .8 + i * 1.8);
+      g.save(); g.globalAlpha = a; box(g, x, 250, 340, 330, 18, 'rgba(255,255,255,.85)', '#334155', 5); parts(g, x + 8, 258, 324, 314, m, t, c); g.restore(); pill(g, n, x + 170, 630, '#0F172A', '#FDE68A', 28, a); });
+      ['bergetar', 'bergerak bebas', 'laju & rawak'].forEach((s, i) => txt(g, s, 370 + i * 430, 690, { size: 24, a: seg(lt, 6 + i * .4, 6.4 + i * .4), col: '#475569' })); }
+    else if (k === 1){ const u = seg(lt, 1.5, 7); box(g, 330, 250, 340, 330, 18, 'rgba(255,255,255,.85)', '#334155', 5); parts(g, 338, 258, 324, 314, u < .5 ? 0 : 1, t * (1 + u * 2), '#60A5FA');
+      flame(g, 500, 640, t); thermo(g, 860, 560, u < .2 ? L(-10, 0, u / .2) : u < .85 ? 0 : L(0, 15, (u - .85) / .15), 40);
+      txt(g, '🧊', 1180, 330, { size: 110, a: 1 - u }); txt(g, '💧', 1180, 470, { size: 110, a: u }); arrow(g, 1180, 380, 1180, 420, '#0F172A', 4, seg(lt, 2, 2.4));
+      pill(g, 'Haba diserap', 500, 220, '#DC2626', '#fff', 24, seg(lt, 1, 1.4)); tag(g, 860, 560, 'Takat lebur ais = 0 °C', 220, 80, seg(lt, 3, 3.4)); }
+    else if (k === 2){ box(g, 330, 330, 340, 250, 18, 'rgba(255,255,255,.85)', '#334155', 5); g.save(); g.beginPath(); g.rect(330, 330, 340, 250); g.clip();
+      g.fillStyle = 'rgba(56,189,248,.5)'; g.fillRect(330, 420, 340, 160);
+      for (let i = 0; i < 12; i++){ const u = ((lt * .6 + i / 12) % 1); circ(g, 350 + (i * 53) % 300, 570 - u * 160, 6 + u * 6, 'rgba(255,255,255,.8)', '#0EA5E9', 2); } g.restore();
+      for (let i = 0; i < 6; i++){ const u = ((lt * .4 + i / 6) % 1); g.save(); g.globalAlpha = 1 - u; circ(g, 420 + i * 40 + Math.sin(u * 6 + i) * 20, 320 - u * 120, 22 + u * 20, 'rgba(203,213,225,.8)'); g.restore(); }
+      flame(g, 500, 640, t, 1.2); thermo(g, 860, 560, L(25, 100, ease(seg(lt, .4, 4))), 120); tag(g, 860, 360, 'Takat didih air = 100 °C', 230, -40, seg(lt, 4, 4.4));
+      tag(g, 470, 250, 'Wap air (gas)', -250, -20, seg(lt, 2, 2.4)); pill(g, 'Haba diserap', 1180, 520, '#DC2626', '#fff', 26, seg(lt, 5, 5.4)); }
+    else if (k === 3){ box(g, 640, 320, 220, 300, 20, 'rgba(224,242,254,.7)', '#0EA5E9', 5); for (let i = 0; i < 5; i++) box(g, 680 + (i % 3) * 50, 480 + Math.floor(i / 3) * 50, 44, 44, 6, 'rgba(255,255,255,.9)', '#7DD3FC', 2);
+      for (let i = 0; i < 9; i++){ const u = seg(lt, .5 + i * .45, 1.5 + i * .45); if (!u) continue; const y = 360 + (i % 3) * 80 + u * 30; g.beginPath(); g.ellipse(i % 2 ? 860 : 640, y, 8, 12, 0, 0, 7); g.fillStyle = 'rgba(56,189,248,.85)'; g.fill(); }
+      for (let i = 0; i < 6; i++){ const u = ((lt * .5 + i / 6) % 1); circ(g, L(i % 2 ? 1150 : 350, i % 2 ? 880 : 620, u), 360 + i * 40, 14, 'rgba(244,114,182,.7)', '#9D174D', 2); }
+      tag(g, 640, 420, 'Titisan air', -230, -40, seg(lt, 2.5, 2.9)); tag(g, 1060, 400, 'Wap air di udara', 120, -120, seg(lt, 1, 1.4)); pill(g, 'Haba dibebaskan', 750, 680, '#0EA5E9', '#fff', 26, seg(lt, 4, 4.4)); }
+    else if (k === 4){ const u = seg(lt, .5, 6.5); box(g, 360, 260, 360, 360, 24, 'rgba(255,255,255,.7)', '#334155', 4);
+      g.save(); g.globalAlpha = 1 - u * .7; circ(g, 540, 560, L(60, 25, u), '#F8FAFC', '#94A3B8', 4); g.restore();
+      for (let i = 0; i < 14; i++){ const v = ((lt * .5 + i / 14) % 1) * u; if (v <= 0) continue; circ(g, 540 + Math.sin(i * 2.3 + lt) * 140 * v, 540 - v * 260, 9, 'rgba(244,114,182,.75)'); }
+      tag(g, 540, 560, 'Ubat gegat (pepejal)', -260, 60, seg(lt, .4, .8)); tag(g, 540, 330, 'Wap (gas)', 260, -40, seg(lt, 2.4, 2.8));
+      pill(g, 'PEPEJAL', 1050, 360, '#60A5FA', '#fff', 30, seg(lt, 3, 3.4)); arrow(g, 1050, 395, 1050, 470, '#0F172A', 5, seg(lt, 3.4, 3.8)); pill(g, 'GAS', 1050, 510, '#F472B6', '#fff', 30, seg(lt, 3.8, 4.2));
+      txt(g, '(tanpa menjadi cecair)', 1050, 580, { size: 24, col: '#475569', a: seg(lt, 4.4, 4.8) }); }
+    else { const N = [[800, 260, 'PEPEJAL', '#60A5FA'], [470, 560, 'CECAIR', '#22D3EE'], [1130, 560, 'GAS', '#F472B6']];
+      N.forEach(([x, y, n, c]) => { circ(g, x, y, 78, c, '#0F172A', 4); txt(g, n, x, y, { size: 26, w: 900, col: '#fff', stroke: 4, sc: '#0F172A' }); });
+      const E = [[0, 1, 'Peleburan', '#DC2626', 40], [1, 0, 'Pembekuan', '#0EA5E9', 40], [1, 2, 'Pendidihan', '#DC2626', 40], [2, 1, 'Kondensasi', '#0EA5E9', 40], [0, 2, 'Pemejalwapan', '#DC2626', 40], [2, 0, 'Pemendapan', '#0EA5E9', 40]];
+      E.forEach(([a1, b1, n, c, off], i) => { const A1 = N[a1], B1 = N[b1], an = Math.atan2(B1[1] - A1[1], B1[0] - A1[0]), nx = -Math.sin(an) * off * .6, ny = Math.cos(an) * off * .6, a = seg(lt, .4 + i * 1.1, .8 + i * 1.1);
+        arrow(g, A1[0] + Math.cos(an) * 85 + nx, A1[1] + Math.sin(an) * 85 + ny, B1[0] - Math.cos(an) * 85 + nx, B1[1] - Math.sin(an) * 85 + ny, c, 5, a);
+        txt(g, n, (A1[0] + B1[0]) / 2 + nx * 2.4, (A1[1] + B1[1]) / 2 + ny * 2.4, { size: 25, w: 900, col: c, a, stroke: 7 }); });
+      pill(g, '🔥 serap haba', 1380, 280, '#DC2626', '#fff', 22, seg(lt, 7.2, 7.6)); pill(g, '❄️ bebas haba', 1380, 340, '#0EA5E9', '#fff', 22, seg(lt, 7.4, 7.8)); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'jirim', subj: SAINS_RX, subjLabel: 'SAINS T1', ico: '🧊', title: 'Perubahan Keadaan Jirim', desc: 'Susunan & gerakan zarah pepejal, cecair dan gas; peleburan, pendidihan, kondensasi, pemejalwapan serta rumusan serap/bebas haba.', scenes, dur: T0, render });
+})();
+
+/* ---------- T1: CAHAYA & OPTIK ---------- */
+(() => {
+  const K = sciKit('CAHAYA', 'SAINS T1'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill } = K;
+  const scenes = [
+    { n: 'Cahaya Bergerak Lurus', d: 8, title: ['Cahaya bergerak ', 'lurus', ''], goal: 'Terangkan pembentukan bayang', cap: 'Cahaya bergerak dalam garis lurus. Apabila cahaya dihalang oleh objek legap, bayang-bayang terbentuk di belakang objek itu.' },
+    { n: 'Pantulan', d: 9, title: ['Pantulan ', 'cahaya', ''], goal: 'Sudut tuju = sudut pantulan', cap: 'Cahaya yang mengenai cermin satah dipantulkan. Sudut tuju sama dengan sudut pantulan. Kedua-dua sudut diukur dari garis normal.' },
+    { n: 'Pembiasan', d: 9, title: ['Pembiasan ', 'cahaya', ''], goal: 'Cahaya membengkok antara medium', cap: 'Apabila cahaya bergerak dari udara ke air, lajunya berkurang dan ia membengkok ke arah normal. Sebab itu pensel dalam air kelihatan bengkok.' },
+    { n: 'Penyebaran', d: 9, title: ['Penyebaran ', 'cahaya', ''], goal: 'Cahaya putih = 7 warna', cap: 'Prisma menyebarkan cahaya putih kepada tujuh warna spektrum: merah, jingga, kuning, hijau, biru, indigo dan ungu. Pelangi terbentuk dengan cara yang sama oleh titisan air.' },
+    { n: 'Warna Primer', d: 8, title: ['Penggabungan ', 'warna cahaya', ''], goal: 'Merah + hijau + biru = putih', cap: 'Warna primer cahaya ialah merah, hijau dan biru. Gabungan dua warna primer menghasilkan warna sekunder: kuning, sian dan magenta. Ketiga-tiganya menghasilkan putih.' }
+  ];
+  const T0 = timeline(scenes);
+  function beam(g, pts, col, w, a, prog){ if (!a) return; g.save(); g.globalAlpha = a; g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.shadowColor = col; g.shadowBlur = 16;
+    let left = prog == null ? 1e9 : prog; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length && left > 0; i++){ const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], d = Math.hypot(x1 - x0, y1 - y0), u = Math.min(1, left / d); g.lineTo(x0 + (x1 - x0) * u, y0 + (y1 - y0) * u); left -= d; }
+    g.stroke(); g.restore(); };
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#F8FAFC', '#E0E7FF'); box(g, 60, 205, 1480, 520, 28, '#0F172A');
+    if (k === 0){ txt(g, '🔦', 260, 450, { size: 110 }); const p = seg(lt, .5, 2.5) * 1300;
+      g.save(); g.globalAlpha = .35 * seg(lt, .5, 1); g.fillStyle = '#FEF08A'; g.beginPath(); g.moveTo(330, 430); g.lineTo(1450, 230); g.lineTo(1450, 670); g.lineTo(330, 470); g.fill(); g.restore();
+      beam(g, [[330, 450], [1450, 450]], '#FDE047', 6, 1, p); box(g, 1450, 220, 30, 460, 4, '#E2E8F0');
+      const o = seg(lt, 3, 3.5); g.save(); g.globalAlpha = o; circ(g, 820, 450, 70, '#F97316', '#7C2D12', 4); g.fillStyle = 'rgba(0,0,0,.85)'; g.beginPath(); g.ellipse(1460, 450, 14, 120, 0, 0, 7); g.fill(); g.restore();
+      tag(g, 820, 450, 'Objek legap', 0, -160, seg(lt, 3.6, 4)); tag(g, 1455, 450, 'Bayang-bayang', -220, 170, seg(lt, 4.4, 4.8)); }
+    else if (k === 1){ box(g, 380, 600, 840, 22, 4, '#BAE6FD', '#E0F2FE', 3); g.save(); g.setLineDash([12, 10]); g.strokeStyle = '#94A3B8'; g.lineWidth = 3; g.beginPath(); g.moveTo(800, 600); g.lineTo(800, 240); g.stroke(); g.restore();
+      const ang = L(30, 55, ease(seg(lt, 4.5, 7))) * Math.PI / 180, len = 380, s1 = [800 - Math.sin(ang) * len, 600 - Math.cos(ang) * len], s2 = [800 + Math.sin(ang) * len, 600 - Math.cos(ang) * len];
+      beam(g, [s1, [800, 600], s2], '#FDE047', 6, 1, seg(lt, .5, 2.5) * 760); arrow(g, s1[0] + (800 - s1[0]) * .45, s1[1] + (600 - s1[1]) * .45, s1[0] + (800 - s1[0]) * .55, s1[1] + (600 - s1[1]) * .55, '#FDE047', 4, seg(lt, 1, 1.3));
+      g.strokeStyle = '#38BDF8'; g.lineWidth = 3; g.beginPath(); g.arc(800, 600, 120, -Math.PI / 2 - ang, -Math.PI / 2); g.stroke(); g.strokeStyle = '#F472B6'; g.beginPath(); g.arc(800, 600, 140, -Math.PI / 2, -Math.PI / 2 + ang); g.stroke();
+      const dg = Math.round(ang * 180 / Math.PI); txt(g, 'i = ' + dg + '°', 690, 420, { size: 30, col: '#38BDF8', a: seg(lt, 2.5, 3) }); txt(g, 'r = ' + dg + '°', 920, 420, { size: 30, col: '#F472B6', a: seg(lt, 3, 3.5) });
+      tag(g, 800, 260, 'Garis normal', 200, -20, seg(lt, .3, .7)); tag(g, 1000, 611, 'Cermin satah', 160, 60, seg(lt, .3, .7)); pill(g, 'Sudut tuju = sudut pantulan', 800, 690, '#FDE047', '#0F172A', 26, seg(lt, 5, 5.4)); }
+    else if (k === 2){ g.fillStyle = 'rgba(56,189,248,.35)'; g.fillRect(300, 470, 1000, 230); g.strokeStyle = '#7DD3FC'; g.lineWidth = 3; g.beginPath(); g.moveTo(300, 470); g.lineTo(1300, 470); g.stroke();
+      txt(g, 'UDARA', 1380, 440, { size: 28, col: '#E2E8F0' }); txt(g, 'AIR', 1380, 560, { size: 28, col: '#E0F2FE' });
+      g.save(); g.setLineDash([12, 10]); g.strokeStyle = '#94A3B8'; g.lineWidth = 3; g.beginPath(); g.moveTo(700, 240); g.lineTo(700, 700); g.stroke(); g.restore();
+      beam(g, [[470, 240], [700, 470], [790, 700]], '#FDE047', 6, 1, seg(lt, .5, 3) * 600); beam(g, [[700, 470], [930, 700]], 'rgba(253,224,71,.5)', 3, seg(lt, 3, 3.5) * .7);
+      tag(g, 760, 620, 'Membengkok ke arah normal', 260, 30, seg(lt, 3, 3.4));
+      const pc = seg(lt, 5, 5.6); g.save(); g.globalAlpha = pc; box(g, 1000, 300, 14, 170, 3, '#FACC15'); g.translate(1007, 470); g.rotate(.25); box(g, -7, 0, 14, 150, 3, '#FACC15'); g.restore(); tag(g, 1012, 380, 'Pensel kelihatan bengkok', 260, -110, seg(lt, 5.8, 6.2)); }
+    else if (k === 3){ g.save(); g.translate(760, 470); g.beginPath(); g.moveTo(0, -190); g.lineTo(170, 120); g.lineTo(-170, 120); g.closePath(); g.fillStyle = 'rgba(186,230,253,.25)'; g.fill(); g.strokeStyle = '#E0F2FE'; g.lineWidth = 4; g.stroke(); g.restore();
+      beam(g, [[200, 560], [670, 430]], '#FFFFFF', 8, 1, seg(lt, .4, 1.8) * 520);
+      const C = ['#EF4444', '#F97316', '#FACC15', '#22C55E', '#3B82F6', '#4F46E5', '#A855F7'], N2 = ['Merah', 'Jingga', 'Kuning', 'Hijau', 'Biru', 'Indigo', 'Ungu'];
+      C.forEach((c, i) => { beam(g, [[670, 430], [850, 455 + i * 6], [1380, 330 + i * 42]], c, 6, seg(lt, 2, 2.4), seg(lt, 2, 4) * 760); txt(g, N2[i], 1450, 330 + i * 42, { size: 22, col: c, al: 'left', a: seg(lt, 4 + i * .25, 4.3 + i * .25) }); });
+      txt(g, '🌈', 400, 300, { size: 90, a: seg(lt, 6.5, 7) }); tag(g, 760, 600, 'Prisma kaca', 0, 80, seg(lt, .4, .8)); }
+    else { const u = ease(seg(lt, .5, 3)); g.save(); g.globalCompositeOperation = 'lighter';
+      [['#FF0000', -1], ['#00FF00', 1], ['#0000FF', 0]].forEach(([c, i], j) => { const ang = -Math.PI / 2 + j * Math.PI * 2 / 3, d = L(330, 105, u); circ(g, 800 + Math.cos(ang) * d, 450 + Math.sin(ang) * d, 160, c); }); g.restore();
+      [['Kuning', 600, 330], ['Sian', 1020, 330], ['Magenta', 800, 690]].forEach(([n, x, y], i) => pill(g, n, x, y, '#0F172A', '#fff', 24, seg(lt, 3.5 + i * .5, 3.9 + i * .5)));
+      pill(g, 'Putih di tengah', 1260, 450, '#fff', '#0F172A', 26, seg(lt, 5.4, 5.8)); arrow(g, 1150, 450, 840, 450, '#fff', 4, seg(lt, 5.4, 5.8)); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'cahaya', subj: SAINS_RX, subjLabel: 'SAINS T1', ico: '🌈', title: 'Cahaya & Optik', desc: 'Cahaya bergerak lurus & bayang-bayang, hukum pantulan, pembiasan (pensel bengkok), penyebaran cahaya oleh prisma dan penggabungan warna primer.', scenes, dur: T0, render });
+})();
+
+/* ---------- T1: PEMBIAKAN TUMBUHAN BERBUNGA ---------- */
+(() => {
+  const K = sciKit('PEMBIAKAN TUMBUHAN', 'SAINS T1'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill } = K;
+  const scenes = [
+    { n: 'Struktur Bunga', d: 10, title: ['Struktur ', 'bunga', ''], goal: 'Kenal organ jantan & betina', cap: 'Stamen ialah organ pembiakan jantan (anter dan filamen). Pistil ialah organ pembiakan betina (stigma, stil dan ovari yang mengandungi ovul).' },
+    { n: 'Pendebungaan', d: 9, title: ['Pendebungaan', '', ''], goal: 'Debunga dari anter ke stigma', cap: 'Pendebungaan ialah pemindahan debunga dari anter ke stigma. Pendebungaan kendiri berlaku pada bunga yang sama; pendebungaan kacuk berlaku antara dua pokok berlainan.' },
+    { n: 'Agen Pendebungaan', d: 8, title: ['Agen ', 'pendebungaan', ''], goal: 'Siapa membawa debunga?', cap: 'Agen pendebungaan termasuk serangga, angin, burung, haiwan lain dan air. Bunga yang didebungakan serangga biasanya berwarna terang, wangi dan ada nektar.' },
+    { n: 'Persenyawaan', d: 9, title: ['Persenyawaan', '', ''], goal: 'Nukleus jantan + ovum', cap: 'Debunga di atas stigma membentuk tiub debunga yang tumbuh melalui stil ke ovul. Nukleus jantan bercantum dengan ovum — inilah persenyawaan.' },
+    { n: 'Buah & Biji', d: 8, title: ['Pembentukan ', 'buah & biji', ''], goal: 'Ovul → biji, ovari → buah', cap: 'Selepas persenyawaan, ovul berkembang menjadi biji dan ovari berkembang menjadi buah. Kelopak dan stamen layu lalu gugur.' },
+    { n: 'Percambahan', d: 9, title: ['Percambahan ', 'biji benih', ''], goal: 'Air, udara & suhu sesuai', cap: 'Biji benih bercambah apabila mendapat air, udara (oksigen) dan suhu yang sesuai. Akar tumbuh dahulu, diikuti pucuk yang mencari cahaya.' }
+  ];
+  const T0 = timeline(scenes);
+  function flower(g, x, y, s, wilt, ovS){ g.save(); g.translate(x, y); g.scale(s, s);
+    box(g, -8, 0, 16, 230, 8, '#16A34A');
+    [-1, 1].forEach(d => { g.save(); g.rotate(d * .9); g.beginPath(); g.ellipse(0, -10, 40, 18, 0, 0, 7); g.fillStyle = '#22C55E'; g.fill(); g.restore(); });
+    if (!wilt || wilt < 1) [[-1, -.5], [1, .5]].forEach(([d, r]) => { g.save(); g.globalAlpha = 1 - (wilt || 0); g.rotate(r + d * (wilt || 0) * .8); g.beginPath(); g.ellipse(d * 120, -140, 120, 60, d * .5, 0, 7); g.fillStyle = '#F9A8D4'; g.fill(); g.strokeStyle = '#BE185D'; g.lineWidth = 4; g.stroke(); g.restore(); });
+    const ov = ovS || 1; g.beginPath(); g.ellipse(0, -40, 46 * ov, 50 * ov, 0, 0, 7); g.fillStyle = ov > 1 ? '#F97316' : '#86EFAC'; g.fill(); g.strokeStyle = '#15803D'; g.lineWidth = 4; g.stroke();
+    [[-14, -40], [14, -36], [0, -60]].forEach(([ox, oy]) => circ(g, ox * ov, oy * ov + (ov - 1) * -10, 9 * Math.min(ov, 1.6), ov > 1 ? '#78350F' : '#FEF08A', '#15803D', 2));
+    if ((wilt || 0) < 1){ box(g, -7, -250, 14, 170, 6, '#4ADE80'); circ(g, 0, -258, 22, '#A3E635', '#4D7C0F', 4);
+      g.save(); g.globalAlpha = 1 - (wilt || 0); [-1, 1].forEach(d => { g.strokeStyle = '#CA8A04'; g.lineWidth = 6; g.beginPath(); g.moveTo(d * 30, -40); g.quadraticCurveTo(d * 70, -150, d * 90, -230); g.stroke(); g.beginPath(); g.ellipse(d * 92, -242, 14, 24, d * .3, 0, 7); g.fillStyle = '#FACC15'; g.fill(); }); g.restore(); }
+    g.restore(); }
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#F0FDF4', '#ECFEFF');
+    if (k === 0){ flower(g, 780, 560, 1.15);
+      [[886, 279, 'Anter', 230, -30, .5], [863, 380, 'Filamen', 240, 30, 1.5], [780, 263, 'Stigma', -220, -40, 2.8], [780, 380, 'Stil', -230, 0, 3.8], [780, 514, 'Ovari', -240, 40, 4.8], [796, 512, 'Ovul', 260, 80, 5.8], [640, 400, 'Kelopak', -170, -150, 6.8]]
+        .forEach(([x, y, n, dx, dy, at]) => tag(g, x, y, n, dx, dy, seg(lt, at, at + .4)));
+      pill(g, 'Stamen = jantan', 1260, 300, '#CA8A04', '#fff', 24, seg(lt, 2, 2.4)); pill(g, 'Pistil = betina', 330, 300, '#15803D', '#fff', 24, seg(lt, 5.2, 5.6)); }
+    else if (k === 1){ flower(g, 450, 600, .85); flower(g, 1150, 600, .85);
+      const bx = L(560, 1150, ease(seg(lt, 2, 6))), by = 380 - Math.sin(seg(lt, 2, 6) * Math.PI) * 120 + Math.sin(lt * 14) * 6;
+      txt(g, '🐝', lt < 2 ? L(200, 525, seg(lt, 0, 1.6)) : bx, lt < 2 ? 360 : by, { size: 70 });
+      if (lt > 1.6) for (let i = 0; i < 5; i++) circ(g, (lt < 2 ? 525 : bx) - 20 + i * 9, (lt < 2 ? 360 : by) + 30, 5, '#FACC15');
+      tag(g, 526, 395, 'Debunga melekat pada lebah', -240, -120, seg(lt, 1.2, 1.6)); tag(g, 1150, 380, 'Debunga ke stigma', 230, -100, seg(lt, 6, 6.4));
+      pill(g, 'Pendebungaan kacuk (2 pokok)', 800, 690, '#BE185D', '#fff', 26, seg(lt, 6.6, 7)); }
+    else if (k === 2){ [['🐝', 'Serangga'], ['🌬️', 'Angin'], ['🐦', 'Burung'], ['🦇', 'Kelawar'], ['💧', 'Air']].forEach(([e, n], i) => { const a = seg(lt, .4 + i * 1, .8 + i * 1), x = 240 + i * 280;
+      circ(g, x, 420, 110, 'rgba(255,255,255,' + .9 * a + ')', a ? '#15803D' : null, 5); txt(g, e, x, 410, { size: 100, a }); pill(g, n, x, 580, '#15803D', '#fff', 26, a); }); }
+    else if (k === 3){ g.save(); g.translate(800, 470); g.beginPath(); g.ellipse(0, 150, 120, 110, 0, 0, 7); g.fillStyle = '#86EFAC'; g.fill(); g.strokeStyle = '#15803D'; g.lineWidth = 5; g.stroke();
+      box(g, -16, -200, 32, 260, 10, '#BBF7D0', '#15803D', 4); circ(g, 0, -210, 44, '#A3E635', '#4D7C0F', 5); g.beginPath(); g.ellipse(30, 160, 36, 46, 0, 0, 7); g.fillStyle = '#FEF08A'; g.fill(); g.strokeStyle = '#A16207'; g.lineWidth = 3; g.stroke();
+      circ(g, 30, 170, 10, '#DB2777'); circ(g, -6, -232, 14, '#FACC15', '#A16207', 3);
+      const u = ease(seg(lt, 1, 5.5)); g.strokeStyle = '#CA8A04'; g.lineWidth = 6; g.beginPath(); g.moveTo(-6, -232); const pts = [[-6, -232], [-4, -120], [0, 0], [10, 90], [30, 160]]; let left = u * 4;
+      for (let i = 1; i < pts.length && left > 0; i++){ const f = Math.min(1, left); g.lineTo(L(pts[i - 1][0], pts[i][0], f), L(pts[i - 1][1], pts[i][1], f)); left -= 1; } g.stroke();
+      const pi = Math.min(3.999, u * 4), seg0 = Math.floor(pi), fr = pi - seg0, nx = L(pts[seg0][0], pts[seg0 + 1][0], fr), ny = L(pts[seg0][1], pts[seg0 + 1][1], fr); circ(g, nx, ny, 9, '#7C3AED');
+      if (lt > 6){ const b = seg(lt, 6, 6.8); circ(g, 30, 170, 18 + Math.sin(b * Math.PI) * 14, 'rgba(250,204,21,' + (1 - b) + ')'); } g.restore();
+      tag(g, 794, 238, 'Debunga di stigma', -260, -20, seg(lt, .3, .7)); tag(g, 800, 400, 'Tiub debunga', 230, -40, seg(lt, 2.2, 2.6)); tag(g, 830, 640, 'Ovum dalam ovul', 250, 30, seg(lt, 4.5, 4.9));
+      pill(g, '💥 Persenyawaan!', 800, 225, '#7C3AED', '#fff', 28, seg(lt, 6.2, 6.6)); }
+    else if (k === 4){ const u = ease(seg(lt, .5, 5)); flower(g, 520, 620, .95, u, L(1, 2.4, u));
+      tag(g, 520, 560, u > .6 ? 'Ovari → BUAH' : 'Ovari', 300, -60, 1); tag(g, 510, 577, u > .6 ? 'Ovul → BIJI' : 'Ovul', 300, 50, 1);
+      txt(g, '🍎', 1150, 360, { size: 120, a: seg(lt, 5, 5.5) }); txt(g, '🥭', 1290, 470, { size: 100, a: seg(lt, 5.4, 5.9) }); txt(g, '🌰', 1110, 520, { size: 80, a: seg(lt, 5.8, 6.3) }); }
+    else { g.fillStyle = '#92400E'; g.fillRect(200, 520, 1200, 180); g.fillStyle = '#78350F'; for (let i = 0; i < 40; i++) g.fillRect(200 + (i * 97) % 1200, 540 + (i * 53) % 150, 6, 4);
+      const u = seg(lt, .8, 7); g.save(); g.translate(560, 560); g.beginPath(); g.ellipse(0, 0, 40, 26, -.3, 0, 7); g.fillStyle = '#A16207'; g.fill(); g.restore();
+      g.strokeStyle = '#FEF3C7'; g.lineWidth = 6; g.beginPath(); g.moveTo(560, 580); g.quadraticCurveTo(550, 620, 560, 580 + u * 110); g.stroke();
+      if (u > .35){ const h = (u - .35) / .65 * 230; g.strokeStyle = '#22C55E'; g.lineWidth = 8; g.beginPath(); g.moveTo(560, 540); g.quadraticCurveTo(580, 540 - h / 2, 560, 540 - h); g.stroke();
+        if (u > .7) [-1, 1].forEach(d => { g.save(); g.translate(560, 540 - h); g.rotate(d * .8); g.beginPath(); g.ellipse(d * 30, 0, 34, 14, 0, 0, 7); g.fillStyle = '#4ADE80'; g.fill(); g.restore(); }); }
+      [['💧', 'Air'], ['🌬️', 'Udara'], ['🌡️', 'Suhu sesuai']].forEach(([e, n], i) => pill(g, e + ' ' + n, 1100, 300 + i * 80, '#15803D', '#fff', 28, seg(lt, 1 + i * .8, 1.4 + i * .8)));
+      tag(g, 560, 660, 'Akar tumbuh dahulu', -260, 0, seg(lt, 2, 2.4)); if (u > .5) tag(g, 560, 420, 'Pucuk mencari cahaya', -250, -40, seg(lt, 4.5, 4.9)); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'debunga', subj: SAINS_RX, subjLabel: 'SAINS T1', ico: '🌸', title: 'Pembiakan Tumbuhan Berbunga', desc: 'Struktur bunga, pendebungaan kendiri & kacuk, agen pendebungaan, persenyawaan (tiub debunga), pembentukan buah & biji serta percambahan biji benih.', scenes, dur: T0, render });
+})();
+
+/* ---------- T3: SISTEM RESPIRASI ---------- */
+(() => {
+  const K = sciKit('RESPIRASI', 'SAINS T3'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill, rules } = K;
+  const scenes = [
+    { n: 'Laluan Udara', d: 10, title: ['Laluan ', 'udara', ''], goal: 'Hidung → alveolus', cap: 'Udara masuk melalui hidung, kemudian trakea, bronkus, bronkiol dan akhirnya alveolus di dalam peparu. Rongga hidung menapis, melembapkan dan memanaskan udara.' },
+    { n: 'Menarik Nafas', d: 9, title: ['Menarik ', 'nafas', ''], goal: 'Isi padu bertambah, tekanan berkurang', cap: 'Semasa menarik nafas, otot interkosta luar mengecut, tulang rusuk bergerak ke atas dan ke luar, diafragma mengecut lalu mendatar. Isi padu rongga toraks bertambah, tekanan berkurang dan udara masuk.' },
+    { n: 'Menghembus Nafas', d: 9, title: ['Menghembus ', 'nafas', ''], goal: 'Isi padu berkurang, tekanan bertambah', cap: 'Semasa menghembus nafas, otot interkosta mengendur, tulang rusuk turun, diafragma mengendur dan melengkung ke atas. Isi padu rongga toraks berkurang, tekanan bertambah dan udara keluar.' },
+    { n: 'Pertukaran Gas', d: 9, title: ['Pertukaran gas ', 'di alveolus', ''], goal: 'Resapan O₂ dan CO₂', cap: 'Oksigen meresap dari alveolus ke dalam kapilari darah dan diangkut oleh hemoglobin. Karbon dioksida meresap dari darah ke alveolus untuk dihembus keluar.' },
+    { n: 'Respirasi Sel', d: 8, title: ['Respirasi ', 'sel', ''], goal: 'Tenaga dibebaskan dari glukosa', cap: 'Dalam sel, glukosa dioksidakan oleh oksigen untuk membebaskan tenaga. Hasilnya karbon dioksida dan air. Proses ini berlaku dalam mitokondria.' },
+    { n: 'Kesihatan', d: 9, title: ['Jaga ', 'kesihatan', ' peparu'], goal: 'Elak bahan berbahaya', cap: 'Asap rokok mengandungi tar (menyebabkan kanser), nikotin (ketagihan) dan karbon monoksida (mengurangkan oksigen dalam darah). Jerebu dan habuk juga merosakkan peparu.' }
+  ];
+  const T0 = timeline(scenes);
+  function torso(g, x, y, s, br){ g.save(); g.translate(x, y); g.scale(s, s);
+    g.fillStyle = '#FED7AA'; g.beginPath(); g.ellipse(0, -330, 70, 82, 0, 0, 7); g.fill(); box(g, -40, -260, 80, 60, 10, '#FED7AA');
+    g.beginPath(); g.moveTo(-200, -200); g.quadraticCurveTo(-240, 100, -170, 220); g.lineTo(170, 220); g.quadraticCurveTo(240, 100, 200, -200); g.closePath(); g.fillStyle = '#FFEDD5'; g.fill(); g.strokeStyle = '#FDBA74'; g.lineWidth = 4; g.stroke();
+    g.strokeStyle = '#CBD5E1'; g.lineWidth = 3; g.beginPath(); g.moveTo(-30, -330); g.quadraticCurveTo(-10, -290, 0, -250); g.stroke();
+    box(g, -14, -250, 28, 140, 10, '#FDA4AF', '#E11D48', 3);
+    const sc = 1 + br * .12; [-1, 1].forEach(d => { g.save(); g.translate(d * 95, 0); g.scale(sc, sc); g.beginPath(); g.ellipse(0, -20, 80, 150, d * -.1, 0, 7); g.fillStyle = '#FDA4AF'; g.fill(); g.strokeStyle = '#BE123C'; g.lineWidth = 4; g.stroke(); g.restore(); });
+    g.strokeStyle = '#E11D48'; g.lineWidth = 8; g.beginPath(); g.moveTo(0, -110); g.lineTo(-70, -60); g.moveTo(0, -110); g.lineTo(70, -60); g.stroke();
+    g.strokeStyle = '#9F1239'; g.lineWidth = 4; [-1, 1].forEach(d => { for (let i = 0; i < 4; i++){ g.beginPath(); g.moveTo(d * 70, -60); g.lineTo(d * (90 + i * 15), -60 + i * 40 - 50); g.stroke(); } });
+    g.strokeStyle = '#94A3B8'; g.lineWidth = 7; for (let i = 0; i < 5; i++){ const yy = -150 + i * 60 - br * 14; [-1, 1].forEach(d => { g.beginPath(); g.moveTo(0, yy); g.quadraticCurveTo(d * (190 + br * 16), yy + 20, d * (180 + br * 16), yy + 70); g.stroke(); }); }
+    const dy = 190 - br * 40; g.strokeStyle = '#7C2D12'; g.lineWidth = 10; g.beginPath(); g.moveTo(-190, 200); g.quadraticCurveTo(0, dy - (1 - br) * 50, 190, 200); g.stroke();
+    g.restore(); }
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#FFF7ED', '#F0F9FF');
+    if (k === 0){ torso(g, 760, 560, .8, 0);
+      const T2 = (x, y) => [760 + x * .8, 560 + y * .8], path = [T2(-30, -330), T2(0, -250), T2(0, -110), T2(-70, -60), T2(-130, -20)], u = (lt * .22) % 1, pi = u * 4, i0 = Math.floor(pi), fr = pi - i0;
+      circ(g, L(path[i0][0], path[i0 + 1][0], fr), L(path[i0][1], path[i0 + 1][1], fr), 12, '#0EA5E9', '#fff', 3);
+      [[-30, -330, 'Hidung', -230, -10, .5], [0, -180, 'Trakea', 230, -40, 1.8], [-50, -75, 'Bronkus', -250, 0, 3.1], [-110, -30, 'Bronkiol', -230, 60, 4.4], [110, -20, 'Peparu (alveolus)', 270, 30, 5.7], [0, 170, 'Diafragma', 260, -10, 7]]
+        .forEach(([x, y, n, dx, dy, at]) => { const [px, py] = T2(x, y); tag(g, px, py, n, dx, dy, seg(lt, at, at + .4)); }); }
+    else if (k === 1 || k === 2){ const inh = k === 1, br = inh ? ease(seg(lt, .5, 3.5)) : 1 - ease(seg(lt, .5, 3.5)); torso(g, 520, 570, .8, br);
+      for (let i = 0; i < 4; i++){ const u = ((lt * .7 + i / 4) % 1); const y = inh ? L(300, 470, u) : L(470, 300, u); circ(g, 506 + (i % 2) * 16, y, 9, '#38BDF8'); }
+      const rows = inh ? [['Otot interkosta luar', 'MENGECUT'], ['Tulang rusuk', 'NAIK & KE LUAR'], ['Diafragma', 'MENGECUT, MENDATAR'], ['Isi padu toraks', 'BERTAMBAH ⬆'], ['Tekanan udara', 'BERKURANG ⬇'], ['Udara', 'MASUK ➜ peparu']]
+        : [['Otot interkosta luar', 'MENGENDUR'], ['Tulang rusuk', 'TURUN & KE DALAM'], ['Diafragma', 'MENGENDUR, MELENGKUNG'], ['Isi padu toraks', 'BERKURANG ⬇'], ['Tekanan udara', 'BERTAMBAH ⬆'], ['Udara', 'KELUAR dari peparu']];
+      rows.forEach(([a1, b1], i) => { const a = seg(lt, 1 + i * .9, 1.4 + i * .9); box(g, 940, 228 + i * 76, 560, 64, 14, 'rgba(255,255,255,' + .95 * a + ')', a ? (inh ? '#0EA5E9' : '#F97316') : null, 3);
+        txt(g, a1, 960, 260 + i * 76, { size: 22, al: 'left', a, col: '#475569' }); txt(g, b1, 1485, 260 + i * 76, { size: 22, al: 'right', w: 900, a, col: inh ? '#0369A1' : '#C2410C' }); }); }
+    else if (k === 3){ circ(g, 600, 450, 210, 'rgba(253,164,175,.35)', '#BE123C', 6); txt(g, 'ALVEOLUS', 600, 300, { size: 28, w: 900, col: '#9F1239' });
+      g.strokeStyle = '#DC2626'; g.lineWidth = 46; g.lineCap = 'round'; g.beginPath(); g.arc(600, 450, 250, -.9, 1.2); g.stroke(); g.strokeStyle = '#7F1D1D'; g.lineWidth = 3; g.stroke(); g.lineCap = 'butt';
+      for (let i = 0; i < 6; i++){ const u = ((lt * .35 + i / 6) % 1), a = L(-.6, .9, (i % 3) / 2); const r = L(150, 250, u); pill(g, 'O₂', 600 + Math.cos(a) * r, 450 + Math.sin(a) * r, '#0EA5E9', '#fff', 18); }
+      for (let i = 0; i < 5; i++){ const u = ((lt * .35 + i / 5 + .5) % 1), a = L(-.3, 1.1, (i % 3) / 2); const r = L(250, 150, u); pill(g, 'CO₂', 600 + Math.cos(a) * r, 450 + Math.sin(a) * r, '#64748B', '#fff', 18); }
+      tag(g, 845, 300, 'Kapilari darah', 230, -40, seg(lt, .5, .9)); txt(g, 'Dinding alveolus:', 1180, 470, { size: 26, w: 800, a: seg(lt, 3, 3.4) });
+      ['• setebal satu sel', '• lembap', '• luas permukaan besar', '• banyak kapilari'].forEach((s2, i) => txt(g, s2, 1060, 520 + i * 40, { size: 24, al: 'left', a: seg(lt, 3.4 + i * .5, 3.8 + i * .5) })); }
+    else if (k === 4){ const p = (s2, x, at, bgc) => pill(g, s2, x, 400, bgc, '#fff', 34, seg(lt, at, at + .4));
+      p('Glukosa', 260, .4, '#CA8A04'); txt(g, '+', 420, 400, { size: 54, a: seg(lt, .8, 1) }); p('Oksigen', 570, 1, '#0EA5E9'); arrow(g, 720, 400, 860, 400, '#0F172A', 6, seg(lt, 1.6, 2));
+      p('Karbon dioksida', 1040, 2.2, '#64748B'); txt(g, '+', 1225, 400, { size: 54, a: seg(lt, 2.6, 2.8) }); p('Air', 1320, 2.8, '#0284C7');
+      txt(g, '+ ⚡ TENAGA', 1180, 500, { size: 46, w: 900, col: '#DC2626', a: seg(lt, 3.4, 3.8) });
+      tag(g, 470, 560, 'Berlaku dalam mitokondria', 0, 80, seg(lt, 4.4, 4.8)); }
+    else { rules(g, ['🚬 Tar — menyebabkan kanser peparu', '🧪 Nikotin — menyebabkan ketagihan', '☁️ Karbon monoksida — kurangkan oksigen dalam darah', '😷 Pakai pelitup ketika jerebu', '🏃 Bersenam untuk peparu yang sihat'], lt, 240); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'respirasi', subj: SAINS_RX, subjLabel: 'SAINS T3', ico: '🫁', title: 'Sistem Respirasi Manusia', desc: 'Laluan udara, mekanisme menarik & menghembus nafas, pertukaran gas di alveolus, persamaan respirasi sel dan kesan asap rokok.', scenes, dur: T0, render });
+})();
+
+/* ---------- T3: SISTEM PEREDARAN DARAH ---------- */
+(() => {
+  const K = sciKit('PEREDARAN DARAH', 'SAINS T3'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill } = K;
+  const scenes = [
+    { n: 'Komponen', d: 8, title: ['Sistem ', 'peredaran darah', ''], goal: 'Jantung, salur darah & darah', cap: 'Sistem peredaran darah terdiri daripada jantung (pam), salur darah (arteri, vena, kapilari) dan darah yang mengangkut oksigen, nutrien dan bahan buangan.' },
+    { n: 'Struktur Jantung', d: 10, title: ['Struktur ', 'jantung', ''], goal: 'Empat ruang jantung', cap: 'Jantung mempunyai empat ruang: atrium kanan, atrium kiri, ventrikel kanan dan ventrikel kiri. Dinding ventrikel kiri paling tebal kerana mengepam darah ke seluruh badan. Injap menghalang darah mengalir balik.' },
+    { n: 'Peredaran Pulmonari', d: 9, title: ['Peredaran ', 'pulmonari', ''], goal: 'Jantung ↔ peparu', cap: 'Ventrikel kanan mengepam darah terdeoksigen melalui arteri pulmonari ke peparu. Darah beroksigen kembali ke atrium kiri melalui vena pulmonari.' },
+    { n: 'Peredaran Sistemik', d: 9, title: ['Peredaran ', 'sistemik', ''], goal: 'Jantung ↔ seluruh badan', cap: 'Ventrikel kiri mengepam darah beroksigen melalui aorta ke seluruh badan. Darah terdeoksigen kembali ke atrium kanan melalui vena kava. Ini dipanggil peredaran ganda dua.' },
+    { n: 'Salur Darah', d: 9, title: ['Jenis ', 'salur darah', ''], goal: 'Arteri, vena & kapilari', cap: 'Arteri berdinding tebal dan berotot, membawa darah bertekanan tinggi dari jantung. Vena berdinding nipis, ada injap dan membawa darah balik ke jantung. Kapilari setebal satu sel untuk pertukaran bahan.' },
+    { n: 'Denyutan Nadi', d: 8, title: ['Kadar ', 'denyutan nadi', ''], goal: 'Bersenam meningkatkan denyutan', cap: 'Semasa bersenam, otot memerlukan lebih banyak oksigen dan tenaga, jadi jantung berdenyut lebih laju. Kadar nadi normal remaja semasa rehat ialah kira-kira 60 hingga 100 denyutan seminit.' }
+  ];
+  const T0 = timeline(scenes);
+  /* jantung (pandangan hadapan: kanan badan = kiri skrin) */
+  function heart(g, x, y, s, beat){ g.save(); g.translate(x, y); const b = 1 + beat * .04; g.scale(s * b, s * b);
+    g.beginPath(); g.moveTo(0, 210); g.bezierCurveTo(-260, 60, -230, -170, -60, -170); g.bezierCurveTo(-20, -170, 0, -140, 0, -120); g.bezierCurveTo(0, -140, 20, -170, 60, -170); g.bezierCurveTo(230, -170, 260, 60, 0, 210); g.fillStyle = '#FCA5A5'; g.fill(); g.strokeStyle = '#991B1B'; g.lineWidth = 6; g.stroke();
+    const room = (px, py, w, h, c) => box(g, px, py, w, h, 30, c, '#7F1D1D', 3);
+    room(-170, -130, 140, 110, '#93C5FD'); room(30, -130, 140, 110, '#FCA5A5'); room(-160, -5, 140, 170, '#60A5FA'); room(20, -5, 140, 170, '#F87171');
+    box(g, 12, -5, 14, 170, 4, '#7F1D1D'); box(g, 20, -5, 18, 170, 0, '#B91C1C');
+    box(g, -12, -150, 24, 320, 6, '#7F1D1D');
+    box(g, 20, -250, 60, 130, 20, '#EF4444', '#7F1D1D', 3); box(g, -150, -250, 50, 130, 18, '#3B82F6', '#1E3A8A', 3); box(g, -60, -230, 46, 110, 16, '#2563EB', '#1E3A8A', 3);
+    g.restore(); }
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#FFF1F2', '#F0F9FF'); const beat = Math.max(0, Math.sin(t * 7.5));
+    if (k === 0){ [['🫀', 'Jantung', 'mengepam darah'], ['〰️', 'Salur darah', 'arteri · vena · kapilari'], ['🩸', 'Darah', 'mengangkut bahan']].forEach(([e, n, d], i) => { const a = seg(lt, .4 + i * 1.6, .9 + i * 1.6), x = 330 + i * 470;
+      circ(g, x, 420, 130, 'rgba(255,255,255,' + .9 * a + ')', a ? '#DC2626' : null, 6); txt(g, e, x, 410, { size: 120, a }); pill(g, n, x, 600, '#DC2626', '#fff', 30, a); txt(g, d, x, 660, { size: 24, col: '#475569', a }); }); }
+    else if (k === 1){ heart(g, 760, 480, 1.05, beat);
+      [[634, 350, 'Atrium kanan', -260, -40, .5], [866, 350, 'Atrium kiri', 260, -40, 1.7], [644, 530, 'Ventrikel kanan', -260, 60, 2.9], [876, 530, 'Ventrikel kiri (dinding tebal)', 290, 80, 4.1], [801, 248, 'Aorta', 200, -40, 5.3], [627, 248, 'Vena kava', -220, -40, 6.3], [760, 470, 'Septum', 0, 230, 7.3]]
+        .forEach(([x, y, n, dx, dy, at]) => tag(g, x, y, n, dx, dy, seg(lt, at, at + .4)));
+    }
+    else if (k === 2 || k === 3){ const pul = k === 2; heart(g, 800, 560, .55, beat);
+      if (pul){ box(g, 560, 220, 170, 130, 50, '#FDA4AF', '#BE123C', 4); box(g, 870, 220, 170, 130, 50, '#FDA4AF', '#BE123C', 4); txt(g, 'PEPARU', 800, 250, { size: 26, w: 900, col: '#9F1239' }); }
+      else { txt(g, '🧍', 800, 290, { size: 0 }); box(g, 610, 640, 380, 70, 30, 'rgba(255,255,255,.9)', '#64748B', 3); txt(g, 'SELURUH BADAN', 800, 676, { size: 26, w: 900, col: '#334155' }); }
+      const loop = pul ? [[765, 550, 'blue'], [740, 420], [650, 330], [645, 260, 'swap'], [950, 260], [950, 330], [860, 420], [840, 500, 'red']] : [[860, 610, 'red'], [850, 470], [1150, 470], [1150, 680, 'swap'], [450, 680], [450, 470], [740, 470], [750, 510, 'blue']];
+      g.save(); g.strokeStyle = 'rgba(148,163,184,.45)'; g.lineWidth = 16; g.lineJoin = 'round'; g.beginPath(); loop.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); g.restore();
+      for (let i = 0; i < 10; i++){ const u = ((lt * .12 + i / 10) % 1), n = loop.length - 1, pi = u * n, i0 = Math.floor(pi), fr = pi - i0, p0 = loop[i0], p1 = loop[i0 + 1];
+        const sw = loop.findIndex(p => p[2] === 'swap'), red = pul ? i0 >= sw : i0 < sw; circ(g, L(p0[0], p1[0], fr), L(p0[1], p1[1], fr), 13, red ? '#DC2626' : '#2563EB', '#fff', 3); }
+      if (pul){ tag(g, 690, 380, 'Arteri pulmonari (terdeoksigen)', -270, 0, seg(lt, 1, 1.4)); tag(g, 905, 380, 'Vena pulmonari (beroksigen)', 270, 0, seg(lt, 3, 3.4)); pill(g, 'O₂ masuk · CO₂ keluar', 800, 400, '#0F172A', '#FDE68A', 22, seg(lt, 2, 2.4)); }
+      else { tag(g, 1150, 520, 'Aorta (beroksigen)', 200, -60, seg(lt, 1, 1.4)); tag(g, 450, 560, 'Vena kava (terdeoksigen)', -230, -60, seg(lt, 3, 3.4)); pill(g, 'Peredaran ganda dua', 800, 300, '#DC2626', '#fff', 30, seg(lt, 5, 5.4)); } }
+    else if (k === 4){ [['ARTERI', 70, 34, '#DC2626', 'Dinding tebal, berotot · tekanan tinggi'], ['VENA', 90, 12, '#2563EB', 'Dinding nipis · ada injap · tekanan rendah'], ['KAPILARI', 26, 4, '#A855F7', 'Setebal satu sel · pertukaran bahan']].forEach(([n, r, w, c, d], i) => {
+      const a = seg(lt, .4 + i * 2, .9 + i * 2), x = 330 + i * 470; g.save(); g.globalAlpha = a; circ(g, x, 410, r + w, c); circ(g, x, 410, r, '#FEE2E2'); if (n === 'VENA'){ g.fillStyle = c; g.beginPath(); g.moveTo(x - 50, 380); g.lineTo(x, 430); g.lineTo(x + 50, 380); g.lineTo(x + 40, 375); g.lineTo(x, 412); g.lineTo(x - 40, 375); g.fill(); } g.restore();
+      pill(g, n, x, 560, c, '#fff', 28, a); txt(g, d, x, 625, { size: 21, col: '#334155', a }); }); }
+    else { const u = seg(lt, 3, 4.5), bpm = Math.round(L(72, 140, u)), sp = L(7.5, 14.5, u), bt = Math.max(0, Math.sin(lt * sp));
+      txt(g, u > .5 ? '🏃' : '🧘', 400, 430, { size: 150 }); txt(g, u > .5 ? 'Bersenam' : 'Rehat', 400, 580, { size: 30, w: 800 });
+      g.strokeStyle = '#DC2626'; g.lineWidth = 5; g.beginPath(); for (let x = 0; x < 600; x += 4){ const ph = (x / 600 * sp * 2 + lt * 3) % (Math.PI * 2), yv = ph < .25 ? -80 * Math.sin(ph / .25 * Math.PI) : ph < .45 ? 30 * Math.sin((ph - .25) / .2 * Math.PI) : 0; x ? g.lineTo(700 + x, 420 + yv) : g.moveTo(700 + x, 420 + yv); } g.stroke();
+      txt(g, '🫀', 1000, 300, { size: 80 + bt * 20 }); txt(g, bpm + ' denyutan/min', 1000, 560, { size: 44, w: 900, col: '#DC2626' }); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'darah', subj: SAINS_RX, subjLabel: 'SAINS T3', ico: '🫀', title: 'Sistem Peredaran Darah', desc: 'Komponen sistem, empat ruang jantung, peredaran pulmonari & sistemik (ganda dua), jenis salur darah dan kadar denyutan nadi.', scenes, dur: T0, render });
+})();
+
+/* ---------- T3: KEREAKTIFAN LOGAM ---------- */
+(() => {
+  const K = sciKit('KEREAKTIFAN LOGAM', 'SAINS T3'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill, rnd } = K;
+  const scenes = [
+    { n: 'Siri Kereaktifan', d: 9, title: ['Siri ', 'kereaktifan', ' logam'], goal: 'Susun logam ikut kereaktifan', cap: 'Siri kereaktifan menyusun logam daripada paling reaktif kepada paling kurang reaktif: kalium, natrium, kalsium, magnesium, aluminium, zink, ferum, stanum, plumbum, kuprum, argentum dan aurum.' },
+    { n: 'Dengan Air', d: 9, title: ['Tindak balas ', 'dengan air', ''], goal: 'Logam reaktif + air → alkali + H₂', cap: 'Kalium dan natrium bertindak balas cergas dengan air sejuk, bergerak di permukaan dan membebaskan gas hidrogen. Kuprum tidak bertindak balas dengan air.' },
+    { n: 'Dengan Oksigen', d: 9, title: ['Tindak balas ', 'dengan oksigen', ''], goal: 'Logam + oksigen → oksida logam', cap: 'Magnesium terbakar dengan nyalaan putih yang sangat terang menghasilkan magnesium oksida. Ferum berbara perlahan, manakala kuprum hanya menjadi hitam. Lebih reaktif = tindak balas lebih cergas.' },
+    { n: 'Kedudukan Karbon', d: 8, title: ['Kedudukan ', 'karbon', ''], goal: 'Karbon menyingkirkan oksigen', cap: 'Karbon terletak antara aluminium dan zink. Logam yang kurang reaktif daripada karbon boleh diekstrak daripada bijihnya dengan memanaskan oksida logam bersama karbon.' },
+    { n: 'Relau Bagas', d: 10, title: ['Pengekstrakan ', 'besi', ''], goal: 'Bijih besi + kok → besi', cap: 'Dalam relau bagas, bijih besi (ferum oksida), kok (karbon) dan batu kapur dipanaskan dengan udara panas. Karbon monoksida menurunkan ferum oksida kepada besi lebur. Batu kapur menyingkirkan bendasing sebagai sanga.' },
+    { n: 'Elektrolisis', d: 8, title: ['Logam ', 'sangat reaktif', ''], goal: 'Diekstrak dengan elektrolisis', cap: 'Logam yang lebih reaktif daripada karbon seperti aluminium diekstrak melalui elektrolisis leburan bijihnya. Proses ini memerlukan banyak tenaga elektrik.' }
+  ];
+  const T0 = timeline(scenes);
+  const M = [['K', 'Kalium', '#A855F7'], ['Na', 'Natrium', '#8B5CF6'], ['Ca', 'Kalsium', '#6366F1'], ['Mg', 'Magnesium', '#3B82F6'], ['Al', 'Aluminium', '#0EA5E9'], ['Zn', 'Zink', '#14B8A6'], ['Fe', 'Ferum', '#22C55E'], ['Sn', 'Stanum', '#84CC16'], ['Pb', 'Plumbum', '#EAB308'], ['Cu', 'Kuprum', '#F97316'], ['Ag', 'Argentum', '#94A3B8'], ['Au', 'Aurum', '#CA8A04']];
+  const chip = (g, sym, x, y, c, a, w) => { if (!a) return; g.save(); g.globalAlpha = a; box(g, x - (w || 52), y - 46, (w || 52) * 2, 92, 14, c, '#0F172A', 3); txt(g, sym, x, y, { size: 40, w: 900, col: '#fff', stroke: 5, sc: 'rgba(15,23,42,.6)' }); g.restore(); };
+  function beaker(g, x, y){ box(g, x - 120, y - 200, 240, 220, 10, 'rgba(224,242,254,.5)', '#64748B', 5); g.fillStyle = 'rgba(56,189,248,.4)'; g.fillRect(x - 117, y - 120, 234, 137); }
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#F8FAFC', '#F1F5F9');
+    if (k === 0 || k === 3){ const showC = k === 3, list = showC ? M.slice(0, 5).concat([['C', 'Karbon', '#0F172A']], M.slice(5)) : M;
+      list.forEach(([s2, n, c], i) => { const x = 140 + i * (1320 / (list.length - 1)), a = k === 0 ? seg(lt, .3 + i * .4, .6 + i * .4) : 1, isC = s2 === 'C';
+        const dy = isC ? L(-200, 0, ease(seg(lt, .8, 2.4))) : 0; chip(g, s2, x, 380 + dy, c, isC ? seg(lt, .6, 1) : a, isC ? 46 : 50);
+        g.save(); g.translate(x, 470); g.rotate(-.6); txt(g, n, 0, 0, { size: 20, al: 'right', col: '#334155', a: isC ? seg(lt, 2, 2.4) : a }); g.restore(); });
+      if (k === 0){ arrow(g, 1460, 270, 140, 270, '#DC2626', 6, seg(lt, 5.4, 6)); txt(g, 'MAKIN REAKTIF', 800, 240, { size: 30, w: 900, col: '#DC2626', a: seg(lt, 5.6, 6) }); }
+      else { const cx = 140 + 5 * (1320 / 12); g.save(); g.globalAlpha = seg(lt, 3, 3.5); g.fillStyle = 'rgba(239,68,68,.12)'; g.fillRect(100, 300, cx - 140, 230); g.fillStyle = 'rgba(34,197,94,.12)'; g.fillRect(cx + 60, 300, 1480 - cx - 60, 230); g.restore();
+        pill(g, '⚡ Elektrolisis', 330, 640, '#DC2626', '#fff', 26, seg(lt, 3.5, 4)); pill(g, '🔥 Penurunan oleh karbon', 1080, 640, '#15803D', '#fff', 26, seg(lt, 4.2, 4.7)); } }
+    else if (k === 1){ [['Na', 450, '#8B5CF6', 1], ['Cu', 1150, '#F97316', 0]].forEach(([s2, x, c, r]) => { beaker(g, x, 600);
+      const mx = r ? x + Math.sin(lt * 3) * 70 : x, my = r ? 485 : 590; if (r){ g.save(); g.globalAlpha = Math.max(.25, 1 - lt / 9); circ(g, mx, my, 26, '#E9D5FF', '#6B21A8', 3); g.restore();
+        for (let i = 0; i < 10; i++){ const u = ((lt * 1.2 + i / 10) % 1); circ(g, mx + Math.sin(i * 3.1) * 30, my - u * 150, 5 + u * 5, 'rgba(255,255,255,.85)', '#94A3B8', 1); } }
+      else box(g, mx - 30, my - 14, 60, 28, 6, '#F97316', '#7C2D12', 3);
+      txt(g, s2, x, 300, { size: 46, w: 900, col: c }); txt(g, r ? 'Cergas! Gas H₂ terbebas' : 'Tiada tindak balas', x, 650, { size: 26, w: 800, col: r ? '#15803D' : '#64748B', a: seg(lt, 2, 2.4) }); });
+      pill(g, 'Natrium + air → natrium hidroksida + hidrogen', 800, 700, '#0F172A', '#FDE68A', 24, seg(lt, 4, 4.4)); }
+    else if (k === 2){ box(g, 120, 250, 1360, 430, 28, '#1E293B'); [['Mg', 330, '#FFFFFF', 1.6, 'Nyalaan putih terang'], ['Fe', 800, '#F97316', .8, 'Berbara perlahan'], ['Cu', 1270, '#1F2937', .2, 'Menjadi hitam']].forEach(([s2, x, fc, pw, d], i) => {
+      box(g, x - 8, 300, 16, 220, 4, '#94A3B8'); const on = seg(lt, .6 + i * 1.4, 1 + i * 1.4);
+      if (pw > .5 && on){ g.save(); g.globalAlpha = on; const gl = g.createRadialGradient(x, 320, 5, x, 320, 140 * pw); gl.addColorStop(0, fc); gl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.beginPath(); g.arc(x, 320, 140 * pw, 0, 7); g.fill();
+        for (let j = 0; j < 8; j++){ const a = j / 8 * 7 + lt * 4; circ(g, x + Math.cos(a) * 50 * pw, 320 + Math.sin(a) * 50 * pw, 4, fc === '#FFFFFF' ? '#FEF9C3' : '#FDBA74'); } g.restore(); }
+      else if (on) circ(g, x, 320, 20, fc);
+      txt(g, s2, x, 580, { size: 46, w: 900, col: '#fff' }); txt(g, d, x, 640, { size: 24, w: 700, col: '#CBD5E1', a: on }); });
+      pill(g, 'Logam + oksigen → oksida logam', 800, 220, '#0F172A', '#FDE68A', 26, seg(lt, 5.4, 5.8)); }
+    else if (k === 4){ g.save(); g.translate(800, 440); g.scale(.85, .85); g.beginPath(); g.moveTo(-120, -240); g.lineTo(120, -240); g.lineTo(200, 120); g.lineTo(150, 220); g.lineTo(-150, 220); g.lineTo(-200, 120); g.closePath();
+      const gr = g.createLinearGradient(0, -240, 0, 220); gr.addColorStop(0, '#78716C'); gr.addColorStop(.6, '#EA580C'); gr.addColorStop(1, '#FACC15'); g.fillStyle = gr; g.fill(); g.strokeStyle = '#292524'; g.lineWidth = 10; g.stroke();
+      for (let i = 0; i < 14; i++){ const u = ((lt * .15 + i / 14) % 1); circ(g, -90 + (i * 37) % 180, -220 + u * 330, 10, ['#7F1D1D', '#1C1917', '#E7E5E4'][i % 3]); }
+      g.fillStyle = '#F59E0B'; g.fillRect(-148, 180, 296, 38); g.fillStyle = '#A8A29E'; g.fillRect(-150, 150, 300, 30); g.restore();
+      arrow(g, 540, 540, 625, 540, '#0EA5E9', 6, seg(lt, 2, 2.4)); arrow(g, 1060, 540, 975, 540, '#0EA5E9', 6, seg(lt, 2, 2.4)); txt(g, 'Udara panas', 470, 500, { size: 22, col: '#0369A1', a: seg(lt, 2, 2.4) });
+      tag(g, 860, 236, 'Bijih besi + kok + batu kapur', 330, 20, seg(lt, .4, .8)); tag(g, 920, 576, 'Sanga', 230, -40, seg(lt, 5.2, 5.6)); tag(g, 900, 610, 'Besi lebur', 230, 30, seg(lt, 4.2, 4.6));
+      txt(g, 'Ferum oksida + karbon monoksida', 300, 330, { size: 24, w: 800, a: seg(lt, 6.4, 6.8) }); txt(g, '→ besi + karbon dioksida', 300, 370, { size: 24, w: 800, col: '#DC2626', a: seg(lt, 6.6, 7) }); }
+    else { box(g, 520, 360, 560, 300, 14, 'rgba(203,213,225,.6)', '#475569', 6); g.fillStyle = 'rgba(251,146,60,.6)'; g.fillRect(526, 470, 548, 184);
+      box(g, 640, 250, 40, 300, 6, '#1F2937'); box(g, 920, 250, 40, 300, 6, '#1F2937'); box(g, 600, 230, 400, 10, 4, '#DC2626');
+      for (let i = 0; i < 6; i++){ const u = ((lt * .5 + i / 6) % 1); circ(g, 940 + (i % 2) * 10, 550 - u * 80, 6, '#E2E8F0'); circ(g, 660, 560 + u * 70, 8, '#CBD5E1'); }
+      pill(g, '⚡ Arus elektrik', 800, 210, '#F59E0B', '#0F172A', 24, seg(lt, .4, .8)); tag(g, 660, 640, 'Aluminium lebur terkumpul', -260, 40, seg(lt, 2, 2.4)); tag(g, 520, 470, 'Leburan bijih aluminium', -230, -80, seg(lt, 1, 1.4)); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'logam', subj: SAINS_RX, subjLabel: 'SAINS T3', ico: '🧲', title: 'Kereaktifan Logam', desc: 'Siri kereaktifan, tindak balas logam dengan air dan oksigen, kedudukan karbon, pengekstrakan besi dalam relau bagas dan elektrolisis aluminium.', scenes, dur: T0, render });
+})();
+
+/* ---------- T3: LITAR ELEKTRIK ---------- */
+(() => {
+  const K = sciKit('ELEKTRIK', 'SAINS T3'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill, rules } = K;
+  const scenes = [
+    { n: 'Simbol Komponen', d: 9, title: ['Simbol ', 'komponen', ' elektrik'], goal: 'Kenal simbol litar', cap: 'Litar elektrik dilukis menggunakan simbol: sel kering, suis, mentol, ammeter (mengukur arus), voltmeter (mengukur voltan) dan perintang.' },
+    { n: 'Arus Elektrik', d: 8, title: ['Arus ', 'elektrik', ''], goal: 'Aliran cas dalam litar tertutup', cap: 'Arus elektrik ialah kadar aliran cas. Elektron mengalir dari terminal negatif ke positif; arah arus (konvensional) pula dari terminal positif ke negatif. Litar mesti tertutup.' },
+    { n: 'Litar Bersiri', d: 9, title: ['Litar ', 'bersiri', ''], goal: 'Satu laluan arus', cap: 'Dalam litar bersiri, arus yang sama mengalir melalui setiap mentol dan voltan dibahagikan antara mentol. Jika satu mentol rosak, semua mentol padam.' },
+    { n: 'Litar Selari', d: 9, title: ['Litar ', 'selari', ''], goal: 'Banyak laluan arus', cap: 'Dalam litar selari, voltan merentasi setiap cabang adalah sama dan arus dibahagikan antara cabang. Jika satu mentol rosak, mentol lain masih menyala — seperti pendawaian rumah.' },
+    { n: 'Hukum Ohm', d: 9, title: ['Hukum ', 'Ohm', ''], goal: 'V = I × R', cap: 'Hukum Ohm: voltan (V) = arus (I) × rintangan (R). Contoh: jika voltan 6 V dan rintangan 2 Ω, arus = 6 ÷ 2 = 3 A. Graf V melawan I ialah garis lurus.' },
+    { n: 'Keselamatan', d: 9, title: ['Keselamatan ', 'elektrik', ''], goal: 'Lindungi diri & peralatan', cap: 'Fius dan pemutus litar memutuskan litar apabila arus terlalu tinggi. Wayar bumi mengalirkan arus bocor ke bumi. Jangan sentuh suis dengan tangan basah dan jangan bebankan soket.' }
+  ];
+  const T0 = timeline(scenes);
+  const cell = (g, x, y) => { g.strokeStyle = '#0F172A'; g.lineWidth = 5; g.beginPath(); g.moveTo(x - 8, y - 40); g.lineTo(x - 8, y + 40); g.stroke(); g.lineWidth = 9; g.beginPath(); g.moveTo(x + 10, y - 22); g.lineTo(x + 10, y + 22); g.stroke(); txt(g, '+', x - 26, y - 46, { size: 28 }); txt(g, '−', x + 30, y - 46, { size: 30 }); };
+  function bulb(g, x, y, on, s){ s = s || 1; if (on){ const gl = g.createRadialGradient(x, y, 4, x, y, 90 * s); gl.addColorStop(0, 'rgba(253,224,71,.95)'); gl.addColorStop(1, 'rgba(253,224,71,0)'); g.fillStyle = gl; g.beginPath(); g.arc(x, y, 90 * s, 0, 7); g.fill(); }
+    circ(g, x, y, 30 * s, on ? '#FEF08A' : '#F1F5F9', '#0F172A', 5); g.strokeStyle = '#0F172A'; g.lineWidth = 4; g.beginPath(); g.moveTo(x - 21 * s, y - 21 * s); g.lineTo(x + 21 * s, y + 21 * s); g.moveTo(x + 21 * s, y - 21 * s); g.lineTo(x - 21 * s, y + 21 * s); g.stroke(); };
+  const wire = (g, pts) => { g.strokeStyle = '#334155'; g.lineWidth = 6; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); };
+  const flow = (g, pts, t, n, col, sp) => { const segs = []; let tot = 0; for (let i = 1; i < pts.length; i++){ const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); segs.push(d); tot += d; }
+    for (let j = 0; j < n; j++){ let s2 = (((t * (sp || 120)) + j * tot / n) % tot); for (let i = 0; i < segs.length; i++){ if (s2 <= segs[i]){ const u = s2 / segs[i]; circ(g, L(pts[i][0], pts[i + 1][0], u), L(pts[i][1], pts[i + 1][1], u), 8, col || '#0EA5E9', '#fff', 2); break; } s2 -= segs[i]; } } };
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#F8FAFC', '#EEF2FF');
+    if (k === 0){ const items = [['Sel kering', (x, y) => cell(g, x, y)], ['Suis', (x, y) => { g.strokeStyle = '#0F172A'; g.lineWidth = 5; g.beginPath(); g.moveTo(x - 60, y); g.lineTo(x - 25, y); g.lineTo(x + 25, y - 30); g.moveTo(x + 30, y); g.lineTo(x + 60, y); g.stroke(); circ(g, x - 25, y, 6, '#fff', '#0F172A', 3); circ(g, x + 30, y, 6, '#fff', '#0F172A', 3); }],
+      ['Mentol', (x, y) => bulb(g, x, y, false)], ['Ammeter', (x, y) => { circ(g, x, y, 40, '#fff', '#0F172A', 5); txt(g, 'A', x, y, { size: 40, w: 900 }); }], ['Voltmeter', (x, y) => { circ(g, x, y, 40, '#fff', '#0F172A', 5); txt(g, 'V', x, y, { size: 40, w: 900 }); }], ['Perintang', (x, y) => box(g, x - 60, y - 20, 120, 40, 2, '#fff', '#0F172A', 5)]];
+      items.forEach(([n, d], i) => { const a = seg(lt, .3 + i * 1.1, .7 + i * 1.1), x = 300 + (i % 3) * 500, y = 330 + Math.floor(i / 3) * 220; g.save(); g.globalAlpha = a; box(g, x - 180, y - 80, 360, 190, 20, '#fff', '#CBD5E1', 3); d(x, y); g.restore(); pill(g, n, x, y + 75, '#1E40AF', '#fff', 24, a); }); }
+    else if (k === 1){ const P1 = [[450, 450], [450, 260], [1150, 260], [1150, 640], [450, 640], [450, 450]]; wire(g, P1); box(g, 410, 410, 80, 80, 0, '#EEF2FF'); g.save(); g.translate(450, 450); g.rotate(Math.PI / 2); cell(g, 0, 0); g.restore();
+      bulb(g, 1150, 450, lt > 1); if (lt > 1) flow(g, [[450, 400], [450, 260], [1150, 260], [1150, 640], [450, 640], [450, 500]], lt, 14, '#0EA5E9');
+      arrow(g, 700, 230, 900, 230, '#DC2626', 5, seg(lt, 3, 3.4)); txt(g, 'Arah arus (+ ke −)', 800, 205, { size: 24, col: '#DC2626', a: seg(lt, 3, 3.4) });
+      arrow(g, 900, 670, 700, 670, '#0EA5E9', 5, seg(lt, 4.4, 4.8)); txt(g, 'Aliran elektron (− ke +)', 800, 700, { size: 24, col: '#0369A1', a: seg(lt, 4.4, 4.8) }); }
+    else if (k === 2){ const broken = lt > 5; const P2 = [[400, 640], [400, 280], [1200, 280], [1200, 640], [400, 640]]; wire(g, P2); box(g, 775, 600, 50, 80, 0, '#F1F3FB'); g.save(); g.translate(800, 640); cell(g, 0, 0); g.restore();
+      bulb(g, 650, 280, !broken); bulb(g, 950, 280, !broken); if (broken){ box(g, 920, 240, 60, 80, 0, '#F8FAFC'); txt(g, '💥', 950, 280, { size: 60 }); }
+      if (!broken) flow(g, P2, lt, 16, '#0EA5E9');
+      pill(g, 'I sama di semua titik', 800, 380, '#0F172A', '#FDE68A', 24, seg(lt, 1.5, 1.9) * (broken ? 0 : 1)); pill(g, 'V jumlah = V₁ + V₂', 800, 450, '#0F172A', '#FDE68A', 24, seg(lt, 3, 3.4) * (broken ? 0 : 1));
+      if (broken) pill(g, 'Satu mentol rosak → SEMUA padam', 800, 420, '#DC2626', '#fff', 28, seg(lt, 5.2, 5.6)); }
+    else if (k === 3){ const broken = lt > 5; wire(g, [[400, 640], [400, 260], [1200, 260], [1200, 640], [400, 640]]); wire(g, [[400, 450], [1200, 450]]); box(g, 775, 600, 50, 80, 0, '#F1F3FB'); g.save(); g.translate(800, 640); cell(g, 0, 0); g.restore();
+      bulb(g, 800, 260, true); bulb(g, 800, 450, !broken); if (broken){ box(g, 770, 410, 60, 80, 0, '#EEF2FF'); txt(g, '💥', 800, 450, { size: 60 }); }
+      flow(g, [[400, 640], [400, 260], [1200, 260], [1200, 640]], lt, 10, '#0EA5E9'); if (!broken) flow(g, [[400, 450], [1200, 450]], lt, 7, '#38BDF8');
+      pill(g, 'V sama setiap cabang', 1380, 350, '#0F172A', '#FDE68A', 22, seg(lt, 1.5, 1.9)); pill(g, 'I = I₁ + I₂', 1380, 420, '#0F172A', '#FDE68A', 22, seg(lt, 3, 3.4));
+      if (broken) pill(g, 'Satu rosak → yang lain masih menyala ✔', 800, 360, '#15803D', '#fff', 26, seg(lt, 5.2, 5.6)); }
+    else if (k === 4){ txt(g, 'V = I × R', 420, 300, { size: 80, w: 900, col: '#1E40AF', serif: true });
+      [['V = 6 V', .8], ['R = 2 Ω', 1.6], ['I = V ÷ R', 2.4], ['I = 6 ÷ 2 = 3 A', 3.2]].forEach(([s2, at], i) => txt(g, s2, 420, 400 + i * 62, { size: 34, w: 800, a: seg(lt, at, at + .4), col: i === 3 ? '#DC2626' : '#0F172A' }));
+      g.strokeStyle = '#0F172A'; g.lineWidth = 4; g.beginPath(); g.moveTo(860, 230); g.lineTo(860, 640); g.lineTo(1420, 640); g.stroke(); txt(g, 'V (volt)', 860, 210, { size: 22 }); txt(g, 'I (ampere)', 1420, 675, { size: 22 });
+      const u = seg(lt, 4, 6.5); g.strokeStyle = '#DC2626'; g.lineWidth = 6; g.beginPath(); g.moveTo(860, 640); g.lineTo(860 + 520 * u, 640 - 380 * u); g.stroke();
+      [.25, .5, .75].forEach(v => { if (u >= v) circ(g, 860 + 520 * v, 640 - 380 * v, 9, '#DC2626', '#fff', 3); }); pill(g, 'Garis lurus melalui asalan', 1140, 300, '#DC2626', '#fff', 22, seg(lt, 6.5, 7)); }
+    else { rules(g, ['🔌 Fius & pemutus litar putuskan arus berlebihan', '🌍 Wayar bumi alirkan arus bocor ke bumi', '💧 Jangan sentuh suis dengan tangan basah', '⚠️ Jangan sambung terlalu banyak plag pada satu soket', '🧤 Panggil juruelektrik untuk pendawaian rosak'], lt, 240); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'litar', subj: SAINS_RX, subjLabel: 'SAINS T3', ico: '💡', title: 'Litar Elektrik', desc: 'Simbol komponen, arus & aliran elektron, litar bersiri vs selari (apabila mentol rosak), hukum Ohm V = IR dan keselamatan elektrik.', scenes, dur: T0, render });
+})();
+
+/* ---------- T3: PENJANAAN & PENGHANTARAN ELEKTRIK ---------- */
+(() => {
+  const K = sciKit('TENAGA ELEKTRIK', 'SAINS T3'), { seg, L, ease, hud, sceneOf, timeline, bg, tag, arrow, txt, box, circ, pill } = K;
+  const scenes = [
+    { n: 'Penjana', d: 9, title: ['Prinsip ', 'penjana', ''], goal: 'Gerakan + magnet → arus', cap: 'Apabila gegelung dawai berputar dalam medan magnet, arus elektrik teraruh dalam gegelung. Lebih laju putaran atau lebih kuat magnet, lebih besar arus yang dijana.' },
+    { n: 'Stesen Jana Kuasa', d: 9, title: ['Sumber ', 'tenaga', ''], goal: 'Turbin memutar penjana', cap: 'Di stesen jana kuasa, turbin diputar oleh air (hidro), stim dari pembakaran arang batu atau gas (terma), angin atau tenaga nuklear. Turbin memutar penjana untuk menghasilkan elektrik. Panel suria pula menukar cahaya terus kepada elektrik.' },
+    { n: 'Transformer Injak Naik', d: 8, title: ['Transformer ', 'injak naik', ''], goal: 'Voltan dinaikkan', cap: 'Elektrik dari stesen jana kuasa dinaikkan voltannya (contoh 11 kV kepada 132 kV hingga 500 kV) oleh transformer injak naik supaya arus kecil dan kehilangan tenaga dalam kabel berkurang.' },
+    { n: 'Grid Nasional', d: 9, title: ['Grid ', 'Nasional', ''], goal: 'Rangkaian kabel seluruh negara', cap: 'Grid Nasional ialah rangkaian kabel penghantaran yang menghubungkan stesen jana kuasa dengan pengguna di seluruh negara. Jika satu stesen rosak, bekalan masih boleh disalurkan dari stesen lain.' },
+    { n: 'Injak Turun', d: 8, title: ['Transformer ', 'injak turun', ''], goal: 'Voltan diturunkan ke 240 V', cap: 'Di pencawang, transformer injak turun menurunkan voltan secara berperingkat kepada 240 V untuk kegunaan di rumah dan sekolah.' },
+    { n: 'Kos Elektrik', d: 9, title: ['Kira ', 'kos elektrik', ''], goal: 'Tenaga = kuasa × masa', cap: 'Tenaga elektrik (kWj) = kuasa (kW) × masa (jam). Kos = tenaga × tarif. Contoh: penyaman udara 1.5 kW digunakan 4 jam = 6 kWj; pada 22 sen sekWj, kos = RM1.32.' }
+  ];
+  const T0 = timeline(scenes);
+  function tower(g, x, y, h){ g.strokeStyle = '#475569'; g.lineWidth = 4; g.beginPath(); g.moveTo(x - 30, y); g.lineTo(x, y - h); g.lineTo(x + 30, y); g.moveTo(x - 40, y - h * .75); g.lineTo(x + 40, y - h * .75); g.moveTo(x - 30, y - h * .5); g.lineTo(x + 30, y - h * .5); g.moveTo(x - 22, y - h * .3); g.lineTo(x + 22, y - h * .48); g.moveTo(x + 22, y - h * .3); g.lineTo(x - 22, y - h * .48); g.stroke(); };
+  function flowLine(g, x0, y0, x1, y1, t, col, n, sp){ g.strokeStyle = '#1F2937'; g.lineWidth = 3; g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2, Math.max(y0, y1) + 30, x1, y1); g.stroke();
+    for (let i = 0; i < n; i++){ const u = ((t * (sp || .5) + i / n) % 1), mx = (x0 + x1) / 2, my = Math.max(y0, y1) + 30, x = (1 - u) * (1 - u) * x0 + 2 * u * (1 - u) * mx + u * u * x1, y = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * my + u * u * y1; circ(g, x, y, 6, col || '#FACC15'); } };
+  function trafo(g, x, y, lab, up){ box(g, x - 70, y - 80, 140, 160, 12, '#64748B', '#1E293B', 4); for (let i = 0; i < (up ? 3 : 6); i++) box(g, x - 50, y - 60 + i * (up ? 40 : 20), 30, 10, 4, '#F59E0B'); for (let i = 0; i < (up ? 6 : 3); i++) box(g, x + 20, y - 60 + i * (up ? 20 : 40), 30, 10, 4, '#F59E0B'); pill(g, lab, x, y + 115, up ? '#DC2626' : '#15803D', '#fff', 20); };
+  function render(g, t){
+    const k = sceneOf(scenes, t), sc = scenes[k], lt = t - sc.t0; bg(g, '#F0F9FF', '#ECFDF5');
+    if (k === 0){ const sp = L(0, 6, seg(lt, .5, 3)), ang = lt * sp * .5;
+      box(g, 380, 300, 150, 300, 16, '#DC2626', '#7F1D1D', 4); txt(g, 'U', 455, 450, { size: 60, w: 900, col: '#fff' }); box(g, 1070, 300, 150, 300, 16, '#2563EB', '#1E3A8A', 4); txt(g, 'S', 1145, 450, { size: 60, w: 900, col: '#fff' });
+      g.save(); g.translate(800, 450); g.scale(1, 1); const w = Math.cos(ang) * 200; g.strokeStyle = '#B45309'; g.lineWidth = 12; g.strokeRect(-Math.abs(w), -130, Math.abs(w) * 2 || 2, 260); g.restore();
+      const amp = Math.sin(ang) * sp / 6; g.save(); g.translate(800, 690); box(g, -90, -60, 180, 80, 40, '#fff', '#0F172A', 3); g.strokeStyle = '#DC2626'; g.lineWidth = 4; g.beginPath(); g.moveTo(0, 10); g.lineTo(Math.sin(amp) * 60, -40); g.stroke(); g.restore();
+      tag(g, 800, 330, 'Gegelung berputar', 260, -110, seg(lt, 1, 1.4)); tag(g, 870, 670, 'Galvanometer: arus teraruh', 280, -20, seg(lt, 3.5, 3.9)); }
+    else if (k === 1){ [['💧', 'Hidro'], ['🔥', 'Terma (arang batu / gas)'], ['☢️', 'Nuklear'], ['🌬️', 'Angin'], ['☀️', 'Suria']].forEach(([e, n], i) => { const a = seg(lt, .3 + i * .8, .7 + i * .8), y = 250 + i * 95; txt(g, e, 220, y, { size: 60, a }); txt(g, n, 280, y, { size: 26, al: 'left', w: 800, a }); if (i < 4) arrow(g, 620, y, 760, 460, '#64748B', 3, a * .7); });
+      const ang = lt * 4; g.save(); g.translate(880, 460); for (let i = 0; i < 6; i++){ g.save(); g.rotate(ang + i * Math.PI / 3); box(g, -10, -110, 20, 100, 8, '#0EA5E9', '#075985', 3); g.restore(); } circ(g, 0, 0, 24, '#334155'); g.restore();
+      arrow(g, 1000, 460, 1100, 460, '#0F172A', 6, seg(lt, 4.5, 5)); box(g, 1110, 390, 180, 140, 18, '#F59E0B', '#78350F', 4); txt(g, 'PENJANA', 1200, 460, { size: 24, w: 900 }); arrow(g, 1300, 460, 1420, 460, '#FACC15', 8, seg(lt, 5.5, 6)); txt(g, '⚡', 1460, 460, { size: 60, a: seg(lt, 5.8, 6.2) });
+      tag(g, 880, 460, 'Turbin', 0, 190, seg(lt, 4.2, 4.6)); }
+    else if (k === 2 || k === 4){ const up = k === 2; trafo(g, 800, 440, up ? 'INJAK NAIK' : 'INJAK TURUN', up);
+      flowLine(g, 300, 400, 730, 400, lt, '#FACC15', 6, .6); flowLine(g, 870, 400, 1300, 400, lt, '#FACC15', up ? 3 : 10, .6);
+      pill(g, up ? '11 kV' : '11 kV', 400, 300, '#0F172A', '#FDE68A', 30, seg(lt, .4, .8)); pill(g, up ? '132 – 500 kV' : '240 V', 1200, 300, '#0F172A', '#FDE68A', 30, seg(lt, 1.6, 2));
+      txt(g, up ? '🏭' : '🏠', up ? 220 : 1400, 400, { size: 100 }); txt(g, up ? '🗼' : '🏫', up ? 1400 : 220, 400, { size: 100 });
+      txt(g, up ? 'Voltan ⬆  ·  Arus ⬇  ·  Kehilangan tenaga ⬇' : 'Selamat digunakan di rumah & sekolah', 800, 640, { size: 30, w: 800, col: up ? '#DC2626' : '#15803D', a: seg(lt, 3, 3.5) }); }
+    else if (k === 3){ g.fillStyle = '#BBF7D0'; g.fillRect(80, 560, 1440, 150); const xs = [240, 520, 800, 1080, 1360]; xs.forEach(x => tower(g, x, 600, 260));
+      for (let i = 0; i < xs.length - 1; i++) flowLine(g, xs[i], 360, xs[i + 1], 360, lt + i * .3, '#FACC15', 3, .8);
+      [['🏭', 120, 'Stesen jana kuasa'], ['🏙️', 1480, 'Bandar'], ['🏘️', 900, 'Kampung']].forEach(([e, x, n], i) => { txt(g, e, x, 640, { size: 80, a: seg(lt, .4 + i * 1.5, .8 + i * 1.5) }); txt(g, n, x, 700, { size: 20, w: 800, a: seg(lt, .4 + i * 1.5, .8 + i * 1.5) }); });
+      pill(g, 'Grid Nasional menghubungkan seluruh negara', 800, 250, '#0F172A', '#FDE68A', 26, seg(lt, 4.5, 5)); }
+    else { txt(g, '❄️', 300, 400, { size: 140 }); txt(g, 'Penyaman udara 1.5 kW', 300, 540, { size: 26, w: 800 });
+      [['Tenaga = kuasa × masa', 0], ['= 1.5 kW × 4 j = 6 kWj', 1.2], ['Kos = 6 kWj × RM0.22', 2.6], ['= RM1.32', 4]].forEach(([s2, at], i) => txt(g, s2, 1000, 300 + i * 85, { size: i === 3 ? 56 : 36, w: 900, a: seg(lt, at + .4, at + .8), col: i === 3 ? '#DC2626' : '#0F172A' }));
+      pill(g, '💡 Tutup suis bila tidak digunakan', 1000, 660, '#15803D', '#fff', 24, seg(lt, 6, 6.4)); }
+    hud(g, scenes, k, lt, null);
+  }
+  SIM_LIB.push({ id: 'jana', subj: SAINS_RX, subjLabel: 'SAINS T3', ico: '⚡', title: 'Penjanaan & Penghantaran Elektrik', desc: 'Prinsip penjana, sumber tenaga di stesen jana kuasa, transformer injak naik & turun, Grid Nasional dan pengiraan kos elektrik.', scenes, dur: T0, render });
 })();
 
 /* ---------- tab SIMULASI ---------- */
