@@ -1,0 +1,23 @@
+ASET KLINIK REMAJA (pilihan) — jana dengan ChatGPT / Gemini, simpan dengan nama fail TEPAT dalam folder assets/klinik.
+Latar magenta dibuang automatik oleh auto-push. Tanpa gambar, game guna watak yang dilukis app.
+
+1. bg_klinik.png  (3:2)
+Bright cheerful school health clinic room interior for teenagers, cartoon game background, examination bed with curtain, doctor desk with computer, health posters on pastel mint walls, window with daylight, medicine cabinet, clean and friendly, no people, no text, flat vector style, 3:2 landscape
+
+2. doktor_p.png  (2:3)
+Friendly young Malaysian female doctor wearing a white hijab, white coat and stethoscope, warm smile, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait
+
+3. doktor_l.png  (2:3)
+Friendly young Malaysian male doctor with short neat hair, white coat and stethoscope, warm smile, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait
+
+4. pesakit_l_risau.png  (2:3)
+Malaysian teenage schoolboy about 14 years old in white school shirt, worried and shy expression, hand on the back of his neck, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait
+
+5. pesakit_l_gembira.png  (2:3)
+Malaysian teenage schoolboy about 14 years old in white school shirt, relieved happy smile, giving a thumbs up, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait
+
+6. pesakit_p_risau.png  (2:3)
+Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, worried and shy expression, hands together, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait
+
+7. pesakit_p_gembira.png  (2:3)
+Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, relieved happy smile, waving, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait

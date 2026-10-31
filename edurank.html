@@ -5891,6 +5891,23 @@ const GAME_LOBBY = {
     },
     starts: [['▶ MAIN (1 peranti)', () => storStart()], ['👑 BUKA BILIK · HOS (tayangan projektor)', () => storHost()]],
     how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> atlet <b>menyewa</b> peralatan sukan (harga murah) — seret dari rak <b>terus kepada atlet</b>. Atlet akan datang semula: seret peralatan yang dipulangkan ke <b>tempat asalnya di rak</b>.<br><b>Jus Blend Sihat:</b> gelembung pelanggan menunjukkan jus yang dipesan — <b>ketik pelanggan</b> untuk lihat resipinya, kemudian seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
+  },
+  klinik: {
+    title: 'KLINIK REMAJA', ico: '🩺', c: '#34D399',
+    bg: () => KL_HAVE.has('bg_klinik') ? KL_HAVE.get('bg_klinik') : '',
+    desc: 'Jadi doktor remaja! Dengar masalah pesakit, buat diagnosis, rawat dengan mini-game atau beri nasihat yang selamat, kemudian tulis preskripsi.',
+    cfg: () => klCfg(),
+    opts: () => [
+      lbSeg('n', 'BILANGAN PESAKIT', [[4,'4'],[6,'6'],[8,'8'],[10,'10']]),
+      lbSeg('jenis', 'JENIS KES', [['semua','Semua'],['fizikal','Fizikal'],['emosi','Emosi & sosial']], 'Fizikal: jerawat, bau badan, senggugut, gigi, tidur, sarapan (mini-game). Emosi & sosial: keluarga, buli siber, tekanan peperiksaan, vape, gangguan seksual, identiti diri (sesi nasihat)'),
+      lbSeg('sens', 'KES SENSITIF', [[1,'Papar'],[0,'Sembunyi']], 'Kes gangguan seksual & kekeliruan identiti. Sembunyikan jika kelas belum sesuai'),
+      lbSeg('jantina', 'PESAKIT', [['campur','Lelaki & perempuan'],['L','Lelaki sahaja'],['P','Perempuan sahaja']]),
+      lbSeg('watak', 'WATAK DOKTOR', [['p','Perempuan'],['l','Lelaki']])],
+    preload: async p => { await klProbe(); p(.3); const urls = [...KL_HAVE.values()]; let n = 0;
+      await Promise.all(urls.map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = () => { n++; p(.3 + .7 * n / urls.length); r(); }; im.src = u; }))); p(1); },
+    starts: [['▶ BUKA KLINIK', () => klStart()]],
+    how: () => '<b>1. Dengar</b> cerita pesakit dalam gelembung dialog.<br><b>2. Diagnosis</b> — pilih masalah yang tepat.<br><b>3. Rawat</b> — masalah fizikal ada mini-game: gosok pencuci & sapu krim jerawat (<b>jangan picit!</b>), susun rutin mandi / tidur, pilih rawatan senggugut atau sarapan sihat, berus semua bahagian gigi.<br>' +
+      '<b>Masalah emosi & sosial</b> — pilih respons doktor yang paling menenangkan dan selamat (meter <b>Rasa Selamat</b>), kemudian pilih <b>siapa boleh bantu</b> (kaunselor, ibu bapa, Talian Kasih 15999…).<br><b>4. Farmasi</b> — jawab satu soalan dari bank soalan.<br><b>5. Preskripsi</b> — baca nasihat kesihatan & dapatkan bintang kepuasan.<br>Diagnosis, nasihat, rujukan & soalan farmasi direkod sebagai <b>TP</b> untuk setiap ahli kumpulan.'
   }
 };
 
@@ -8206,7 +8223,7 @@ function pvpBoardHtml(){
    dan disimpan dalam rekod PBD hari itu bagi SETIAP ahli kumpulan (markah
    dikongsi). TP hari itu = purata penilaian guru (matrik) + setiap game.
    Setiap aktiviti game boleh dipadam satu demi satu dalam Sejarah.      */
-const GAME_NAMES = { tangga:'Tangga Ilmon', kombo:'Kombo Ilmon', esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)', stor:'Simulasi Stor Sukan' };
+const GAME_NAMES = { tangga:'Tangga Ilmon', kombo:'Kombo Ilmon', esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)', stor:'Simulasi Stor Sukan', klinik:'Klinik Remaja' };
 const teamOf = id => { const g = (S.groups || []).find(x => x.id === id); return g ? { id, name: g.name, members: (g.members || []).map(stu).filter(Boolean), g } : null; };
 const teamName = id => (teamOf(id) || {}).name || '—';
 const classTeams = () => (S.groups || []).filter(g => g.classId === S.ui.activeClassId && (g.members || []).some(m => stu(m)));
@@ -8288,15 +8305,438 @@ const gameLine = g => (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' be
    Tiga permainan, semuanya tanpa aset untuk dimuat naik: Kad Koleksi
    (dilukis oleh app), Larian Ilmu (3D) dan Sekolah Berhantu (3D).     */
 function viewGame(){
-  const g = ['cards','run','escape','stor'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
+  const g = ['cards','run','escape','stor','klinik'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[12px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
-  const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + '</div>';
+  const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + tab('klinik','fa-stethoscope','KLINIK') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
   return tabs + todayQNotice() +                                    // kumpulan & tetapan dipilih dalam menu game
-    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : viewCards()) +
+    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : g === 'klinik' ? viewKlinik() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
+}
+
+/* ============ GAME 6: KLINIK REMAJA ============
+   Murid (kumpulan) menjadi doktor remaja. Pesakit remaja lelaki/perempuan
+   datang dengan masalah Pendidikan Kesihatan: dengar cerita → diagnos →
+   rawat (mini-game: cuci jerawat, susun rutin, pilih rawatan, berus gigi)
+   atau beri nasihat (dialog empati + "Siapa boleh bantu?") → soalan farmasi
+   dari bank soalan → preskripsi. Diagnosis, nasihat & soalan = markah TP.
+   Aset pilihan: assets/klinik/<id>.png (senarai.json); tanpa aset, watak
+   dilukis oleh app.                                                      */
+let KLINIK = null;
+const KL_HAVE = new Map();
+let KL_PROBED = null;
+const KL_ASSETS = [
+  { id:'bg_klinik', r:'3:2', p:'Bright cheerful school health clinic room interior for teenagers, cartoon game background, examination bed with curtain, doctor desk with computer, health posters on pastel mint walls, window with daylight, medicine cabinet, clean and friendly, no people, no text, flat vector style, 3:2 landscape' },
+  { id:'doktor_p', r:'2:3', p:'Friendly young Malaysian female doctor wearing a white hijab, white coat and stethoscope, warm smile, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
+  { id:'doktor_l', r:'2:3', p:'Friendly young Malaysian male doctor with short neat hair, white coat and stethoscope, warm smile, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
+  { id:'pesakit_l_risau', r:'2:3', p:'Malaysian teenage schoolboy about 14 years old in white school shirt, worried and shy expression, hand on the back of his neck, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
+  { id:'pesakit_l_gembira', r:'2:3', p:'Malaysian teenage schoolboy about 14 years old in white school shirt, relieved happy smile, giving a thumbs up, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
+  { id:'pesakit_p_risau', r:'2:3', p:'Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, worried and shy expression, hands together, waist-up, cute cartoon game character, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' },
+  { id:'pesakit_p_gembira', r:'2:3', p:'Malaysian teenage schoolgirl about 14 years old in white school hijab and light blue baju kurung school uniform, relieved happy smile, waving, waist-up, cute cartoon game character, same character as the worried version, flat vector style, plain solid magenta #FF00FF background, 2:3 portrait' }
+];
+function klProbe(){
+  if (KL_PROBED) return KL_PROBED;
+  KL_PROBED = fetch('assets/klinik/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
+    .then(m => Object.keys(m).forEach(id => KL_HAVE.set(id, 'assets/klinik/' + m[id]))).catch(() => {});
+  return KL_PROBED;
+}
+function klCfg(){ S.config.klinik = Object.assign({ n:6, jenis:'semua', sens:1, jantina:'campur', watak:'p' }, S.config.klinik || {}); return S.config.klinik; }
+function klData(){ S.klinik = S.klinik || {}; S.klinik.best = S.klinik.best || {}; S.klinik.plays = S.klinik.plays || {}; return S.klinik; }
+/* Kes pesakit. t: 'f' fizikal (mini-game) / 'e' emosi (dialog). g: '' = lelaki atau perempuan. sens: kes sensitif (boleh dimatikan guru) */
+const KL_HELP = { kaunselor:'🧑‍🏫 Guru kaunseling', ibubapa:'👪 Ibu bapa / penjaga', guru:'👩‍🏫 Guru yang dipercayai', talian:'☎️ Talian Kasih 15999', polis:'🚓 Polis / 999 jika dalam bahaya',
+  doktor:'🩺 Doktor / klinik kesihatan', keluarga:'👵 Ahli keluarga yang dipercayai', kawan:'🤝 Kawan baik yang positif', platform:'🚩 Laporkan kepada platform media sosial',
+  x_diam:'🙊 Simpan seorang diri', x_sosmed:'📱 Luahkan di media sosial', x_asing:'🌐 Orang asing di internet', x_balas:'😡 Balas dendam', x_padam:'🗑️ Padam semua bukti', x_geng:'🚬 Kawan yang mengajak' };
+const KL_CASES = [
+  { id:'jerawat', t:'f', g:'', look:'jerawat', nm:'Jerawat', topik:'Kebersihan & kesihatan diri',
+    cerita:['Doktor, muka saya penuh jerawat…', 'Saya malu nak bergambar dengan kawan-kawan. Saya selalu picit, tapi makin banyak!'],
+    dx:['Jerawat — hormon akil baligh & kulit berminyak', 'Alahan makanan laut', 'Digigit nyamuk aedes'],
+    game:'jerawat',
+    tips:['Cuci muka 2 kali sehari dengan pencuci yang lembut.', 'Jangan picit jerawat — boleh tinggalkan parut dan jangkitan.', 'Tukar sarung bantal selalu dan jangan sentuh muka dengan tangan kotor.', 'Minum air secukupnya, kurangkan makanan berminyak.', 'Jumpa doktor jika jerawat teruk atau bernanah.'] },
+  { id:'bau', t:'f', g:'', look:'bau', nm:'Bau badan', topik:'Kebersihan diri',
+    cerita:['Lepas kelas PJ, kawan-kawan jauhkan diri dari saya…', 'Mereka kata saya bau badan. Saya rasa sedih sangat.'],
+    dx:['Bau badan — peluh & bakteria kerana kebersihan kurang', 'Penyakit jantung', 'Kurang tidur'],
+    game:'susun', steps:['🚿 Mandi selepas bersukan', '🧼 Sabun ketiak & celah badan', '🧻 Lap badan hingga kering', '🧴 Pakai deodoran', '👕 Pakai baju yang bersih'],
+    trap:['🌸 Sembur minyak wangi tanpa mandi', 'Minyak wangi hanya menutup bau — bakteria masih ada. Mandi dahulu!'],
+    tips:['Mandi sekurang-kurangnya 2 kali sehari dan selepas bersukan.', 'Sabun bahagian ketiak, leher dan celah badan.', 'Pakai deodoran dan baju yang bersih serta kering.', 'Tukar stokin & pakaian dalam setiap hari.'] },
+  { id:'senggugut', t:'f', g:'P', look:'senggugut', nm:'Senggugut', topik:'Kesihatan reproduktif',
+    cerita:['Doktor, setiap kali datang haid, perut saya sakit sangat…', 'Saya tak boleh fokus dalam kelas dan rasa nak menangis.'],
+    dx:['Senggugut — kejang otot rahim semasa haid', 'Demam denggi', 'Keracunan makanan'],
+    game:'pilih', good:['♨️ Tuam botol air panas di perut', '☕ Minum air suam', '🛌 Rehat & baring sebentar', '🧘 Regangan / senaman ringan', '📅 Catat tarikh haid setiap bulan'],
+    bad:['🧊 Minum air berais banyak-banyak', '💊 Makan ubat kawan tanpa bertanya', '🍟 Makan makanan ringan bergula'],
+    tips:['Senggugut ringan adalah normal semasa haid.', 'Tuam perut dengan botol air panas dan minum air suam.', 'Senaman ringan dan rehat boleh mengurangkan sakit.', 'Ubat tahan sakit hanya dengan nasihat ibu bapa atau doktor.', 'Jumpa doktor jika sakit melampau, pening atau pitam.'] },
+  { id:'gigi', t:'f', g:'', look:'gigi', nm:'Bau mulut & gusi berdarah', topik:'Kesihatan mulut',
+    cerita:['Bila saya bercakap, kawan saya tutup hidung…', 'Gusi saya pun kadang-kadang berdarah bila makan.'],
+    dx:['Plak gigi — kebersihan mulut kurang', 'Kekurangan zat besi', 'Selsema biasa'],
+    game:'berus',
+    tips:['Berus gigi 2 kali sehari selama 2 minit dengan ubat gigi berfluorida.', 'Berus semua bahagian gigi, termasuk lidah.', 'Guna flos untuk celah gigi.', 'Kurangkan makanan & minuman bergula.', 'Jumpa doktor gigi setiap 6 bulan.'] },
+  { id:'tidur', t:'f', g:'', look:'letih', nm:'Kurang tidur', topik:'Gaya hidup sihat',
+    cerita:['Saya selalu mengantuk dalam kelas, doktor…', 'Malam-malam saya main telefon sampai pukul 2 pagi.'],
+    dx:['Kurang tidur — guna gajet lewat malam', 'Penyakit kencing manis', 'Malas sejak lahir'],
+    game:'susun', steps:['📵 Simpan telefon 1 jam sebelum tidur', '🚿 Mandi & bersihkan diri', '📖 Baca buku atau ulang kaji ringan', '💡 Tutup lampu', '😴 Tidur sebelum 10.30 malam'],
+    trap:['☕ Minum kopi pekat waktu malam', 'Kafein membuatkan otak terus berjaga — susah nak tidur!'],
+    tips:['Remaja perlukan 8–10 jam tidur setiap malam.', 'Simpan gajet sekurang-kurangnya 1 jam sebelum tidur.', 'Tidur & bangun pada waktu yang sama setiap hari.', 'Elak kafein (kopi, minuman tenaga) pada waktu petang & malam.'] },
+  { id:'sarapan', t:'f', g:'', look:'pening', nm:'Pening tidak bersarapan', topik:'Pemakanan sihat',
+    cerita:['Saya jarang sarapan sebab tak sempat…', 'Pukul 10 pagi saya pening, lemah dan tangan menggigil.'],
+    dx:['Gula darah rendah — tidak bersarapan', 'Patah tulang', 'Alahan habuk'],
+    game:'pilih', good:['🍞 Roti gandum', '🥚 Telur rebus', '🍌 Pisang', '🥛 Susu', '🥣 Oat'], bad:['🥤 Minuman bergas', '🍩 Donat bergula', '🍟 Kerepek'],
+    tips:['Sarapan memberi tenaga untuk belajar dan fokus.', 'Pilih karbohidrat kompleks, protein dan buah-buahan.', 'Elak minuman bergas dan makanan tinggi gula.', 'Sediakan sarapan ringkas pada malam sebelumnya jika selalu kesuntukan masa.'] },
+  { id:'gangguan', t:'e', g:'', sens:1, nm:'Gangguan seksual', topik:'Kesihatan & keselamatan diri',
+    cerita:['Doktor… ada seseorang di tempat tuisyen selalu sentuh saya dengan cara yang saya tak suka.', 'Dia kata jangan beritahu sesiapa.'],
+    dx:['Gangguan seksual — sentuhan tidak selamat', 'Gurauan biasa sahaja', 'Salah faham kecil'],
+    talk:[['Saya rasa takut… dan malu nak cerita.', 'Terima kasih kerana berani beritahu. Ini bukan salah kamu.', ['Kenapa kamu tak lari saja?', 'Mungkin dia cuma bergurau.']],
+      ['Tapi dia kata saya akan dapat susah kalau saya beritahu.', 'Rahsia yang membuat kamu takut tidak perlu disimpan. Kamu berhak dilindungi.', ['Kalau begitu, diam sajalah.', 'Jangan besar-besarkan hal kecil.']],
+      ['Apa saya patut buat sekarang?', 'Katakan TIDAK, jauhkan diri dan beritahu orang dewasa yang dipercayai.', ['Balas dendam pada dia.', 'Ceritakan dulu di media sosial.']]],
+    help:['ibubapa', 'kaunselor', 'talian', 'polis'], nohelp:['x_diam', 'x_sosmed'],
+    tips:['Tubuh kamu milik kamu. Sentuhan yang membuat kamu tidak selesa ialah sentuhan tidak selamat.', 'Katakan TIDAK, lari dan beritahu orang dewasa yang dipercayai.', 'Ini bukan salah mangsa — jangan simpan rahsia yang menakutkan.', 'Talian Kasih 15999 / WhatsApp 019-2615999 (24 jam).'] },
+  { id:'keluarga', t:'e', g:'', nm:'Masalah keluarga', topik:'Kekeluargaan',
+    cerita:['Mak dan ayah saya selalu bergaduh. Sekarang ayah dah pindah keluar.', 'Saya rasa semua ini salah saya…'],
+    dx:['Tekanan emosi akibat konflik keluarga', 'Demam panas', 'Kurang zat besi'],
+    talk:[['Saya rasa ini semua salah saya.', 'Masalah antara orang dewasa bukan salah kamu.', ['Itu hal orang tua, tak perlu sedih.', 'Pilih saja nak tinggal dengan siapa.']],
+      ['Saya tak boleh tidur dan malas nak ke sekolah.', 'Perasaan kamu normal. Luahkan kepada orang yang kamu percaya dan teruskan rutin harian.', ['Ponteng sekolah dulu sampai rasa okey.', 'Pendam saja, nanti hilanglah.']],
+      ['Macam mana nak rasa lebih baik?', 'Tulis jurnal, bersenam, luangkan masa dengan kawan baik dan jumpa kaunselor.', ['Main game sampai lupa semua.', 'Lepaskan marah pada adik-adik.']]],
+    help:['kaunselor', 'keluarga', 'talian', 'kawan'], nohelp:['x_asing', 'x_diam'],
+    tips:['Konflik ibu bapa bukan salah anak.', 'Luahkan perasaan kepada orang yang dipercayai.', 'Kekalkan rutin: sekolah, tidur, makan dan bersukan.', 'Guru kaunseling sedia mendengar secara sulit.'] },
+  { id:'identiti', t:'e', g:'', sens:1, nm:'Kekeliruan identiti diri', topik:'Kesihatan mental & emosi',
+    cerita:['Saya rasa keliru tentang diri saya, doktor…', 'Saya rasa tak sama macam kawan-kawan lain, dan mereka selalu ejek saya.'],
+    dx:['Kekeliruan identiti diri & tekanan emosi remaja', 'Penyakit berjangkit', 'Sengaja cari perhatian'],
+    talk:[['Saya takut orang akan benci saya kalau saya cerita.', 'Saya dengar tanpa menghukum. Kamu selamat bercerita di sini.', ['Itu cuma perasaan, lupakan saja.', 'Patutlah kawan-kawan ejek kamu.']],
+      ['Kawan-kawan ejek saya setiap hari.', 'Mengejek ialah buli dan tidak boleh diterima. Kita boleh laporkan kepada guru.', ['Ejek mereka balik.', 'Jauhkan diri dari semua orang.']],
+      ['Saya nak faham diri saya.', 'Berbincang dengan kaunselor sekolah dan ibu bapa boleh membantu kamu memahami perasaan kamu dengan selamat.', ['Cari jawapan di forum internet seorang diri.', 'Simpan semuanya sendiri.']]],
+    help:['kaunselor', 'ibubapa', 'guru', 'doktor'], nohelp:['x_asing', 'x_diam'],
+    tips:['Perasaan keliru semasa remaja perlu dibincangkan, bukan dipendam.', 'Bercakap dengan kaunselor sekolah, ibu bapa atau pakar kesihatan.', 'Mengejek dan membuli sesiapa pun adalah salah.', 'Hormati diri sendiri dan orang lain.'] },
+  { id:'buli', t:'e', g:'', nm:'Buli siber', topik:'Keselamatan diri',
+    cerita:['Ada akaun palsu sebarkan gambar saya…', 'Mereka tulis komen jahat. Saya malu nak pergi sekolah.'],
+    dx:['Buli siber', 'Masalah kulit', 'Rabun mata'],
+    talk:[['Semua orang dah tengok gambar tu…', 'Itu buli siber — kamu tidak bersalah.', ['Itulah, siapa suruh ambil gambar.', 'Abaikan saja, nanti mereka berhenti sendiri.']],
+      ['Saya nak balas komen mereka!', 'Jangan balas. Tangkap layar sebagai bukti.', ['Balas dengan komen yang lebih teruk.', 'Padam akaun dan semua bukti.']],
+      ['Apa langkah seterusnya?', 'Sekat dan laporkan akaun itu, kemudian beritahu ibu bapa atau guru.', ['Cari siapa pemiliknya dan serang dia.', 'Diam dan tunggu sahaja.']]],
+    help:['ibubapa', 'kaunselor', 'platform', 'polis'], nohelp:['x_balas', 'x_padam'],
+    tips:['Jangan balas pembuli siber.', 'Simpan bukti (tangkap layar).', 'Sekat (block) dan laporkan akaun tersebut.', 'Beritahu ibu bapa atau guru; lapor kepada polis jika ada ugutan.'] },
+  { id:'stres', t:'e', g:'', nm:'Tekanan peperiksaan', topik:'Kesihatan mental & emosi',
+    cerita:['Peperiksaan dah dekat… setiap kali buka buku saya rasa nak menangis.', 'Jantung saya berdebar-debar dan susah nak tidur.'],
+    dx:['Tekanan (stres) peperiksaan', 'Sakit jantung', 'Cacingan'],
+    talk:[['Saya takut gagal dan kecewakan mak ayah.', 'Rasa risau itu normal. Kita boleh uruskannya bersama.', ['Memang patut takut, nanti gagal.', 'Jangan fikir, buat-buat lupa.']],
+      ['Jantung saya berdebar sekarang.', 'Mari tarik nafas dalam 4 saat, tahan, dan hembus perlahan-lahan.', ['Minum minuman tenaga.', 'Lari keluar dari kelas.']],
+      ['Macam mana nak belajar dengan tenang?', 'Buat jadual belajar ringkas dengan rehat, tidur cukup dan bersenam.', ['Belajar sepanjang malam tanpa tidur.', 'Tak payah belajar langsung.']]],
+    help:['kaunselor', 'ibubapa', 'guru', 'kawan'], nohelp:['x_diam', 'x_sosmed'],
+    tips:['Pecahkan ulang kaji kepada sesi pendek dengan rehat.', 'Amalkan pernafasan dalam apabila cemas.', 'Tidur cukup, makan sihat dan bersenam.', 'Kongsi kerisauan dengan ibu bapa, guru atau kaunselor.'] },
+  { id:'vape', t:'e', g:'', nm:'Desakan rakan sebaya (vape)', topik:'Penyalahgunaan bahan',
+    cerita:['Kawan-kawan paksa saya cuba vape…', 'Kalau tak cuba, mereka kata saya penakut.'],
+    dx:['Tekanan rakan sebaya — risiko penyalahgunaan bahan', 'Asma keturunan', 'Demam selsema'],
+    talk:[['Saya tak nak, tapi takut tak ada kawan.', 'Kamu berhak berkata TIDAK. Kawan sebenar menghormati keputusan kamu.', ['Cuba sekali saja, tak apa.', 'Ikut saja supaya mereka suka.']],
+      ['Vape tu selamat kan? Bau dia wangi.', 'Vape mengandungi nikotin & bahan kimia yang merosakkan paru-paru dan menyebabkan ketagihan.', ['Ya, vape lebih selamat dari air.', 'Selamat kalau guna sekali-sekala.']],
+      ['Macam mana nak tolak?', 'Katakan "Tak nak, terima kasih", beri alasan, dan jauhkan diri dari situasi itu.', ['Ambil dan buang bila mereka tak tengok.', 'Lari tanpa cakap apa-apa selamanya.']]],
+    help:['ibubapa', 'kaunselor', 'kawan', 'doktor'], nohelp:['x_geng', 'x_diam'],
+    tips:['Vape & rokok mengandungi nikotin yang menyebabkan ketagihan.', 'Berani berkata TIDAK kepada desakan rakan sebaya.', 'Pilih kawan yang membawa pengaruh positif.', 'Dapatkan bantuan guru kaunseling jika didesak berterusan.'] }
+];
+const KL_NAMES = { L:['Haziq', 'Danial', 'Aqil', 'Irfan', 'Hakim', 'Faris', 'Amsyar', 'Zarif', 'Iman', 'Rayyan'], P:['Aina', 'Sofea', 'Balqis', 'Hana', 'Damia', 'Alya', 'Qistina', 'Irdina', 'Nadia', 'Aisyah'] };
+const klShuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+/* watak dilukis app (tanpa aset): remaja sekolah, lelaki / perempuan bertudung, ekspresi & tanda masalah */
+function klAva(g, mood, look){
+  const skin = '#E0AC7E', P = g === 'P';
+  const eyes = mood === 'gembira' ? '<path d="M78 92q6-7 12 0M110 92q6-7 12 0" stroke="#2A1B12" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+    : look === 'letih' ? '<path d="M77 92h14M109 92h14" stroke="#2A1B12" stroke-width="3.5" stroke-linecap="round"/><path d="M78 99q6 4 12 0M110 99q6 4 12 0" stroke="#9A6B5A" stroke-width="2.5" fill="none"/>'
+    : '<ellipse cx="84" cy="92" rx="5" ry="6.5" fill="#2A1B12"/><ellipse cx="116" cy="92" rx="5" ry="6.5" fill="#2A1B12"/><circle cx="86" cy="90" r="1.8" fill="#fff"/><circle cx="118" cy="90" r="1.8" fill="#fff"/>';
+  const brow = mood === 'gembira' ? '' : '<path d="M75 84l14-5M125 84l-14-5" stroke="#2A1B12" stroke-width="3" stroke-linecap="round"/>';
+  const mouth = mood === 'gembira' ? '<path d="M86 116q14 14 28 0" stroke="#7A2E22" stroke-width="4" fill="#fff" stroke-linecap="round"/>'
+    : mood === 'sedih' ? '<path d="M88 122q12-9 24 0" stroke="#7A2E22" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    : '<path d="M88 119q6-4 12 0t12 0" stroke="#7A2E22" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+  const tear = mood === 'sedih' ? '<path d="M122 101q4 8 0 11q-4-3 0-11z" fill="#7DD3FC"/>' : mood === 'risau' ? '<path d="M138 70q5 9 0 12q-5-3 0-12z" fill="#7DD3FC"/>' : '';
+  const ac = look === 'jerawat' && mood !== 'gembira' ? [[72, 108], [130, 106], [96, 76], [124, 120], [78, 122], [110, 72]].map(([x, y]) => '<circle cx="' + x + '" cy="' + y + '" r="3.6" fill="#D9534F"/>').join('') : '';
+  const fx = mood === 'gembira' ? '' : look === 'bau' ? '<path d="M30 190q8-10 0-20t0-20M170 190q-8-10 0-20t0-20" stroke="#84CC16" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/>'
+    : look === 'letih' ? '<text x="150" y="50" font-size="26" font-weight="900" fill="#93C5FD">z</text><text x="166" y="32" font-size="18" font-weight="900" fill="#93C5FD">z</text>'
+    : look === 'senggugut' ? '<path d="M88 214l8-10-6-2 8-10M112 214l-8-10 6-2-8-10" stroke="#F87171" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
+    : look === 'pening' ? '<path d="M64 56q36-22 72 0" stroke="#FDE68A" stroke-width="3" fill="none" stroke-dasharray="5 6"/><text x="140" y="56" font-size="22">💫</text>'
+    : look === 'gigi' ? '<path d="M126 130q10-4 14-14M134 136q12-2 18-10" stroke="#A3A3A3" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>' : '';
+  const body = P ? '<path d="M38 260c0-46 26-74 62-74s62 28 62 74z" fill="#7DB7E8"/><path d="M52 152c0 30 20 50 48 50s48-20 48-50l-6 56H58z" fill="#F8FAFC"/>'
+    : '<path d="M38 260c0-46 26-74 62-74s62 28 62 74z" fill="#F8FAFC"/><path d="M88 186l12 22 12-22" fill="#E2E8F0"/><path d="M96 196h8l-2 40h-4z" fill="#1E3A8A"/>';
+  const head = P ? '<path d="M100 36c-34 0-54 26-54 58 0 40 22 70 54 70s54-30 54-70c0-32-20-58-54-58z" fill="#F8FAFC"/><ellipse cx="100" cy="100" rx="38" ry="44" fill="' + skin + '"/><path d="M62 78c6-22 22-32 38-32s32 10 38 32c-12-8-24-11-38-11s-26 3-38 11z" fill="#F1F5F9"/>'
+    : '<rect x="88" y="138" width="24" height="26" fill="' + skin + '"/><ellipse cx="100" cy="98" rx="40" ry="46" fill="' + skin + '"/><ellipse cx="60" cy="100" rx="7" ry="11" fill="' + skin + '"/><ellipse cx="140" cy="100" rx="7" ry="11" fill="' + skin + '"/><path d="M58 88c0-30 18-44 42-44s42 14 42 44c-6-14-20-22-42-22s-36 8-42 22z" fill="#1F2937"/>';
+  const hand = mood !== 'gembira' && look === 'senggugut' ? '<ellipse cx="100" cy="222" rx="22" ry="11" fill="' + skin + '"/>' : '';
+  return '<svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">' + body + head + brow + eyes + mouth + '<ellipse cx="72" cy="112" rx="8" ry="5" fill="#F87171" opacity="' + (mood === 'gembira' ? .45 : .15) + '"/><ellipse cx="128" cy="112" rx="8" ry="5" fill="#F87171" opacity="' + (mood === 'gembira' ? .45 : .15) + '"/>' + ac + tear + hand + fx + '</svg>';
+}
+const klPatImg = (g, mood, look) => {
+  const id = 'pesakit_' + (g === 'P' ? 'p' : 'l') + '_' + (mood === 'gembira' ? 'gembira' : 'risau');
+  return KL_HAVE.has(id) && !(look === 'jerawat' && mood !== 'gembira') ? '<img src="' + KL_HAVE.get(id) + '" alt="" draggable="false">' : klAva(g, mood, look);   // jerawat: lukisan app supaya bintik kelihatan
+};
+let KL_CSS = false;
+function klStyle(){
+  if (KL_CSS) return; KL_CSS = true;
+  const s = document.createElement('style');
+  s.textContent = '.kl{position:fixed;inset:0;z-index:955;background:#0B1220;color:#fff;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:inherit;overflow:hidden}' +
+  '.kl-hud{display:flex;align-items:center;gap:8px;padding:8px 12px;background:linear-gradient(180deg,#0F3B3A,#0B2A2E);border-bottom:2px solid #34D39955;flex:none}' +
+  '.kl-hud .p{background:rgba(0,0,0,.3);border-radius:99px;padding:5px 12px;font-weight:800;font-size:13px;white-space:nowrap}.kl-hud .sp{flex:1}.kl-hud .tn{font-size:12px;color:#A7F3D0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+  '.kl-hud .x{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;font-weight:900;cursor:pointer;flex:none}' +
+  '.kl-main{flex:1;display:flex;min-height:0}' +
+  '.kl-scene{position:relative;flex:0 0 42%;overflow:hidden;background:linear-gradient(180deg,#D1FAE5 0 62%,#E7D8C4 62% 100%)}' +
+  '.kl-scene.img{background-size:cover;background-position:center}' +
+  '.kl-scene .win{position:absolute;left:8%;top:9%;width:26%;height:26%;background:linear-gradient(180deg,#BAE6FD,#E0F2FE);border:6px solid #fff;border-radius:6px;box-shadow:0 2px 0 #0002}' +
+  '.kl-scene .pos{position:absolute;right:8%;top:8%;width:30%;padding:8px;background:#fff;border-radius:8px;color:#065F46;font-weight:900;font-size:clamp(9px,1.2vw,14px);text-align:center;box-shadow:0 3px 0 #0001;line-height:1.25}' +
+  '.kl-scene .pos b{display:block;font-size:1.7em}' +
+  '.kl-pat{position:absolute;left:50%;bottom:0;width:min(58%,300px);transform:translateX(-50%);transition:transform .6s cubic-bezier(.2,.9,.3,1.2),opacity .5s}' +
+  '.kl-pat svg,.kl-pat img{width:100%;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}' +
+  '.kl-pat.in{animation:klIn .7s cubic-bezier(.2,.9,.3,1.2)}.kl-pat.out{transform:translateX(160%);opacity:0}' +
+  '@keyframes klIn{from{transform:translateX(-170%)}to{transform:translateX(-50%)}}' +
+  '.kl-name{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:#065F46;color:#fff;font-weight:800;font-size:12px;padding:3px 10px;border-radius:99px;white-space:nowrap}' +
+  '.kl-bub{position:absolute;left:5%;right:5%;top:40%;background:#fff;color:#1F2937;border-radius:16px;padding:10px 14px;font-size:clamp(13px,1.45vw,17px);font-weight:600;line-height:1.4;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:2;animation:klPop .35s}' +
+  '.kl-bub:after{content:"";position:absolute;left:50%;bottom:-12px;border:12px solid transparent;border-top-color:#fff;border-bottom:0;transform:translateX(-50%)}' +
+  '@keyframes klPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}' +
+  '.kl-doc{position:absolute;left:3%;bottom:3%;width:17%;max-width:110px;text-align:center;font-size:42px;line-height:1}.kl-doc img{width:100%}.kl-doc span{display:block;font-size:10px;font-weight:800;color:#065F46;background:#ECFDF5;border-radius:6px;margin-top:2px;padding:1px 3px}' +
+  '.kl-meter{position:absolute;left:5%;right:5%;top:3%;background:rgba(6,95,70,.85);border-radius:10px;padding:5px 8px;font-size:11px;font-weight:800;z-index:2}.kl-meter .b{height:8px;background:#0003;border-radius:9px;margin-top:3px;overflow:hidden}.kl-meter .b i{display:block;height:100%;background:linear-gradient(90deg,#FCA5A5,#FDE68A,#4ADE80);transition:width .5s}' +
+  '.kl-pan{flex:1;overflow-y:auto;padding:16px 18px;background:radial-gradient(circle at 80% 0,#134E4A55,transparent 60%),#0F172A;display:flex;flex-direction:column}' +
+  '.kl-step{font-size:11px;letter-spacing:.18em;font-weight:900;color:#34D399}.kl-h{font-size:clamp(17px,2vw,24px);font-weight:900;margin:4px 0 10px}' +
+  '.kl-opt{display:block;width:100%;text-align:left;background:#1E293B;border:2px solid #334155;color:#fff;border-radius:12px;padding:12px 14px;margin:7px 0;font-size:clamp(13px,1.4vw,16px);font-weight:700;cursor:pointer;line-height:1.35}' +
+  '.kl-opt:hover{border-color:#34D399}.kl-opt.ok{background:#14532D;border-color:#4ADE80}.kl-opt.no{background:#7F1D1D;border-color:#F87171}.kl-opt.on{border-color:#34D399;background:#134E4A}.kl-opt:disabled{cursor:default}' +
+  '.kl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}.kl-grid .kl-opt{margin:0;text-align:center}' +
+  '.kl-go{margin-top:12px;align-self:flex-end;background:linear-gradient(180deg,#34D399,#059669);color:#022C22;border:0;border-radius:12px;padding:12px 22px;font-weight:900;font-size:16px;cursor:pointer;box-shadow:0 4px 0 #065F46}' +
+  '.kl-go:disabled{opacity:.4}.kl-fb{border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14px;line-height:1.45;animation:klPop .3s}.kl-fb.ok{background:#14532D;border:1px solid #4ADE80}.kl-fb.no{background:#451A1A;border:1px solid #F87171}' +
+  '.kl-msg{min-height:22px;font-weight:800;font-size:14px;color:#FDE68A;margin:6px 0}' +
+  '.kl-face{position:relative;width:min(100%,330px);aspect-ratio:1;margin:4px auto;touch-action:none;cursor:pointer}.kl-face svg{width:100%;height:100%}' +
+  '.kl-face .dirt{position:absolute;inset:8% 14% 6%;border-radius:45%;background:radial-gradient(circle,#A16207aa,#78350F88);pointer-events:none;transition:opacity .15s}' +
+  '.kl-spot{position:absolute;width:9%;height:9%;margin:-4.5% 0 0 -4.5%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FCA5A5,#DC2626 60%,#991B1B);border:0;box-shadow:0 0 0 3px #FEE2E255;cursor:pointer;transition:all .3s}' +
+  '.kl-spot.done{background:radial-gradient(circle,#FDF2F8,#F9A8D4);transform:scale(.6);box-shadow:none}.kl-spot.bad{transform:scale(1.5);background:radial-gradient(circle,#B91C1C,#7F1D1D)}' +
+  '.kl-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.kl-tools button{background:#1E293B;border:2px solid #334155;border-radius:12px;color:#fff;font-weight:800;padding:8px 12px;font-size:14px;cursor:pointer}.kl-tools button.on{border-color:#34D399;background:#134E4A}' +
+  '.kl-slots{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.kl-slots div{background:#0B1220;border:2px dashed #334155;border-radius:10px;padding:7px 10px;font-weight:700;font-size:14px;min-height:20px}.kl-slots div.f{border-style:solid;border-color:#4ADE80;background:#14532D;animation:klPop .3s}' +
+  '.kl-shake{animation:klSh .35s}@keyframes klSh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}' +
+  '.kl-mouth{position:relative;width:min(100%,360px);margin:6px auto;touch-action:none}.kl-mouth svg{width:100%}.kl-brush{position:absolute;font-size:40px;pointer-events:none;transform:translate(-30%,-60%) rotate(-20deg);display:none}' +
+  '.kl-zbar{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px}.kl-zbar div{height:9px;border-radius:9px;background:#1E293B;overflow:hidden}.kl-zbar i{display:block;height:100%;background:#4ADE80;width:0}' +
+  '.kl-rx{background:#F8FAFC;color:#0F172A;border-radius:14px;padding:14px 16px;position:relative}.kl-rx h4{margin:0 0 6px;color:#065F46;font-size:17px;font-weight:900}.kl-rx li{margin:5px 0 5px 18px;font-size:14px;line-height:1.4}.kl-rx .hp{margin-top:8px;padding-top:8px;border-top:1px dashed #94A3B8;font-size:13px;font-weight:700;color:#0E7490}' +
+  '.kl-rx .st{position:absolute;right:12px;top:8px;font-size:22px}' +
+  '.kl-end{position:absolute;inset:0;z-index:5;background:rgba(2,6,23,.82);display:flex;align-items:center;justify-content:center;padding:16px}.kl-end .pn{background:#0F172A;border:2px solid #34D399;border-radius:18px;padding:20px;max-width:560px;width:100%;text-align:center}' +
+  '.kl-end .big{font-size:28px;font-weight:900;color:#34D399}.kl-end .gr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.kl-end .gr div{background:#1E293B;border-radius:10px;padding:8px;font-size:11px;color:#94A3B8}.kl-end .gr b{display:block;font-size:20px;color:#fff}' +
+  '.kl-end .bt{display:flex;gap:8px;justify-content:center}.kl-end .bt button{border:0;border-radius:12px;padding:11px 20px;font-weight:900;cursor:pointer;background:#334155;color:#fff;font-size:15px}.kl-end .bt .o{background:#34D399;color:#022C22}' +
+  '@media (max-aspect-ratio:1/1){.kl-main{flex-direction:column}.kl-scene{flex:0 0 40%}.kl-pat{width:min(40%,200px)}.kl-bub{top:auto;bottom:62%;font-size:13px}}';
+  document.head.appendChild(s);
+}
+async function klStart(){
+  const o = arenaUi();
+  if (!o.team || !teamOf(o.team)) return toast('Pilih kumpulan dahulu.', null, true);
+  if (KLINIK || STOR || RUN || ESC) return;
+  try { const a = audCtx(); if (a && a.state === 'suspended') a.resume(); } catch(e){}
+  await Promise.race([klProbe(), new Promise(r => setTimeout(r, 4000))]);
+  try { klRun(o.team); }
+  catch(e){ KLINIK = null; const r = $('#klRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Permainan gagal dimulakan.', null, true); }
+}
+function klRun(team){
+  klStyle();
+  const cfg = klCfg(), TNAME = teamName(team);
+  let pool = KL_CASES.filter(c => (cfg.jenis === 'semua' || (cfg.jenis === 'fizikal') === (c.t === 'f')) && (cfg.sens || !c.sens) && (cfg.jantina === 'campur' || !c.g || c.g === cfg.jantina));
+  if (!pool.length) pool = KL_CASES.filter(c => !c.sens);
+  const N = +cfg.n || 6, queue = [];
+  while (queue.length < N){ klShuf(pool).forEach(c => { if (queue.length < N && (!queue.length || queue[queue.length - 1].id !== c.id)) queue.push(c); }); }
+  const usedNm = new Set();
+  const pats = queue.map(c => { const g = c.g || (cfg.jantina !== 'campur' ? cfg.jantina : Math.random() < .5 ? 'L' : 'P');
+    const nm = klShuf(KL_NAMES[g]).find(n => !usedNm.has(n)) || KL_NAMES[g][0]; usedNm.add(nm); return { c, g, nm, age: 13 + Math.floor(Math.random() * 4) }; });
+  let idx = 0, score = 0, right = 0, asked = 0, stars = 0, over = false, P = null;
+  const docImg = KL_HAVE.has('doktor_' + cfg.watak) ? '<img src="' + KL_HAVE.get('doktor_' + cfg.watak) + '" alt="">' : (cfg.watak === 'l' ? '👨‍⚕️' : '👩‍⚕️');
+  const root = document.createElement('div'); root.className = 'kl'; root.id = 'klRoot';
+  root.innerHTML = '<div class="kl-hud"><span class="p">🩺 <span id="klN"></span></span><span class="p">⭐ <span id="klSc">0</span></span><span class="tn">' + esc(TNAME) + '</span><span class="sp"></span><button class="x" data-x="1">✕</button></div>' +
+    '<div class="kl-main"><div class="kl-scene' + (KL_HAVE.has('bg_klinik') ? ' img' : '') + '" id="klScene"' + (KL_HAVE.has('bg_klinik') ? ' style="background-image:url(' + KL_HAVE.get('bg_klinik') + ')"' : '') + '>' +
+      (KL_HAVE.has('bg_klinik') ? '' : '<div class="win"></div><div class="pos"><b>🩺</b>KLINIK REMAJA<br><span style="font-weight:700;color:#047857">Sihat Tubuh, Tenang Minda</span></div>') +
+      '<div id="klMeter"></div><div class="kl-pat" id="klPat"></div><div id="klBub"></div>' +
+      '<div class="kl-doc">' + docImg + '<span>DR. ' + esc(TNAME.replace(/kumpulan\s*/i, '').toUpperCase().slice(0, 12)) + '</span></div></div>' +
+    '<div class="kl-pan" id="klPan"></div></div><div id="klEnd"></div>';
+  document.body.appendChild(root); lockBody();
+  KLINIK = { root };
+  const $k = s => root.querySelector(s), pan = () => $k('#klPan');
+  const hud = () => { $k('#klN').textContent = 'Pesakit ' + Math.min(idx + 1, N) + '/' + N; $k('#klSc').textContent = score; };
+  const add = (n, ok) => { score += n; hud(); if (ok != null){ asked++; if (ok) right++; } };
+  const say = t => { $k('#klBub').innerHTML = t ? '<div class="kl-bub">' + t + '</div>' : ''; };
+  const pat = (mood, cls) => { const e = $k('#klPat'); e.className = 'kl-pat' + (cls ? ' ' + cls : ''); e.innerHTML = klPatImg(P.g, mood, P.c.look) + '<div class="kl-name">' + esc(P.nm) + ' · ' + P.age + ' thn</div>'; };
+  const meter = v => { $k('#klMeter').innerHTML = v == null ? '' : '<div class="kl-meter">💚 RASA SELAMAT<div class="b"><i style="width:' + Math.round(v * 100) + '%"></i></div></div>'; };
+  const head = (step, h) => '<div class="kl-step">' + step + '</div><div class="kl-h">' + h + '</div>';
+  const go = (label, fn, dis) => { const b = document.createElement('button'); b.className = 'kl-go'; b.innerHTML = label; b.disabled = !!dis; b.onclick = () => { if (b.dataset.used) return; b.dataset.used = 1; b.disabled = true; sfx('flip'); fn(); };   /* sekali tekan sahaja (elak langkau pesakit) */ pan().appendChild(b); return b; };
+  /* ---------- aliran pesakit ---------- */
+  function next(){
+    if (over) return;
+    if (idx >= N) return finish();
+    P = Object.assign({}, pats[idx], { pts: 0, max: 0, mis: 0, safe: .25 });
+    hud(); meter(null); pat(P.c.t === 'e' ? 'sedih' : 'risau', 'in'); say('');
+    pan().innerHTML = head('PESAKIT BAHARU', '🚪 ' + esc(P.nm) + ' masuk ke klinik…') + '<div style="color:#94A3B8;font-size:14px">' + (P.g === 'P' ? 'Pelajar perempuan' : 'Pelajar lelaki') + ', ' + P.age + ' tahun. Dengar ceritanya dengan teliti.</div>';
+    snd('kl_masuk', 'hi');
+    let k = 0;
+    const line = () => { say(esc(P.c.cerita[k])); k++; if (k < P.c.cerita.length) setTimeout(() => { if (P && !over) line(); }, 1900); else setTimeout(() => { if (!over) go('Diagnos ➜', diagnose); }, 600); };
+    setTimeout(line, 650);
+  }
+  function diagnose(){
+    say(esc(P.c.cerita.join(' ')));
+    const opts = klShuf(P.c.dx.map((t, i) => [t, i === 0]));
+    pan().innerHTML = head('LANGKAH 1 · DIAGNOSIS', 'Apakah masalah ' + esc(P.nm) + '?') + opts.map(([t, ok], i) => '<button class="kl-opt" data-d="' + i + '">' + esc(t) + '</button>').join('') + '<div id="klFb"></div>';
+    P.max += 30;
+    pan().onclick = e => { const b = e.target.closest('[data-d]'); if (!b) return; pan().onclick = null;
+      const ok = opts[+b.dataset.d][1];
+      pan().querySelectorAll('[data-d]').forEach((x, i) => { x.disabled = true; if (opts[i][1]) x.classList.add('ok'); else if (x === b) x.classList.add('no'); });
+      add(ok ? 30 : 0, ok); if (ok) P.pts += 30; sfx(ok ? 'hi' : 'low');
+      $k('#klFb').innerHTML = '<div class="kl-fb ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✅ Tepat! ' : '❌ Kurang tepat. ') + 'Diagnosis: <b>' + esc(P.c.dx[0]) + '</b> · Topik: ' + esc(P.c.topik) + '</div>';
+      go(P.c.t === 'e' ? 'Mula sesi nasihat ➜' : 'Mula rawatan ➜', treat);
+    };
+  }
+  function treat(){ say(''); const g = P.c.t === 'e' ? 'dialog' : P.c.game; ({ jerawat: mgAcne, susun: mgOrder, pilih: () => mgPick(P.c.good, P.c.bad, 'LANGKAH 2 · RAWATAN', P.c.id === 'sarapan' ? 'Pilih sarapan sihat untuk ' + esc(P.nm) : 'Pilih SEMUA cara rawatan yang selamat', pharmacy), berus: mgBrush, dialog: mgTalk })[g](); }
+  const mgDone = (pts, maxp) => { P.max += maxp; P.pts += pts; add(pts); sfx('myth'); pat('gembira'); say('Terima kasih, doktor! Rasa lebih baik.'); setTimeout(() => { if (!over) pharmacy(); }, 1300); };
+  /* mini-game: jerawat — cuci muka, kemudian sapu krim pada setiap jerawat (jangan picit!) */
+  function mgAcne(){
+    const spots = [[30, 46], [70, 44], [44, 30], [60, 62], [34, 64], [66, 28], [50, 52]];
+    let tool = 'cuci', clean = 0, done = 0, mis = 0;
+    pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Rawat jerawat ' + esc(P.nm)) +
+      '<div class="kl-tools"><button data-t="cuci" class="on">🧼 Pencuci muka</button><button data-t="krim">🧴 Krim jerawat</button><button data-t="picit">🤏 Picit</button></div><div class="kl-msg" id="klMsg">Gosok muka dengan pencuci sehingga bersih.</div>' +
+      '<div class="kl-face" id="klFace">' + klFace(P.g) + '<div class="dirt" id="klDirt"></div>' + spots.map(([x, y], i) => '<button class="kl-spot" data-s="' + i + '" style="left:' + x + '%;top:' + y + '%"></button>').join('') + '</div>';
+    const m = t => $k('#klMsg').innerHTML = t, face = $k('#klFace');
+    pan().querySelector('.kl-tools').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; tool = b.dataset.t; pan().querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === b)); sfx('flip');
+      m(tool === 'cuci' ? 'Gosok muka dengan pencuci.' : tool === 'krim' ? 'Ketik setiap jerawat untuk sapu krim.' : 'Hmm… betul ke nak picit?'); };
+    let last = null;
+    face.addEventListener('pointerdown', e => { last = [e.clientX, e.clientY]; face.setPointerCapture && face.setPointerCapture(e.pointerId); });
+    face.addEventListener('pointermove', e => { if (!last || tool !== 'cuci' || clean >= 1) return; const d = Math.hypot(e.clientX - last[0], e.clientY - last[1]); last = [e.clientX, e.clientY];
+      clean = Math.min(1, clean + d / 1400); $k('#klDirt').style.opacity = 1 - clean;
+      if (clean >= 1){ sfx('hi'); m('✨ Muka bersih! Sekarang pilih <b>🧴 Krim jerawat</b> dan ketik setiap jerawat.'); } });
+    face.addEventListener('pointerup', () => last = null);
+    face.addEventListener('click', e => { const s = e.target.closest('[data-s]'); if (!s || s.classList.contains('done')) return;
+      if (tool === 'picit'){ mis++; s.classList.add('bad'); setTimeout(() => s.classList.remove('bad'), 700); sfx('low'); return m('❌ Jangan picit! Boleh meninggalkan parut dan menyebabkan jangkitan.'); }
+      if (tool === 'cuci') return m('Gosok seluruh muka dahulu, kemudian guna krim.');
+      if (clean < 1) return m('Cuci muka sampai bersih dahulu sebelum sapu krim.');
+      s.classList.add('done'); done++; sfx('flip');
+      if (done === spots.length){ m('✅ Semua jerawat dirawat!'); mgDone(Math.max(10, 40 - mis * 10), 40); } });
+  }
+  /* mini-game: susun rutin mengikut urutan */
+  function mgOrder(){
+    const st = P.c.steps, cards = klShuf(st.concat([P.c.trap[0]]));
+    let k = 0, mis = 0;
+    pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Susun rutin yang betul untuk ' + esc(P.nm)) + '<div class="kl-msg" id="klMsg">Ketik langkah mengikut urutan (1 → ' + st.length + ').</div>' +
+      '<div class="kl-slots">' + st.map((_, i) => '<div id="klSl' + i + '">' + (i + 1) + '.</div>').join('') + '</div>' +
+      '<div class="kl-grid">' + cards.map((t, i) => '<button class="kl-opt" data-o="' + i + '">' + esc(t) + '</button>').join('') + '</div>';
+    pan().onclick = e => { const b = e.target.closest('[data-o]'); if (!b || b.disabled) return; const t = cards[+b.dataset.o];
+      if (t === P.c.trap[0]){ mis++; b.classList.add('no', 'kl-shake'); b.disabled = true; sfx('low'); return $k('#klMsg').innerHTML = '❌ ' + esc(P.c.trap[1]); }
+      if (t !== st[k]){ mis++; b.classList.remove('kl-shake'); void b.offsetWidth; b.classList.add('kl-shake'); sfx('low'); return $k('#klMsg').innerHTML = '🤔 Bukan langkah ' + (k + 1) + '. Fikir semula urutannya.'; }
+      const sl = $k('#klSl' + k); sl.textContent = (k + 1) + '. ' + t; sl.classList.add('f'); b.disabled = true; b.style.visibility = 'hidden'; k++; sfx('flip');
+      if (k === st.length){ pan().onclick = null; $k('#klMsg').innerHTML = '✅ Rutin lengkap!'; mgDone(Math.max(10, 40 - mis * 8), 40); } };
+  }
+  /* pilih semua yang betul (rawatan senggugut, sarapan sihat, siapa boleh bantu) */
+  function mgPick(good, bad, step, title, then, isHelp){
+    const items = klShuf(good.map(t => [t, 1]).concat(bad.map(t => [t, 0]))), on = new Set();
+    pan().innerHTML = head(step, title) + '<div class="kl-msg" id="klMsg">Ketik untuk pilih (' + good.length + ' jawapan betul), kemudian tekan SIAP.</div>' +
+      '<div class="kl-grid">' + items.map(([t], i) => '<button class="kl-opt" data-p="' + i + '">' + esc(t) + '</button>').join('') + '</div>';
+    pan().onclick = e => { const b = e.target.closest('[data-p]'); if (!b || b.disabled) return; const i = +b.dataset.p; on.has(i) ? on.delete(i) : on.add(i); b.classList.toggle('on'); sfx('flip'); };
+    const btn = go('✔ SIAP', () => {
+      pan().onclick = null; btn.disabled = true; let hit = 0, wrong = 0;
+      pan().querySelectorAll('[data-p]').forEach(b => { const i = +b.dataset.p, g = items[i][1]; b.disabled = true; b.classList.remove('on');
+        if (g && on.has(i)){ hit++; b.classList.add('ok'); } else if (!g && on.has(i)){ wrong++; b.classList.add('no'); } else if (g) b.style.borderColor = '#4ADE80'; });
+      const full = hit === good.length && !wrong, pts = Math.max(0, Math.round(40 * (hit - wrong) / good.length));
+      $k('#klMsg').innerHTML = full ? '✅ Sempurna!' : '🟩 Garisan hijau = pilihan betul yang tertinggal · 🟥 merah = tidak sesuai.';
+      if (isHelp){ add(0, full); P.max += 20; P.pts += full ? 20 : Math.round(pts / 2); score += full ? 20 : Math.round(pts / 2); hud(); sfx(full ? 'myth' : 'low'); if (full) meter(1); setTimeout(() => go('Seterusnya ➜', then), 400); }
+      else { P.max += 40; P.pts += pts; add(pts); sfx(full ? 'myth' : 'low'); pat('gembira'); say(full ? 'Terima kasih, doktor! Saya cuba buat begitu.' : 'Baik doktor, saya akan ingat yang betul.'); setTimeout(() => go('Seterusnya ➜', then), 400); }
+    });
+  }
+  /* mini-game: berus gigi — gosok setiap zon */
+  function mgBrush(){
+    const Z = [[18, 34], [50, 30], [82, 34], [18, 66], [50, 70], [82, 66]], fill = Z.map(() => 0);
+    pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Tunjuk cara berus gigi yang betul') + '<div class="kl-msg" id="klMsg">Gosok berus gigi pada SEMUA bahagian gigi (atas & bawah, kiri, tengah, kanan).</div>' +
+      '<div class="kl-mouth" id="klMouth">' + klTeeth() + '<div class="kl-brush" id="klBr">🪥</div></div><div class="kl-zbar">' + Z.map((_, i) => '<div><i id="klZ' + i + '"></i></div>').join('') + '</div>';
+    const mo = $k('#klMouth'), br = $k('#klBr'); let last = null, fin = false;
+    mo.addEventListener('pointerdown', e => { last = [e.clientX, e.clientY]; mo.setPointerCapture && mo.setPointerCapture(e.pointerId); });
+    mo.addEventListener('pointerup', () => last = null);
+    mo.addEventListener('pointermove', e => { const r = mo.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top) / r.height * 100;
+      br.style.display = 'block'; br.style.left = x + '%'; br.style.top = y + '%';
+      if (!last || fin) return; const d = Math.hypot(e.clientX - last[0], e.clientY - last[1]); last = [e.clientX, e.clientY];
+      Z.forEach(([zx, zy], i) => { if (Math.abs(x - zx) < 17 && Math.abs(y - zy) < 18 && fill[i] < 1){ fill[i] = Math.min(1, fill[i] + d / 500); $k('#klZ' + i).style.width = fill[i] * 100 + '%'; mo.querySelector('[data-z="' + i + '"]').setAttribute('opacity', 1 - fill[i] * .9); } });
+      if (fill.every(v => v >= 1)){ fin = true; $k('#klMsg').innerHTML = '✅ Bersih berkilat! Ingat: 2 kali sehari, 2 minit.'; mgDone(40, 40); } });
+  }
+  /* sesi nasihat: dialog 3 pusingan + siapa boleh bantu */
+  function mgTalk(){
+    let r = 0; meter(P.safe);
+    const round = () => {
+      if (r >= P.c.talk.length){ say('Siapa yang boleh saya minta tolong?'); return mgPick(P.c.help.map(k => KL_HELP[k]), P.c.nohelp.map(k => KL_HELP[k]), 'LANGKAH 3 · RUJUKAN', 'Siapa boleh bantu ' + esc(P.nm) + '?', pharmacy, true); }
+      const [line, good, bads] = P.c.talk[r], opts = klShuf([[good, 1]].concat(bads.map(t => [t, 0])));
+      say(esc(line));
+      pan().innerHTML = head('LANGKAH 2 · SESI NASIHAT (' + (r + 1) + '/' + P.c.talk.length + ')', 'Apakah respons terbaik doktor?') + opts.map(([t], i) => '<button class="kl-opt" data-r="' + i + '">💬 ' + esc(t) + '</button>').join('') + '<div id="klFb"></div>';
+      P.max += 20;
+      pan().onclick = e => { const b = e.target.closest('[data-r]'); if (!b) return; pan().onclick = null; const ok = opts[+b.dataset.r][1];
+        pan().querySelectorAll('[data-r]').forEach((x, i) => { x.disabled = true; if (opts[i][1]) x.classList.add('ok'); else if (x === b) x.classList.add('no'); });
+        add(ok ? 20 : 0, ok); if (ok){ P.pts += 20; P.safe = Math.min(1, P.safe + .25); } else P.safe = Math.max(.05, P.safe - .1);
+        meter(P.safe); sfx(ok ? 'hi' : 'low'); pat(ok && r === P.c.talk.length - 1 ? 'gembira' : ok ? 'risau' : 'sedih');
+        $k('#klFb').innerHTML = '<div class="kl-fb ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✅ Respons yang menenangkan dan selamat.' : '❌ Respons itu boleh membuatkan ' + esc(P.nm) + ' rasa lebih tertekan. Respons terbaik:<br><b>"' + esc(good) + '"</b>') + '</div>';
+        r++; go('Seterusnya ➜', round);
+      };
+    };
+    round();
+  }
+  /* soalan farmasi (bank soalan subjek) sebelum preskripsi */
+  function pharmacy(){
+    say(''); const q = escQuestion(), ord = klShuf(q.c.map((t, i) => [t, i === q.a]));
+    pan().innerHTML = head('FARMASI · SOALAN', '💊 Jawab untuk dapatkan ' + (P.c.t === 'e' ? 'surat rujukan' : 'ubat') + '') + '<div class="kl-fb" style="background:#1E293B;border:1px solid #334155;font-size:16px;font-weight:700">' + esc(q.q) + '</div>' +
+      ord.map(([t], i) => '<button class="kl-opt" data-q="' + i + '">' + 'ABCD'[i] + '. ' + esc(t) + '</button>').join('') + '<div id="klFb"></div>';
+    P.max += 20;
+    pan().onclick = e => { const b = e.target.closest('[data-q]'); if (!b) return; pan().onclick = null; const ok = ord[+b.dataset.q][1];
+      pan().querySelectorAll('[data-q]').forEach((x, i) => { x.disabled = true; if (ord[i][1]) x.classList.add('ok'); else if (x === b) x.classList.add('no'); });
+      add(ok ? 20 : 0, ok); if (ok) P.pts += 20; snd(ok ? 'kl_betul' : 'kl_salah', ok ? 'hi' : 'low');
+      $k('#klFb').innerHTML = '<div class="kl-fb ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✅ Betul!' : '❌ Jawapan betul: <b>' + esc(q.c[q.a]) + '</b>') + '</div>';
+      go('Tulis preskripsi ➜', prescribe); };
+  }
+  function prescribe(){
+    const f = P.max ? P.pts / P.max : 0, st = f >= .85 ? 3 : f >= .55 ? 2 : 1; stars += st;
+    pat('gembira'); say(P.c.t === 'e' ? 'Terima kasih sebab dengar cerita saya, doktor.' : 'Terima kasih doktor! Saya akan ikut nasihat ni.');
+    pan().innerHTML = head('PRESKRIPSI', '📋 Nasihat untuk ' + esc(P.nm)) +
+      '<div class="kl-rx"><span class="st">' + '⭐'.repeat(st) + '<span style="opacity:.25">' + '⭐'.repeat(3 - st) + '</span></span><h4>' + esc(P.c.nm) + '</h4><ul>' + P.c.tips.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' +
+      (P.c.t === 'e' ? '<div class="hp">Saluran bantuan: ' + P.c.help.map(k => esc(KL_HELP[k])).join(' · ') + '</div>' : '') + '</div>';
+    snd('kl_sembuh', 'myth');
+    go(idx + 1 >= N ? '🏁 Lihat keputusan' : 'Pesakit seterusnya ➜', () => { $k('#klPat').classList.add('out'); say(''); idx++; setTimeout(next, 550); });
+  }
+  /* ---------- tamat ---------- */
+  function finish(){
+    if (over) return; over = true;
+    const d = klData(), rp = clamp(Math.round(score / 40), 2, 25);
+    teamRP(team, rp);
+    const tp = asked ? gameToPBD(team, 'klinik', right, asked, { score, stars }) : 0;
+    const best = !d.best[team] || score > d.best[team]; if (best) d.best[team] = score;
+    d.plays[team] = (d.plays[team] || 0) + 1; save(true);
+    snd('stor_tamat', 'myth');
+    $k('#klEnd').innerHTML = '<div class="kl-end"><div class="pn"><div style="font-size:44px">🩺</div><div class="big">KLINIK DITUTUP</div>' +
+      '<div style="color:#94A3B8;font-size:13px;margin-top:4px">' + esc(TNAME) + (best ? ' · <b style="color:#4ADE80">REKOD BAHARU!</b>' : '') + '</div>' +
+      '<div class="gr"><div><b style="color:#FDE68A">⭐ ' + score + '</b>skor</div><div><b>' + N + '</b>pesakit dirawat</div><div><b>' + stars + '/' + N * 3 + '</b>bintang kepuasan</div>' +
+      '<div><b>' + right + '/' + asked + '</b>jawapan betul</div><div><b style="color:#FB923C">+' + rp + '</b>RP</div><div><b style="color:' + (tp ? TP_COLOR[tp] : '#fff') + '">' + (tp ? 'TP' + tp : '—') + '</b>ke PBD</div></div>' +
+      '<div class="bt"><button data-x="quit">Tutup</button><button class="o" data-x="again">↻ Main Lagi</button></div></div></div>';
+    confettiBurst($k('#klEnd'), 60);
+  }
+  function quit(){
+    if (!KLINIK) return; KLINIK = null; root.remove(); unlockBody();
+    if (S.ui.tab === 'arena') renderTab();
+  }
+  root.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    if (x.dataset.x === 'again'){ quit(); setTimeout(klStart, 80); return; }
+    if (x.dataset.x === 'quit' || over) return quit();
+    gameConfirm(null, null, asked, right).then(ok => { if (!ok) return; if (asked) finish(); else quit(); });
+  });
+  hud(); next();
+}
+/* muka dekat (mini-game jerawat) */
+function klFace(g){
+  const skin = '#E0AC7E';
+  return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">' + (g === 'P' ? '<path d="M50 2C22 2 8 24 8 52c0 30 18 48 42 48s42-18 42-48C92 24 78 2 50 2z" fill="#F8FAFC"/>' : '<path d="M14 44C14 16 30 4 50 4s36 12 36 40c-6-14-18-20-36-20S20 30 14 44z" fill="#1F2937"/><ellipse cx="13" cy="54" rx="5" ry="9" fill="' + skin + '"/><ellipse cx="87" cy="54" rx="5" ry="9" fill="' + skin + '"/>') +
+    '<ellipse cx="50" cy="56" rx="34" ry="40" fill="' + skin + '"/>' + (g === 'P' ? '<path d="M17 44c4-18 17-26 33-26s29 8 33 26c-10-6-21-9-33-9s-23 3-33 9z" fill="#F1F5F9"/>' : '') +
+    '<ellipse cx="38" cy="50" rx="3.2" ry="4" fill="#2A1B12"/><ellipse cx="62" cy="50" rx="3.2" ry="4" fill="#2A1B12"/><path d="M31 42l10 2M69 42l-10 2" stroke="#2A1B12" stroke-width="2" stroke-linecap="round"/>' +
+    '<path d="M50 54l-3 11h6" stroke="#B07850" stroke-width="1.6" fill="none"/><path d="M42 76q8 4 16 0" stroke="#7A2E22" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>';
+}
+/* gigi (mini-game berus): 6 zon bertompok plak */
+function klTeeth(){
+  const tooth = (x, y) => '<rect x="' + x + '" y="' + y + '" width="13" height="18" rx="5" fill="#FFFBEB" stroke="#E5E7EB"/>';
+  let t = ''; for (let i = 0; i < 7; i++){ t += tooth(8 + i * 12.5, 22); t += tooth(8 + i * 12.5, 58); }
+  const plq = [[18, 34], [50, 30], [82, 34], [18, 66], [50, 70], [82, 66]].map(([x, y], i) => '<ellipse data-z="' + i + '" cx="' + x + '" cy="' + y + '" rx="15" ry="7" fill="#CA8A04" opacity="1" style="mix-blend-mode:multiply"/>').join('');
+  return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="10" width="96" height="80" rx="38" fill="#9F1239"/><rect x="6" y="14" width="88" height="72" rx="34" fill="#BE123C"/><rect x="5" y="16" width="90" height="14" rx="7" fill="#FB7185"/><rect x="5" y="70" width="90" height="14" rx="7" fill="#FB7185"/>' + t + plq + '</svg>';
+}
+function viewKlinik(){
+  if (!ctxOk()) return emptyState('fa-stethoscope','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas.');
+  const d = klData(), board = classTeams().filter(g => d.best[g.id]).sort((a, b) => d.best[b.id] - d.best[a.id]).slice(0, 5);
+  if (!KL_PROBED) klProbe().then(() => { if (S.ui.tab === 'arena' && arenaUi().game === 'klinik') renderTab(); });
+  let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(52,211,153,.22),rgba(14,116,144,.12) 60%,transparent),var(--panel,#141C26)">' +
+    '<div style="font-size:40px;line-height:1">🩺</div>' +
+    '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#6EE7B7;text-shadow:0 0 12px rgba(52,211,153,.6)">KLINIK REMAJA</div>' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Jadi <b style="color:#6EE7B7">doktor remaja</b>! Pelajar datang dengan masalah kesihatan — jerawat, bau badan, senggugut, kurang tidur, masalah keluarga, buli siber dan lain-lain. Dengar cerita mereka, buat <b class="text-cyan">diagnosis</b>, rawat dengan mini-game atau beri <b style="color:#FDE68A">nasihat yang selamat</b>, kemudian tulis preskripsi.</div></div>';
+  h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="klinik"><i class="fa-solid fa-play"></i> MAIN</button>';
+  if (board.length) h += '<div class="panel clip p-3 mt-3"><div class="lbl">SKOR TERBAIK KUMPULAN</div>' + board.map((g, i) =>
+    '<div class="flex items-center gap-2 mt-2"><span class="num w-5 text-orange">' + (i + 1) + '</span>' + teamAvatar(g.id, 24) +
+    '<span class="flex-1 text-[13px] truncate">' + esc(g.name) + '</span><span class="num text-[12px]" style="color:#FDE68A">⭐ ' + d.best[g.id] + '</span></div>').join('') + '</div>';
+  return h;
 }
 
 /* ============ GAME 5: SIMULASI STOR SUKAN ============

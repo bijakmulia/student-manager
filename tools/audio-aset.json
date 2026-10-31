@@ -97,6 +97,11 @@
     { "id": "sim_sb_baling",  "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Softball underhand windmill pitch, fast arm whoosh, outdoor field" },
     { "id": "sim_sb_tangkap", "g": "Simulasi", "k": "sfx", "s": 0.5, "p": "Softball smacking into a leather catcher mitt, loud deep pop, outdoor" },
     { "id": "sim_sb_pukul",   "g": "Simulasi", "k": "sfx", "s": 0.6, "p": "Aluminium softball bat hitting the ball, loud metallic ping crack, outdoor field" },
+    { "id": "kl_masuk",       "g": "Klinik Remaja", "k": "sfx", "s": 1, "p": "Clinic door opening with a soft friendly reception chime, short and gentle" },
+    { "id": "kl_betul",       "g": "Klinik Remaja", "k": "sfx", "s": 0.8, "p": "Bright positive correct-answer ding for a kids medical game, short sparkle" },
+    { "id": "kl_salah",       "g": "Klinik Remaja", "k": "sfx", "s": 0.8, "p": "Soft gentle wrong-answer buzz for a kids game, short, not harsh" },
+    { "id": "kl_sembuh",      "g": "Klinik Remaja", "k": "sfx", "s": 1.5, "p": "Happy healing sparkle with a short cheerful jingle, patient feels better, kids game" },
+
     { "id": "bgm_menu",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Cheerful inspiring school game main menu theme, bright piano and light orchestra, warm and friendly, seamless loop, instrumental, 100 BPM" },
     { "id": "bgm_stor",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Upbeat cozy shop management game music, light marimba, ukulele and bouncy bass with subtle Malaysian gamelan bells, seamless loop, instrumental, 110 BPM" },
     { "id": "bgm_duel",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Energetic anime card battle music, driving drums, electric guitar and orchestral hits, heroic, seamless loop, instrumental, 140 BPM" },

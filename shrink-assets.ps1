@@ -38,7 +38,7 @@ if ($known.Count -and (Test-Path $dlDir)) {
 
 function Get-MaxSize([string]$id) {
     if ($id -like 'bg_*') { return @(1600, 1000) }
-    if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -like 'pintu_*' -or $id -eq 'pembekal') { return @(512, 768) }
+    if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -like 'pesakit_*' -or $id -like 'doktor_*' -or $id -like 'pintu_*' -or $id -eq 'pembekal') { return @(512, 768) }
     if ($id -like 'kaunter_*') { return @(768, 512) }
     if ($id -like 'dapur*' -or $id -like 'blender*' -or $id -like 'meja_telefon*' -or $id -like 'dulang*' -or $id -eq 'logo_stor') { return @(512, 512) }
     return @(256, 256)
@@ -233,3 +233,5 @@ function Shrink-Art($dir, $tag, $promptFile, $max, $dlRx, $hint) {
 Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^(edurank__kad__)?(k\d\d|belakang)( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96 atau belakang'
 # assets\seram: jumpscare faces for Sekolah Berhantu (muka_putih, muka_pontianak, muka_toyol + "2" variants), 900px.
 Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 900.0 '^(edurank__seram__)?muka_(putih|pontianak|toyol)2?( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-SERAM.txt'
+# assets\klinik: Klinik Remaja (pesakit_*, doktor_*, bg_klinik) - same magenta keying & sizes as assets\stor.
+if ($Dir -eq (Join-Path $PSScriptRoot 'assets\stor')) { & $PSCommandPath -Dir (Join-Path $PSScriptRoot 'assets\klinik') }
