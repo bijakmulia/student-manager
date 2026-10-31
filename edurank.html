@@ -433,9 +433,25 @@ const rankSrc = () => null;
    Rank ditentukan oleh RP, BUKAN skor. RP Arena tidak menyentuh TP atau skor PBD. */
 const arenaRP = sid => ((S.arena && S.arena.rp) || {})[sid] || 0;
 const rpRate = () => (S.config && S.config.rpPerScore !== undefined) ? S.config.rpPerScore : 1;
+/* Reset Rank (musim baharu): RP dikira hanya daripada sesi SELEPAS tarikh reset; rekod PBD, skor & TP tidak berubah */
+function rpScore(sid, sj){
+  const at = S.rpReset && S.rpReset.at;
+  if (!at) return stats(sid, sj).score;
+  return Math.round(sessionsOf(sid, sj).filter(x => x.date > at).reduce((a, x) => a + rateOf(x), 0) * 10) / 10;
+}
 function rpOf(sid, sj){
-  const sc = stats(sid, sj === undefined ? (S.ui.activeSubjectId || null) : sj).score;
+  const sc = rpScore(sid, sj === undefined ? (S.ui.activeSubjectId || null) : sj);
   return Math.max(0, Math.round(sc * rpRate() + arenaRP(sid)));
+}
+async function rankReset(){
+  const ok = await confirmBox({ danger: true, title: 'Reset Rank Semua Pelajar', okText: 'Reset Rank',
+    message: 'RP <b>semua pelajar (semua kelas)</b> akan kembali <b>0</b> dan rank bermula semula dari tarikh hari ini.<br><span class="text-muted text-[12px]">Rekod PBD, skor, TP, laporan, lencana &amp; ganjaran <b>tidak terjejas</b>. RP baharu dikira daripada penilaian dan game selepas hari ini. Anda boleh tekan <b>BATALKAN</b> pada notis sejurus selepas ini.</span>' });
+  if (!ok) return;
+  const old = { reset: S.rpReset ? JSON.parse(JSON.stringify(S.rpReset)) : null, rp: JSON.parse(JSON.stringify((S.arena && S.arena.rp) || {})) };
+  S.rpReset = { at: todayKey(), n: ((S.rpReset && S.rpReset.n) || 0) + 1 };
+  S.arena = S.arena || { points:{}, wins:{}, losses:{}, history:[] }; S.arena.rp = {};
+  save(true); renderAll();
+  toast('Rank semua pelajar telah di-reset. Musim baharu bermula!', () => { S.rpReset = old.reset; S.arena.rp = old.rp; save(true); renderAll(); });
 }
 /* Kemenangan lawan pihak lebih kuat = RP lebih banyak; lawan lemah = sedikit sahaja */
 function rpAward(winIds, loseIds, sj){
@@ -2305,7 +2321,9 @@ function viewSettings(){
     '<div class="text-[12px] text-muted">24 langkah rank (Rookie 3 → Legend 1). Bingkai banner <b>dilukis oleh app</b> mengikut warna rank — tiada gambar untuk dimuat naik.</div>' +
     '<div class="flex flex-wrap gap-1 my-2">' + S.ranks.map(r =>
       '<span class="tag num !text-[9px]" style="border-color:'+r.color+';color:'+r.color+'">'+esc(r.name)+'</span>').join('') + '</div>' +
-    '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="frames"><i class="fa-solid fa-sliders"></i> Laras Julat Skor</button>');
+    '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="frames"><i class="fa-solid fa-sliders"></i> Laras Julat Skor</button>' +
+    '<button class="btn btn-d clip-s w-full mt-2 text-[13px]" data-act="rank-reset"><i class="fa-solid fa-rotate-left"></i> Reset Rank Semua Pelajar</button>' +
+    '<div class="text-[11px] text-muted mt-1">RP semua pelajar kembali 0 dan rank bermula semula (musim baharu). <b>Rekod PBD, skor &amp; TP tidak berubah.</b>' + (S.rpReset && S.rpReset.at ? ' Reset terakhir: <b class="text-cyan">' + fmtDate(S.rpReset.at) + '</b>.' : '') + '</div>');
 
   h += sec('fa-list-check','Medan Profil Dinamik',
     (S.fields.length ? S.fields.map(f=>listRow(f.label,'fld',f.id)).join('') : '<div class="text-[12px] text-muted">Tiada medan tambahan. Contoh: No. IC, No. Pendaftaran, Alamat.</div>') +
@@ -14143,6 +14161,7 @@ const ACTS = {
   'maxkb-save': () => { const v = parseInt($('#cfgMaxKb').value,10); S.config.maxUploadKB = clamp(isNaN(v)?200:v, 20, 500); save(true); renderTab(); toast('Had saiz gambar: '+S.config.maxUploadKB+'KB'); },
   'set-grp': d => { S.ui.setGrp = d.id; S.ui.setSec = ''; save(); renderTab(); window.scrollTo(0,0); },
   'set-sec': d => { S.ui.setSec = (S.ui.setSec === d.id) ? '' : d.id; save(); rerenderKeepScroll(); },
+  'rank-reset': () => rankReset(),
   'rp-save': () => { const v = parseFloat($('#cfgRp').value); S.config.rpPerScore = clamp(isNaN(v)?1:v, 0.1, 10); save(true); renderTab(); toast('Kadar RP: '+S.config.rpPerScore+' per skor'); },
   'tpc-save': () => { const v = parseFloat($('#cfgTpc').value); S.config.tpcRate = clamp(isNaN(v)?1:v, 0.1, 5); save(true); renderTab(); toast('Kadar TPC: '+S.config.tpcRate+' per skor'); },
   'cfg-save': () => {
