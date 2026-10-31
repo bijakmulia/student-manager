@@ -12059,7 +12059,8 @@ function simPlay(id){
   root.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:calc(8px + var(--safe-t,0px)) 12px 6px"><div style="font-size:22px">' + sim.ico + '</div>' +
       '<div style="flex:1;min-width:0;font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(sim.title) + '</div>' +
       '<button class="btn clip-s !px-3 !py-1" data-s="x"><i class="fa-solid fa-xmark"></i></button></div>' +
-    '<div id="simBox" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 8px"><canvas id="simCv" width="' + SIM_W + '" height="' + SIM_H + '" style="max-width:100%;max-height:100%;aspect-ratio:16/9;border-radius:10px;background:#F6EFE6;box-shadow:0 10px 40px rgba(0,0,0,.5)"></canvas></div>' +
+    '<style>#simBar{min-width:40px}@media (max-width:520px){#simTime{display:none}}#simRoot.simFs>div:first-of-type,#simRoot.simFs>div:last-child{display:none!important}#simRoot.simFs #simBox{padding:0!important;background:#000}#simRoot.simFs #simCv{border-radius:0!important}#simFsX{display:none;position:absolute;top:calc(10px + var(--safe-t,0px));right:12px;z-index:3;width:44px;height:44px;border-radius:22px;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px}#simRoot.simFs #simFsX{display:block}@media (orientation:portrait){#simRoot.simFs.simRot #simBox{position:fixed!important;width:100vh;height:100vw;flex:none!important;top:50%;left:50%;transform:translate(-50%,-50%) rotate(90deg)}}</style>' +
+    '<div id="simBox" style="position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 8px"><button id="simFsX" data-s="fs" title="Keluar skrin penuh"><i class="fa-solid fa-compress"></i></button><canvas id="simCv" width="' + SIM_W + '" height="' + SIM_H + '" style="max-width:100%;max-height:100%;aspect-ratio:16/9;border-radius:10px;background:#F6EFE6;box-shadow:0 10px 40px rgba(0,0,0,.5)"></canvas></div>' +
     '<div style="padding:8px 12px calc(10px + var(--safe-b,0px))">' +
       '<div id="simCh" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:6px"></div>' +
       '<div style="display:flex;align-items:center;gap:8px"><button class="btn clip-s !px-3 !py-2" data-s="prev"><i class="fa-solid fa-backward-step"></i></button>' +
@@ -12109,15 +12110,41 @@ function simPlay(id){
     if (a === 'next') return seek(sim.scenes[Math.min(sim.scenes.length - 1, k + 1)].t0);
     if (a === 'ch') return seek(sim.scenes[+b.dataset.i].t0);
     if (a === 'spd'){ spd = spd === 1 ? .5 : spd === .5 ? 1.5 : 1; b.textContent = spd + '×'; }
-    if (a === 'fs'){ const d = document, on = d.fullscreenElement || d.webkitFullscreenElement;          /* tayangan skrin penuh (projektor) */
-      try { if (on) (d.exitFullscreen || d.webkitExitFullscreen).call(d); else (root.requestFullscreen || root.webkitRequestFullscreen).call(root); } catch(e){ toast('Skrin penuh tidak disokong pada peranti ini.', null, true); }
-      setTimeout(() => { const o = d.fullscreenElement || d.webkitFullscreenElement; b.innerHTML = '<i class="fa-solid fa-' + (o ? 'compress' : 'expand') + '"></i>'; }, 300); return; }
+    if (a === 'fs'){ fsOn ? fsExit() : fsEnter(); return; }
     if (a === 'voice'){ voiceOn = !voiceOn; S.config.simVoice = voiceOn ? 1 : 0; save(); voBtn(); if (!voiceOn) hush(); else spokenK = -1; } });
+  /* ---- skrin penuh: cuba Fullscreen API + kunci landskap; jika tidak disokong (cth. iPhone) kanvas dipusing 90° dengan CSS.
+     Keluar automatik bila telefon dipusing kembali ke potret (sensor graviti / orientasi tetingkap). ---- */
+  let fsOn = false, fsReal = false, seenLand = false, portSince = 0;
+  const d = document, fsEl = () => d.fullscreenElement || d.webkitFullscreenElement, so = screen.orientation;
+  const portWin = matchMedia('(orientation: portrait)');
+  const fsIcon = () => { root.querySelector('#simFs').innerHTML = '<i class="fa-solid fa-' + (fsOn ? 'compress' : 'expand') + '"></i>'; };
+  const onMotion = e => { const q = e.accelerationIncludingGravity; if (!fsOn || !q || q.x == null) return; const ax = Math.abs(q.x), ay = Math.abs(q.y);
+    if (ax > ay + 2 && ax > 5){ seenLand = true; portSince = 0; }
+    else if (ay > ax + 3 && ay > 6 && seenLand){ const now = performance.now(); if (!portSince) portSince = now; else if (now - portSince > 600) fsExit(); } else portSince = 0; };
+  const onWin = () => { if (!fsOn) return; if (!portWin.matches){ seenLand = true; root.classList.remove('simRot'); } else if (seenLand && !fsReal) fsExit(); };
+  const onFsChange = () => { if (fsOn && fsReal && !fsEl()) fsExit(true); };
+  async function fsEnter(){
+    fsOn = true; seenLand = !portWin.matches; portSince = 0; root.classList.add('simFs'); fsIcon();
+    try { if (window.DeviceMotionEvent && DeviceMotionEvent.requestPermission) DeviceMotionEvent.requestPermission().catch(() => {}); } catch(e){}
+    window.addEventListener('devicemotion', onMotion); portWin.addEventListener && portWin.addEventListener('change', onWin);
+    d.addEventListener('fullscreenchange', onFsChange); d.addEventListener('webkitfullscreenchange', onFsChange);
+    try { if (!fsEl()){ const de = d.documentElement, rq = de.requestFullscreen || de.webkitRequestFullscreen; if (rq){ const p = rq.call(de, { navigationUI: 'hide' }); if (p && p.then) await p; } } fsReal = !!fsEl(); } catch(e){ fsReal = false; }
+    let locked = false; try { if (so && so.lock){ await so.lock('landscape'); locked = true; } } catch(e){}
+    if (!locked && portWin.matches) root.classList.add('simRot');            /* tiada kunci orientasi: pusing paparan sendiri */
+  }
+  function fsExit(fromSys){
+    if (!fsOn) return; fsOn = false; root.classList.remove('simFs', 'simRot'); fsIcon();
+    window.removeEventListener('devicemotion', onMotion); portWin.removeEventListener && portWin.removeEventListener('change', onWin);
+    d.removeEventListener('fullscreenchange', onFsChange); d.removeEventListener('webkitfullscreenchange', onFsChange);
+    try { if (so && so.unlock) so.unlock(); } catch(e){}
+    if (!fromSys && fsReal && fsEl() && !ORIENT_FS){ try { const p = (d.exitFullscreen || d.webkitExitFullscreen).call(d); p && p.catch && p.catch(() => {}); } catch(e){} }
+    fsReal = false; if (ORIENT_FS || fsEl()) try { so.lock('any').catch(() => {}); } catch(e){}
+  }
   cv.addEventListener('click', () => setPlay(!playing));                      // ketik skrin = jeda / main
   bar.addEventListener('input', () => { seek(+bar.value); });
   const onKey = e => { if (e.key === ' '){ e.preventDefault(); setPlay(!playing); } else if (e.key === 'ArrowRight') seek(t + 5); else if (e.key === 'ArrowLeft') seek(t - 5); else if (e.key === 'Escape') close(); };
   window.addEventListener('keydown', onKey);
-  function close(){ alive = false; hush(); try { const d = document; if (d.fullscreenElement || d.webkitFullscreenElement) (d.exitFullscreen || d.webkitExitFullscreen).call(d); } catch(e){} window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
+  function close(){ alive = false; hush(); fsExit(); window.removeEventListener('keydown', onKey); root.remove(); unlockBody(); orientBack(); }
   window.SIM_SEEK = seek;                                                     // untuk ujian / tangkapan skrin
   window.SIM_SAY = k => sayTxt(sim.scenes[k]);
   voBtn();
