@@ -5900,7 +5900,7 @@ const GAME_LOBBY = {
     cfg: () => klCfg(),
     opts: () => [
       lbSeg('n', 'BILANGAN PESAKIT', [[4,'4'],[6,'6'],[8,'8'],[10,'10']]),
-      lbSeg('jenis', 'JENIS KES', [['semua','Semua'],['fizikal','Fizikal'],['emosi','Emosi & sosial']], 'Fizikal: jerawat, bau badan, senggugut, gigi, tidur, sarapan (mini-game). Emosi & sosial: keluarga, buli siber, tekanan peperiksaan, vape, gangguan seksual, identiti diri (sesi nasihat)'),
+      lbSeg('jenis', 'JENIS KES', [['semua','Semua'],['fizikal','Fizikal'],['emosi','Emosi & sosial']], 'Fizikal: jerawat, bau badan, senggugut, gigi, tidur, sarapan, pertolongan cemas (R.I.C.E., D.R.A.B.C., hidung berdarah, melecur), denggi, asma, gula, keracunan makanan, diet (mini-game). Emosi & sosial: keluarga, jurang generasi, buli siber, geng, kemarahan, tekanan peperiksaan, vape, asap rokok, kenalan internet, akil baligh, gangguan seksual, identiti diri (sesi nasihat)'),
       lbSeg('sens', 'KES SENSITIF', [[1,'Papar'],[0,'Sembunyi']], 'Kes gangguan seksual & kekeliruan identiti. Sembunyikan jika kelas belum sesuai'),
       lbSeg('jantina', 'PESAKIT', [['campur','Lelaki & perempuan'],['L','Lelaki sahaja'],['P','Perempuan sahaja']]),
       lbSeg('watak', 'WATAK DOKTOR', [['p','Perempuan'],['l','Lelaki']]),
@@ -8438,7 +8438,111 @@ const KL_CASES = [
       ['Vape tu selamat kan? Bau dia wangi.', 'Vape mengandungi nikotin & bahan kimia yang merosakkan paru-paru dan menyebabkan ketagihan.', ['Ya, vape lebih selamat dari air.', 'Selamat kalau guna sekali-sekala.']],
       ['Macam mana nak tolak?', 'Katakan "Tak nak, terima kasih", beri alasan, dan jauhkan diri dari situasi itu.', ['Ambil dan buang bila mereka tak tengok.', 'Lari tanpa cakap apa-apa selamanya.']]],
     help:['ibubapa', 'kaunselor', 'kawan', 'doktor'], nohelp:['x_geng', 'x_diam'],
-    tips:['Vape & rokok mengandungi nikotin yang menyebabkan ketagihan.', 'Berani berkata TIDAK kepada desakan rakan sebaya.', 'Pilih kawan yang membawa pengaruh positif.', 'Dapatkan bantuan guru kaunseling jika didesak berterusan.'] }
+    tips:['Vape & rokok mengandungi nikotin yang menyebabkan ketagihan.', 'Berani berkata TIDAK kepada desakan rakan sebaya.', 'Pilih kawan yang membawa pengaruh positif.', 'Dapatkan bantuan guru kaunseling jika didesak berterusan.'] },
+  /* ---- PERTOLONGAN CEMAS ---- */
+  { id:'seliuh', t:'f', g:'', look:'', nm:'Terseliuh buku lali', topik:'Pertolongan cemas (R.I.C.E.)',
+    cerita:['Aduh doktor… kaki saya terpelecok masa main bola tadi.', 'Buku lali saya bengkak dan sakit bila berjalan.'],
+    dx:['Terseliuh — kecederaan ligamen buku lali', 'Patah tulang belakang', 'Gigitan serangga'],
+    game:'urutan', ptitle:'Susun langkah R.I.C.E. mengikut urutan', seq:['🛌 R — Rehat, jangan gerakkan kaki', '🧊 I — Ais, tuam 15–20 minit', '🩹 C — Balut dengan balutan anjal', '🦵 E — Tinggikan kaki atas bantal'],
+    wrong:['🔥 Urut kuat dengan minyak panas', '🏃 Teruskan bermain bola'],
+    tips:['Ikut prosedur R.I.C.E.: Rehat, Ais, Mampatan (balut), Tinggikan.', 'Tuam ais berlapik kain 15–20 minit, ulang setiap 2–3 jam.', 'Jangan urut atau tuam panas pada 48 jam pertama.', 'Jumpa doktor jika tidak boleh berjalan atau bengkak teruk.'] },
+  { id:'pengsan', t:'f', g:'', look:'', nm:'Kawan pengsan', topik:'Pertolongan cemas (D.R.A.B.C.)',
+    cerita:['Doktor, kawan saya tiba-tiba pengsan masa perhimpunan tadi!', 'Saya panik, tak tahu nak buat apa…'],
+    dx:['Mangsa tidak sedar — gunakan prosedur D.R.A.B.C.', 'Kawan cuma tertidur', 'Masalah kulit'],
+    game:'urutan', ptitle:'Susun prosedur D.R.A.B.C. mengikut urutan', seq:['⚠️ D — Pastikan kawasan selamat', '🗣️ R — Tepuk bahu dan panggil mangsa', '📞 Jerit minta bantuan / telefon 999', '👄 A — Dongakkan kepala, buka saluran udara', '👂 B — Lihat, dengar dan rasa pernafasan', '❤️ C — Periksa peredaran, mulakan CPR jika perlu'],
+    wrong:['💦 Simbah air ke muka mangsa', '🥤 Paksa mangsa minum air'],
+    tips:['D.R.A.B.C.: Danger, Response, Airway, Breathing, Circulation.', 'Pastikan diri sendiri selamat dahulu sebelum membantu.', 'Jangan beri makanan atau minuman kepada mangsa yang tidak sedar.', 'Panggil guru dan hubungi 999 dengan segera.'] },
+  { id:'hidung', t:'f', g:'', look:'', nm:'Hidung berdarah', topik:'Pertolongan cemas',
+    cerita:['Hidung saya tiba-tiba berdarah masa dalam kelas.', 'Kawan suruh saya dongak ke atas, betul ke doktor?'],
+    dx:['Epistaksis — hidung berdarah', 'Demam denggi', 'Gigi berlubang'],
+    game:'pilih', ptitle:'Pilih SEMUA cara yang betul untuk hidung berdarah', good:['🪑 Duduk dan condongkan badan ke depan', '🤏 Picit bahagian lembut hidung 10 minit', '🧊 Tuam sejuk di batang hidung', '😮‍💨 Bernafas melalui mulut'],
+    bad:['🙆 Dongakkan kepala ke belakang', '🤧 Hembus hidung kuat-kuat', '🛌 Baring terlentang'],
+    tips:['Condongkan badan ke DEPAN supaya darah tidak tertelan.', 'Picit bahagian lembut hidung selama 10 minit tanpa lepas.', 'Jangan dongak dan jangan hembus hidung kuat selepas berhenti.', 'Jumpa doktor jika darah tidak berhenti selepas 20 minit.'] },
+  { id:'melecur', t:'f', g:'', look:'', nm:'Tangan melecur', topik:'Pertolongan cemas',
+    cerita:['Tangan saya tersimbah air panas masa tolong mak masak.', 'Pedih sangat, kulit merah dan panas!'],
+    dx:['Melecur — kecederaan akibat haba', 'Alahan makanan', 'Jangkitan kuman'],
+    game:'tahan',
+    tips:['Alirkan air paip sejuk (bukan ais) pada luka selama 20 minit.', 'Tanggalkan cincin atau jam sebelum kawasan membengkak.', 'Jangan sapu ubat gigi, mentega atau kicap.', 'Jangan pecahkan lepuh. Tutup dengan kain bersih dan jumpa doktor jika teruk.'] },
+  /* ---- PENYAKIT ---- */
+  { id:'denggi', t:'f', g:'', look:'pening', nm:'Demam denggi di rumah', topik:'Penyakit berjangkit',
+    cerita:['Adik saya demam panas 3 hari dan ada ruam merah. Doktor kata denggi.', 'Halaman rumah kami ada banyak bekas air hujan…'],
+    dx:['Demam denggi — dibawa nyamuk Aedes', 'Selsema biasa', 'Keracunan makanan'],
+    game:'cari',
+    tips:['Nyamuk Aedes membiak dalam air bersih yang bertakung.', 'Amalkan 10 minit setiap minggu: cari dan musnahkan tempat pembiakan.', 'Terbalikkan bekas, tutup tong air dan buang tayar lama.', 'Demam lebih 2 hari? Segera ke klinik dan minum air secukupnya.'] },
+  { id:'asma', t:'f', g:'', look:'letih', nm:'Asma — semput selepas berlari', topik:'Penyakit respiratori kronik',
+    cerita:['Masa larian merentas desa, dada saya rasa ketat…', 'Nafas saya berbunyi dan saya susah nak bernafas.'],
+    dx:['Serangan asma', 'Keracunan makanan', 'Patah kaki'],
+    game:'pilih', ptitle:'Pilih SEMUA tindakan yang betul semasa serangan asma', good:['🛑 Berhenti berlari dan rehat', '🪑 Duduk tegak, jangan baring', '💨 Guna inhaler seperti diajar doktor', '😮‍💨 Bernafas perlahan-lahan', '📢 Beritahu guru'],
+    bad:['🏃 Teruskan larian sampai habis', '🛌 Baring terlentang', '🚬 Duduk dekat orang merokok'],
+    tips:['Sentiasa bawa inhaler dan beritahu guru PJ tentang asma kamu.', 'Elakkan pencetus: asap rokok, habuk dan udara sejuk.', 'Panaskan badan sebelum bersukan.', 'Jika inhaler tidak membantu, hubungi 999.'] },
+  { id:'gula', t:'f', g:'', look:'', nm:'Terlalu banyak minuman manis', topik:'Penyakit tidak berjangkit (diabetes)',
+    cerita:['Saya minum air manis 5 gelas sehari, doktor.', 'Ayah saya ada kencing manis. Saya pun takut juga…'],
+    dx:['Risiko diabetes — pengambilan gula berlebihan', 'Kekurangan zat besi', 'Penyakit kulit'],
+    game:'pilih', ptitle:'Pilih SEMUA minuman yang lebih sihat', good:['💧 Air kosong', '🥛 Susu rendah lemak', '🍵 Teh tanpa gula', '🥥 Air kelapa'],
+    bad:['🧋 Teh ais manis', '🥤 Minuman bergas', '🧃 Jus kotak bergula', '⚡ Minuman tenaga'],
+    tips:['Hadkan gula kepada kurang 6 sudu teh sehari.', 'Pilih air kosong sebagai minuman utama.', 'Bersenam sekurang-kurangnya 60 minit sehari.', 'Sejarah keluarga diabetes? Lakukan pemeriksaan kesihatan berkala.'] },
+  /* ---- PEMAKANAN ---- */
+  { id:'keracunan', t:'f', g:'', look:'pening', nm:'Keracunan makanan', topik:'Keselamatan makanan',
+    cerita:['Lepas makan nasi lemak yang dah berbau di kantin…', 'Perut saya memulas, saya muntah dan cirit-birit.'],
+    dx:['Keracunan makanan', 'Senggugut', 'Serangan asma'],
+    game:'pilih', ptitle:'Pilih SEMUA makanan yang SELAMAT dimakan', good:['🍎 Buah segar yang dibasuh', '🥫 Tin elok, belum luput', '🍳 Telur dimasak sempurna', '🍱 Makanan bertutup dan panas'],
+    bad:['🍗 Ayam separuh masak', '🥫 Tin kemek dan kembung', '🍛 Nasi berbau basi', '🪰 Makanan dihurung lalat'],
+    tips:['Semak tarikh luput dan keadaan bungkusan.', 'Jangan makan makanan berbau, berlendir atau dihurung lalat.', 'Basuh tangan sebelum makan.', 'Minum air atau larutan ORS dan jumpa doktor jika muntah teruk.'] },
+  { id:'diet', t:'f', g:'', look:'letih', nm:'Diet tidak seimbang', topik:'Pemakanan (makro & mikro nutrien)',
+    cerita:['Saya nak kurus cepat, jadi saya makan sekali sehari saja.', 'Sekarang saya selalu letih dan pening.'],
+    dx:['Diet tidak seimbang — kurang nutrien', 'Penyakit jantung', 'Demam denggi'],
+    game:'pilih', ptitle:'Isi Pinggan Sihat Malaysia (suku · suku · separuh)', good:['🍚 Suku pinggan: nasi / bijirin', '🍗 Suku pinggan: ikan, ayam, kekacang', '🥦 Separuh pinggan: sayur & buah', '💧 Air kosong'],
+    bad:['🍟 Kentang goreng setiap hari', '🥤 Air bergas', '🚫 Langkau waktu makan'],
+    tips:['Ikut Pinggan Sihat Malaysia: suku-suku-separuh.', 'Jangan langkau makan, terutama sarapan.', 'Berat badan sihat = makan seimbang + bersenam.', 'Remaja perlukan protein, kalsium dan zat besi untuk membesar.'] },
+  /* ---- MENTAL, EMOSI & SOSIAL ---- */
+  { id:'marah', t:'e', g:'', nm:'Sukar mengawal kemarahan', topik:'Pengurusan mental & emosi',
+    cerita:['Bila kalah game, saya terus hentak meja dan marah kawan.', 'Semalam saya hampir tumbuk adik saya…'],
+    dx:['Sukar mengurus kemarahan', 'Demam panas', 'Rabun jauh'],
+    talk:[['Saya tak boleh kawal bila marah.', 'Marah itu emosi biasa — yang penting cara kita mengurusnya.', ['Memang kamu ni panas baran.', 'Lepaskan saja, nanti reda sendiri.']],
+      ['Apa saya patut buat masa tengah marah?', 'Berhenti seketika, tarik nafas dalam dan kira 1 hingga 10.', ['Balas dengan kata-kata kasar.', 'Hentak barang supaya rasa lega.']],
+      ['Lepas tu macam mana?', 'Jauhkan diri sekejap, kemudian berbincang dengan tenang bila sudah reda.', ['Simpan dendam pada kawan.', 'Mengamuk sampai semua orang takut.']]],
+    help:['kaunselor', 'ibubapa', 'guru', 'kawan'], nohelp:['x_balas', 'x_diam'],
+    tips:['Kenali tanda awal marah: muka panas, jantung berdebar.', 'Tarik nafas dalam dan kira 1–10 sebelum bertindak.', 'Bersenam atau tulis perasaan untuk menyalurkan marah.', 'Minta maaf jika tersilap dan bincang dengan tenang.'] },
+  { id:'rokok', t:'e', g:'', nm:'Perokok pasif di rumah', topik:'Penyalahgunaan bahan (asap rokok)',
+    cerita:['Ayah saya merokok dalam rumah setiap hari.', 'Saya selalu batuk, dan adik saya ada asma.'],
+    dx:['Kesan asap rokok kepada perokok pasif', 'Alahan habuk sahaja', 'Demam denggi'],
+    talk:[['Saya tak merokok, takkan saya pun kena?', 'Ya, perokok pasif yang menghidu asap rokok juga terdedah kepada bahaya kesihatan.', ['Tak apa, asap rokok tak bahaya kalau tak hisap.', 'Biasakan diri saja.']],
+      ['Saya takut nak tegur ayah.', 'Tegur dengan sopan dan penuh kasih sayang, terangkan kesannya pada kesihatan keluarga.', ['Marah dan sorokkan rokok ayah.', 'Diam saja, bukan urusan kamu.']],
+      ['Apa lagi yang boleh dibuat?', 'Cadangkan ayah merokok di luar rumah dan dapatkan bantuan program berhenti merokok (mQuit).', ['Cuba merokok supaya faham ayah.', 'Tutup semua tingkap rumah.']]],
+    help:['ibubapa', 'doktor', 'kaunselor', 'keluarga'], nohelp:['x_diam', 'x_sosmed'],
+    tips:['Asap rokok mengandungi lebih 7,000 bahan kimia.', 'Perokok pasif berisiko asma, jangkitan paru-paru dan penyakit jantung.', 'Rumah dan kereta mesti bebas asap rokok.', 'Perkhidmatan mQuit membantu perokok berhenti merokok.'] },
+  { id:'eksploitasi', t:'e', g:'', nm:'Kenalan internet ajak berjumpa', topik:'Keselamatan diri (eksploitasi)',
+    cerita:['Ada orang yang saya kenal di media sosial ajak berjumpa malam ni.', 'Dia janji nak bagi telefon baru, dan minta gambar peribadi saya.'],
+    dx:['Risiko eksploitasi (grooming) dalam talian', 'Persahabatan biasa sahaja', 'Masalah gigi'],
+    talk:[['Dia baik sangat, selalu belanja topup.', 'Hadiah daripada orang asing boleh menjadi umpan untuk memerangkap kamu.', ['Untunglah dapat kawan kaya.', 'Terima saja, rezeki jangan ditolak.']],
+      ['Dia minta gambar peribadi saya.', 'Jangan sekali-kali hantar gambar peribadi. Sekat orang itu dan simpan bukti.', ['Hantar sekali saja, tak apa.', 'Hantar gambar kawan lain.']],
+      ['Patut ke saya pergi jumpa dia?', 'Jangan pergi. Beritahu ibu bapa atau guru dengan segera.', ['Pergi tapi bawa kawan.', 'Pergi sekejap, lepas tu balik.']]],
+    help:['ibubapa', 'guru', 'polis', 'talian'], nohelp:['x_asing', 'x_diam'],
+    tips:['Jangan kongsi maklumat atau gambar peribadi dengan orang asing.', 'Hadiah dan pujian berlebihan ialah tanda amaran.', 'Jangan berjumpa kenalan internet tanpa pengetahuan ibu bapa.', 'Sekat, simpan bukti dan laporkan kepada orang dewasa.'] },
+  { id:'jurang', t:'e', g:'', nm:'Jurang generasi dengan ibu bapa', topik:'Kekeluargaan',
+    cerita:['Mak ayah saya selalu tak faham saya.', 'Setiap kali bercakap mesti bergaduh pasal telefon dan kawan.'],
+    dx:['Jurang generasi dalam keluarga', 'Penyakit kronik', 'Kurang tidur'],
+    talk:[['Mereka asyik larang itu ini.', 'Mak ayah risau sebab sayang. Cuba fahami sebab larangan mereka.', ['Abaikan saja cakap mereka.', 'Melawan supaya mereka faham.']],
+      ['Saya rasa tak didengar.', 'Pilih masa yang tenang dan luahkan perasaan kamu dengan sopan.', ['Mogok tak nak bercakap seminggu.', 'Lari dari rumah.']],
+      ['Macam mana nak rapat semula?', 'Luangkan masa bersama — makan, bersembang atau buat aktiviti keluarga.', ['Duduk dalam bilik sepanjang masa.', 'Cerita masalah keluarga di media sosial.']]],
+    help:['ibubapa', 'keluarga', 'kaunselor', 'guru'], nohelp:['x_sosmed', 'x_diam'],
+    tips:['Jurang generasi berlaku kerana perbezaan pengalaman dan zaman.', 'Dengar dahulu, kemudian luahkan pendapat dengan sopan.', 'Luangkan masa berkualiti bersama keluarga.', 'Kompromi: cari jalan tengah yang dipersetujui bersama.'] },
+  { id:'geng', t:'e', g:'', nm:'Dipaksa masuk geng', topik:'Keselamatan (buli & gangsterisme)',
+    cerita:['Budak senior paksa saya masuk geng mereka.', 'Kalau saya tak ikut, mereka ugut nak pukul saya.'],
+    dx:['Gangsterisme dan buli', 'Masalah pemakanan', 'Serangan asma'],
+    talk:[['Saya takut kena pukul.', 'Kamu tidak bersalah. Ugutan dan paksaan masuk geng adalah salah.', ['Masuk saja supaya selamat.', 'Lawan mereka seorang diri.']],
+      ['Kalau saya tolak, macam mana?', 'Katakan TIDAK dengan tegas dan elakkan tempat sunyi bersendirian.', ['Bawa senjata untuk pertahankan diri.', 'Ikut sekali-sekala saja.']],
+      ['Perlu ke saya beritahu?', 'Ya — laporkan kepada guru disiplin, kaunselor dan ibu bapa dengan segera.', ['Jangan beritahu, nanti lebih teruk.', 'Rakam dan viralkan.']]],
+    help:['guru', 'kaunselor', 'ibubapa', 'polis'], nohelp:['x_geng', 'x_balas'],
+    tips:['Gangsterisme dan buli ialah kesalahan disiplin dan undang-undang.', 'Berani berkata TIDAK dan bergerak bersama kawan yang dipercayai.', 'Elakkan tempat sunyi dan laporkan ugutan dengan segera.', 'Sekolah wajib melindungi murid yang melapor.'] },
+  { id:'baligh', t:'e', g:'', nm:'Perubahan akil baligh', topik:'Kesihatan diri & reproduktif',
+    cerita:['Badan saya banyak berubah sekarang, doktor…', 'Suara, bentuk badan, ada bulu tumbuh. Saya malu dan rasa pelik.'],
+    dx:['Perkembangan seksual sekunder (akil baligh) — normal', 'Penyakit berjangkit', 'Alahan'],
+    talk:[['Kenapa badan saya berubah?', 'Itu perkembangan normal akil baligh akibat hormon. Semua remaja melaluinya.', ['Itu tanda kamu sakit.', 'Jangan fikir, nanti hilang.']],
+      ['Emosi saya pun cepat berubah.', 'Perubahan emosi juga normal. Kenali perasaan dan luahkan kepada orang yang dipercayai.', ['Kamu memang suka merajuk.', 'Pendam saja semua perasaan.']],
+      ['Apa yang saya perlu jaga?', 'Jaga kebersihan diri, makan seimbang, tidur cukup dan jaga batas pergaulan.', ['Tak perlu mandi selalu.', 'Cari maklumat di laman web yang tidak sesuai.']]],
+    help:['ibubapa', 'kaunselor', 'doktor', 'guru'], nohelp:['x_asing', 'x_diam'],
+    tips:['Akil baligh ialah proses normal, berlaku pada masa berbeza bagi setiap orang.', 'Jaga kebersihan diri dengan lebih teliti.', 'Perubahan emosi boleh diurus dengan bercerita kepada orang dipercayai.', 'Dapatkan maklumat daripada ibu bapa, guru atau doktor.'] }
 ];
 const KL_NAMES = { L:['Haziq', 'Danial', 'Aqil', 'Irfan', 'Hakim', 'Faris', 'Amsyar', 'Zarif', 'Iman', 'Rayyan'], P:['Aina', 'Sofea', 'Balqis', 'Hana', 'Damia', 'Alya', 'Qistina', 'Irdina', 'Nadia', 'Aisyah'] };
 const klShuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -8525,6 +8629,15 @@ function klStyle(){
   '.kl-end{position:absolute;inset:0;z-index:5;background:rgba(2,6,23,.82);display:flex;align-items:center;justify-content:center;padding:16px}.kl-end .pn{background:#0F172A;border:2px solid #34D399;border-radius:18px;padding:20px;max-width:560px;width:100%;text-align:center}' +
   '.kl-end .big{font-size:28px;font-weight:900;color:#34D399}.kl-end .gr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.kl-end .gr div{background:#1E293B;border-radius:10px;padding:8px;font-size:11px;color:#94A3B8}.kl-end .gr b{display:block;font-size:20px;color:#fff}' +
   '.kl-end .bt{display:flex;gap:8px;justify-content:center}.kl-end .bt button{border:0;border-radius:12px;padding:11px 20px;font-weight:900;cursor:pointer;background:#334155;color:#fff;font-size:15px}.kl-end .bt .o{background:#34D399;color:#022C22}' +
+  '.kl-seq .kl-opt{position:relative}.kl-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-right:8px;border-radius:50%;background:#4ADE80;color:#052E16;font-weight:900}' +
+  '.kl-burn{display:flex;align-items:center;justify-content:center;gap:28px;margin:6px 0}.kl-hand{position:relative;font-size:96px;line-height:1}.kl-hand .hot{position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,.8),rgba(239,68,68,0) 70%);mix-blend-mode:multiply;transition:opacity .2s}' +
+  '.kl-drops{position:absolute;left:10%;right:10%;top:-30%;height:60%;opacity:0;background:repeating-linear-gradient(90deg,rgba(125,211,252,.85) 0 4px,transparent 4px 14px);border-radius:8px;transition:opacity .2s}.kl-drops.on{opacity:1;animation:klFlow .35s linear infinite}@keyframes klFlow{from{background-position:0 0}to{background-position:0 28px}}' +
+  '.kl-tap{width:112px;height:112px;border-radius:28px;font-size:60px;background:#0E7490;border:3px solid #22D3EE;cursor:pointer;touch-action:none;user-select:none}.kl-tap.on{background:#155E75;box-shadow:0 0 0 8px #22D3EE44;transform:scale(.96)}' +
+  '.kl-bar{height:16px;background:#1E293B;border-radius:99px;overflow:hidden;margin:8px 0 4px}.kl-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#22D3EE,#4ADE80)}.kl-bt{text-align:center;font-weight:800;font-size:13px;color:#A5F3FC}' +
+  '.kl-alt{display:flex;gap:10px;justify-content:center;margin-top:10px}.kl-alt button{width:56px;height:56px;border-radius:16px;font-size:30px;background:#1E293B;border:2px solid #334155;cursor:pointer}.kl-alt button.no{background:#7F1D1D;border-color:#F87171}' +
+  '.kl-yard{position:relative;width:min(100%,560px);aspect-ratio:16/10;margin:4px auto;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#BAE6FD 0 30%,#86EFAC 30% 100%)}.kl-house{position:absolute;left:3%;top:2%;font-size:clamp(40px,9vw,70px)}.kl-tree{position:absolute;right:4%;top:4%;font-size:clamp(36px,8vw,60px)}' +
+  '.kl-yi{position:absolute;transform:translate(-50%,-50%);background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.9);border-radius:14px;padding:3px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1}.kl-yi span{font-size:clamp(24px,5vw,36px)}.kl-yi small{font-size:10px;font-weight:800;color:#14532D;margin-top:2px;white-space:nowrap}' +
+  '.kl-yi.ok{background:#4ADE80;border-color:#166534;opacity:.75}.kl-yi.ok span{filter:grayscale(1)}.kl-yi.ok::after{content:"✔";position:absolute;right:-6px;top:-8px;font-size:18px;color:#166534}' +
   '@media (max-aspect-ratio:1/1){.kl-acne .kl-face{width:min(calc(100% - 76px),34vh)}.kl-main{flex-direction:column}.kl-scene{flex:0 0 40%}.kl-pat{height:66%}.kl-bub{top:11%;font-size:13px;padding:7px 10px}}';
   document.head.appendChild(s);
 }
@@ -8600,7 +8713,7 @@ function klRun(team){
       go(P.c.t === 'e' ? 'Mula sesi nasihat ➜' : 'Mula rawatan ➜', treat);
     };
   }
-  function treat(){ say(''); const g = P.c.t === 'e' ? 'dialog' : P.c.game; ({ jerawat: mgAcne, pilih: () => mgPick(P.c.good, P.c.bad, 'LANGKAH 2 · RAWATAN', P.c.ptitle || (P.c.id === 'sarapan' ? 'Pilih sarapan sihat untuk ' + esc(P.nm) : 'Pilih SEMUA cara rawatan yang selamat'), pharmacy), berus: mgBrush, dialog: mgTalk })[g](); }
+  function treat(){ say(''); const g = P.c.t === 'e' ? 'dialog' : P.c.game; ({ jerawat: mgAcne, pilih: () => mgPick(P.c.good, P.c.bad, 'LANGKAH 2 · RAWATAN', P.c.ptitle || (P.c.id === 'sarapan' ? 'Pilih sarapan sihat untuk ' + esc(P.nm) : 'Pilih SEMUA cara rawatan yang selamat'), pharmacy), berus: mgBrush, dialog: mgTalk, urutan: mgSeq, tahan: mgHold, cari: mgFind })[g](); }
   const mgDone = (pts, maxp) => { P.max += maxp; P.pts += pts; add(pts); sfx('myth'); pat('gembira'); talk('Terima kasih, doktor! Rasa lebih baik.'); setTimeout(() => { if (!over) pharmacy(); }, 1300); };
   /* mini-game: jerawat — pilih alat (emoji di tepi muka), SERET alat atas muka:
      🧼 gosok → buih sabun, kotoran hilang; 🧴 sapu atas setiap jerawat → krim, jerawat sembuh;
@@ -8651,6 +8764,53 @@ function klRun(team){
     const up = () => { active = false; last = null; };
     face.addEventListener('pointerup', up); face.addEventListener('pointercancel', up);
     face.addEventListener('pointerleave', () => { if (!active) cur.style.display = 'none'; });
+  }
+  /* mini-game: susun langkah mengikut urutan (R.I.C.E., D.R.A.B.C.) — ketik kad satu demi satu; kad betul mendapat nombor */
+  function mgSeq(){
+    const seq = P.c.seq, cards = klShuf(seq.concat(P.c.wrong || []));
+    let k = 0, mis = 0;
+    pan().innerHTML = head('LANGKAH 2 · RAWATAN', esc(P.c.ptitle)) + '<div class="kl-msg" id="klMsg">Ketik langkah pertama.</div>' +
+      '<div class="kl-grid kl-seq">' + cards.map((t, i) => '<button class="kl-opt" data-o="' + i + '">' + esc(t) + '</button>').join('') + '</div>';
+    pan().onclick = e => { const b = e.target.closest('[data-o]'); if (!b || b.disabled) return; const t = cards[+b.dataset.o];
+      if (seq.indexOf(t) < 0){ mis++; b.classList.add('no'); b.disabled = true; snd('kl_salah', 'low'); return $k('#klMsg').innerHTML = '❌ Langkah ini salah dan berbahaya!'; }
+      if (t !== seq[k]){ mis++; b.classList.remove('kl-shake'); void b.offsetWidth; b.classList.add('kl-shake'); snd('kl_salah', 'low'); return $k('#klMsg').innerHTML = '🤔 Bukan langkah ke-' + (k + 1) + '. Fikir semula urutannya.'; }
+      b.classList.add('ok'); b.disabled = true; b.insertAdjacentHTML('afterbegin', '<b class="kl-n">' + (k + 1) + '</b>'); k++; sfx('flip');
+      $k('#klMsg').innerHTML = k < seq.length ? '✅ Betul! Ketik langkah ke-' + (k + 1) + '.' : '✅ Prosedur lengkap!';
+      if (k === seq.length){ pan().onclick = null; mgDone(Math.max(10, 40 - mis * 8), 40); } };
+  }
+  /* mini-game: melecur — tekan & tahan paip supaya air sejuk mengalir atas luka (bar = 20 minit); pilihan salah memberi amaran */
+  function mgHold(){
+    const BAD = [['🦷', 'Ubat gigi memerangkap haba dan boleh menyebabkan jangkitan!'], ['🧈', 'Mentega memerangkap haba — luka makin teruk!'], ['🧊', 'Ais terus boleh merosakkan kulit. Guna air paip sejuk.']];
+    let v = 0, on = false, mis = 0, fin = false, last = 0, raf = 0;
+    pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Sejukkan luka melecur') + '<div class="kl-msg" id="klMsg">Tekan & tahan 🚰 untuk alirkan air paip sejuk atas tangan.</div>' +
+      '<div class="kl-burn"><div class="kl-hand" id="klHand">✋<i class="hot" id="klHot"></i><div class="kl-drops" id="klDrops"></div></div>' +
+      '<button class="kl-tap" id="klTap" aria-label="Paip air">🚰</button></div>' +
+      '<div class="kl-bar"><i id="klBar"></i></div><div class="kl-bt"><span id="klMin">0</span> / 20 minit</div>' +
+      '<div class="kl-alt">' + BAD.map(([e], i) => '<button data-w="' + i + '">' + e + '</button>').join('') + '</div>';
+    const tap = $k('#klTap');
+    const step = t => { if (!on || fin) return; const dt = last ? (t - last) / 1000 : 0; last = t; v = Math.min(1, v + dt / 5.5);
+      $k('#klBar').style.width = v * 100 + '%'; $k('#klMin').textContent = Math.round(v * 20); $k('#klHot').style.opacity = 1 - v;
+      if (v >= 1){ fin = true; on = false; tap.classList.remove('on'); $k('#klDrops').classList.remove('on'); $k('#klMsg').innerHTML = '✅ Luka sudah sejuk! Tutup dengan kain bersih.'; mgDone(Math.max(10, 40 - mis * 10), 40); return; }
+      raf = requestAnimationFrame(step); };
+    const start = e => { if (fin) return; e.preventDefault(); on = true; last = 0; tap.classList.add('on'); $k('#klDrops').classList.add('on'); try { tap.setPointerCapture(e.pointerId); } catch(er){} raf = requestAnimationFrame(step); };
+    const stop = () => { if (!on) return; on = false; cancelAnimationFrame(raf); tap.classList.remove('on'); $k('#klDrops').classList.remove('on'); if (!fin) $k('#klMsg').innerHTML = 'Teruskan! Air sejuk perlu mengalir 20 minit.'; };
+    tap.addEventListener('pointerdown', start); ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => tap.addEventListener(ev, stop));
+    pan().querySelector('.kl-alt').onclick = e => { const b = e.target.closest('[data-w]'); if (!b || fin) return; mis++; b.classList.add('no'); snd('kl_salah', 'low'); $k('#klMsg').innerHTML = '❌ ' + BAD[+b.dataset.w][1]; };
+  }
+  /* mini-game: denggi — cari & musnahkan tempat pembiakan nyamuk Aedes di halaman rumah */
+  function mgFind(){
+    const BREED = ['🛞 Tayar lama', '🪴 Piring pasu', '🥫 Tin berisi air', '🪣 Baldi terbuka', '🥥 Tempurung kelapa'], SAFE = ['⚽ Bola', '🚲 Basikal', '🐈 Kucing', '🧺 Bakul kain'];
+    const SLOT = klShuf([[13, 50], [37, 46], [62, 50], [86, 47], [22, 76], [47, 79], [71, 75], [90, 80], [55, 62]]);
+    const items = klShuf(BREED.map(t => [t, 1]).concat(SAFE.map(t => [t, 0])));
+    let found = 0, mis = 0;
+    pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Cari & musnahkan tempat pembiakan nyamuk') + '<div class="kl-msg" id="klMsg">Ketik tempat yang boleh menakung air. Dijumpai <b id="klF">0</b>/' + BREED.length + '</div>' +
+      '<div class="kl-yard"><span class="kl-house">🏠</span><span class="kl-tree">🌳</span>' + items.map(([t], i) => { const [x, y] = SLOT[i], sp = t.indexOf(' ');
+        return '<button class="kl-yi" data-y="' + i + '" style="left:' + x + '%;top:' + y + '%"><span>' + t.slice(0, sp) + '</span><small>' + esc(t.slice(sp + 1)) + '</small></button>'; }).join('') + '</div>';
+    pan().onclick = e => { const b = e.target.closest('[data-y]'); if (!b || b.disabled) return; const [t, br] = items[+b.dataset.y];
+      if (!br){ mis++; b.classList.remove('kl-shake'); void b.offsetWidth; b.classList.add('kl-shake'); snd('kl_salah', 'low'); return $k('#klMsg').innerHTML = '❌ ' + esc(t.slice(t.indexOf(' ') + 1)) + ' tidak menakung air. Dijumpai <b id="klF">' + found + '</b>/' + BREED.length; }
+      b.disabled = true; b.classList.add('ok'); found++; sfx('flip');
+      $k('#klMsg').innerHTML = (found < BREED.length ? '✅ Dimusnahkan! Dijumpai ' : '✅ Semua tempat pembiakan dimusnahkan! ') + '<b id="klF">' + found + '</b>/' + BREED.length;
+      if (found === BREED.length){ pan().onclick = null; mgDone(Math.max(10, 40 - mis * 8), 40); } };
   }
   /* pilih semua yang betul (rawatan senggugut, rutin mandi & tidur, sarapan sihat, siapa boleh bantu) */
   function mgPick(good, bad, step, title, then, isHelp){
