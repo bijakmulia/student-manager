@@ -235,5 +235,7 @@ function Shrink-Art($dir, $tag, $promptFile, $max, $dlRx, $hint) {
 Shrink-Art (Join-Path $PSScriptRoot 'assets\kad') 'kad' 'PROMPT-KAD.txt' 512.0 '^(edurank__kad__)?(k\d\d|belakang)( \(\d+\))?\.(png|jpe?g)$' 'guna k01 ... k96 atau belakang'
 # assets\seram: jumpscare faces for Sekolah Berhantu (muka_putih, muka_pontianak, muka_toyol + "2" variants), 900px.
 Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 900.0 '^(edurank__seram__)?muka_(putih|pontianak|toyol)2?( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-SERAM.txt'
+# assets\taikun: Taikun Ilmu board game (logo_taikun, tengah_papan, bg_taikun), 1024px.
+Shrink-Art (Join-Path $PSScriptRoot 'assets\taikun') 'taikun' 'PROMPT-TAIKUN.txt' 1024.0 '^(edurank__taikun__)?(logo_taikun|tengah_papan|bg_taikun)( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-TAIKUN.txt'
 # assets\klinik: Klinik Remaja (pesakit_*, doktor_*, bg_klinik) - same magenta keying & sizes as assets\stor.
 if ($Dir -eq (Join-Path $PSScriptRoot 'assets\stor')) { & $PSCommandPath -Dir (Join-Path $PSScriptRoot 'assets\klinik') }

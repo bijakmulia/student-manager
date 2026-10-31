@@ -115,6 +115,18 @@
     { "id": "bgm_duel",       "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Energetic anime card battle music, driving drums, electric guitar and orchestral hits, heroic, seamless loop, instrumental, 140 BPM" },
     { "id": "bgm_run",        "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Fast fun endless runner game music, bright chiptune pop with a catchy synth lead, seamless loop, instrumental, 150 BPM" },
     { "id": "bgm_kad",        "g": "Muzik Latar", "k": "bgm", "s": 60, "p": "Mystical strategic card game music, magical fantasy world, light orchestral strings with harp, soft celesta sparkles and gentle hand percussion, curious and focused but upbeat, seamless loop, instrumental, 105 BPM" },
+    { "id": "tk_dadu", "g": "Taikun Ilmu", "k": "sfx", "s": 1.2, "p": "Two plastic dice shaken in a hand and rolled onto a wooden board game table, clattering then stopping" },
+    { "id": "tk_lompat", "g": "Taikun Ilmu", "k": "sfx", "s": 0.3, "p": "Tiny cute cartoon hop boing, short and light, board game token jumping one square" },
+    { "id": "tk_beli", "g": "Taikun Ilmu", "k": "sfx", "s": 1, "p": "Cash register cha-ching with a happy chime, buying property in a kids board game" },
+    { "id": "tk_bina", "g": "Taikun Ilmu", "k": "sfx", "s": 1.2, "p": "Quick cartoon construction: two hammer taps and a pop, building a little house in a board game" },
+    { "id": "tk_bayar", "g": "Taikun Ilmu", "k": "sfx", "s": 0.8, "p": "Coins dropping out of a pocket, short descending tone, paying money in a game" },
+    { "id": "tk_duit", "g": "Taikun Ilmu", "k": "sfx", "s": 0.8, "p": "Bright coin collect sparkle, receiving money in a kids game" },
+    { "id": "tk_betul", "g": "Taikun Ilmu", "k": "sfx", "s": 0.8, "p": "Correct answer ding, bright happy two-note chime, kids quiz game" },
+    { "id": "tk_salah", "g": "Taikun Ilmu", "k": "sfx", "s": 0.8, "p": "Wrong answer soft buzzer, gentle not harsh, kids quiz game" },
+    { "id": "tk_disiplin", "g": "Taikun Ilmu", "k": "sfx", "s": 1.2, "p": "School whistle blow followed by a comedic jail door clank, kids board game" },
+    { "id": "tk_misteri", "g": "Taikun Ilmu", "k": "sfx", "s": 1.2, "p": "Mystery box opening, magical shimmer with a curious rising tone" },
+    { "id": "tk_menang", "g": "Taikun Ilmu", "k": "sfx", "s": 3, "p": "Victory fanfare with coins and cheering, kids board game winner celebration" },
+    { "id": "bgm_taikun", "g": "Muzik Latar", "k": "bgm", "s": 90, "p": "Upbeat playful board game background music for kids, bouncy pizzicato strings, marimba and light jazzy piano, cheerful city tycoon mood, 110 BPM, seamless loop, instrumental" },
     { "id": "bgm_esc",        "g": "Muzik Latar", "k": "bgm", "s": 75, "p": "Dark eerie haunted school ambient music, slow detuned piano, low drones and cold pads, tense, seamless loop, instrumental" }
   ]
 }

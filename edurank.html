@@ -4315,7 +4315,8 @@ let SFX_CTX = null;
 const BGM_SLOTS = [
   { k:'menu', name:'Lagu Latar App', ico:'fa-house', hint:'Dimainkan di semua skrin app (game 3D guna bunyinya sendiri)' },
   { k:'kad', name:'Lagu Tangga Ilmon', ico:'fa-layer-group', hint:'Dimainkan semasa game kad Tangga Ilmon (senyap jika tiada)' },
-  { k:'klinik', name:'Lagu Klinik Remaja', ico:'fa-stethoscope', hint:'Dimainkan semasa game Klinik Remaja (senyap jika tiada)' }
+  { k:'klinik', name:'Lagu Klinik Remaja', ico:'fa-stethoscope', hint:'Dimainkan semasa game Klinik Remaja (senyap jika tiada)' },
+  { k:'taikun', name:'Lagu Taikun Ilmu', ico:'fa-city', hint:'Dimainkan semasa game papan Taikun Ilmu (lagu app jika tiada)' }
 ];
 /* KELANTANGAN UTAMA: setiap bunyi (lagu latar, bunyi efek, bunyi enjin game) disambung ke audOut(a), bukan terus ke speaker */
 const masterVol = () => { const v = S && S.config ? S.config.masterVol : undefined; return (v === undefined || v === null || isNaN(+v)) ? 1 : clamp(+v, 0, 100) / 100; };
@@ -4413,7 +4414,7 @@ const bgmOn = () => !(S && S.config && S.config.bgmOn === 0);
 /* Skrin mana sedang dipaparkan? Pentas lakonan dekat di atas papan, papan
    di atas menu. */
 function bgmScene(){
-  for (const [sel, k] of [['#simRoot','sim'], ['#kmRoot','kad'], ['#kmJoin','kad'], ['#stRoot','stor'], ['#btRoot','duel'], ['#runRoot','run'], ['#escRoot','esc'], ['#klRoot','klinik']]) if (document.querySelector(sel)) return k;
+  for (const [sel, k] of [['#simRoot','sim'], ['#kmRoot','kad'], ['#kmJoin','kad'], ['#stRoot','stor'], ['#btRoot','duel'], ['#runRoot','run'], ['#escRoot','esc'], ['#klRoot','klinik'], ['#tkRoot','taikun']]) if (document.querySelector(sel)) return k;
   return 'menu';
 }
 function bgmTarget(){
@@ -4421,7 +4422,7 @@ function bgmTarget(){
   if (!bgmOn()) return null;
   const s = bgmScene();
   if (bgmSrc(s)) return s;
-  return (s === 'stor' || s === 'duel' || s === 'klinik') && bgmSrc('menu') ? 'menu' : null;   /* Klinik: lagu latar EduRank sehingga bgm_klinik dimasukkan */   // game 3D tanpa muzik aset: guna bunyi enjinnya sendiri
+  return (s === 'stor' || s === 'duel' || s === 'klinik' || s === 'taikun') && bgmSrc('menu') ? 'menu' : null;   /* Klinik: lagu latar EduRank sehingga bgm_klinik dimasukkan */   // game 3D tanpa muzik aset: guna bunyi enjinnya sendiri
 }
 async function bgmSwitch(src){
   const a = audCtx(); if (!a) return;
@@ -5948,6 +5949,48 @@ const GAME_LOBBY = {
     starts: [['▶ MAIN (1 peranti)', () => storStart()], ['👑 BUKA BILIK · HOS (tayangan projektor)', () => storHost()]],
     how: () => 'Semua tindakan dengan <b>SERET</b> sahaja — uji kecekapan tangan!<br><b>Kaunter Stor:</b> atlet <b>menyewa</b> peralatan sukan (harga murah) — seret dari rak <b>terus kepada atlet</b>. Atlet akan datang semula: seret peralatan yang dipulangkan ke <b>tempat asalnya di rak</b>.<br><b>Jus Blend Sihat:</b> gelembung pelanggan menunjukkan jus yang dipesan — <b>ketik pelanggan</b> untuk lihat resipinya, kemudian seret setiap bahan dari <b>Rak Bahan Jus</b> ke dalam <b>blender</b> (atas kaunter). Bila kombinasi betul, blender mengisar sendiri — seret blender kepada pelanggan. Salah bahan? Seret blender ke <b>tong sampah</b>.<br><b>Makanan:</b> seret terus kepada pelanggan (atau letak dulu atas kaunter). Makanan 🍳 dimasak di dapur — bila siap, seret kepada pelanggan.<br><b>Tong sampah</b> penuh & berlalat? Seret tong ke <b>pintu</b> untuk dikosongkan.<br>Telefon berdering = pembekal: jawab soalan, kemudian sambut dia di <b>pintu stok</b>.<br>Jam di atas pintu menunjukkan baki masa syif.'
   },
+  taikun: {
+    title: 'TAIKUN ILMU', ico: '🏙️', c: '#FACC15', noTeam: true,
+    logo: () => TK_HAVE.get('logo_taikun') || '', bg: () => TK_HAVE.get('bg_taikun') || '',
+    desc: 'Papan hartanah 3D untuk 2–4 pemain. Jawab soalan untuk membeli tanah, bina rumah & hotel, kutip sewa — harta bersih tertinggi menang!',
+    cfg: () => tkCfg(),
+    opts: () => [
+      lbSeg('len', 'TEMPOH PERMAINAN', [[10,'10 min'],[15,'15 min'],[20,'20 min'],[30,'30 min'],[0,'Tiada had']], 'Bila masa tamat, giliran semasa dihabiskan dan harta bersih tertinggi menang. Tiada had: main sehingga tinggal seorang (atau tekan 🏁).'),
+      lbSeg('lvl', 'TAHAP ROBOT', [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']], 'Ketepatan robot menjawab soalan: 45% · 65% · 85%.'),
+      lbSeg('qt', 'MASA MENJAWAB', [[15,'15s'],[20,'20s'],[30,'30s'],[45,'45s']]),
+      lbSeg('cash', 'WANG PERMULAAN', [[1000,'RM1,000'],[1500,'RM1,500'],[2000,'RM2,000']])],
+    preload: async p => { p(.1); await tkProbe(); p(.3); await import(ESC_THREE); p(.6); try { await Promise.all(KN_CHARS.slice(0, 6).map(n => knFetch(n))); } catch(e){} p(1); },
+    main: () => {
+      const c = tkCfg(), b = (on, a, l) => '<button class="' + (on ? 'on' : '') + '" data-lb="' + a + '">' + l + '</button>';
+      if (MURID) return '<div class="lb-sec">TAHAP ROBOT</div><div class="lb-seg">' + [['mudah','Mudah'],['sederhana','Sederhana'],['sukar','Sukar']].map(([k, l]) => b(c.lvl === k, 'tkl:' + k, l)).join('') + '</div>' +
+        '<div class="lb-note">Kamu lawan 3 robot. Markah PBD: Mudah ×0.8 · Sederhana ×1 · <b>Sukar ×1.2</b></div>';
+      return '<div class="lb-sec">PEMAIN (2–4)</div>' + tkSeats().map((s, i) => '<div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="width:12px;height:12px;border-radius:50%;background:' + TK_COL[i] + ';flex:none"></span>' +
+        '<button class="lb-btn" style="flex:1;margin:0;padding:8px 10px;min-width:0;justify-content:flex-start" data-lb="tks:' + i + '"' + (s.m === 'h' ? '' : ' disabled') + '><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+          (s.m === 'h' ? esc(teamName(s.id)) : s.m === 'b' ? '🤖 Robot ' + 'ABCD'[i] : '— tiada —') + '</span></button>' +
+        '<div class="lb-seg" style="margin:0;flex:none">' + b(s.m === 'h', 'tkm:' + i + ':h', '👤') + b(s.m === 'b', 'tkm:' + i + ':b', '🤖') + b(s.m === 'x', 'tkm:' + i + ':x', '✖') + '</div></div>').join('') +
+        '<div class="lb-note">👤 kumpulan murid · 🤖 robot · ✖ tiada. Ketik nama untuk tukar kumpulan. <b>HOS:</b> kumpulan 👤 main di telefon masing-masing.</div>';
+    },
+    act: (a, b, x) => {
+      const c = tkCfg(), seats = tkSeats(), all = classTeams();
+      if (a.indexOf('tkl:') === 0){ c.lvl = a.slice(4); save(); x.paint(); return true; }
+      if (a.indexOf('tkm:') === 0){ const [, i, m] = a.split(':'), s = seats[+i];
+        if (m === 'h'){ const usedIds = seats.filter((y, k) => k !== +i && y.m === 'h').map(y => y.id);
+          if (!s.id || usedIds.includes(s.id)){ const fr = all.find(g => !usedIds.includes(g.id)); if (!fr){ toast('Tiada kumpulan lain — cipta kumpulan di tab KUMPULAN.', null, true); return true; } s.id = fr.id; } }
+        s.m = m; save(); x.paint(); return true; }
+      if (a.indexOf('tks:') === 0){ const i = +a.slice(4), s = seats[i], usedIds = seats.filter((y, k) => k !== i && y.m === 'h').map(y => y.id), k0 = all.findIndex(g => g.id === s.id);
+        const nx = all.slice(k0 + 1).concat(all.slice(0, k0 + 1)).find(g => !usedIds.includes(g.id)); if (nx){ s.id = nx.id; save(); x.paint(); } return true; }
+      return false;
+    },
+    starts: [['▶ MAIN (1 peranti)', () => tkStart(false)], ['👑 BUKA BILIK · HOS (projektor + telefon)', () => tkStart(true)]],
+    how: () => '<b>🎯 Matlamat:</b> jadi pemain dengan <b>harta bersih tertinggi</b> (wang + tanah + bangunan) bila masa tamat — atau pemain terakhir yang tidak muflis.<br><br>' +
+      '<b>🎲 Giliran:</b> baling 2 dadu dan lompat mengikut jumlahnya. Dadu sama = baling lagi (3 kali sama = Bilik Disiplin). Lalu <b>MULA</b> = +RM200.<br><br>' +
+      '<b>🏷️ Beli tanah:</b> mendarat di tanah kosong → <b>jawab 1 soalan dengan betul</b> untuk membelinya. Salah = tidak dapat beli.<br>' +
+      '<b>🏗️ Bina:</b> sebelum baling dadu (butang BINA) atau bila mendarat di tanah sendiri — jawab betul untuk bina 🏠 rumah (maks 3) kemudian 🏨 hotel. Lebih banyak bangunan = sewa lebih tinggi. Miliki semua tanah satu zon warna = sewa berganda!<br>' +
+      '<b>💰 Sewa:</b> mendarat di tanah orang lain = bayar sewa. <b>Rayuan:</b> jawab betul = bayar separuh sahaja.<br><br>' +
+      '<b>Petak istimewa:</b> 🎁 Kotak Misteri (peristiwa sekolah) · 🧠 Cabaran Ilmu (betul = +RM100) · 💸 Yuran (betul = diskaun 50%) · 🍜 Kantin Rehat (kutip Tabung Kelas) · 🛑 Ditahan Pengawas → 🚪 Bilik Disiplin (keluar dengan jawab betul, Kad Pas, atau bayar RM50).<br><br>' +
+      '<b>Wang tidak cukup?</b> Bangunan & tanah dijual separuh harga secara automatik; jika masih tidak cukup = <b>MUFLIS</b>.<br><br>' +
+      '<b>📺 1 peranti:</b> semua bergilir di skrin ini. <b>👑 HOS:</b> peranti ini jadi papan 3D di projektor; setiap kumpulan masuk kod bilik di telefon untuk baling dadu & menjawab.'
+  },
   klinik: {
     title: 'KLINIK REMAJA', ico: '🩺', c: '#34D399',
     bg: () => KL_HAVE.has('bg_klinik') ? KL_HAVE.get('bg_klinik') : '',
@@ -7406,13 +7449,14 @@ async function komboJoinAsk(){
   toast('Mencari bilik ' + c + '…');
   const kind = await new Promise(res => {                // bilik Tangga Ilmon ('st') atau Sekolah Berhantu ('esc')
     let done = false; const offs = []; const fin = k => { if (done) return; done = true; offs.forEach(o => { try { o && o(); } catch(e){} }); res(k); };
-    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }), T.on('run', v => { if (v && !v.closed) fin('run'); }), T.on('stor', v => { if (v && !v.closed) fin('stor'); }));
+    offs.push(T.on('esc', v => { if (v && !v.closed) fin('esc'); }), T.on('st', v => { if (v && !v.closed) fin('km'); }), T.on('run', v => { if (v && !v.closed) fin('run'); }), T.on('stor', v => { if (v && !v.closed) fin('stor'); }), T.on('tk', v => { if (v && !v.closed && !v.started) fin('tk'); }));
     setTimeout(() => fin(null), 6000);
   });
   if (!kind) return toast('Bilik ' + c + ' tidak dijumpai. Semak kod di skrin hos.', null, true);
   if (kind === 'esc') return escJoin(c, T);
   if (kind === 'run') return runJoin(c, T);
   if (kind === 'stor') return storJoin(c, T);
+  if (kind === 'tk') return tkJoin(c, T);
   await kadProbe(); komboJoin(c, T);
 }
 function komboJoin(code, T){
@@ -8283,7 +8327,7 @@ function pvpBoardHtml(){
    dan disimpan dalam rekod PBD hari itu bagi SETIAP ahli kumpulan (markah
    dikongsi). TP hari itu = purata penilaian guru (matrik) + setiap game.
    Setiap aktiviti game boleh dipadam satu demi satu dalam Sejarah.      */
-const GAME_NAMES = { tangga:'Tangga Ilmon', kombo:'Kombo Ilmon', esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)', stor:'Simulasi Stor Sukan', klinik:'Klinik Remaja' };
+const GAME_NAMES = { tangga:'Tangga Ilmon', kombo:'Kombo Ilmon', esc:'Sekolah Berhantu', run:'Larian Ilmu', duel:'Duel Kad', pvp:'Duel Kad (lawan kumpulan)', stor:'Simulasi Stor Sukan', klinik:'Klinik Remaja', taikun:'Taikun Ilmu' };
 const teamOf = id => { const g = (S.groups || []).find(x => x.id === id); return g ? { id, name: g.name, members: (g.members || []).map(stu).filter(Boolean), g } : null; };
 const teamName = id => (teamOf(id) || {}).name || '—';
 const classTeams = () => (S.groups || []).filter(g => g.classId === S.ui.activeClassId && (g.members || []).some(m => stu(m)));
@@ -8362,18 +8406,703 @@ function gameDel(sid, sj, date, gameId){
 }
 const gameLine = g => (g.m ? '📲 ' : '') + (GAME_NAMES[g.g] || g.g) + ' · ' + g.r + '/' + g.n + ' betul (' + Math.round(g.r / g.n * 100) + '%) → TP' + calcTP(g.rate) + (g.tn ? ' · ' + g.tn : '');
 
+/* ============ GAME 7: TAIKUN ILMU (papan hartanah 3D) ============
+   Reka bentuk asli EduRank: papan 32 petak bertema sekolah, 2–4 pemain (kumpulan / robot).
+   Ilmu = kuasa beli: setiap pembelian & pembinaan perlu jawapan BETUL dari bank soalan DSKP;
+   bayar sewa / yuran boleh dipotong separuh dengan jawapan betul; Bilik Disiplin dibuka dengan soalan.
+   Kemenangan: harta bersih tertinggi bila masa tamat (atau pemain terakhir yang tidak muflis).
+   Mod: 1 peranti (bergilir di skrin ini) atau HOS (projektor) + hingga 4 telefon (MASUK KOD BILIK).
+   Aset pilihan: assets/taikun/<id>.jpg (senarai.json) · bunyi tk_* & bgm_taikun dalam assets/sfx. */
+const TK_COL = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B'], TK_DOT = ['🔴', '🔵', '🟢', '🟡'];
+const TK_ZONE = {
+  bhs: { n: 'Taman Bahasa', c: '#B45309', b: 50 }, mat: { n: 'Lembah Matematik', c: '#0EA5E9', b: 50 },
+  sns: { n: 'Desa Sains', c: '#16A34A', b: 100 }, sej: { n: 'Bukit Sejarah', c: '#EA580C', b: 100 },
+  geo: { n: 'Kota Geografi', c: '#7C3AED', b: 150 }, sen: { n: 'Teluk Seni', c: '#DB2777', b: 150 },
+  tek: { n: 'Puncak Teknologi', c: '#1E40AF', b: 200 }
+};
+const TK_T = [
+  { t: 'mula', n: 'MULA', ic: '🏁' },
+  { t: 'lot', z: 'bhs', n: 'Jalan Pantun', p: 60, ic: '📜' }, { t: 'misteri', n: 'Kotak Misteri', ic: '🎁' },
+  { t: 'lot', z: 'bhs', n: 'Lorong Syair', p: 60, ic: '✒️' }, { t: 'yuran', n: 'Yuran PIBG', p: 100, ic: '💸' },
+  { t: 'lot', z: 'mat', n: 'Taman Pecahan', p: 100, ic: '➗' }, { t: 'lot', z: 'mat', n: 'Jalan Algebra', p: 100, ic: '🔢' },
+  { t: 'lot', z: 'mat', n: 'Medan Geometri', p: 120, ic: '📐' },
+  { t: 'disiplin', n: 'BILIK DISIPLIN', ic: '🚪' },
+  { t: 'lot', z: 'sns', n: 'Makmal Biologi', p: 140, ic: '🧬' }, { t: 'util', n: 'Perpustakaan', p: 150, ic: '📚' },
+  { t: 'lot', z: 'sns', n: 'Taman Kimia', p: 140, ic: '⚗️' }, { t: 'lot', z: 'sns', n: 'Jalan Fizik', p: 160, ic: '🧲' },
+  { t: 'cabaran', n: 'Cabaran Ilmu', ic: '🧠' }, { t: 'lot', z: 'sej', n: 'Lebuh Merdeka', p: 180, ic: '🏛️' },
+  { t: 'lot', z: 'sej', n: 'Jalan Kesultanan', p: 180, ic: '👑' },
+  { t: 'kantin', n: 'KANTIN REHAT', ic: '🍜' },
+  { t: 'lot', z: 'sej', n: 'Dataran Warisan', p: 200, ic: '🏺' }, { t: 'misteri', n: 'Kotak Misteri', ic: '🎁' },
+  { t: 'lot', z: 'geo', n: 'Bukit Peta', p: 220, ic: '🗺️' }, { t: 'lot', z: 'geo', n: 'Lembah Iklim', p: 220, ic: '🌦️' },
+  { t: 'util', n: 'Makmal Komputer', p: 150, ic: '💻' }, { t: 'lot', z: 'geo', n: 'Tanjung Kompas', p: 240, ic: '🧭' },
+  { t: 'cabaran', n: 'Cabaran Ilmu', ic: '🧠' },
+  { t: 'tahan', n: 'DITAHAN PENGAWAS', ic: '🛑' },
+  { t: 'lot', z: 'sen', n: 'Galeri Warna', p: 260, ic: '🎨' }, { t: 'lot', z: 'sen', n: 'Pentas Muzik', p: 260, ic: '🎵' },
+  { t: 'misteri', n: 'Kotak Misteri', ic: '🎁' }, { t: 'lot', z: 'sen', n: 'Studio Tari', p: 280, ic: '💃' },
+  { t: 'yuran', n: 'Yuran Aktiviti', p: 150, ic: '💸' }, { t: 'lot', z: 'tek', n: 'Hab Robotik', p: 320, ic: '🤖' },
+  { t: 'lot', z: 'tek', n: 'Menara Kod', p: 350, ic: '💡' }
+];
+/* Kotak Misteri: peristiwa kehidupan sekolah */
+const TK_MIS = [
+  ['🏆', 'Johan pertandingan pidato peringkat daerah!', { cash: 150 }],
+  ['📚', 'Buku teks hilang — bayar ganti ke Tabung Kelas.', { pay: 80 }],
+  ['🚌', 'Naik bas sekolah terus ke MULA.', { to: 0 }],
+  ['🏃', 'Larian merentas desa — maju 3 petak.', { step: 3 }],
+  ['🥤', 'Tertinggal botol air — undur 2 petak.', { step: -2 }],
+  ['🎂', 'Hari jadi kamu! Setiap pemain beri hadiah RM20.', { each: 20 }],
+  ['🛠️', 'Selenggara bangunan: RM25 setiap rumah, RM60 setiap hotel.', { repair: [25, 60] }],
+  ['🚨', 'Ponteng perhimpunan — terus ke Bilik Disiplin!', { jail: 1 }],
+  ['🎫', 'Kad Pas Pengawas: keluar Bilik Disiplin percuma (disimpan).', { pass: 1 }],
+  ['🌟', 'Murid Contoh bulan ini — hadiah RM100.', { cash: 100 }],
+  ['📖', 'Kelas tambahan di Perpustakaan — pergi ke sana.', { to: 10 }],
+  ['💡', 'Idea inovasi menang hadiah RM200!', { cash: 200 }],
+  ['🧹', 'Gotong-royong kelas — Tabung Kelas memberi RM50.', { cash: 50 }],
+  ['📱', 'Bawa telefon ke kelas tanpa izin — denda RM60.', { pay: 60 }]
+];
+const TK_SLOT = [[-.36, .32], [.36, .32], [-.36, .78], [.36, .78]];     /* kedudukan token dalam petak (sepanjang sisi, ke luar) */
+const tkRM = n => 'RM' + Math.round(n).toLocaleString('en-US');
+const tkCfg = () => { S.config.taikun = Object.assign({ len: 20, lvl: 'sederhana', qt: 20, cash: 1500, seats: null }, S.config.taikun || {}); return S.config.taikun; };
+function tkSeats(){
+  const c = tkCfg(), all = classTeams();
+  if (!Array.isArray(c.seats) || c.seats.length !== 4) c.seats = [0, 1, 2, 3].map(i => ({ id: all[i] ? all[i].id : '', m: all[i] ? (i < 2 ? 'h' : 'b') : (i < 2 ? 'b' : 'x') }));
+  c.seats.forEach(s => { if (s.id && !all.some(g => g.id === s.id)) s.id = ''; if (s.m === 'h' && !s.id) s.m = 'b'; });
+  return c.seats;
+}
+const TK_HAVE = new Map(); let TK_PROBED = null;
+function tkProbe(){
+  if (!TK_PROBED) TK_PROBED = fetch('assets/taikun/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
+    .then(m => Object.keys(m).forEach(id => TK_HAVE.set(id, 'assets/taikun/' + m[id]))).catch(() => {});
+  return TK_PROBED;
+}
+const tkTileRent = (t, lv, full) => t.t === 'util' ? 0 : lv === 0 ? Math.max(5, Math.round(t.p * .1 / 5) * 5) * (full ? 2 : 1) : Math.round(t.p * [0, .5, 1.3, 2.5, 3.6][lv] / 5) * 5 * (full ? 1.25 : 1);
+
+function viewTaikun(){
+  if (!ctxOk()) return emptyState('fa-building', 'Konteks Belum Dipilih', 'Pilih Kelas dan Subjek di bahagian atas.') + '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — sertai bilik hos</button>';
+  if (!TK_PROBED) tkProbe().then(() => { if (S.ui.tab === 'arena' && arenaUi().game === 'taikun' && TK_HAVE.size) renderTab(); });
+  const logo = TK_HAVE.get('logo_taikun');
+  let h = '<div class="panel clip p-4 mt-3 text-center" style="background:linear-gradient(180deg,rgba(250,204,21,.22),rgba(234,88,12,.12) 60%,transparent),var(--panel,#141C26)">' +
+    (logo ? '<img src="' + logo + '" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:18px;margin:0 auto">' : '<div style="font-size:40px;line-height:1">🏙️</div>') +
+    '<div class="font-bold tracking-[.2em] text-[20px] mt-2" style="color:#FDE68A;text-shadow:0 0 12px rgba(250,204,21,.6)">TAIKUN ILMU</div>' +
+    '<div class="text-[12px] text-muted mt-2 leading-relaxed">Papan hartanah <b style="color:#FDE68A">3D</b> untuk 2–4 pemain. Baling dadu, lompat dari petak ke petak, <b class="text-cyan">jawab soalan</b> untuk membeli tanah, bina <b>rumah</b> & <b>hotel</b>, kutip sewa — dan jadi taikun paling kaya!</div></div>';
+  h += '<button class="btn btn-o clip-s w-full mt-3 !py-3 text-[16px]" data-act="lobby" data-id="taikun"><i class="fa-solid fa-play"></i> MAIN</button>';
+  h += '<button class="btn btn-c clip-s w-full mt-3 !py-3 text-[15px]" data-act="km-join"><i class="fa-solid fa-hashtag"></i> MASUK KOD BILIK — main di projektor hos</button>';
+  return h;
+}
+
+/* ---------- mula permainan (dari menu) ---------- */
+async function tkStart(host){
+  const c = tkCfg(); let seats;
+  if (MURID){ const me = arenaUi().team; seats = [{ id: me, name: teamName(me), bot: false }].concat([1, 2, 3].map(i => ({ id: '', name: 'Robot ' + 'ABCD'[i], bot: true }))); }
+  else seats = tkSeats().map((s, i) => s.m === 'x' ? null : { id: s.m === 'h' ? s.id : '', name: s.m === 'h' ? teamName(s.id) : 'Robot ' + 'ABCD'[i], bot: s.m === 'b' }).filter(Boolean);
+  if (seats.length < 2) return toast('Perlu sekurang-kurangnya 2 pemain (murid atau robot).', null, true);
+  if (!seats.some(s => !s.bot)) return toast('Perlu sekurang-kurangnya 1 pemain murid.', null, true);
+  let T = null, code = null;
+  if (host){
+    code = String(1000 + Math.floor(Math.random() * 9000));
+    T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  }
+  let THREE; try { THREE = await import(ESC_THREE); } catch(e){ return toast('Gagal memuat enjin 3D. Semak internet.', null, true); }
+  await tkProbe();
+  try { tkGame(THREE, seats, { T, code, host: !!host }); }
+  catch(e){ console.error(e); const r = document.querySelector('#tkRoot'); if (r) r.remove(); unlockBody(); toast('Permainan gagal dimulakan.', null, true); }
+}
+
+function tkGame(THREE, seatsIn, net){
+  const cfg = tkCfg(), SPD = window.TK_SPD || 1, lvl = cfg.lvl || 'sederhana';
+  const used = [];
+  const P = seatsIn.map((s, i) => { const ch = (() => { let c0 = s.id ? knPick(s.id) : KN_CHARS[(i * 5 + 3) % KN_CHARS.length]; while (used.includes(c0)) c0 = KN_CHARS[(KN_CHARS.indexOf(c0) + 1) % KN_CHARS.length]; used.push(c0); return c0; })();
+    return { i, id: s.id, name: s.name, bot: !!s.bot, remote: net.host && !s.bot, joined: !net.host || !!s.bot, char: ch, col: TK_COL[i], cash: +cfg.cash || 1500, pos: 0, jail: 0, jt: 0, pass: 0, out: false, r: 0, a: 0 }; });
+  const OWN = {};
+  let turn = 0, pot = 0, over = false, alive = true, started = !net.host, endAt = 0, endFlag = false, PEND = null, seq = 0, banner = '', dice = [0, 0], reveal = null, ended = null;
+  const root = document.createElement('div'); root.id = 'tkRoot';
+  root.style.cssText = 'position:fixed;inset:0;z-index:950;background:#0B1220;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;font-family:inherit;color:#fff';
+  root.innerHTML = '<style>' +
+    '#tkRoot .tk-pl{position:absolute;left:10px;top:calc(56px + var(--safe-t,0px));display:flex;flex-direction:column;gap:6px;width:190px;pointer-events:none}' +
+    '#tkRoot .pc{background:rgba(10,16,30,.82);border:2px solid rgba(255,255,255,.12);border-left:6px solid var(--c);border-radius:12px;padding:6px 9px;transition:transform .25s,border-color .25s}' +
+    '#tkRoot .pc.on{border-color:var(--c);transform:translateX(6px);box-shadow:0 0 18px var(--c)}#tkRoot .pc.out{opacity:.45;filter:grayscale(1)}' +
+    '#tkRoot .pc .n{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#tkRoot .pc .m{font-size:17px;font-weight:900;color:#FDE68A;font-variant-numeric:tabular-nums}' +
+    '#tkRoot .pc .s{font-size:10.5px;color:#CBD5E1}' +
+    '#tkRoot .tk-top{position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;display:flex;align-items:center;gap:8px;pointer-events:none;text-shadow:0 1px 4px #000}' +
+    '#tkRoot .tk-top button{pointer-events:auto}#tkRoot .chip{background:rgba(10,16,30,.8);border-radius:99px;padding:4px 11px;font-weight:800;font-size:13px}' +
+    '#tkRoot .tk-ban{position:absolute;left:50%;top:calc(52px + var(--safe-t,0px));transform:translateX(-50%);background:rgba(10,16,30,.88);border:2px solid #FACC15;border-radius:99px;padding:7px 18px;font-weight:800;font-size:15px;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis;transition:opacity .3s;pointer-events:none}' +
+    '#tkRoot .tk-bar{position:absolute;left:0;right:0;bottom:calc(16px + var(--safe-b,0px));display:flex;justify-content:center;gap:10px;padding:0 10px}' +
+    '#tkRoot .tk-bar button{font-size:18px;font-weight:900;padding:14px 26px;border-radius:16px;border:0;color:#1A1405;background:linear-gradient(#FDE047,#F59E0B);box-shadow:0 6px 0 #92400E,0 10px 24px rgba(0,0,0,.5);letter-spacing:.04em}' +
+    '#tkRoot .tk-bar button.b2{background:linear-gradient(#93C5FD,#3B82F6);color:#fff;box-shadow:0 6px 0 #1E3A8A,0 10px 24px rgba(0,0,0,.5)}#tkRoot .tk-bar button:active{transform:translateY(4px);box-shadow:0 2px 0 #92400E}' +
+    '#tkRoot .tk-wait{background:rgba(10,16,30,.85);border-radius:14px;padding:10px 18px;font-weight:700;font-size:14px}' +
+    '#tkRoot .tk-mod{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,14,.45)}' +
+    '#tkRoot .card{width:100%;max-width:520px;background:linear-gradient(180deg,#1E293B,#0F172A);border:3px solid var(--c,#FACC15);border-radius:20px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:tkPop .28s cubic-bezier(.2,1.6,.4,1)}' +
+    '@keyframes tkPop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}' +
+    '#tkRoot .card .hd{margin:-16px -16px 12px;padding:10px 16px;border-radius:16px 16px 0 0;background:var(--c,#FACC15);color:#fff;font-weight:900;letter-spacing:.06em;text-shadow:0 1px 3px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px}' +
+    '#tkRoot .card .qt{font-size:18px;font-weight:800;line-height:1.35;margin:4px 0 12px}#tkRoot .card .ch{display:grid;grid-template-columns:1fr 1fr;gap:8px}' +
+    '#tkRoot .card .ch button{background:#1E3A5F;border:2px solid #3B82F6;color:#fff;border-radius:12px;padding:11px 10px;font-size:15px;font-weight:700;text-align:left;line-height:1.25}' +
+    '#tkRoot .card .ch button.ok{background:#15803D;border-color:#4ADE80}#tkRoot .card .ch button.no{background:#991B1B;border-color:#F87171}#tkRoot .card .ch button:disabled{opacity:1}' +
+    '#tkRoot .card .bt{display:flex;gap:8px;margin-top:12px}#tkRoot .card .bt button{flex:1;padding:12px;border-radius:12px;font-weight:900;font-size:15px;border:0;background:#334155;color:#fff}' +
+    '#tkRoot .card .bt button.go{background:linear-gradient(#FDE047,#F59E0B);color:#1A1405}#tkRoot .tm{height:6px;background:#334155;border-radius:9px;overflow:hidden;margin-bottom:10px}#tkRoot .tm i{display:block;height:100%;background:#FACC15;transform-origin:left}' +
+    '#tkRoot .rt{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:13px;color:#CBD5E1;margin-top:6px}#tkRoot .rt b{color:#fff;text-align:right}' +
+    '#tkRoot .lots button{display:flex;width:100%;align-items:center;gap:8px;background:#1E293B;border:2px solid #334155;border-radius:12px;padding:9px;margin-top:6px;color:#fff;font-weight:700;font-size:14px;text-align:left}' +
+    '@media (orientation:portrait){#tkRoot .tk-pl{left:6px;right:6px;width:auto;flex-direction:row;flex-wrap:wrap;top:calc(46px + var(--safe-t,0px))}#tkRoot .pc{flex:1 1 calc(50% - 6px);padding:4px 7px}#tkRoot .pc.on{transform:translateY(2px)}' +
+      '#tkRoot .tk-top>b{display:none}#tkRoot .tk-ban{top:auto;bottom:calc(92px + var(--safe-b,0px));font-size:13px}#tkRoot .card .qt{font-size:16px}#tkRoot .card .ch{grid-template-columns:1fr}}' +
+    '</style>' +
+    '<canvas id="tkCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
+    '<div class="tk-top"><span style="font-size:20px">🏙️</span><b style="letter-spacing:.12em;font-size:14px">TAIKUN ILMU</b>' +
+      '<span class="chip" id="tkTime" style="margin-left:8px"></span><span class="chip" id="tkPot" title="Tabung Kelas"></span><span style="flex:1"></span>' +
+      (net.host ? '<span class="chip" style="color:#FDE68A">🔢 ' + net.code + '</span>' : '') +
+      '<button class="btn clip-s !px-3 !py-1 text-[13px]" data-k="end" title="Tamatkan">🏁</button><button class="btn clip-s !px-3 !py-1 text-[13px]" data-k="x"><i class="fa-solid fa-xmark"></i></button></div>' +
+    '<div class="tk-pl" id="tkPl"></div><div class="tk-ban" id="tkBan" style="opacity:0"></div><div class="tk-bar" id="tkBar"></div><div class="tk-mod" id="tkMod"></div><div class="tk-mod" id="tkCf" style="z-index:5;background:rgba(2,6,14,.7)"></div>';
+  document.body.appendChild(root); lockBody(); orientFree();
+  const $r = s => root.querySelector(s);
+
+  /* ---------- pentas 3D ---------- */
+  const R = new THREE.WebGLRenderer({ canvas: $r('#tkCv'), antialias: true, powerPreference: 'high-performance' });
+  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); R.outputColorSpace = THREE.SRGBColorSpace;
+  R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; };
+  scene.background = canvasTex(4, 256, (g) => { const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#0B1E3F'); gr.addColorStop(.6, '#1D4E89'); gr.addColorStop(1, '#4FA3D9'); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); });
+  const cam = new THREE.PerspectiveCamera(48, 1, .1, 200);
+  scene.add(new THREE.HemisphereLight(0xFFFFFF, 0x334466, 1.25));
+  const sun = new THREE.DirectionalLight(0xFFF4E0, 1.7); sun.position.set(7, 16, 9); sun.castShadow = true;
+  sun.shadow.mapSize.set(1536, 1536); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 40 }); sun.shadow.bias = -.0008; scene.add(sun);
+  /* meja & tapak papan */
+  const table = new THREE.Mesh(new THREE.CircleGeometry(40, 48), new THREE.MeshStandardMaterial({ map: canvasTex(256, 256, (g) => { g.fillStyle = '#5B3A22'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 70; i++){ g.strokeStyle = 'rgba(' + (i % 2 ? '40,22,10' : '120,80,48') + ',.25)'; g.lineWidth = 1 + Math.random() * 3; g.beginPath(); const y = Math.random() * 256; g.moveTo(0, y); g.bezierCurveTo(80, y + 8, 170, y - 8, 256, y + 3); g.stroke(); } }), roughness: .9 }));
+  table.material.map.wrapS = table.material.map.wrapT = THREE.RepeatWrapping; table.material.map.repeat.set(6, 6);
+  table.rotation.x = -Math.PI / 2; table.position.y = -.42; table.receiveShadow = true; scene.add(table);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(17, .4, 17), new THREE.MeshStandardMaterial({ color: 0x0E3B2C, roughness: .7 })); base.position.y = -.2; base.receiveShadow = base.castShadow = true; scene.add(base);
+  const rim = new THREE.Mesh(new THREE.BoxGeometry(17.5, .3, 17.5), new THREE.MeshStandardMaterial({ color: 0xB45309, roughness: .6 })); rim.position.y = -.3; scene.add(rim);
+  /* tengah papan */
+  const midImg = TK_HAVE.get('tengah_papan');
+  const midTex = canvasTex(1024, 1024, (g) => {
+    const gr = g.createRadialGradient(512, 512, 60, 512, 512, 720); gr.addColorStop(0, '#2FA36B'); gr.addColorStop(1, '#0F5132'); g.fillStyle = gr; g.fillRect(0, 0, 1024, 1024);
+    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 3; for (let r = 120; r < 760; r += 70){ g.beginPath(); g.arc(512, 512, r, 0, 7); g.stroke(); }
+    g.save(); g.translate(512, 470); g.rotate(-.08); g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = '900 150px system-ui,sans-serif'; g.lineWidth = 22; g.strokeStyle = '#7C2D12'; g.strokeText('TAIKUN', 0, -60); g.fillStyle = '#FDE047'; g.fillText('TAIKUN', 0, -60);
+    g.font = '900 170px system-ui,sans-serif'; g.strokeText('ILMU', 0, 100); const t2 = g.createLinearGradient(0, 30, 0, 170); t2.addColorStop(0, '#FFFFFF'); t2.addColorStop(1, '#FDBA74'); g.fillStyle = t2; g.fillText('ILMU', 0, 100);
+    g.restore(); g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '700 38px system-ui,sans-serif'; g.fillText('Jawab · Beli · Bina · Jadi Taikun!', 512, 700);
+  });
+  const mid = new THREE.Mesh(new THREE.PlaneGeometry(11.2, 11.2), new THREE.MeshStandardMaterial({ map: midTex, roughness: .8 }));
+  mid.rotation.x = -Math.PI / 2; mid.position.y = .005; mid.receiveShadow = true; scene.add(mid);
+  if (midImg) new THREE.TextureLoader().load(midImg, t => { t.colorSpace = THREE.SRGBColorSpace; mid.material.map = t; mid.material.needsUpdate = true; });
+  /* hiasan tengah: dek kad & pokok */
+  const deck = (x, z, col, txt, rot) => { const g = new THREE.Group(); const top = canvasTex(256, 360, (c) => { c.fillStyle = col; c.fillRect(0, 0, 256, 360); c.strokeStyle = '#fff'; c.lineWidth = 12; c.strokeRect(14, 14, 228, 332);
+      c.textAlign = 'center'; c.font = '120px system-ui'; c.fillText(txt[0], 128, 160); c.fillStyle = '#fff'; c.font = '900 34px system-ui,sans-serif'; c.fillText(txt[1], 128, 270); c.fillText(txt[2], 128, 312); });
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.5, .32, 2.1), [0, 0, 1, 0, 0, 0].map(k => new THREE.MeshStandardMaterial(k ? { map: top } : { color: 0xF8FAFC })));
+    m.position.y = .16; m.castShadow = true; g.add(m); g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g); };
+  deck(-2.9, -2.6, '#7C3AED', ['🎁', 'KOTAK', 'MISTERI'], .5); deck(2.9, 2.5, '#0EA5E9', ['🧠', 'CABARAN', 'ILMU'], .5);
+  const tree = (x, z, s) => { const g = new THREE.Group(); const tr = new THREE.Mesh(new THREE.CylinderGeometry(.08 * s, .1 * s, .5 * s, 6), new THREE.MeshStandardMaterial({ color: 0x7C4A24 })); tr.position.y = .25 * s; g.add(tr);
+    [[.55, .75], [.42, 1.1], [.28, 1.4]].forEach(([r, y]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r * s, .55 * s, 8), new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: .8 })); c.position.y = y * s; c.castShadow = true; g.add(c); });
+    g.position.set(x, 0, z); scene.add(g); };
+  [[-4.6, -4.6], [4.6, -4.6], [-4.6, 4.6], [4.6, 4.6], [-4.2, 1.2], [4.2, -1.3]].forEach(([x, z], k) => tree(x, z, k > 3 ? .8 : 1.1));
+
+  /* ---------- petak ---------- */
+  const SIDE = [{ s: new THREE.Vector3(6.8, 0, 6.8), a: new THREE.Vector3(-1, 0, 0), o: new THREE.Vector3(0, 0, 1), r: 0 },
+    { s: new THREE.Vector3(-6.8, 0, 6.8), a: new THREE.Vector3(0, 0, -1), o: new THREE.Vector3(-1, 0, 0), r: -Math.PI / 2 },
+    { s: new THREE.Vector3(-6.8, 0, -6.8), a: new THREE.Vector3(1, 0, 0), o: new THREE.Vector3(0, 0, -1), r: Math.PI },
+    { s: new THREE.Vector3(6.8, 0, -6.8), a: new THREE.Vector3(0, 0, 1), o: new THREE.Vector3(1, 0, 0), r: Math.PI / 2 }];
+  const TP = TK_T.map((t, i) => { const sd = SIDE[Math.floor(i / 8)], k = i % 8, c = sd.s.clone().addScaledVector(sd.a, k ? 2 + 1.6 * (k - 1) : 0);
+    return { c, a: sd.a, o: sd.o, r: sd.r, len: k ? 1.6 : 2.4, corner: !k }; });
+  const wrapTxt = (g, txt, x, y, maxW, lh) => { const w = txt.split(' '); let line = '', ys = []; w.forEach(wd => { const tt = line ? line + ' ' + wd : wd; if (g.measureText(tt).width > maxW && line){ ys.push(line); line = wd; } else line = tt; }); ys.push(line);
+    ys.forEach((l, k) => g.fillText(l, x, y + (k - (ys.length - 1) / 2) * lh)); };
+  const tileTex = (t, tp) => { const W = tp.corner ? 384 : 256, H = 384;
+    return canvasTex(W, H, (g) => {
+      g.fillStyle = t.t === 'lot' || t.t === 'util' ? '#FFF8E7' : t.t === 'misteri' ? '#F3E8FF' : t.t === 'cabaran' ? '#E0F2FE' : t.t === 'yuran' ? '#FEF2F2' : '#FEF9C3'; g.fillRect(0, 0, W, H);
+      g.strokeStyle = '#1F2937'; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, H - 6); g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (t.t === 'lot'){ const z = TK_ZONE[t.z]; g.fillStyle = z.c; g.fillRect(6, 6, W - 12, 78); g.fillStyle = '#fff'; g.font = '800 22px system-ui,sans-serif'; g.fillText(z.n.toUpperCase(), W / 2, 45); }
+      if (tp.corner){
+        const cc = { mula: '#16A34A', disiplin: '#64748B', kantin: '#D97706', tahan: '#DC2626' }[t.t]; g.fillStyle = cc; g.fillRect(6, 6, W - 12, 92);
+        g.fillStyle = '#fff'; g.font = '900 38px system-ui,sans-serif'; wrapTxt(g, t.n, W / 2, 52, W - 30, 40);
+        g.font = '150px system-ui'; g.fillText(t.ic, W / 2, 210);
+        g.fillStyle = '#1F2937'; g.font = '700 26px system-ui,sans-serif';
+        g.fillText({ mula: 'Lalu: +RM200', disiplin: 'Melawat sahaja', kantin: 'Kutip Tabung Kelas', tahan: '→ Bilik Disiplin' }[t.t], W / 2, 330);
+        return; }
+      g.font = (t.t === 'lot' ? 92 : 110) + 'px system-ui'; g.fillText(t.ic, W / 2, t.t === 'lot' ? 165 : 150);
+      g.fillStyle = '#111827'; g.font = '800 30px system-ui,sans-serif'; wrapTxt(g, t.n, W / 2, t.t === 'lot' ? 262 : 262, W - 26, 32);
+      g.font = '800 30px system-ui,sans-serif'; g.fillStyle = t.t === 'yuran' ? '#B91C1C' : '#065F46';
+      g.fillText(t.t === 'lot' || t.t === 'util' ? tkRM(t.p) : t.t === 'yuran' ? 'Bayar ' + tkRM(t.p) : t.t === 'cabaran' ? '+RM100' : '?', W / 2, 340);
+    }); };
+  const tileG = TK_T.map((t, i) => { const tp = TP[i], g = new THREE.Group(); g.position.copy(tp.c); g.rotation.y = tp.r;
+    const box = new THREE.Mesh(new THREE.BoxGeometry(tp.len - .04, .16, 2.4 - .04), new THREE.MeshStandardMaterial({ color: 0xF1F5F9, roughness: .6 })); box.position.y = .08; box.receiveShadow = true; box.castShadow = true; g.add(box);
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(tp.len - .06, 2.4 - .06), new THREE.MeshStandardMaterial({ map: tileTex(t, tp), roughness: .75 }));
+    top.rotation.x = -Math.PI / 2; top.position.y = .162; top.receiveShadow = true; g.add(top); scene.add(g);
+    return { g, top, flag: null, bld: [] }; });
+  const tileGlow = new THREE.Mesh(new THREE.RingGeometry(.9, 1.15, 40), new THREE.MeshBasicMaterial({ color: 0xFDE047, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+  tileGlow.rotation.x = -Math.PI / 2; tileGlow.position.y = .2; scene.add(tileGlow);
+  const slotPos = (ti, pi) => { const tp = TP[ti], s = TK_SLOT[pi % 4], k = tp.corner ? 1.3 : 1; return tp.c.clone().addScaledVector(tp.a, s[0] * k).addScaledVector(tp.o, s[1] * (tp.corner ? 1 : 1)).setY(.16); };
+  /* bangunan: rumah (1–3) & hotel (4) di jalur warna (dalam), bendera milik di tepi luar */
+  function paintTile(i){
+    const o = OWN[i], tg = tileG[i], tp = TP[i];
+    tg.bld.forEach(m => tg.g.remove(m)); tg.bld = [];
+    if (tg.flag){ tg.g.remove(tg.flag); tg.flag = null; }
+    if (!o) return;
+    const col = new THREE.Color(P[o.p].col);
+    tg.flag = new THREE.Mesh(new THREE.BoxGeometry(tp.len - .12, .05, .2), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .35 })); tg.flag.position.set(0, .19, 1.06); tg.g.add(tg.flag);
+    const pole = new THREE.Group(), stick = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .7, 6), new THREE.MeshStandardMaterial({ color: 0xE5E7EB }));
+    stick.position.y = .35; pole.add(stick); const fl = new THREE.Mesh(new THREE.BoxGeometry(.3, .18, .02), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .3 })); fl.position.set(.15, .6, 0); pole.add(fl);
+    pole.position.set(tp.len / 2 - .2, .16, .9); tg.g.add(pole); tg.bld.push(pole);
+    const mk = (w, h, d, c2, roofC) => { const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: c2, roughness: .6 })); b.position.y = h / 2; b.castShadow = true; g.add(b);
+      const rf = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * .78, h * .7, 4), new THREE.MeshStandardMaterial({ color: roofC, roughness: .6 })); rf.position.y = h + h * .35; rf.rotation.y = Math.PI / 4; rf.castShadow = true; g.add(rf); return g; };
+    if (o.lv >= 4){ const h = mk(1.05, .62, .5, 0xDC2626, 0x7F1D1D); const ww = new THREE.Mesh(new THREE.BoxGeometry(1.07, .08, .52), new THREE.MeshStandardMaterial({ color: 0xFDE68A, emissive: 0xFACC15, emissiveIntensity: .4 })); ww.position.y = .36; h.add(ww);
+      h.position.set(0, .16, -.78); tg.g.add(h); tg.bld.push(h); }
+    else for (let k = 0; k < o.lv; k++){ const h = mk(.32, .28, .32, col, 0xF8FAFC); h.position.set((k - (o.lv - 1) / 2) * .46, .16, -.82); tg.g.add(h); tg.bld.push(h); }
+  }
+  const popAnim = [];                                                       /* bangunan baharu "melantun" muncul */
+  const popLast = i => tileG[i].bld.slice(1).forEach(m => { m.scale.setScalar(.01); popAnim.push({ m, t: 0 }); });
+
+  /* ---------- dadu ---------- */
+  const pipTex = n => canvasTex(128, 128, (g) => { g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#E2E8F0'; g.lineWidth = 8; g.strokeRect(4, 4, 120, 120);
+    const P2 = { 1: [[64, 64]], 2: [[34, 34], [94, 94]], 3: [[30, 30], [64, 64], [98, 98]], 4: [[34, 34], [94, 34], [34, 94], [94, 94]], 5: [[32, 32], [96, 32], [64, 64], [32, 96], [96, 96]], 6: [[34, 28], [94, 28], [34, 64], [94, 64], [34, 100], [94, 100]] }[n];
+    g.fillStyle = n === 1 ? '#DC2626' : '#111827'; P2.forEach(([x, y]) => { g.beginPath(); g.arc(x, y, n === 1 ? 17 : 12, 0, 7); g.fill(); }); });
+  const FACE = [1, 6, 2, 5, 3, 4];                                           /* +x,-x,+y,-y,+z,-z */
+  const dmat = FACE.map(n => new THREE.MeshStandardMaterial({ map: pipTex(n), roughness: .35 }));
+  const D = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.BoxGeometry(.62, .62, .62), dmat); m.castShadow = true; m.position.set(0, -2, 0); scene.add(m); return { m, anim: null }; });
+  const upQ = v => { const q = new THREE.Quaternion(), X = new THREE.Vector3(1, 0, 0), Z = new THREE.Vector3(0, 0, 1);
+    if (v === 1) q.setFromAxisAngle(Z, Math.PI / 2); else if (v === 6) q.setFromAxisAngle(Z, -Math.PI / 2); else if (v === 5) q.setFromAxisAngle(X, Math.PI);
+    else if (v === 3) q.setFromAxisAngle(X, -Math.PI / 2); else if (v === 4) q.setFromAxisAngle(X, Math.PI / 2); return q; };
+
+  /* ---------- token pemain (watak Kenney + tapak warna + nama) ---------- */
+  const label = (txt, col) => { const t = canvasTex(320, 80, (g) => { g.fillStyle = 'rgba(10,16,30,.85)'; g.beginPath(); g.roundRect(4, 8, 312, 64, 32); g.fill(); g.strokeStyle = col; g.lineWidth = 6; g.stroke();
+      g.fillStyle = '#fff'; g.font = '800 34px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt.length > 14 ? txt.slice(0, 13) + '…' : txt, 160, 42); });
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); s.scale.set(1.5, .375, 1); s.renderOrder = 5; return s; };
+  P.forEach(p => {
+    const g = new THREE.Group(); p.g = g; p.act = {}; p.mix = null; p.now = null;
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(.3, .34, .07, 24), new THREE.MeshStandardMaterial({ color: p.col, emissive: p.col, emissiveIntensity: .25 })); disc.position.y = .035; disc.castShadow = true; g.add(disc);
+    const body = new THREE.Group(); p.body = body; g.add(body);
+    const ph = new THREE.Mesh(new THREE.CapsuleGeometry(.2, .45, 4, 10), new THREE.MeshStandardMaterial({ color: p.col })); ph.position.y = .45; ph.castShadow = true; body.add(ph); p.ph = ph;
+    p.lb = label(p.name, p.col); p.lb.position.y = 1.45 + p.i * .34; g.add(p.lb);
+    g.position.copy(slotPos(0, p.i)); scene.add(g);
+    knModel(p.char).then(gl => { if (!alive) return; const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1, k = 1.15 / h;
+      m.scale.setScalar(k); m.position.y = -box.min.y * k + .06; m.traverse(o => { if (o.isMesh){ o.castShadow = true; o.frustumCulled = false; } });
+      body.remove(ph); body.add(m); p.mix = new THREE.AnimationMixer(m); gl.animations.forEach(c => p.act[c.name] = p.mix.clipAction(c));
+      ['jump', 'emote-yes', 'emote-no', 'pick-up'].forEach(n => { if (p.act[n]){ p.act[n].setLoop(THREE.LoopOnce); p.act[n].clampWhenFinished = true; } });
+      anim(p, p.out ? 'sit' : 'idle'); }).catch(() => {});
+  });
+  function anim(p, n, ts){ const a = p.act[n]; if (!a) return; if (p.now === a && n !== 'jump' && n !== 'emote-yes' && n !== 'emote-no'){ return; }
+    a.reset(); a.timeScale = ts || 1; a.fadeIn(.12).play(); if (p.now && p.now !== a) p.now.fadeOut(.12); p.now = a; }
+  const face = (p, dir) => { p.body.rotation.y = Math.atan2(dir.x, dir.z) - p.g.rotation.y; };
+  P.forEach(p => face(p, TP[0].a));
+
+  /* teks terapung (+RM / -RM) */
+  const floaters = [];
+  function floatTxt(pos, txt, col){ const t = canvasTex(320, 96, (g) => { g.font = '900 64px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 10; g.strokeStyle = '#0B1220'; g.strokeText(txt, 160, 48); g.fillStyle = col; g.fillText(txt, 160, 48); });
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); s.scale.set(1.9, .57, 1); s.renderOrder = 6; s.position.copy(pos).setY(1.9); scene.add(s); floaters.push({ s, t: 0 }); }
+  /* zarah syiling */
+  const coins = []; const coinGeo = new THREE.CylinderGeometry(.1, .1, .03, 12), coinMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, emissive: 0xB45309, emissiveIntensity: .3, metalness: .6, roughness: .3 });
+  function coinBurst(pos, n){ for (let k = 0; k < (n || 12); k++){ const m = new THREE.Mesh(coinGeo, coinMat); m.position.copy(pos).setY(.9); scene.add(m);
+    coins.push({ m, v: new THREE.Vector3((Math.random() - .5) * 3, 3 + Math.random() * 2.5, (Math.random() - .5) * 3), t: 0, w: (Math.random() - .5) * 20 }); } }
+
+  /* ---------- kamera ---------- */
+  const camP = new THREE.Vector3(0, 20, 16), camL = new THREE.Vector3(0, 0, 0), wantP = new THREE.Vector3(), wantL = new THREE.Vector3();
+  let camMode = 'over', camFocus = null, camTile = null;
+  const fitK = () => { const a = innerWidth / Math.max(1, innerHeight); return a < 1 ? 1.45 : a < 1.4 ? 1.15 : 1; }, portr = () => innerWidth < innerHeight;
+  function camWant(){
+    const k = fitK();
+    if (camMode === 'over'){ wantP.set(0, 18.5 * k, 14.5 * k); wantL.set(0, 0, portr() ? -2.2 : .6); return; }
+    if (camMode === 'dice'){ wantP.set(0, 9 * k, 9.5 * k); wantL.set(0, 0, portr() ? -.4 : 1.8); return; }
+    const p = camFocus ? camFocus.g.position : TP[camTile || 0].c, ti = camFocus ? camFocus.pos : camTile, tp = TP[ti || 0];
+    const f = camMode === 'close' ? .8 : 1;
+    wantP.copy(p).addScaledVector(tp.o, 6.2 * f * k).addScaledVector(tp.a, -2.2 * f).setY(5.6 * f * Math.max(1, k * .9));
+    wantL.copy(p).addScaledVector(tp.o, portr() ? -3.4 : -1.2).setY(.6);
+  }
+
+  /* ---------- UI HTML ---------- */
+  const pl = $r('#tkPl'), ban = $r('#tkBan'), bar = $r('#tkBar'), mod = $r('#tkMod');
+  const worth = p => p.cash + Object.keys(OWN).reduce((s, i) => OWN[i].p === p.i ? s + TK_T[i].p + (TK_T[i].t === 'lot' ? OWN[i].lv * TK_ZONE[TK_T[i].z].b : 0) : s, 0);
+  const lotsOf = p => Object.keys(OWN).filter(i => OWN[i].p === p.i).map(Number);
+  function paintPl(){
+    pl.innerHTML = P.map(p => { const ls = lotsOf(p), b = ls.reduce((s, i) => s + (OWN[i].lv || 0), 0);
+      return '<div class="pc' + (p.i === turn && !over ? ' on' : '') + (p.out ? ' out' : '') + '" style="--c:' + p.col + '"><div class="n">' + TK_DOT[p.i] + ' ' + esc(p.name) + (p.jail ? ' 🚪' : '') + (p.pass ? ' 🎫' : '') + (p.remote && !p.joined ? ' ⏳' : '') + '</div>' +
+        '<div class="m">' + (p.out ? 'MUFLIS' : tkRM(p.cash)) + '</div><div class="s">🏷️' + ls.length + ' · 🏠' + b + ' · ✅' + p.r + '/' + p.a + '</div></div>'; }).join('');
+    $r('#tkPot').textContent = '🍜 Tabung ' + tkRM(pot);
+  }
+  let banT = 0;
+  function say(t, ms){ banner = t; ban.textContent = t; ban.style.opacity = 1; clearTimeout(banT); if (ms) banT = setTimeout(() => { ban.style.opacity = 0; }, ms); pub(); }
+  const sleep = ms => new Promise(r => setTimeout(r, ms * SPD));
+  const rnd = n => Math.floor(Math.random() * n);
+  /* ---------- rangkaian: hos menerbitkan keadaan, telefon menghantar tindakan ---------- */
+  let pubT = 0;
+  function snap(){ return { pl: P.map(p => ({ n: p.name, c: p.cash, ps: p.pos, o: p.out ? 1 : 0, j: p.jail ? 1 : 0, ps2: p.pass, col: p.col, r: p.r, a: p.a, rm: p.remote ? 1 : 0, w: worth(p) })),
+    own: Object.fromEntries(Object.entries(OWN).map(([i, o]) => [i, [o.p, o.lv]])), turn, pot, ban: banner, dice, t: endAt, over: over ? 1 : 0, rev: reveal,
+    pd: PEND ? { id: PEND.id, p: PEND.p, pr: PEND.pr } : null, end: ended }; }
+  function pub(){ if (!net.T || pubT) return; pubT = setTimeout(() => { pubT = 0; if (alive) net.T.set('tks', snap()); }, 80); }
+  const lastN = {}, offs = [];
+  const pubCfg = () => net.T && net.T.set('tk', { g: 'taikun', code: net.code, started, seats: P.map(p => ({ n: p.name, bot: p.bot ? 1 : 0, j: p.joined ? 1 : 0, col: p.col })) });
+  if (net.T){
+    P.forEach(p => { if (!p.remote) return;
+      offs.push(net.T.on('j' + p.i, v => { if (v && !p.joined && !started){ p.joined = true; pubCfg(); paintPl(); lobbyPaint(); snd('tk_duit', 'hi'); } }));
+      offs.push(net.T.on('a' + p.i, v => { if (!v || !(v.n > (lastN[p.i] || 0))) return; lastN[p.i] = v.n; if (PEND && PEND.p === p.i && v.id === PEND.id) PEND.res(v.v); }));
+    });
+  }
+  const hb = net.T ? setInterval(() => { if (!alive) return; pubCfg(); pub(); }, 2500) : 0;
+
+  /* ---------- soalan / keputusan: satu janji untuk manusia di skrin ini, telefon, atau robot ---------- */
+  const BOT_ACC = { mudah: .45, sederhana: .65, sukar: .85 }[lvl] || .65;
+  function ask(p, pr, ans){
+    return new Promise(res => {
+      const id = ++seq; let to = 0;
+      PEND = { id, p: p.i, pr, res: v => { if (!PEND || PEND.id !== id) return; PEND = null; clearTimeout(to); res(v); } };
+      if (p.bot){ const pick = botPick(p, pr, ans); to = setTimeout(() => PEND && PEND.id === id && PEND.res(pick), (pr.k === 'q' ? 2200 + rnd(1600) : 900 + rnd(700)) * SPD); }
+      else if (p.remote){ const lim = pr.k === 'q' ? cfg.qt * 1000 + 1500 : pr.k === 'turn' ? 60000 : 40000; to = setTimeout(() => PEND && PEND.id === id && PEND.res(pr.k === 'q' ? -1 : pr.k === 'turn' ? 'roll' : pr.k === 'jail' ? 'q' : pr.k === 'build' ? -1 : 0), lim); }
+      else if (pr.k === 'q') to = setTimeout(() => PEND && PEND.id === id && PEND.res(-1), cfg.qt * 1000);
+      showPrompt(p, pr); pub();
+    });
+  }
+  function botPick(p, pr, ans){
+    if (pr.k === 'q') return Math.random() < BOT_ACC ? ans : (ans + 1 + rnd(pr.c.length - 1)) % pr.c.length;
+    if (pr.k === 'turn') return pr.b && Math.random() < .8 ? 'build' : 'roll';
+    if (pr.k === 'buy') return p.cash - pr.price >= 120 ? 1 : 0;
+    if (pr.k === 'build'){ const ok = pr.lots.filter(l => p.cash - l.cost >= 200); return ok.length ? ok.sort((a, b) => b.lv - a.lv)[0].i : -1; }
+    if (pr.k === 'jail') return p.pass ? 'pass' : 'q';
+    return 0;
+  }
+  /* soalan dari bank soalan DSKP (topik hari ini didahulukan); pilihan dikocak */
+  async function quiz(p, why){
+    const q0 = escQuestion(), ord = q0.c.map((x, k) => k).sort(() => Math.random() - .5), c = ord.map(k => String(q0.c[k])), a = ord.indexOf(q0.a);
+    const v = await ask(p, { k: 'q', q: String(q0.q), c, why, until: Date.now() + cfg.qt * 1000 }, a);
+    const ok = v === a; p.a++; if (ok) p.r++;
+    reveal = { id: seq, p: p.i, v, a, ok: ok ? 1 : 0 }; showReveal(p, { q: String(q0.q), c, why }, v, a); paintPl(); pub();
+    snd(ok ? 'tk_betul' : 'tk_salah', ok ? 'hi' : 'low'); if (ok) anim(p, 'emote-yes'); else anim(p, 'emote-no');
+    await sleep(1900); reveal = null; hideMod(); anim(p, 'idle'); return ok;
+  }
+  const qHtml = (pr, local, v, a) => '<div class="tm"><i id="tkTm"></i></div><div style="font-size:12px;color:#93C5FD;font-weight:800;letter-spacing:.08em">🧠 ' + esc(pr.why || 'SOALAN') + '</div><div class="qt">' + esc(pr.q) + '</div>' +
+    '<div class="ch">' + pr.c.map((c, k) => '<button data-q="' + k + '"' + (local && v == null ? '' : ' disabled') + ' class="' + (a != null ? (k === a ? 'ok' : k === v ? 'no' : '') : '') + '">' + 'ABCD'[k] + '. ' + esc(c) + '</button>').join('') + '</div>';
+  let tmRAF = 0;
+  function showPrompt(p, pr){
+    const local = !p.bot && !p.remote, who = p.bot ? '🤖 ' + esc(p.name) + ' sedang berfikir…' : p.remote ? '📱 Menunggu ' + esc(p.name) + ' di telefon…' : '';
+    bar.innerHTML = ''; cancelAnimationFrame(tmRAF);
+    if (pr.k === 'turn'){ hideMod();
+      bar.innerHTML = local ? '<button data-a="roll">🎲 BALING DADU</button>' + (pr.b ? '<button class="b2" data-a="build">🏗️ BINA</button>' : '') : '<div class="tk-wait">' + who + '</div>'; return; }
+    let h = '';
+    if (pr.k === 'q'){ h = '<div class="card" style="--c:#3B82F6"><div class="hd">' + TK_DOT[p.i] + ' ' + esc(p.name) + '</div>' + qHtml(pr, local) + (local ? '' : '<div style="margin-top:10px;font-size:13px;color:#CBD5E1;text-align:center">' + who + '</div>') + '</div>';
+      const t0 = Date.now(), tot = Math.max(1, pr.until - t0); const tick = () => { const el = mod.querySelector('#tkTm'); if (!el) return; el.style.transform = 'scaleX(' + Math.max(0, (pr.until - Date.now()) / tot) + ')'; if (Date.now() < pr.until) tmRAF = requestAnimationFrame(tick); }; tmRAF = requestAnimationFrame(tick); }
+    else if (pr.k === 'buy'){ const t = TK_T[pr.i], z = TK_ZONE[t.z] || { n: 'Kemudahan Sekolah', c: '#0F766E' };
+      h = '<div class="card" style="--c:' + z.c + '"><div class="hd"><span style="font-size:22px">' + t.ic + '</span>' + esc(t.n) + '<span style="margin-left:auto;font-size:12px">' + esc(z.n) + '</span></div>' +
+        '<div style="font-size:14px">Tanah ini belum dimiliki. Harga <b style="color:#FDE68A;font-size:18px">' + tkRM(t.p) + '</b></div>' + rentTable(pr.i) +
+        '<div style="font-size:12.5px;color:#93C5FD;margin-top:8px">🧠 Untuk membeli, kamu mesti <b>jawab 1 soalan dengan betul</b>.</div>' +
+        (local ? '<div class="bt"><button data-v="0">Langkau</button>' + (p.cash >= t.p ? '<button class="go" data-v="1">🧠 JAWAB & BELI</button>' : '<button disabled>Wang tidak cukup</button>') + '</div>' : '<div style="margin-top:10px;font-size:13px;text-align:center;color:#CBD5E1">' + who + '</div>') + '</div>'; }
+    else if (pr.k === 'build'){ h = '<div class="card" style="--c:#3B82F6"><div class="hd">🏗️ BINA — ' + esc(p.name) + '</div><div style="font-size:13px;color:#CBD5E1">Pilih tanah. 3 rumah → hotel. <b style="color:#93C5FD">Jawab betul untuk membina.</b></div><div class="lots">' +
+        pr.lots.map(l => '<button data-v="' + l.i + '"' + (local && p.cash >= l.cost ? '' : ' disabled style="opacity:.5"') + '><span style="font-size:20px">' + TK_T[l.i].ic + '</span><span style="flex:1">' + esc(TK_T[l.i].n) + '<br><small style="color:#94A3B8">' + (l.lv === 3 ? '🏠🏠🏠 → 🏨 Hotel' : '🏠'.repeat(l.lv) + ' → ' + '🏠'.repeat(l.lv + 1)) + '</small></span><b style="color:#FDE68A">' + tkRM(l.cost) + '</b></button>').join('') + '</div>' +
+        (local ? '<div class="bt"><button data-v="-1">Batal</button></div>' : '<div style="margin-top:10px;font-size:13px;text-align:center;color:#CBD5E1">' + who + '</div>') + '</div>'; }
+    else if (pr.k === 'jail'){ h = '<div class="card" style="--c:#64748B"><div class="hd">🚪 BILIK DISIPLIN — ' + esc(p.name) + '</div><div style="font-size:14px">Cara keluar (cubaan ' + (p.jt + 1) + '/3):</div>' +
+        (local ? '<div class="bt" style="flex-direction:column"><button class="go" data-v="q">🧠 Jawab soalan — betul = keluar percuma</button>' + (p.pass ? '<button data-v="pass">🎫 Guna Kad Pas Pengawas</button>' : '') + '<button data-v="pay"' + (p.cash >= 50 ? '' : ' disabled') + '>💸 Bayar denda RM50</button></div>'
+          : '<div style="margin-top:10px;font-size:13px;text-align:center;color:#CBD5E1">' + who + '</div>') + '</div>'; }
+    mod.innerHTML = h; mod.style.display = 'flex';
+  }
+  function showReveal(p, pr, v, a){ cancelAnimationFrame(tmRAF);
+    mod.innerHTML = '<div class="card" style="--c:' + (v === a ? '#16A34A' : '#DC2626') + '"><div class="hd">' + (v === a ? '✅ BETUL!' : v < 0 ? '⏰ MASA TAMAT' : '❌ SALAH') + ' — ' + esc(p.name) + '</div>' + qHtml(pr, false, v, a) + '</div>'; mod.style.display = 'flex'; }
+  const hideMod = () => { mod.style.display = 'none'; mod.innerHTML = ''; cancelAnimationFrame(tmRAF); };
+  function info(icon, title, txt, col, ms){
+    mod.innerHTML = '<div class="card" style="--c:' + (col || '#7C3AED') + ';text-align:center"><div class="hd" style="justify-content:center">' + esc(title) + '</div><div style="font-size:64px;line-height:1.1">' + icon + '</div><div style="font-size:17px;font-weight:700;margin-top:8px">' + esc(txt) + '</div></div>';
+    mod.style.display = 'flex'; say(icon + ' ' + txt); return sleep(ms || 2600).then(hideMod);
+  }
+  function rentTable(i){ const t = TK_T[i];
+    if (t.t === 'util') return '<div class="rt"><span>Sewa (1 kemudahan)</span><b>dadu × 8</b><span>Sewa (2 kemudahan)</span><b>dadu × 20</b></div>';
+    const z = TK_ZONE[t.z]; return '<div class="rt"><span>Sewa tanah</span><b>' + tkRM(tkTileRent(t, 0)) + '</b><span>🏠 1 rumah</span><b>' + tkRM(tkTileRent(t, 1)) + '</b><span>🏠🏠 2 rumah</span><b>' + tkRM(tkTileRent(t, 2)) + '</b>' +
+      '<span>🏠🏠🏠 3 rumah</span><b>' + tkRM(tkTileRent(t, 3)) + '</b><span>🏨 Hotel</span><b>' + tkRM(tkTileRent(t, 4)) + '</b><span>Kos bina</span><b>' + tkRM(z.b) + '</b></div><div style="font-size:11.5px;color:#94A3B8;margin-top:4px">Miliki semua tanah ' + esc(z.n) + ' = sewa berganda!</div>'; }
+  mod.addEventListener('click', e => { const b = e.target.closest('[data-q],[data-v]'); if (!b || b.disabled || !PEND) return; const p = P[PEND.p]; if (p.bot || p.remote) return;
+    sfx('flip'); PEND.res(b.dataset.q != null ? +b.dataset.q : /^-?\d+$/.test(b.dataset.v) ? +b.dataset.v : b.dataset.v); });
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b || !PEND || PEND.pr.k !== 'turn') return; const p = P[PEND.p]; if (p.bot || p.remote) return; bar.innerHTML = ''; PEND.res(b.dataset.a); });
+
+  /* ---------- wang ---------- */
+  function gain(p, n, why){ if (!n) return; p.cash += n; floatTxt(p.g.position, '+' + tkRM(n), '#4ADE80'); coinBurst(p.g.position, Math.min(18, 4 + n / 25)); snd('tk_duit', 'hi'); paintPl(); pub(); }
+  /* bayar: jual bangunan / tanah (separuh harga) jika tidak cukup; masih tidak cukup = MUFLIS */
+  async function payTo(p, n, to){
+    if (n <= 0) return;
+    if (p.cash < n){
+      const ls = lotsOf(p).sort((a, b) => (OWN[b].lv || 0) - (OWN[a].lv || 0));
+      for (const i of ls){ if (p.cash >= n) break; const o = OWN[i], t = TK_T[i];
+        while (o.lv > 0 && p.cash < n){ o.lv--; p.cash += Math.round(TK_ZONE[t.z].b / 2); }
+        if (p.cash < n && !o.lv){ delete OWN[i]; p.cash += Math.round(t.p / 2); }
+        paintTile(i); }
+      if (p.cash < n){ const left = p.cash; p.cash = 0; if (to) to.cash += left; else pot += left; p.out = true;
+        lotsOf(p).forEach(i => { delete OWN[i]; paintTile(i); });
+        anim(p, 'sit'); snd('tk_disiplin', 'low'); paintPl(); await info('💀', 'MUFLIS', p.name + ' tidak mampu membayar dan terkeluar dari permainan.', '#7F1D1D', 3000); return; }
+      say('🏚️ ' + p.name + ' menjual harta untuk membayar…', 2400); await sleep(900);
+    }
+    p.cash -= n; if (to){ to.cash += n; floatTxt(to.g.position, '+' + tkRM(n), '#4ADE80'); } else pot += n;
+    floatTxt(p.g.position, '-' + tkRM(n), '#F87171'); snd('tk_bayar', 'low'); paintPl(); pub();
+  }
+
+  /* ---------- pergerakan ---------- */
+  const hops = [];
+  function hopTo(p, ti, dur){ return new Promise(res => { const from = p.g.position.clone(), to = slotPos(ti, p.i), d = to.clone().sub(from); if (d.lengthSq() > .001) face(p, d);
+    hops.push({ p, from, to, t: 0, dur: dur * SPD, res }); anim(p, 'jump', 1.6); snd('tk_lompat'); }); }
+  async function moveSteps(p, n){
+    camMode = 'follow'; camFocus = p;
+    const dir = n < 0 ? -1 : 1;
+    for (let k = 0; k < Math.abs(n); k++){
+      p.pos = (p.pos + dir + 32) % 32; await hopTo(p, p.pos, .34);
+      if (dir > 0 && p.pos === 0){ say('🏁 ' + p.name + ' lalu MULA: +RM200', 1800); gain(p, 200); }
+    }
+    anim(p, 'idle'); pub();
+  }
+  async function jumpTo(p, ti, passStart){            /* lompat jauh (Kotak Misteri / Bilik Disiplin) */
+    camMode = 'follow'; camFocus = p;
+    if (passStart && ti < p.pos){ gain(p, 200); }
+    p.pos = ti; await hopTo(p, ti, .9); anim(p, 'idle'); pub();
+  }
+  async function toJail(p){ say('🚨 ' + p.name + ' ke Bilik Disiplin!', 2400); snd('tk_disiplin', 'low'); anim(p, 'emote-no'); await sleep(600); p.jail = 1; p.jt = 0; await jumpTo(p, 8, false); paintPl(); }
+
+  /* ---------- dadu ---------- */
+  async function rollDice(p){
+    camMode = 'dice'; snd('tk_dadu', 'flip');
+    const a = 1 + rnd(6), b = 1 + rnd(6); dice = [a, b];
+    await new Promise(res => { let n = 0; D.forEach((d, k) => { const end = new THREE.Vector3(k ? .55 : -.55, .31, 2.1 + (k ? .25 : -.1)), st = new THREE.Vector3((k ? 1 : -1) * 2.6, 3.6, 5.6);
+      const fin = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.random() * 6).multiply(upQ(k ? b : a));
+      d.anim = { t: 0, dur: 1.15 * SPD, st, end, fin, ax: new THREE.Vector3(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize(), spin: 14 + Math.random() * 8, res: () => { if (++n === 2) res(); } }; }); });
+    say('🎲 ' + p.name + ': ' + a + ' + ' + b + ' = ' + (a + b) + (a === b ? '  · SAMA!' : ''), 2200); pub();
+    await sleep(700); return [a, b];
+  }
+
+  /* ---------- petak: apa berlaku bila mendarat ---------- */
+  function buildable(p){ return lotsOf(p).filter(i => TK_T[i].t === 'lot' && OWN[i].lv < 4).map(i => ({ i, lv: OWN[i].lv, cost: TK_ZONE[TK_T[i].z].b })); }
+  async function tryBuild(p, only){
+    const lots = only != null ? buildable(p).filter(l => l.i === only) : buildable(p); if (!lots.length) return;
+    const pick = await ask(p, { k: 'build', lots }); hideMod();
+    if (pick == null || pick < 0) return;
+    const l = lots.find(x => x.i === +pick); if (!l || p.cash < l.cost) return;
+    camMode = 'tile'; camTile = l.i; camFocus = null;
+    const ok = await quiz(p, 'BINA ' + (l.lv === 3 ? 'HOTEL' : 'RUMAH') + ' — ' + TK_T[l.i].n);
+    if (!ok){ say('❌ Pembinaan gagal — jawapan salah.', 2000); return; }
+    p.cash -= l.cost; OWN[l.i].lv++; paintTile(l.i); popLast(l.i); snd('tk_bina', 'hi'); floatTxt(TP[l.i].c, OWN[l.i].lv === 4 ? '🏨 HOTEL!' : '🏠 +1', '#FDE68A');
+    say('🏗️ ' + p.name + ' membina ' + (OWN[l.i].lv === 4 ? 'HOTEL' : 'rumah') + ' di ' + TK_T[l.i].n, 2400); paintPl(); await sleep(1300);
+    camMode = 'follow'; camFocus = p;
+  }
+  const zoneFull = (z, pi) => TK_T.every((t, i) => t.z !== z || (OWN[i] && OWN[i].p === pi));
+  async function land(p, roll){
+    const i = p.pos, t = TK_T[i];
+    if (t.t === 'lot' || t.t === 'util'){
+      const o = OWN[i];
+      if (!o){
+        const v = await ask(p, { k: 'buy', i, price: t.p }); hideMod();
+        if (!v || p.cash < t.p){ say('↪️ ' + p.name + ' tidak membeli ' + t.n, 1800); return; }
+        const ok = await quiz(p, 'BELI ' + t.n.toUpperCase() + ' (' + tkRM(t.p) + ')');
+        if (!ok){ say('❌ Jawapan salah — ' + t.n + ' tidak dapat dibeli.', 2200); return; }
+        p.cash -= t.p; OWN[i] = { p: p.i, lv: 0 }; paintTile(i); popLast(i); snd('tk_beli', 'myth'); anim(p, 'emote-yes');
+        floatTxt(TP[i].c, '🏷️ ' + t.n, '#FDE68A'); say('🏷️ ' + p.name + ' membeli ' + t.n + '!' + (t.z && zoneFull(t.z, p.i) ? '  ⭐ ZON PENUH: sewa berganda!' : ''), 2600); paintPl(); await sleep(1400); return;
+      }
+      if (o.p === p.i){ if (t.t === 'lot' && o.lv < 4 && p.cash >= TK_ZONE[t.z].b){ say('🏠 Tanah sendiri — mahu bina?', 1800); await tryBuild(p, i); } return; }
+      const own = P[o.p];
+      if (own.out) return;
+      const nu = TK_T.filter((x, k) => x.t === 'util' && OWN[k] && OWN[k].p === o.p).length;
+      let rent = t.t === 'util' ? roll * (nu > 1 ? 20 : 8) : tkTileRent(t, o.lv, zoneFull(t.z, o.p));
+      say('💰 ' + t.n + ' milik ' + own.name + ' — sewa ' + tkRM(rent), 2400); await sleep(900);
+      const ok = await quiz(p, 'RAYUAN SEWA — betul = bayar separuh (' + tkRM(rent / 2) + ')');
+      if (ok) rent = Math.round(rent / 2);
+      await payTo(p, rent, own); anim(own, 'emote-yes'); return;
+    }
+    if (t.t === 'yuran'){ say('💸 ' + t.n + ': bayar ' + tkRM(t.p) + ' ke Tabung Kelas', 2200); await sleep(700);
+      const ok = await quiz(p, t.n.toUpperCase() + ' — betul = diskaun 50%'); await payTo(p, ok ? t.p / 2 : t.p, null); return; }
+    if (t.t === 'cabaran'){ const ok = await quiz(p, 'CABARAN ILMU — betul = +RM100'); if (ok) gain(p, 100); return; }
+    if (t.t === 'kantin'){ if (pot > 0){ const n = pot; pot = 0; await info('🍜', 'KANTIN REHAT', p.name + ' mengutip Tabung Kelas ' + tkRM(n) + '!', '#D97706', 2200); gain(p, n); } else say('🍜 Rehat sebentar di kantin…', 1800); return; }
+    if (t.t === 'tahan'){ await toJail(p); return; }
+    if (t.t === 'misteri'){
+      const [ic, txt, ef] = TK_MIS[rnd(TK_MIS.length)]; snd('tk_misteri', 'myth');
+      await info(ic, '🎁 KOTAK MISTERI', txt, '#7C3AED', 2800);
+      if (ef.cash) gain(p, ef.cash);
+      if (ef.pay) await payTo(p, ef.pay, null);
+      if (ef.each){ for (const q of P) if (q !== p && !q.out) await payTo(q, ef.each, p); }
+      if (ef.repair){ let n = 0; lotsOf(p).forEach(k => { const lv = OWN[k].lv || 0; n += lv >= 4 ? ef.repair[1] : lv * ef.repair[0]; }); if (n) await payTo(p, n, null); else say('🛠️ Tiada bangunan — tiada kos.', 1600); }
+      if (ef.pass){ p.pass++; paintPl(); }
+      if (ef.jail){ await toJail(p); return; }
+      if (ef.to != null){ await jumpTo(p, ef.to, true); await land(p, roll); return; }
+      if (ef.step){ await moveSteps(p, ef.step); await land(p, roll); return; }
+    }
+  }
+  async function jailTurn(p){                         /* true = boleh terus baling dadu */
+    say('🚪 ' + p.name + ' di Bilik Disiplin', 1800);
+    let c = await ask(p, { k: 'jail' }); hideMod();
+    if (c === 'pass' && p.pass){ p.pass--; p.jail = 0; say('🎫 ' + p.name + ' guna Kad Pas — bebas!', 1800); paintPl(); return true; }
+    if (c === 'pay' && p.cash >= 50){ await payTo(p, 50, null); p.jail = 0; paintPl(); return true; }
+    const ok = await quiz(p, 'KELUAR BILIK DISIPLIN');
+    if (ok){ p.jail = 0; say('✅ ' + p.name + ' bebas dari Bilik Disiplin!', 1800); paintPl(); return true; }
+    p.jt++;
+    if (p.jt >= 3){ say('⌛ 3 cubaan — bayar denda RM50 dan keluar.', 2000); await payTo(p, 50, null); p.jail = 0; paintPl(); return !p.out; }
+    say('🔒 ' + p.name + ' kekal di Bilik Disiplin.', 1800); await sleep(800); return false;
+  }
+
+  /* ---------- giliran ---------- */
+  async function doTurn(p){
+    camMode = 'follow'; camFocus = p; paintPl(); say('▶ Giliran ' + p.name, 1600); pub();
+    if (p.jail){ const go = await jailTurn(p); if (!go || p.out || !alive) return; }
+    let built = false, dbl = 0;
+    for (;;){
+      const c = await ask(p, { k: 'turn', b: !built && buildable(p).some(l => p.cash >= l.cost) });
+      bar.innerHTML = '';
+      if (c === 'build' && !built){ built = true; await tryBuild(p); camMode = 'follow'; camFocus = p; continue; }
+      const [a, b] = await rollDice(p); if (!alive) return;
+      if (a === b && ++dbl === 3){ await toJail(p); return; }
+      await moveSteps(p, a + b); if (!alive) return;
+      await land(p, a + b); if (!alive || p.out || p.jail) return;
+      if (a !== b) return;
+      say('🎲 Dadu sama — ' + p.name + ' baling sekali lagi!', 1800); built = true;
+    }
+  }
+  const active = () => P.filter(p => !p.out);
+  async function loop(){
+    endAt = +cfg.len ? Date.now() + cfg.len * 60000 : 0; pub(); camMode = 'over'; await sleep(900);
+    say('🏙️ Selamat datang ke TAIKUN ILMU!', 2200); await sleep(1600);
+    while (alive && !over){
+      const p = P[turn];
+      if (!p.out) await doTurn(p);
+      if (!alive) return;
+      bar.innerHTML = '';
+      if (active().length <= 1 || endFlag || (endAt && Date.now() >= endAt)) break;
+      do { turn = (turn + 1) % P.length; } while (P[turn].out);
+      await sleep(500);
+    }
+    if (alive) finish();
+  }
+  /* ---------- tamat: kedudukan ikut harta bersih, rekod RP & PBD ---------- */
+  function finish(){
+    if (over) return; over = true; PEND = null; hideMod(); bar.innerHTML = '';
+    const rank = P.slice().sort((a, b) => (a.out - b.out) || (worth(b) - worth(a))), win = rank[0];
+    camMode = 'follow'; camFocus = win; anim(win, 'emote-yes'); coinBurst(win.g.position, 30); snd('tk_menang', 'myth');
+    P.forEach(p => { if (p !== win && !p.out) anim(p, 'idle'); });
+    const RPS = [30, 20, 12, 8];
+    const rows = rank.map((p, k) => { let tp = 0, rp = 0;
+      if (!p.bot && p.id && p.a){ rp = RPS[k] || 5; if (!MURID) teamRP(p.id, rp); tp = gameToPBD(p.id, 'taikun', p.r, p.a, { score: worth(p), lvl }); }
+      return { n: p.name, col: p.col, w: worth(p), r: p.r, a: p.a, rp, tp, bot: p.bot, out: p.out }; });
+    if (!MURID) save(true);
+    ended = rows.map(x => ({ n: x.n, w: x.w, r: x.r, a: x.a, tp: x.tp || 0, col: x.col }));
+    paintPl(); pub();
+    setTimeout(() => { if (!alive) return;
+      mod.innerHTML = '<div class="card" style="--c:#FACC15;max-width:560px"><div class="hd" style="justify-content:center;color:#1A1405;text-shadow:none">🏆 ' + esc(win.name).toUpperCase() + ' TAIKUN ILMU!</div>' +
+        rows.map((x, k) => '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;margin-top:6px;background:' + (k ? '#1E293B' : 'rgba(250,204,21,.18)') + ';border-left:6px solid ' + x.col + '">' +
+          '<b style="width:22px;color:#FDE68A">' + (k + 1) + '</b><span style="flex:1;font-weight:800">' + esc(x.n) + (x.out ? ' <small style="color:#F87171">muflis</small>' : '') + '</span>' +
+          '<span style="font-size:12px;color:#CBD5E1">✅' + x.r + '/' + x.a + '</span><b style="color:#FDE68A;min-width:80px;text-align:right">' + tkRM(x.w) + '</b>' +
+          (x.rp ? '<span style="color:#FB923C;font-size:12px">+' + x.rp + ' RP</span>' : '') + (x.tp ? '<b style="color:' + TP_COLOR[x.tp] + '">TP' + x.tp + '</b>' : '') + '</div>').join('') +
+        '<div style="font-size:11.5px;color:#94A3B8;margin-top:8px;text-align:center">Kedudukan ikut harta bersih (wang + harga tanah + bangunan). Markah PBD ikut ketepatan jawapan.</div>' +
+        '<div class="bt"><button class="go" data-k="x">Tutup</button></div></div>'; mod.style.display = 'flex'; }, 2600 * SPD);
+  }
+
+  /* ---------- lobi hos: kod bilik & menunggu telefon ---------- */
+  function lobbyPaint(){
+    if (started || !alive) return;
+    const n = P.filter(p => p.remote && p.joined).length;
+    mod.innerHTML = '<div class="card" style="--c:#FACC15;text-align:center"><div class="hd" style="justify-content:center;color:#1A1405;text-shadow:none">👑 HOS — TAIKUN ILMU</div>' +
+      '<div style="font-size:12px;color:#CBD5E1">Di telefon: EduRank → GAME → <b>🔢 MASUK KOD BILIK</b></div><div style="font-size:64px;font-weight:900;letter-spacing:.2em;color:#FDE68A;line-height:1.15">' + net.code + '</div>' +
+      P.map(p => '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-top:6px;background:#1E293B;border-left:6px solid ' + p.col + ';text-align:left"><b style="flex:1">' + esc(p.name) + '</b>' +
+        '<span style="font-size:12px;color:' + (p.bot ? '#94A3B8">🤖 robot' : p.joined ? '#4ADE80">✅ sudah masuk' : '#F59E0B">⏳ menunggu telefon…') + '</span></div>').join('') +
+      '<div style="font-size:11.5px;color:#94A3B8;margin-top:8px">Kumpulan yang belum masuk akan dimainkan oleh robot.</div>' +
+      '<div class="bt"><button data-k="x">Tutup</button><button class="go" data-k="go"' + (n ? '' : ' disabled style="opacity:.5"') + '>' + (n ? '▶ MULA (' + n + ' telefon)' : '⏳ Menunggu telefon…') + '</button></div></div>';
+    mod.style.display = 'flex';
+  }
+  function begin(){ if (started) return; started = true;
+    P.forEach(p => { if (p.remote && !p.joined){ p.remote = false; p.bot = true; p.name = p.name + ' 🤖'; } });
+    pubCfg(); hideMod(); paintPl(); loop(); }
+
+  /* ---------- kawalan atas ---------- */
+  function close(){ if (!alive) return; alive = false; PEND = null; clearInterval(hb); clearTimeout(pubT); cancelAnimationFrame(raf); cancelAnimationFrame(tmRAF);
+    if (net.T){ net.T.set('tk', { closed: true }); offs.forEach(o => { try { o && o(); } catch(e){} }); }
+    window.removeEventListener('resize', size); try { R.dispose(); } catch(e){} root.remove(); unlockBody(); orientBack(); if (window.TK_DBG) window.TK_DBG = null; }
+  const ask2 = (title, msg, ok) => new Promise(res => { const cf = $r('#tkCf'); cf.innerHTML = '<div class="card" style="--c:#F59E0B;max-width:400px"><div class="hd">' + esc(title) + '</div><div style="font-size:14px;line-height:1.5">' + esc(msg) + '</div><div class="bt"><button data-c="0">Batal</button><button class="go" data-c="1">' + esc(ok) + '</button></div></div>';
+    cf.style.display = 'flex'; cf.onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; e.stopPropagation(); cf.style.display = 'none'; cf.innerHTML = ''; res(b.dataset.c === '1'); }; });
+  root.addEventListener('click', async e => { const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k;
+    if (k === 'go') return begin();
+    if (k === 'x'){ if (over || !started || await ask2('Keluar Taikun Ilmu?', 'Permainan belum tamat — markah tidak akan direkod.', 'Keluar')) close(); return; }
+    if (k === 'end' && started && !over){ if (await ask2('Tamatkan permainan?', 'Permainan tamat selepas giliran ini. Pemain dengan harta bersih tertinggi menang dan markah direkod.', 'Tamatkan')){ endFlag = true; say('🏁 Permainan tamat selepas giliran ini', 3000); } } });
+
+  /* ---------- gelung lukisan ---------- */
+  function size(){ const w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 60 : 48; cam.updateProjectionMatrix(); }
+  window.addEventListener('resize', size); size();
+  let raf = 0, last = performance.now(), T0 = last;
+  const ease = u => u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+  function frame(now){
+    if (!alive) return; raf = requestAnimationFrame(frame);
+    const dt = Math.min(.05, (now - last) / 1000); last = now; const tt = (now - T0) / 1000;
+    P.forEach(p => { if (p.mix) p.mix.update(dt); });
+    for (let k = hops.length - 1; k >= 0; k--){ const h = hops[k]; h.t += dt; const u = Math.min(1, h.t / h.dur);
+      h.p.g.position.lerpVectors(h.from, h.to, u); h.p.g.position.y = .16 + Math.sin(u * Math.PI) * (h.dur > .6 ? 2.2 : .75);
+      const sq = u > .85 ? 1 - Math.sin((u - .85) / .15 * Math.PI) * .18 : 1; h.p.body.scale.set(2 - sq, sq, 2 - sq);
+      if (u >= 1){ h.p.body.scale.set(1, 1, 1); hops.splice(k, 1); h.res(); } }
+    D.forEach(d => { const a = d.anim; if (!a) return; a.t += dt; const u = Math.min(1, a.t / a.dur), e2 = 1 - Math.pow(1 - u, 3);
+      d.m.position.lerpVectors(a.st, a.end, e2); d.m.position.y = a.end.y + Math.abs(Math.sin(e2 * Math.PI * 2.2)) * (1 - e2) * 2.6;
+      d.m.quaternion.copy(a.fin).multiply(new THREE.Quaternion().setFromAxisAngle(a.ax, a.spin * Math.pow(1 - u, 2)));
+      if (u >= 1){ d.anim = null; a.res(); } });
+    for (let k = popAnim.length - 1; k >= 0; k--){ const q = popAnim[k]; q.t += dt; const u = Math.min(1, q.t / .5); q.m.scale.setScalar(u < 1 ? Math.max(.01, 1 + Math.sin(u * Math.PI) * .35 * (1 - u) + (u - 1) * 0) * ease(u) : 1); if (u >= 1) popAnim.splice(k, 1); }
+    for (let k = floaters.length - 1; k >= 0; k--){ const f = floaters[k]; f.t += dt; f.s.position.y += dt * .9; f.s.material.opacity = Math.max(0, 1 - Math.max(0, f.t - .8) / .8); if (f.t > 1.6){ scene.remove(f.s); f.s.material.map.dispose(); floaters.splice(k, 1); } }
+    for (let k = coins.length - 1; k >= 0; k--){ const c = coins[k]; c.t += dt; c.v.y -= 9 * dt; c.m.position.addScaledVector(c.v, dt); c.m.rotation.x += c.w * dt; if (c.m.position.y < .2){ c.m.position.y = .2; c.v.multiplyScalar(.4); c.v.y = Math.abs(c.v.y) * .5; }
+      if (c.t > 1.6){ scene.remove(c.m); coins.splice(k, 1); } }
+    const cp = P[turn]; if (cp && !over && started){ tileGlow.material.opacity = .55 + Math.sin(tt * 5) * .25; tileGlow.position.set(cp.g.position.x, .2, cp.g.position.z); } else tileGlow.material.opacity = 0;
+    P.forEach(p => { p.lb.material.opacity = p.out ? .35 : 1; });
+    camWant(); const kk = 1 - Math.exp(-dt * (camMode === 'follow' ? 3.2 : 2.2)); camP.lerp(wantP, kk); camL.lerp(wantL, kk);
+    if (camMode === 'over' && !started){ const a = tt * .12, r = Math.hypot(wantP.x, wantP.z); camP.set(Math.sin(a) * r, wantP.y, Math.cos(a) * r); }
+    cam.position.copy(camP); cam.lookAt(camL);
+    if (endAt && !over){ const s = Math.max(0, Math.round((endAt - Date.now()) / 1000)); $r('#tkTime').textContent = s ? '⏱ ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '⏱ Giliran akhir'; }
+    else $r('#tkTime').textContent = over ? '🏁 TAMAT' : '⏱ ∞';
+    R.render(scene, cam);
+  }
+  raf = requestAnimationFrame(frame);
+  paintPl(); TK_T.forEach((t, i) => paintTile(i));
+  window.TK_DBG = { P, OWN, get turn(){ return turn; }, get over(){ return over; }, get pend(){ return PEND; }, finish, close, endNow: () => { endFlag = true; } };
+  if (net.host){ pubCfg(); lobbyPaint(); } else loop();
+}
+
+/* ---------- TELEFON: sertai bilik Taikun Ilmu (alat kawalan 2D; papan 3D di projektor hos) ---------- */
+function tkJoin(code, T){
+  let cfg = null, seat = -1, st = null, n = 0, done = false;
+  const offs = [], ov = document.createElement('div'); ov.id = 'mpRoom'; ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#3A2A06,#07050A');
+  if (LVW.view) LVW.view.close();
+  document.body.appendChild(ov); lockBody();
+  const close = () => { done = true; offs.forEach(o => { try { o && o(); } catch(e){} }); ov.remove(); unlockBody(); };
+  const send = (id, v) => { T.set('a' + seat, { n: ++n + Date.now(), id, v }); vibrate(10); sfx('flip'); };
+  const btn = (a, label, cls) => '<button class="btn ' + (cls || 'btn-o') + ' clip-s w-full !py-3 mt-2 text-[15px] font-bold" ' + a + '>' + label + '</button>';
+  let lastKey = '';
+  function paint(){
+    if (done) return;
+    const top = '<div class="lbl" style="color:#FDE68A">🏙️ TAIKUN ILMU · BILIK ' + esc(code) + '</div>';
+    let h = '';
+    if (!cfg) h = '<div class="mt-4 text-muted">Mencari bilik…</div>';
+    else if (seat < 0) h = '<div class="font-bold text-[16px] mt-2">PILIH KUMPULAN KAMU</div><div class="grid gap-2 mt-3">' + cfg.seats.map((x, i) => x.bot ? '' :
+      '<button class="btn clip-s !py-3 text-[14px]" data-s="' + i + '"' + (x.j ? ' disabled style="opacity:.4;border-left:6px solid ' + x.col + '"' : ' style="border-left:6px solid ' + x.col + '"') + '>' + esc(x.n) + (x.j ? ' ✅' : '') + '</button>').join('') + '</div>';
+    else if (!cfg.started || !st) h = '<div class="mt-3 text-[16px] font-bold" style="color:' + cfg.seats[seat].col + '">' + esc(cfg.seats[seat].n) + '</div><div class="text-muted text-[13px] mt-2">✅ Sudah masuk. Menunggu hos menekan MULA…</div>';
+    else {
+      const me = st.pl[seat], my = Object.entries(st.own || {}).filter(([i, o]) => o[0] === seat);
+      h = '<div style="border-left:6px solid ' + me.col + ';text-align:left;padding-left:10px;margin-top:6px"><div class="font-bold text-[15px]">' + esc(me.n) + (me.j ? ' 🚪' : '') + (me.ps2 ? ' 🎫' : '') + '</div>' +
+        '<div class="num" style="font-size:30px;font-weight:900;color:#FDE68A">' + (me.o ? 'MUFLIS' : tkRM(me.c)) + '</div><div class="text-[12px] text-muted">Harta bersih ' + tkRM(me.w) + ' · ✅ ' + me.r + '/' + me.a + ' betul</div></div>' +
+        '<div class="text-[13px] mt-3" style="min-height:20px;color:#CBD5E1">' + esc(st.ban || '') + '</div>';
+      const pd = st.pd;
+      if (st.end){ const k = st.end.findIndex(x => x.n === me.n); h += '<div style="font-size:42px;margin-top:10px">' + (k === 0 ? '🏆' : '🏁') + '</div><div class="font-bold text-[18px]">' + (k === 0 ? 'KAMU TAIKUN ILMU!' : 'Tempat ke-' + (k + 1)) + '</div>' +
+        st.end.map((x, i) => '<div class="text-[13px] mt-1">' + (i + 1) + '. ' + esc(x.n) + ' — ' + tkRM(x.w) + '</div>').join(''); }
+      else if (st.rev && st.rev.p === seat){ h += '<div style="font-size:44px;margin-top:10px">' + (st.rev.ok ? '✅' : '❌') + '</div><div class="font-bold text-[18px]">' + (st.rev.ok ? 'BETUL!' : st.rev.v < 0 ? 'MASA TAMAT' : 'SALAH') + '</div>'; }
+      else if (pd && pd.p === seat){
+        const pr = pd.pr, id = pd.id;
+        if (pr.k === 'turn') h += btn('data-v="roll" data-id="' + id + '"', '🎲 BALING DADU') + (pr.b ? btn('data-v="build" data-id="' + id + '"', '🏗️ BINA', 'btn-c') : '');
+        else if (pr.k === 'buy'){ const t = TK_T[pr.i]; h += '<div class="panel clip-s p-3 mt-2"><div style="font-size:30px">' + t.ic + '</div><div class="font-bold">' + esc(t.n) + '</div><div class="text-[13px]">Harga <b style="color:#FDE68A">' + tkRM(t.p) + '</b> · jawab betul untuk membeli</div></div>' +
+          (me.c >= t.p ? btn('data-v="1" data-id="' + id + '"', '🧠 JAWAB & BELI') : '') + btn('data-v="0" data-id="' + id + '"', 'Langkau', 'btn'); }
+        else if (pr.k === 'build') h += '<div class="font-bold mt-2">🏗️ Pilih tanah untuk dibina</div>' + pr.lots.map(l => btn('data-v="' + l.i + '" data-id="' + id + '"' + (me.c >= l.cost ? '' : ' disabled'), TK_T[l.i].ic + ' ' + esc(TK_T[l.i].n) + ' · ' + (l.lv === 3 ? '🏨' : '🏠' + (l.lv + 1)) + ' · ' + tkRM(l.cost), 'btn')).join('') + btn('data-v="-1" data-id="' + id + '"', 'Batal', 'btn');
+        else if (pr.k === 'jail') h += '<div class="font-bold mt-2">🚪 Bilik Disiplin</div>' + btn('data-v="q" data-id="' + id + '"', '🧠 Jawab soalan — betul = bebas') + (me.ps2 ? btn('data-v="pass" data-id="' + id + '"', '🎫 Guna Kad Pas', 'btn-c') : '') + btn('data-v="pay" data-id="' + id + '"' + (me.c >= 50 ? '' : ' disabled'), '💸 Bayar RM50', 'btn');
+        else if (pr.k === 'q') h += '<div class="text-[12px] mt-2" style="color:#93C5FD;font-weight:800">🧠 ' + esc(pr.why || '') + '</div><div class="font-bold text-[17px] mt-1 text-left">' + esc(pr.q) + '</div>' +
+          pr.c.map((c, k) => '<button class="btn clip-s w-full !py-3 mt-2 text-[14px] text-left" data-v="' + k + '" data-id="' + id + '">' + 'ABCD'[k] + '. ' + esc(c) + '</button>').join('') + '<div class="text-[12px] text-muted mt-2" id="tjT"></div>';
+      } else if (pd){ h += '<div class="text-muted text-[13px] mt-4">⏳ Giliran ' + esc(st.pl[pd.p].n) + '…</div>'; }
+      if (my.length) h += '<div class="text-left mt-4"><div class="lbl">HARTA KAMU</div>' + my.map(([i, o]) => '<div class="text-[13px] mt-1">' + TK_T[i].ic + ' ' + esc(TK_T[i].n) + ' ' + (o[1] >= 4 ? '🏨' : '🏠'.repeat(o[1])) + '</div>').join('') + '</div>';
+    }
+    const key = h; if (key === lastKey) return; lastKey = key;
+    ov.innerHTML = '<div class="panel clip p-5 w-full text-center" style="max-width:480px;border-color:#FACC15;max-height:94vh;overflow:auto">' + top + h + '<button class="btn clip-s w-full !py-2 mt-4" data-x="1">Keluar</button></div>';
+  }
+  offs.push(T.on('tk', v => { if (!v || done) return; if (v.closed){ toast('Bilik ditutup oleh hos.', null, true); return close(); } cfg = v; paint(); }));
+  offs.push(T.on('tks', v => { if (!v || done) return; st = v; paint(); }));
+  ov.addEventListener('click', e => {
+    if (e.target.closest('[data-x]')) return close();
+    const s = e.target.closest('[data-s]'); if (s && seat < 0 && cfg){ seat = +s.dataset.s; T.set('j' + seat, { t: Date.now() }); paint(); return; }
+    const b = e.target.closest('[data-v][data-id]'); if (!b || b.disabled) return;
+    const v = b.dataset.v; send(+b.dataset.id, /^-?\d+$/.test(v) ? +v : v); b.disabled = true; b.style.opacity = .6;
+  });
+  paint();
+}
+
 /* ============ TAB GAME ============
    Tiga permainan, semuanya tanpa aset untuk dimuat naik: Kad Koleksi
    (dilukis oleh app), Larian Ilmu (3D) dan Sekolah Berhantu (3D).     */
 function viewGame(){
-  const g = ['cards','run','escape','stor','klinik'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
+  const g = ['cards','run','escape','stor','klinik','taikun'].indexOf(arenaUi().game) >= 0 ? arenaUi().game : 'cards';
   const tab = (k, ic, t) => '<button class="btn clip-s flex-1 !py-2 text-[12px] '+(g===k?'btn-o':'')+'" data-act="game-mode" data-id="'+k+'"><i class="fa-solid '+ic+'"></i> '+t+'</button>';
-  const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + tab('klinik','fa-stethoscope','KLINIK') + '</div>';
+  const tabs = '<div class="grid grid-cols-3 gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + tab('klinik','fa-stethoscope','KLINIK') + tab('taikun','fa-city','TAIKUN') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
   const share = MURID ? '' : '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="murid-share"><i class="fa-solid fa-mobile-screen-button text-cyan"></i> Kongsi Game kepada Murid' + (S.murid && S.murid.on ? ' <span class="text-[#4ADE80]">· aktif</span>' : '') + '</button>';
   return tabs + share + todayQNotice() +                                    // kumpulan & tetapan dipilih dalam menu game
-    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : g === 'klinik' ? viewKlinik() : viewCards()) +
+    (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : g === 'klinik' ? viewKlinik() : g === 'taikun' ? viewTaikun() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
 }
@@ -15231,6 +15960,7 @@ const muridAcc = v => Math.min(1, (+v.r || 0) / v.n * ((v.x && KM_LVL_X[v.x.lvl]
 function muridResult(game, right, asked, extra){
   if (!asked || !MURID || !MURID.me) return 0;
   if (game === 'tangga') extra = Object.assign({}, extra, { lvl: komboLb().lvl || 'sederhana' });
+  if (game === 'taikun') extra = Object.assign({}, extra, { lvl: tkCfg().lvl || 'sederhana' });
   if (MURID.pack && MURID.pack.awam){ setTimeout(() => toast('🌍 Mod Awam: main saje-saje, markah tidak direkod.'), 900); return 0; }
   const dayKey = MURID.me.i + '|' + (S.ui.activeSubjectId || '') + '|' + todayKey();
   let days = {}; try { days = JSON.parse(localStorage.getItem('rk_murid_day') || '{}'); } catch(e){}

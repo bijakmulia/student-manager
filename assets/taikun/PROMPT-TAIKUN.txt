@@ -1,0 +1,12 @@
+ASET GAMBAR: TAIKUN ILMU (game papan hartanah 3D EduRank)
+Simpan setiap gambar dalam folder ini (assets/taikun) dengan nama di bawah (.png atau .jpg).
+auto-push akan kecilkan saiz & tukar ke .jpg secara automatik. Tanpa gambar, game guna lukisan app sendiri.
+
+### logo_taikun.png
+Game logo icon for a kids educational property board game called "TAIKUN ILMU". A cheerful cartoon city of colourful school-themed buildings (library, science lab with flask on the roof, small houses and one tall red hotel) sitting on top of a big open book, a golden coin with a star and two dice in front. Bright saturated colours, glossy 3D cartoon style like a mobile game icon, rounded shapes, soft lighting. Plain dark navy background. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+### tengah_papan.png
+Top-down view of the centre of a board game, square artwork. A lush green park plaza with a small round fountain in the middle, curving paths, tiny trees and flower beds, little cartoon school buildings around the edges, a big golden star badge. Bright, friendly 3D cartoon style viewed straight from above, even lighting, no shadows from the side. Leave the centre fairly calm and simple. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+### bg_taikun.png
+Background illustration for a kids board game menu screen. A colourful 3D cartoon board game on a wooden table seen from a low angle: tiny houses and a red hotel on the squares, two white dice mid-roll, golden coins scattered, a cute little character token jumping between squares, warm cosy lighting, soft depth of field. No text, no letters, no watermark. Landscape 16:10 image (1600x1000).
