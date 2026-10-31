@@ -8342,6 +8342,9 @@ const KL_ASSETS = [
 ];
 /* zon jerawat pada gambar muka_l / muka_p (% kanvas) — sama dengan tools/template/templat_muka.png */
 const KL_MUKA = [[42, 31], [58, 29], [31, 59], [69, 59], [35, 70], [65, 70], [50, 85]];
+/* kedudukan sebenar pada gambar yang dijana (AI tidak ikut templat dengan tepat): jerawat atas kulit, bukan rambut/tudung/leher; d = kawasan kotor (inset) */
+const KL_MUKA_ART = { l: { s: [[42.5, 36], [57.5, 34], [33, 59], [67, 59], [35, 70], [65, 70], [50, 77.5]], d: '23% 25% 20% 25%' },
+  p: { s: [[40, 31], [56, 29], [33.5, 57], [64.5, 57], [36, 68.5], [61.5, 68.5], [48, 72]], d: '21% 27% 25% 26%' } };
 function klProbe(){
   if (KL_PROBED) return KL_PROBED;
   KL_PROBED = fetch('assets/klinik/senarai.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {})
@@ -8501,9 +8504,18 @@ function klStyle(){
   '.kl-msg{min-height:22px;font-weight:800;font-size:14px;color:#FDE68A;margin:6px 0}' +
   '.kl-face{position:relative;width:min(100%,330px);aspect-ratio:1;margin:4px auto;touch-action:none;cursor:pointer}.kl-face svg{width:100%;height:100%}' +
   '.kl-face img{width:100%;height:100%;display:block;pointer-events:none}.kl-face.art .dirt{inset:18% 22% 10%;border-radius:50%}.kl-face.art .kl-spot{width:7%;height:7%;margin:-3.5% 0 0 -3.5%}.kl-face .dirt{position:absolute;inset:8% 14% 6%;border-radius:45%;background:radial-gradient(circle,#A16207aa,#78350F88);pointer-events:none;transition:opacity .15s}' +
-  '.kl-spot{position:absolute;width:9%;height:9%;margin:-4.5% 0 0 -4.5%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FCA5A5,#DC2626 60%,#991B1B);border:0;box-shadow:0 0 0 3px #FEE2E255;cursor:pointer;transition:all .3s}' +
+  '.kl-spot{position:absolute;width:9%;height:9%;margin:-4.5% 0 0 -4.5%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FCA5A5,#DC2626 60%,#991B1B);border:0;box-shadow:0 0 0 3px #FEE2E255;pointer-events:none;transition:all .3s}' +
   '.kl-spot.done{background:radial-gradient(circle,#FDF2F8,#F9A8D4);transform:scale(.6);box-shadow:none}.kl-spot.bad{transform:scale(1.5);background:radial-gradient(circle,#B91C1C,#7F1D1D)}' +
-  '.kl-tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.kl-tools button{background:#1E293B;border:2px solid #334155;border-radius:12px;color:#fff;font-weight:800;padding:8px 12px;font-size:14px;cursor:pointer}.kl-tools button.on{border-color:#34D399;background:#134E4A}' +
+  '.kl-acne{display:flex;gap:12px;align-items:center;justify-content:center}.kl-rail{display:flex;flex-direction:column;gap:10px;flex:none}' +
+  '.kl-rail button{width:60px;height:60px;border-radius:18px;font-size:32px;line-height:1;background:#1E293B;border:2px solid #334155;cursor:pointer;display:flex;align-items:center;justify-content:center}.kl-rail button.on{border-color:#34D399;background:#134E4A;box-shadow:0 0 0 3px #34D39955}' +
+  '.kl-acne .kl-face{width:min(calc(100% - 76px),330px,58vh);margin:0;flex:none}' +
+  '.kl-foam{position:absolute;inset:0;pointer-events:none}.kl-foam i{position:absolute;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#fff 0 30%,#E0F2FE 60%,rgba(186,230,253,.7));box-shadow:inset -2px -2px 4px rgba(14,165,233,.25);animation:klBub .25s;transition:opacity .8s,transform .8s}.kl-foam.rinse i{opacity:0;transform:translate(-50%,-50%) scale(1.7)}' +
+  '@keyframes klBub{from{transform:translate(-50%,-50%) scale(.2)}to{transform:translate(-50%,-50%) scale(1)}}' +
+  '.kl-tool{position:absolute;z-index:6;font-size:44px;line-height:1;pointer-events:none;transform:translate(-30%,-75%) rotate(-12deg);display:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}' +
+  '.kl-spot.soapy{filter:saturate(.4) brightness(1.25)}' +
+  '.kl-cream{position:absolute;width:11%;height:11%;margin:-5.5% 0 0 -5.5%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0 45%,#F8FAFC 60%,rgba(255,255,255,0) 72%);animation:klCream .9s forwards}' +
+  '@keyframes klCream{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.15);opacity:1}100%{transform:scale(.9);opacity:0}}' +
+  '.kl-splat{position:absolute;width:16%;height:16%;margin:-8% 0 0 -8%;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#B91C1C 0 30%,rgba(220,38,38,.6) 45%,rgba(220,38,38,0) 70%);animation:klCream .9s forwards}' +
   '.kl-slots{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.kl-slots div{background:#0B1220;border:2px dashed #334155;border-radius:10px;padding:7px 10px;font-weight:700;font-size:14px;min-height:20px}.kl-slots div.f{border-style:solid;border-color:#4ADE80;background:#14532D;animation:klPop .3s}' +
   '.kl-shake{animation:klSh .35s}@keyframes klSh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}' +
   '.kl-mouth{position:relative;width:min(100%,360px);margin:6px auto;touch-action:none}.kl-mouth svg{width:100%}.kl-brush{position:absolute;font-size:40px;pointer-events:none;transform:translate(-30%,-60%) rotate(-20deg);display:none}' +
@@ -8513,7 +8525,7 @@ function klStyle(){
   '.kl-end{position:absolute;inset:0;z-index:5;background:rgba(2,6,23,.82);display:flex;align-items:center;justify-content:center;padding:16px}.kl-end .pn{background:#0F172A;border:2px solid #34D399;border-radius:18px;padding:20px;max-width:560px;width:100%;text-align:center}' +
   '.kl-end .big{font-size:28px;font-weight:900;color:#34D399}.kl-end .gr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.kl-end .gr div{background:#1E293B;border-radius:10px;padding:8px;font-size:11px;color:#94A3B8}.kl-end .gr b{display:block;font-size:20px;color:#fff}' +
   '.kl-end .bt{display:flex;gap:8px;justify-content:center}.kl-end .bt button{border:0;border-radius:12px;padding:11px 20px;font-weight:900;cursor:pointer;background:#334155;color:#fff;font-size:15px}.kl-end .bt .o{background:#34D399;color:#022C22}' +
-  '@media (max-aspect-ratio:1/1){.kl-main{flex-direction:column}.kl-scene{flex:0 0 40%}.kl-pat{height:66%}.kl-bub{top:11%;font-size:13px;padding:7px 10px}}';
+  '@media (max-aspect-ratio:1/1){.kl-acne .kl-face{width:min(calc(100% - 76px),34vh)}.kl-main{flex-direction:column}.kl-scene{flex:0 0 40%}.kl-pat{height:66%}.kl-bub{top:11%;font-size:13px;padding:7px 10px}}';
   document.head.appendChild(s);
 }
 async function klStart(){
@@ -8590,28 +8602,55 @@ function klRun(team){
   }
   function treat(){ say(''); const g = P.c.t === 'e' ? 'dialog' : P.c.game; ({ jerawat: mgAcne, pilih: () => mgPick(P.c.good, P.c.bad, 'LANGKAH 2 · RAWATAN', P.c.ptitle || (P.c.id === 'sarapan' ? 'Pilih sarapan sihat untuk ' + esc(P.nm) : 'Pilih SEMUA cara rawatan yang selamat'), pharmacy), berus: mgBrush, dialog: mgTalk })[g](); }
   const mgDone = (pts, maxp) => { P.max += maxp; P.pts += pts; add(pts); sfx('myth'); pat('gembira'); talk('Terima kasih, doktor! Rasa lebih baik.'); setTimeout(() => { if (!over) pharmacy(); }, 1300); };
-  /* mini-game: jerawat — cuci muka, kemudian sapu krim pada setiap jerawat (jangan picit!) */
+  /* mini-game: jerawat — pilih alat (emoji di tepi muka), SERET alat atas muka:
+     🧼 gosok → buih sabun, kotoran hilang; 🧴 sapu atas setiap jerawat → krim, jerawat sembuh;
+     🤏 picit → jerawat pecah + amaran. Langkah salah = bunyi amaran (kl_salah). */
   function mgAcne(){
-    const art = KL_HAVE.get('muka_' + (P.g === 'P' ? 'p' : 'l')), spots = art ? KL_MUKA : [[30, 46], [70, 44], [44, 30], [60, 62], [34, 64], [66, 28], [50, 52]];   /* gambar muka ikut templat: jerawat di zon templat */
-    let tool = 'cuci', clean = 0, done = 0, mis = 0;
+    const art = KL_HAVE.get('muka_' + (P.g === 'P' ? 'p' : 'l')), ma = art && KL_MUKA_ART[P.g === 'P' ? 'p' : 'l'], spots = art ? (ma ? ma.s : KL_MUKA) : [[30, 46], [70, 44], [44, 30], [60, 62], [34, 64], [66, 28], [50, 52]];
+    const TOOLS = { cuci: '🧼', krim: '🧴', picit: '🤏' };
+    let tool = 'cuci', clean = 0, done = 0, mis = 0, active = false, last = null, hit = new Set(), warnAt = 0, fin = false;
     pan().innerHTML = head('LANGKAH 2 · RAWATAN', 'Rawat jerawat ' + esc(P.nm)) +
-      '<div class="kl-tools"><button data-t="cuci" class="on">🧼 Pencuci muka</button><button data-t="krim">🧴 Krim jerawat</button><button data-t="picit">🤏 Picit</button></div><div class="kl-msg" id="klMsg">Gosok muka dengan pencuci sehingga bersih.</div>' +
-      '<div class="kl-face' + (art ? ' art' : '') + '" id="klFace">' + (art ? '<img src="' + art + '" alt="" draggable="false">' : klFace(P.g)) + '<div class="dirt" id="klDirt"></div>' + spots.map(([x, y], i) => '<button class="kl-spot" data-s="' + i + '" style="left:' + x + '%;top:' + y + '%"></button>').join('') + '</div>';
-    const m = t => $k('#klMsg').innerHTML = t, face = $k('#klFace');
-    pan().querySelector('.kl-tools').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; tool = b.dataset.t; pan().querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === b)); sfx('flip');
-      m(tool === 'cuci' ? 'Gosok muka dengan pencuci.' : tool === 'krim' ? 'Ketik setiap jerawat untuk sapu krim.' : 'Hmm… betul ke nak picit?'); };
-    let last = null;
-    face.addEventListener('pointerdown', e => { last = [e.clientX, e.clientY]; face.setPointerCapture && face.setPointerCapture(e.pointerId); });
-    face.addEventListener('pointermove', e => { if (!last || tool !== 'cuci' || clean >= 1) return; const d = Math.hypot(e.clientX - last[0], e.clientY - last[1]); last = [e.clientX, e.clientY];
-      clean = Math.min(1, clean + d / 1400); $k('#klDirt').style.opacity = 1 - clean;
-      if (clean >= 1){ sfx('hi'); m('✨ Muka bersih! Sekarang pilih <b>🧴 Krim jerawat</b> dan ketik setiap jerawat.'); } });
-    face.addEventListener('pointerup', () => last = null);
-    face.addEventListener('click', e => { const s = e.target.closest('[data-s]'); if (!s || s.classList.contains('done')) return;
-      if (tool === 'picit'){ mis++; s.classList.add('bad'); setTimeout(() => s.classList.remove('bad'), 700); sfx('low'); return m('❌ Jangan picit! Boleh meninggalkan parut dan menyebabkan jangkitan.'); }
-      if (tool === 'cuci') return m('Gosok seluruh muka dahulu, kemudian guna krim.');
-      if (clean < 1) return m('Cuci muka sampai bersih dahulu sebelum sapu krim.');
-      s.classList.add('done'); done++; sfx('flip');
-      if (done === spots.length){ m('✅ Semua jerawat dirawat!'); mgDone(Math.max(10, 40 - mis * 10), 40); } });
+      '<div class="kl-msg" id="klMsg">Seret 🧼 dan gosok seluruh muka.</div>' +
+      '<div class="kl-acne"><div class="kl-rail">' + Object.keys(TOOLS).map(k => '<button data-t="' + k + '"' + (k === tool ? ' class="on"' : '') + ' aria-label="' + k + '">' + TOOLS[k] + '</button>').join('') + '</div>' +
+      '<div class="kl-face' + (art ? ' art' : '') + '" id="klFace">' + (art ? '<img src="' + art + '" alt="" draggable="false">' : klFace(P.g)) +
+        '<div class="dirt" id="klDirt"' + (ma ? ' style="inset:' + ma.d + '"' : '') + '></div><div class="kl-foam" id="klFoam"></div>' +
+        spots.map(([x, y], i) => '<i class="kl-spot" data-s="' + i + '" style="left:' + x + '%;top:' + y + '%"></i>').join('') +
+        '<div class="kl-tool" id="klTool">' + TOOLS[tool] + '</div></div></div>';
+    const m = t => $k('#klMsg').innerHTML = t, face = $k('#klFace'), foam = $k('#klFoam'), cur = $k('#klTool');
+    const warn = t => { m('❌ ' + t); if (performance.now() - warnAt > 700){ warnAt = performance.now(); snd('kl_salah', 'low'); } };
+    pan().querySelector('.kl-rail').onclick = e => { const bt = e.target.closest('[data-t]'); if (!bt) return; tool = bt.dataset.t; cur.textContent = TOOLS[tool];
+      pan().querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === bt)); sfx('flip');
+      m(tool === 'cuci' ? 'Gosok muka dengan pencuci.' : tool === 'krim' ? 'Sapu krim atas setiap jerawat.' : 'Hmm… betul ke nak picit?'); };
+    const at = e => { const r = face.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 100]; };
+    const spotAt = (x, y) => [...face.querySelectorAll('.kl-spot')].find(el => !el.classList.contains('done') && Math.hypot(parseFloat(el.style.left) - x, parseFloat(el.style.top) - y) < 6.5);
+    const act = e => {
+      const [x, y] = at(e), sp = spotAt(x, y);
+      if (tool === 'cuci'){
+        if (clean >= 1) return m('Muka dah bersih — pilih 🧴 dan sapu krim.');
+        const d = last ? Math.hypot(e.clientX - last[0], e.clientY - last[1]) : 0;
+        if (!last || d > 14){ last = [e.clientX, e.clientY];
+          if (foam.children.length < 70){ const bb = document.createElement('i'), z = 5 + Math.random() * 6; bb.style.cssText = 'left:' + x + '%;top:' + y + '%;width:' + z + '%;height:' + z + '%'; foam.appendChild(bb); }
+          face.querySelectorAll('.kl-spot').forEach(el => { if (Math.hypot(parseFloat(el.style.left) - x, parseFloat(el.style.top) - y) < 12) el.classList.add('soapy'); });
+          clean = Math.min(1, clean + d / 1100); $k('#klDirt').style.opacity = 1 - clean;
+          if (clean >= 1){ foam.classList.add('rinse'); setTimeout(() => { foam.innerHTML = ''; foam.classList.remove('rinse'); }, 900);
+            face.querySelectorAll('.kl-spot.soapy').forEach(el => el.classList.remove('soapy')); sfx('hi'); m('✨ Muka bersih! Pilih 🧴 dan sapu krim atas setiap jerawat.'); } }
+        return;
+      }
+      if (!sp || hit.has(sp)) return;
+      hit.add(sp);
+      if (tool === 'picit'){ mis++; sp.classList.add('bad'); const sx = document.createElement('i'); sx.className = 'kl-splat'; sx.style.cssText = sp.style.cssText; face.appendChild(sx);
+        setTimeout(() => { sp.classList.remove('bad'); sx.remove(); }, 900); return warn('Jangan picit! Boleh tinggalkan parut dan jangkitan.'); }
+      if (clean < 1) return warn('Cuci muka sampai bersih dahulu sebelum sapu krim.');
+      const cr = document.createElement('i'); cr.className = 'kl-cream'; cr.style.cssText = sp.style.cssText; face.appendChild(cr);
+      sp.classList.add('done'); done++; sfx('flip'); setTimeout(() => cr.remove(), 950);
+      if (done === spots.length && !fin){ fin = true; m('✅ Semua jerawat dirawat!'); setTimeout(() => mgDone(Math.max(10, 40 - mis * 10), 40), 500); }
+    };
+    const showCur = e => { const [x, y] = at(e); cur.style.display = 'block'; cur.style.left = x + '%'; cur.style.top = y + '%'; };
+    face.addEventListener('pointerdown', e => { if (fin) return; active = true; last = null; hit = new Set(); try { face.setPointerCapture(e.pointerId); } catch(er){} showCur(e); act(e); });
+    face.addEventListener('pointermove', e => { showCur(e); if (active && !fin) act(e); });
+    const up = () => { active = false; last = null; };
+    face.addEventListener('pointerup', up); face.addEventListener('pointercancel', up);
+    face.addEventListener('pointerleave', () => { if (!active) cur.style.display = 'none'; });
   }
   /* pilih semua yang betul (rawatan senggugut, rutin mandi & tidur, sarapan sihat, siapa boleh bantu) */
   function mgPick(good, bad, step, title, then, isHelp){
