@@ -697,6 +697,7 @@ function sanitizeBadges(){
 /* ---------- PERSISTENCE ---------- */
 let saveTimer = null;
 function save(now){
+  if (MURID) return;                                   /* versi murid: tiada apa disimpan pada peranti */
   clearTimeout(saveTimer);
   const run = () => {
     S.rev = Date.now(); S.clientId = CLIENT_ID;
@@ -704,6 +705,7 @@ function save(now){
     catch(e){ toast('Storan penuh. Eksport JSON & padam gambar lama.', null, true); }
     fbPush();
     if (S.share && S.share.on && FB.on){ clearTimeout(shareTimer); shareTimer = setTimeout(()=>publishShare().catch(()=>{}), 2500); }
+    if (S.murid && S.murid.on && FB.on){ clearTimeout(muridTimer); muridTimer = setTimeout(()=>publishMurid().catch(()=>{}), 4000); }
   };
   if (now) run(); else saveTimer = setTimeout(run, 300);
 }
@@ -762,6 +764,7 @@ function migrate(d){
 
 /* ---------- FIREBASE (pilihan) ---------- */
 const FB = { on:false, app:null, db:null, st:null, mod:{}, cfg:null, busy:false };
+let MURID = null, MURID_CFG = null;                 /* versi murid: pakej dari guru (baca sahaja) & konfigurasi Firebase untuk bilik bermain */
 function fbCfgGet(){ try { return JSON.parse(localStorage.getItem(LS_FB)||'null'); } catch(e){ return null; } }
 async function fbInit(){
   const cfg = fbCfgGet();
@@ -1003,6 +1006,7 @@ function renderTab(){
   else if (t==='arena') m.innerHTML = viewGame();
   else if (t==='sim') m.innerHTML = viewSim();
   else if (t==='report') m.innerHTML = viewReport();
+  else if (t==='msc') m.innerHTML = muridShowcase();
   else m.innerHTML = viewSettings();
   if (typeof LOBBY !== 'undefined' && LOBBY && LOBBY.repaint) LOBBY.repaint();     // menu game terbuka: segarkan (cth. selepas buka pack)
 }
@@ -1237,7 +1241,20 @@ function commitForceTP(ids, tp, ms){
   return ids.length;
 }
 
-/* ---------- Daftar pelajar (pukal) ---------- */
+/* ---------- Daftar pelajar (pukal) ----------
+   Tampal senarai dari Excel: setiap baris = satu murid. Nombor IC (YYMMDD-PB-####,
+   dengan atau tanpa sengkang) dikesan automatik; nama = sel lain yang berhuruf.
+   Hanya 4 digit akhir IC disimpan (s.ic4) sebagai PIN log masuk versi murid. */
+const IC_RE = /(\d{6})[-\s]?(\d{2})[-\s]?(\d{4})/;
+function regParse(text){
+  return text.split(/\r?\n/).map(line => {
+    const m = line.match(IC_RE), ic4 = m ? m[3] : '';
+    const cells = (m ? line.replace(m[0], '\t') : line).split(/\t|;|,(?=\s*\S)/).map(x => x.replace(/^\s*\d+[.)]?\s+/, '').replace(/\s+/g, ' ').trim().replace(/[,;:]+$/, '').trim()).filter(x => /[A-Za-z\u00C0-\u024F]/.test(x));
+    const name = cells.sort((x, y) => y.replace(/[^A-Za-z]/g, '').length - x.replace(/[^A-Za-z]/g, '').length)[0] || '';
+    return { name, ic4 };
+  }).filter(r => r.name);
+}
+const normName = n => String(n || '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 function openRegister(){
   if (!S.classes.length) return toast('Cipta kelas dahulu di Tetapan.', null, true);
   const id = openModal({
@@ -1245,27 +1262,38 @@ function openRegister(){
     body:
       '<label class="lbl">KELAS</label>' +
       '<select id="regClass" class="fld clip-s mt-1">'+baseClasses().map(c=>'<option value="'+c.id+'"'+(c.id===S.ui.activeClassId?' selected':'')+'>'+esc(c.name)+'</option>').join('')+'</select>' +
-      '<label class="lbl mt-3 block">NAMA PELAJAR — 1 BARIS 1 NAMA</label>' +
-      '<textarea id="regNames" rows="8" class="fld clip-s mt-1" placeholder="Ahmad bin Ali&#10;Siti Nurhaliza&#10;..."></textarea>' +
-      '<div id="regPrev" class="text-[12px] text-cyan mt-2">0 pelajar akan didaftarkan.</div>',
+      '<label class="lbl mt-3 block">NAMA PELAJAR — 1 BARIS 1 NAMA (boleh tampal terus dari Excel, dengan No. IC)</label>' +
+      '<textarea id="regNames" rows="8" class="fld clip-s mt-1" placeholder="Ahmad bin Ali&#10;Siti Nurhaliza    080512-10-1234&#10;..."></textarea>' +
+      '<div id="regPrev" class="text-[12px] text-cyan mt-2">0 pelajar akan didaftarkan.</div>' +
+      '<div id="regIC" style="display:none" class="panel clip-s p-3 mt-2"><div class="text-[12px] leading-relaxed"><b class="text-[#4ADE80]">🪪 No. IC dikesan!</b> <span id="regICn"></span><br><span class="text-muted text-[11px]">Hanya <b>4 digit akhir IC</b> disimpan sebagai PIN log masuk versi murid. Nama yang sudah wujud dalam kelas dikemas kini; nama baharu didaftarkan.</span></div>' +
+        '<button class="btn btn-c clip-s w-full mt-2 !py-2" data-act="reg-ic"><i class="fa-solid fa-id-card"></i> Apply IC</button></div>',
     footer:'<button class="btn clip-s flex-1" data-close="1">Batal</button><button class="btn btn-o clip-s flex-1" data-act="reg-save">Daftar</button>'
   });
   const bd = $('[data-modal="'+id+'"]');
-  const ta = $('#regNames', bd), sel = $('#regClass', bd), pv = $('#regPrev', bd);
+  const ta = $('#regNames', bd), sel = $('#regClass', bd), pv = $('#regPrev', bd), icBox = $('#regIC', bd);
   const upd = () => {
-    const n = ta.value.split('\n').map(x=>x.trim()).filter(Boolean).length;
-    pv.textContent = n + ' pelajar akan didaftarkan ke ' + (sel.options[sel.selectedIndex]||{}).text;
+    const rows = regParse(ta.value), nIc = rows.filter(r => r.ic4).length;
+    pv.textContent = rows.length + ' pelajar akan didaftarkan ke ' + (sel.options[sel.selectedIndex]||{}).text;
+    icBox.style.display = nIc ? '' : 'none';
+    if (nIc){ const cid = sel.value, have = new Set(S.students.filter(x => x.classId === cid).map(x => normName(x.name)));
+      const ada = rows.filter(r => r.ic4 && have.has(normName(r.name))).length;
+      $('#regICn', bd).textContent = nIc + ' IC untuk ' + rows.length + ' nama · ' + ada + ' nama sudah ada dalam kelas, ' + (rows.length - ada) + ' baharu.'; }
   };
   ta.addEventListener('input', upd); sel.addEventListener('change', upd); upd();
   bd.addEventListener('click', e => {
-    if (!e.target.closest('[data-act="reg-save"]')) return;
-    const names = ta.value.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-    if (!names.length) return toast('Masukkan sekurang-kurangnya 1 nama.', null, true);
-    const cid = sel.value;
-    names.forEach(n => S.students.push({ id:uid('s'), name:n, classId:cid, fields:{}, badges:[], bannerUrl:'', iconUrl:'', createdAt:Date.now() }));
+    const ic = e.target.closest('[data-act="reg-ic"]');
+    if (!e.target.closest('[data-act="reg-save"]') && !ic) return;
+    const rows = regParse(ta.value);
+    if (!rows.length) return toast('Masukkan sekurang-kurangnya 1 nama.', null, true);
+    const cid = sel.value; let upd2 = 0, add = 0;
+    const mk = r => { S.students.push({ id:uid('s'), name:r.name, classId:cid, fields:{}, badges:[], bannerUrl:'', iconUrl:'', createdAt:Date.now(), ic4: r.ic4 || undefined }); add++; };
+    if (ic){                                              /* Apply IC: padankan nama sedia ada, daftar yang belum ada */
+      rows.forEach(r => { const ex = S.students.find(x => x.classId === cid && normName(x.name) === normName(r.name));
+        if (ex){ if (r.ic4){ ex.ic4 = r.ic4; upd2++; } } else mk(r); });
+    } else rows.forEach(mk);
     if (S.ui.activeClassId !== cid){ S.ui.activeClassId = cid; selReset(); }
     save(true); closeModal(id); renderAll();
-    toast(names.length + ' pelajar didaftarkan.');
+    toast(ic ? '🪪 ' + upd2 + ' PIN IC dikemas kini' + (add ? ', ' + add + ' pelajar baharu didaftarkan' : '') + '.' : add + ' pelajar didaftarkan.');
   });
 }
 
@@ -6684,6 +6712,7 @@ async function komboStart(seats, opt){
 const KM_APP = {};
 async function kmNet(code, cfg){
   let d = null, db = null;
+  if (!cfg && MURID_CFG) cfg = MURID_CFG;
   if (FB.on && FB.mod.d){ d = FB.mod.d; db = FB.db; }
   else if (cfg && cfg.databaseURL){
     try {
@@ -8312,7 +8341,8 @@ function viewGame(){
   const tabs = '<div class="flex gap-2 mt-3">' + tab('cards','fa-layer-group','KAD') + tab('run','fa-person-running','LARIAN') + tab('escape','fa-ghost','SERAM') + tab('stor','fa-store','STOR') + tab('klinik','fa-stethoscope','KLINIK') + '</div>';
   if (!ctxOk()) return tabs + emptyState('fa-gamepad','Konteks Belum Dipilih','Pilih Kelas dan Subjek di bahagian atas. Soalan diambil dari bank soalan subjek itu dan markah game direkod sebagai TP.');
   if (!classTeams().length) return tabs + teamPanelHtml();          // semua game berkumpulan: cipta kumpulan dahulu
-  return tabs + todayQNotice() +                                    // kumpulan & tetapan dipilih dalam menu game
+  const share = MURID ? '' : '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="murid-share"><i class="fa-solid fa-mobile-screen-button text-cyan"></i> Kongsi Game kepada Murid' + (S.murid && S.murid.on ? ' <span class="text-[#4ADE80]">· aktif</span>' : '') + '</button>';
+  return tabs + share + todayQNotice() +                                    // kumpulan & tetapan dipilih dalam menu game
     (g === 'run' ? viewRun() : g === 'escape' ? viewEscape() : g === 'stor' ? viewStor() : g === 'klinik' ? viewKlinik() : viewCards()) +
     '<button class="btn clip-s w-full mt-3 text-[12px]" data-act="qbank"><i class="fa-solid fa-brain text-cyan"></i> Bank Soalan ' +
       (S.ui.activeSubjectId ? '· ' + esc(subjName(S.ui.activeSubjectId)) + ' (' + qBank(S.ui.activeSubjectId).length + ')' : '') + '</button>';
@@ -13994,6 +14024,8 @@ const ACTS = {
   'game-mode': d => { arenaUi().game = d.id; save(); renderTab(); },
   'lobby': d => gameLobby(d.id),
   'km-join': () => komboJoinAsk(),
+  'murid-share': () => muridShareModal(),
+  'murid-out': () => muridLogout(),
   'sub-link': d => subLink(d.id),
   'lesson-pick': () => lessonPick(),
   'rpt-open': () => rptModal(),
@@ -14222,13 +14254,213 @@ function installGate(){
   window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); window.__bip = ev; showInst(ev); });
 }
 
+/* ============ VERSI MURID (KONGSI GAME KEPADA MURID) ============
+   Guru menerbit PAKEJ baca-sahaja ke ipbd_share/m_<hash(token|kod sekolah)>:
+   kelas, subjek, nama murid, kumpulan, bank soalan, tetapan game & PIN (hash).
+   Tanpa kod sekolah, laluan pakej tidak boleh diteka. Murid memilih nama;
+   jika guru menetapkan PIN (4 digit akhir IC), PIN diperlukan. Peranti murid
+   tidak menyimpan apa-apa ke data guru; bilik bermain guna Firebase guru.   */
+let muridTimer = null, muridBusy = false;
+async function sha(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, '0')).join(''); }
+const muridPath = async (t, kod) => 'm_' + (await sha(t + '|' + String(kod).toUpperCase().trim())).slice(0, 32);
+const muridPin = async (t, sid, pin) => (await sha(t + '|' + sid + '|' + pin)).slice(0, 20);
+function muridLink(){ const c = FB.cfg || {}; return location.origin + location.pathname + '?m=' + b64urlEnc(JSON.stringify({ t: S.murid.token, f: { apiKey: c.apiKey, authDomain: c.authDomain, databaseURL: c.databaseURL, projectId: c.projectId, appId: c.appId } })); }
+async function buildMuridPack(){
+  const t = S.murid.token, cls = baseClasses().filter(c => S.students.some(x => x.classId === c.id));
+  const st = [];
+  for (const x of S.students.filter(y => cls.some(c => c.id === y.classId))) st.push({ i: x.id, n: x.name, c: x.classId, g: x.gender || '', p: x.ic4 ? await muridPin(t, x.id, x.ic4) : '', ic: x.iconUrl || '' });
+  const q = (S.quiz || []).map(x => ({ id: x.id, subjectId: x.subjectId, chapterId: x.chapterId || '', q: x.q, c: x.c, a: x.a, huraian: x.huraian || '', short: !!x.short, qs: x.qs || '', as: x.as || '', sp: x.sp || '', sk: x.sk || '' }));
+  const cf = S.config || {};
+  return { u: Date.now(), title: S.murid.title || 'EduRank', sc: S.share && S.share.on && FB.cfg ? b64urlEnc(JSON.stringify({ d: FB.cfg.databaseURL.replace(/\/$/, ''), t: S.share.token })) : '',
+    cls: cls.map(c => ({ i: c.id, n: c.name })), sj: S.subjects.map(x => ({ i: x.id, n: x.name })), st,
+    gr: (S.groups || []).filter(g => cls.some(c => c.id === g.classId)).map(g => ({ i: g.id, c: g.classId, n: g.name, m: g.members || [] })),
+    q, ch: S.chapters || [], cfg: { klinik: cf.klinik, stor: cf.stor, esc: cf.esc, run: cf.run, rpPerScore: cf.rpPerScore }, ar: { kombo: (S.ui.arena || {}).kombo || null } };
+}
+async function publishMurid(){
+  if (!S.murid || !S.murid.on || !FB.on || muridBusy) return;
+  muridBusy = true;
+  try { const p = await muridPath(S.murid.token, S.murid.kod); await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + p), JSON.parse(JSON.stringify(await buildMuridPack()))); }
+  finally { muridBusy = false; }
+}
+async function unpublishMurid(t, kod){ try { await FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd_share/' + await muridPath(t, kod)), null); } catch(e){} }
+const randKod = () => { const a = new Uint8Array(6); crypto.getRandomValues(a); return Array.from(a, x => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x % 32]).join(''); };
+function muridShareModal(){
+  if (!FB.on) return openModal({ center:true, icon:'fa-mobile-screen-button', title:'Kongsi Game kepada Murid',
+    body:'<div class="text-[13px] leading-relaxed">Versi murid memerlukan <b>Firebase</b> (Tetapan → Penyegerakan Firebase) supaya senarai nama, bank soalan dan bilik bermain boleh dibuka dari telefon murid.</div>',
+    footer:'<button class="btn btn-o clip-s flex-1" data-close="1">Faham</button>' });
+  const m = S.murid && S.murid.on ? S.murid : null;
+  const nSt = S.students.length, nPin = S.students.filter(x => x.ic4).length;
+  const id = openModal({ icon:'fa-mobile-screen-button', title:'Kongsi Game kepada Murid',
+    body:
+      '<div class="text-[12px] text-muted leading-relaxed">Murid membuka pautan, memasang app, memasukkan <b class="text-cyan">kod sekolah</b>, memilih nama, dan boleh bermain semua game serta melihat showcase. Data guru tidak boleh diubah oleh murid.</div>' +
+      '<label class="lbl mt-3 block">TAJUK (cth. nama sekolah)</label><input id="muT" class="fld clip-s mt-1" value="' + esc(m ? m.title : 'EduRank') + '">' +
+      '<label class="lbl mt-3 block">KOD SEKOLAH</label><input id="muK" class="fld clip-s mt-1 num !text-[20px] tracking-[.3em] uppercase" maxlength="8" value="' + esc(m ? m.kod : randKod()) + '">' +
+      '<div class="panel clip-s p-2 mt-3 text-[12px]">🪪 PIN log masuk: <b>' + nPin + '/' + nSt + '</b> murid ada PIN (4 digit akhir IC). Murid tanpa PIN terus memilih nama.<br><span class="text-muted text-[11px]">Tetapkan PIN: tab Pelajar → Daftar → tampal senarai nama + IC dari Excel → Apply IC.</span></div>' +
+      (S.share && S.share.on ? '' : '<div class="text-[11px] text-[#FFC24D] mt-2"><i class="fa-solid fa-circle-info"></i> Showcase belum dikongsi — terbitkan di butang Showcase supaya murid boleh melihatnya.</div>') +
+      (m ? '<div class="lbl mt-3">PAUTAN MURID</div><div class="flex gap-2 mt-1"><input id="muL" readonly class="fld clip-s !text-[11px] num" value="' + esc(muridLink()) + '"><button class="btn btn-c clip-s !px-3" data-mu="copy"><i class="fa-solid fa-copy"></i></button></div>' +
+        '<div class="flex justify-center mt-3"><div id="muQR" style="background:#fff;padding:10px"></div></div>' +
+        '<div class="text-center mt-2 text-[12px]">Kod sekolah: <b class="num text-orange text-[20px] tracking-[.2em]">' + esc(m.kod) + '</b></div>' +
+        '<button class="btn btn-d clip-s w-full mt-3 text-[12px]" data-mu="stop"><i class="fa-solid fa-link-slash"></i> Henti Kongsi</button>' : ''),
+    footer:'<button class="btn clip-s flex-1" data-close="1">Tutup</button><button class="btn btn-o clip-s flex-1" data-mu="pub">' + (m ? 'Terbit Semula' : 'Terbitkan') + '</button>',
+    afterOpen: async bd => { if (!m) return; const ok = await loadQR(), box = $('#muQR', bd); if (ok && box){ box.innerHTML = ''; new QRCode(box, { text: muridLink(), width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M }); } else if (box) box.outerHTML = ''; } });
+  const bd = $('[data-modal="' + id + '"]');
+  bd.addEventListener('click', async e => {
+    const b = e.target.closest('[data-mu]'); if (!b) return;
+    if (b.dataset.mu === 'copy') return copyText(muridLink(), 'Pautan murid disalin.');
+    if (b.dataset.mu === 'stop'){ if (!await confirmBox({ danger:true, title:'Henti Kongsi', okText:'Henti', message:'Murid tidak lagi boleh membuka game melalui pautan ini. Teruskan?' })) return;
+      await unpublishMurid(m.token, m.kod); S.murid.on = false; save(true); closeModal(id); renderTab(); return toast('Kongsi kepada murid dihentikan.'); }
+    if (b.dataset.mu === 'pub'){
+      const kod = ($('#muK', bd).value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      if (kod.length < 4) return toast('Kod sekolah sekurang-kurangnya 4 aksara.', null, true);
+      b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menerbit...';
+      if (m && m.kod !== kod) await unpublishMurid(m.token, m.kod);
+      S.murid = { on: true, token: m ? m.token : newToken(), kod, title: ($('#muT', bd).value || '').trim() || 'EduRank' }; save(true);
+      try { await publishMurid(); toast('Versi murid diterbitkan.'); closeModal(id); renderTab(); setTimeout(muridShareModal, 220); }
+      catch(err){ b.disabled = false; b.textContent = 'Cuba Lagi'; toast('Gagal menerbit: semak Security Rules (ipbd_share).', null, true); }
+    }
+  });
+}
+
+/* ---------- aplikasi murid ---------- */
+function muridEntry(param){
+  let p = null; try { p = JSON.parse(b64urlDec(param)); } catch(e){}
+  if (!p || !p.t || !p.f || !p.f.databaseURL){ S = blank(); document.body.insertAdjacentHTML('beforeend', '<div style="padding:40px;text-align:center;color:#fff">Pautan murid rosak. Minta pautan baharu daripada guru.</div>'); return; }
+  let teacher = null; try { teacher = localStorage.getItem(LS_KEY); } catch(e){}
+  if (!teacher) try { localStorage.setItem('rk_murid', JSON.stringify(p)); } catch(e){}   // diingat: app yang dipasang terus dibuka sebagai versi murid
+  initPWA(); S = blank();
+  let seen = null; try { seen = localStorage.getItem('rk_murid_me') || sessionStorage.getItem('rk_mgate'); } catch(e){}
+  if (!teacher && !isInstalled() && !seen) return muridGate(p);      /* arahan pasang hanya kali pertama */
+  muridBoot(p);
+}
+function muridGate(p){
+  ['header','nav','#main'].forEach(sel => { const el = $(sel); if (el) el.style.display = 'none'; });
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const step = (n, t) => '<div class="panel clip-s p-3 mb-2 text-left text-[13px] flex gap-3"><b class="text-orange num">' + n + '</b><div>' + t + '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', '<div id="mGate" style="position:fixed;inset:0;z-index:1000;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:24px 20px;background:radial-gradient(circle at 50% 25%,rgba(0,229,255,.14),transparent 60%),#0C1118">' +
+    '<div class="w-full max-w-sm text-center"><img src="' + APP_ICON + '" alt="" style="width:96px;height:96px;object-fit:contain;margin:0 auto;border-radius:22px;box-shadow:0 0 36px rgba(0,229,255,.35)">' +
+    '<div class="font-bold tracking-[.25em] text-[26px] glow-o mt-4">EDURANK</div><div class="text-cyan font-bold tracking-widest text-[13px]">VERSI MURID</div>' +
+    '<div class="text-[13px] text-muted mt-2 mb-4">Pasang app ke telefon kamu untuk bermain game kelas dan melihat showcase.</div>' +
+    '<button id="mInst" class="btn btn-o clip-s w-full !py-3 text-[15px] mb-3" style="display:none"><i class="fa-solid fa-download"></i> PASANG APP</button>' +
+    (ios ? step(1, 'Buka dalam <b>Safari</b>, tekan butang <b>Kongsi</b>') + step(2, 'Pilih <b>Tambah ke Skrin Utama</b>') + step(3, 'Buka <b>EduRank</b> dari skrin utama')
+         : step(1, 'Tekan menu <b>⋮</b> di Chrome') + step(2, 'Pilih <b>Pasang aplikasi</b> / <b>Tambah ke skrin utama</b>') + step(3, 'Buka <b>EduRank</b> dari skrin utama')) +
+    '<button id="mGo" class="btn clip-s w-full !py-2 mt-3 text-[13px]">Teruskan tanpa pasang ›</button></div></div>');
+  const inst = $('#mInst'), show = ev => { inst.style.display = ''; inst.onclick = async () => { ev.prompt(); const r = await ev.userChoice.catch(() => null); if (r && r.outcome === 'accepted') toast('EduRank dipasang — buka dari skrin utama.'); }; };
+  if (window.__bip) show(window.__bip);
+  window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); window.__bip = ev; show(ev); });
+  $('#mGo').onclick = () => { try { sessionStorage.setItem('rk_mgate', '1'); } catch(e){} $('#mGate').remove(); muridBoot(p); };
+}
+async function muridFetch(t, kod, db){
+  const r = await fetch(String(db).replace(/\/$/, '') + '/ipbd_share/' + await muridPath(t, kod) + '.json', { cache: 'no-store' });
+  if (!r.ok) throw new Error('net'); return r.json();
+}
+async function muridBoot(p){
+  ['header','nav','#main'].forEach(sel => { const el = $(sel); if (el) el.style.display = 'none'; });
+  MURID = { p, pack: null, me: null }; MURID_CFG = p.f;
+  try { IDB = await idbOpen(); Object.assign(PHOTOS, await idbAll()); } catch(e){}
+  let me = null; try { me = JSON.parse(localStorage.getItem('rk_murid_me') || 'null'); } catch(e){}
+  if (me && me.t === p.t && me.kod){
+    try { const pack = await muridFetch(p.t, me.kod, p.f.databaseURL); const s = pack && pack.st.find(x => x.i === me.sid);
+      if (s && (!s.p || s.p === me.ph)){ MURID.pack = pack; MURID.kod = me.kod; return muridApp(s); } } catch(e){}
+  }
+  muridLogin();
+}
+function muridLogin(step){
+  let el = $('#mLogin'); if (!el){ document.body.insertAdjacentHTML('beforeend', '<div id="mLogin" style="position:fixed;inset:0;z-index:900;overflow-y:auto;padding:calc(20px + var(--safe-t)) 16px 24px;background:radial-gradient(circle at 50% 0%,rgba(255,107,0,.14),transparent 55%),#0C1118"></div>'); el = $('#mLogin'); }
+  const P = MURID.pack, head = '<div class="text-center mb-4"><img src="' + APP_ICON + '" alt="" style="width:64px;height:64px;object-fit:contain;margin:0 auto;border-radius:16px"><div class="font-bold tracking-[.2em] text-[20px] glow-o mt-2">' + esc(P ? P.title : 'EDURANK') + '</div><div class="text-cyan text-[11px] tracking-widest font-bold">VERSI MURID</div></div>';
+  const wrap = h => '<div class="max-w-sm mx-auto">' + head + h + '</div>';
+  if (!P){
+    el.innerHTML = wrap('<label class="lbl">KOD SEKOLAH</label><input id="mKod" class="fld clip-s mt-1 num !text-[24px] text-center tracking-[.3em] uppercase" maxlength="8" placeholder="ABC123" autocomplete="off">' +
+      '<button id="mKodGo" class="btn btn-o clip-s w-full !py-3 mt-3 text-[15px]">MASUK</button><div id="mErr" class="text-[12px] text-[#FCA5A5] mt-2 text-center"></div>' +
+      '<div class="text-[11px] text-muted mt-4 text-center">Kod sekolah diberi oleh guru kamu.</div>');
+    const go = async () => { const kod = ($('#mKod').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (kod.length < 4) return;
+      $('#mErr').textContent = 'Menyemak…';
+      try { const pack = await muridFetch(MURID.p.t, kod, MURID.p.f.databaseURL); if (!pack || !pack.st) return $('#mErr').textContent = 'Kod sekolah salah atau perkongsian telah dihentikan.';
+        MURID.pack = pack; MURID.kod = kod; muridLogin(); } catch(e){ $('#mErr').textContent = 'Tiada sambungan internet. Cuba lagi.'; } };
+    $('#mKodGo').onclick = go; $('#mKod').addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); setTimeout(() => $('#mKod').focus(), 100);
+    return;
+  }
+  if (!step || step.k === 'cls'){
+    el.innerHTML = wrap('<div class="lbl mb-2">PILIH KELAS KAMU</div>' + P.cls.map(c => '<button class="btn clip-s w-full mb-2 !py-3 text-[15px] text-left" data-mc="' + esc(c.i) + '"><i class="fa-solid fa-people-group text-cyan"></i> ' + esc(c.n) + '</button>').join('') +
+      '<button class="btn clip-s w-full mt-3 text-[12px]" data-mx="kod">‹ Tukar kod sekolah</button>');
+    el.onclick = e => { const c = e.target.closest('[data-mc]'); if (c) return muridLogin({ k: 'nama', c: c.dataset.mc }); if (e.target.closest('[data-mx]')){ MURID.pack = null; muridLogin(); } };
+    return;
+  }
+  if (step.k === 'nama'){
+    const list = P.st.filter(x => x.c === step.c).sort((a, b) => a.n.localeCompare(b.n));
+    el.innerHTML = wrap('<div class="lbl mb-2">CARI NAMA KAMU · ' + esc((P.cls.find(c => c.i === step.c) || {}).n || '') + '</div><input id="mQ" class="fld clip-s mb-2" placeholder="Taip nama…" autocomplete="off"><div id="mList">' +
+      list.map(x => '<button class="btn clip-s w-full mb-1 !py-2 text-left flex items-center gap-2" data-ms="' + esc(x.i) + '" data-nm="' + esc(x.n.toLowerCase()) + '"><span class="flex-1 truncate text-[14px]">' + esc(x.n) + '</span>' + (x.p ? '<i class="fa-solid fa-lock text-muted text-[11px]"></i>' : '') + '</button>').join('') + '</div>' +
+      '<button class="btn clip-s w-full mt-3 text-[12px]" data-mx="cls">‹ Tukar kelas</button>');
+    $('#mQ').addEventListener('input', e => { const q = e.target.value.toLowerCase().trim(); el.querySelectorAll('[data-ms]').forEach(b => b.style.display = !q || b.dataset.nm.includes(q) ? '' : 'none'); });
+    el.onclick = e => { const b = e.target.closest('[data-ms]'); if (b){ const x = P.st.find(y => y.i === b.dataset.ms); return x.p ? muridLogin({ k: 'pin', s: x, c: step.c }) : muridIn(x, ''); }
+      if (e.target.closest('[data-mx]')) muridLogin({ k: 'cls' }); };
+    return;
+  }
+  if (step.k === 'pin'){
+    el.innerHTML = wrap('<div class="text-center text-[15px] font-bold">' + esc(step.s.n) + '</div><label class="lbl mt-3 block text-center">PIN — 4 DIGIT AKHIR NO. IC KAMU</label>' +
+      '<input id="mPin" type="password" inputmode="numeric" maxlength="4" class="fld clip-s mt-2 num !text-[30px] text-center tracking-[.6em]" autocomplete="off"><div id="mErr" class="text-[12px] text-[#FCA5A5] mt-2 text-center"></div>' +
+      '<button class="btn clip-s w-full mt-4 text-[12px]" data-mx="nama">‹ Bukan saya</button>');
+    const pin = $('#mPin'); setTimeout(() => pin.focus(), 100);
+    pin.addEventListener('input', async () => { pin.value = pin.value.replace(/\D/g, '').slice(0, 4); if (pin.value.length < 4) return;
+      const h = await muridPin(MURID.p.t, step.s.i, pin.value); if (h === step.s.p) return muridIn(step.s, h);
+      $('#mErr').textContent = 'PIN salah. Cuba lagi.'; pin.value = ''; snd('kl_salah', 'low'); });
+    el.onclick = e => { if (e.target.closest('[data-mx]')) muridLogin({ k: 'nama', c: step.c }); };
+  }
+}
+function muridIn(s, ph){
+  try { localStorage.setItem('rk_murid_me', JSON.stringify({ t: MURID.p.t, kod: MURID.kod, sid: s.i, ph })); } catch(e){}
+  const el = $('#mLogin'); if (el) el.remove();
+  muridApp(s);
+}
+function muridApp(me){
+  const P = MURID.pack; MURID.me = me;
+  S = blank();
+  S.classes = P.cls.map(c => ({ id: c.i, name: c.n })); S.subjects = P.sj.map(x => ({ id: x.i, name: x.n }));
+  S.students = P.st.map(x => ({ id: x.i, name: x.n, classId: x.c, gender: x.g, iconUrl: x.ic, fields: {}, badges: [] }));
+  S.groups = (P.gr || []).map(g => ({ id: g.i, classId: g.c, name: g.n, members: g.m || [] }));
+  S.quiz = P.q || []; S.chapters = P.ch || [];
+  Object.keys(P.cfg || {}).forEach(k => { if (P.cfg[k] != null) S.config[k] = P.cfg[k]; });
+  S.ui.activeClassId = me.c;
+  const sjHas = P.sj.find(x => S.quiz.some(q => q.subjectId === x.i));
+  S.ui.activeSubjectId = (sjHas || P.sj[0] || {}).i || '';
+  S.ui.arena = { kombo: P.ar && P.ar.kombo ? P.ar.kombo : undefined };
+  const g = S.groups.find(x => x.classId === me.c && (x.members || []).includes(me.i)); if (g) arenaUi().team = g.id;
+  S.ui.tab = 'arena';
+  ['header','nav','#main'].forEach(sel => { const el = $(sel); if (el) el.style.display = ''; });
+  $$('.navbtn').forEach(b => { if (b.dataset.nav !== 'arena') b.style.display = 'none'; });
+  if (!$('[data-nav="msc"]')) $('nav').insertAdjacentHTML('afterbegin', '<button class="navbtn" data-nav="msc"><i class="fa-solid fa-trophy text-base"></i><span>SHOWCASE</span></button>');
+  $$('header [data-act="showcase-open"], header [data-act="sync-status"]').forEach(b => b.style.display = 'none');
+  const ttl = $('header .glow-o'); if (ttl) ttl.textContent = P.title || 'EDURANK';
+  if (!$('#mMe')) $('#hdrRefresh').insertAdjacentHTML('beforebegin', '<button id="mMe" class="btn clip-s px-2 py-1 text-[11px] max-w-[45%] truncate" data-act="murid-out" title="Tukar akaun">👋 ' + esc(me.n.split(' ')[0]) + ' <i class="fa-solid fa-right-from-bracket text-muted"></i></button>');
+  $('#hdrRefresh').style.display = '';
+  bgmInit(); audProbe(); kadProbe();
+  $$('.navbtn').forEach(b => b.classList.toggle('on', b.dataset.nav === S.ui.tab));
+  renderAll(); $('#ctxClass').disabled = true;
+  /* pakej terkini setiap kali app dibuka semula (soalan / kumpulan baharu daripada guru) */
+  document.addEventListener('visibilitychange', async () => { if (document.hidden || !MURID) return;
+    try { const pk = await muridFetch(MURID.p.t, MURID.kod, MURID.p.f.databaseURL); if (pk && pk.u !== MURID.pack.u && !document.querySelector('.lb,#klRoot,#stRoot,#kmRoot,#kmJoin,#runRoot,#escRoot')){ const s2 = pk.st.find(x => x.i === me.i); if (s2 && (!s2.p || s2.p === (JSON.parse(localStorage.getItem('rk_murid_me') || '{}').ph))){ MURID.pack = pk; muridApp(s2); } } } catch(e){} });
+}
+function muridShowcase(){
+  const P = MURID && MURID.pack;
+  if (!P || !P.sc) return emptyState('fa-trophy', 'Showcase Belum Dikongsi', 'Guru kamu belum menerbitkan showcase. Main game dahulu!');
+  return '<iframe src="' + location.pathname + '?s=' + P.sc + '" title="Showcase" style="width:100%;height:calc(100vh - 200px - var(--safe-t) - var(--safe-b));border:0;border-radius:14px;background:#0C1118;margin-top:10px"></iframe>';
+}
+async function muridLogout(){
+  if (!await confirmBox({ title: 'Tukar Akaun', okText: 'Log Keluar', message: 'Log keluar dan pilih nama lain?' })) return;
+  try { localStorage.removeItem('rk_murid_me'); } catch(e){}
+  location.reload();
+}
+
 /* ============ INIT ============ */
 (async function init(){
   // Mod paparan awam: ?s=... → showcase sahaja, tiada state tempatan, tiada Firebase SDK
+  const mp = new URLSearchParams(location.search).get('m');
+  if (mp){ muridEntry(mp); return; }                    // pautan versi murid: showcase + game sahaja
   const vp = new URLSearchParams(location.search).get('s');
   if (vp){ S = blank(); viewerBoot(vp); return; }      // pautan showcase murid: tidak perlu pasang
   const kmp = new URLSearchParams(location.search).get('km');
   if (kmp){ S = blank(); komboJoinBoot(kmp); return; }  // pautan / kod QR sertai Kombo Ilmon: telefon kumpulan, tidak perlu pasang
+  { let saved = null, teacher = null; try { saved = JSON.parse(localStorage.getItem('rk_murid') || 'null'); teacher = localStorage.getItem(LS_KEY); } catch(e){}
+    if (saved && saved.t && !teacher){ initPWA(); S = blank(); muridBoot(saved); return; } }   // app murid yang dipasang (tiada data guru pada peranti ini)
   initPWA();
   if (!isInstalled()){ installGate(); return; }         // dalam pelayar: tutup app, papar arahan pasang sahaja
   { let pc = false; try { pc = localStorage.getItem('rk_pc') === '1'; } catch(e){}   // butang refresh dalam app dipasang / mod PC (tiada butang refresh pelayar)
