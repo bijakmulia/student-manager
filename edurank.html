@@ -12261,7 +12261,24 @@ function tpdHtml(){
         (x.r ? '<span class="num text-[10px] text-muted" style="width:62px;text-align:right">kadar ' + fmtScore(rateOf(x.r)) + '</span>' : '<span class="text-[10px] text-muted" style="width:62px;text-align:right">tiada</span>') + '</button>';
     }).join('') + '</div>' +
     '<button class="btn btn-o clip-s w-full mt-3 !py-2 text-[13px]" data-act="refl-open" data-id="' + d + '"><i class="fa-solid fa-pen-to-square"></i> REFLEKSI PdP ' + fmtDate(d) + '</button>' +
+    (done.length ? '<button class="btn btn-d clip-s w-full mt-2 !py-2 text-[12px]" data-act="tpd-del" data-id="' + d + '"><i class="fa-solid fa-trash-can"></i> Padam rekod SEMUA pelajar · ' + fmtDate(d) + '</button>' : '') +
     '<div class="text-[10px] text-muted mt-2">Ketik nama untuk melihat semua sejarah penilaian pelajar itu.</div></div>';
+}
+/* Padam rekod penilaian (matrik + game) SEMUA pelajar kelas & subjek aktif pada satu tarikh — boleh dibuat asal */
+async function tpdDel(d){
+  const sj = S.ui.activeSubjectId, list = studentsOf(S.ui.activeClassId).filter(x => ((S.records[x.id] || {})[sj] || {})[d]);
+  if (!list.length) return;
+  const ok = await confirmBox({ danger: true, title: 'Padam Rekod Tarikh Ini', okText: 'Padam Semua',
+    message: 'Padam rekod penilaian <b>' + list.length + ' pelajar</b> (' + esc(clsName(S.ui.activeClassId)) + ' · ' + esc(subjName(sj)) + ') pada <b>' + fmtDate(d) + '</b>?<br><span class="text-muted text-[12px]">Skor matrik, TP dan markah game hari itu dibuang. Kehadiran tidak terjejas. Anda boleh tekan <b>BATALKAN</b> pada notis sejurus selepas ini.</span>' });
+  if (!ok) return;
+  const old = {};
+  list.forEach(x => { old[x.id] = S.records[x.id][sj][d]; delete S.records[x.id][sj][d];
+    if (!Object.keys(S.records[x.id][sj]).length) delete S.records[x.id][sj]; });
+  save(true); renderTab();
+  toast(list.length + ' rekod pada ' + fmtDate(d) + ' dipadam.', () => {
+    Object.keys(old).forEach(id => { S.records[id] = S.records[id] || {}; S.records[id][sj] = S.records[id][sj] || {}; S.records[id][sj][d] = old[id]; });
+    S.ui.tpdDate = d; save(true); renderTab();
+  });
 }
 
 /* ============ GAME 3: SEKOLAH BERHANTU (3D) ============
@@ -14104,6 +14121,7 @@ const ACTS = {
   'att-note': d => attNote(d.id),
   'tpd-day': d => tpdMove(+d.id),
   'tpd-pick': d => { S.ui.tpdDate = d.id; save(); renderTab(); },
+  'tpd-del': d => tpdDel(d.id),
   'cfg-hint': d => { S.config.hintsInline = d.id === '1' ? 1 : 0; save(true);
     if (hintsInline()) hintUndo(); renderTab(); if (!hintsInline()) hintScan(document.body);
     toast(hintsInline() ? 'Semua arahan dipaparkan penuh.' : 'Arahan panjang disorok di sebalik ?.'); },
