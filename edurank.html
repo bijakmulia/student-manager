@@ -8839,6 +8839,8 @@ const ST_ITEMS = [
   ['madu','Madu','🍯','jus','j',2,null,'a small honey jar with a wooden honey dipper dripping golden honey']
 ].map(([id, n, e, sh, tg, p, prep, d, img, col]) => ({ id, n, e, sh: ST_SPOT[id] ? ST_SPOT[id].sh : null, tg, p, prep, d, img, col }))
   .filter(i => i.sh).map(i => Object.assign(i, { z: ST_SHELVES.find(s => s[0] === i.sh)[2] }));
+/* plastik sampah berisi bahan buangan (ghost bila campuran blender diseret ke tong) */
+const ST_BAG = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M24 10q8 6 16 0l-3 8h-10z" fill="#334155"/><path d="M27 17h10q16 8 16 26q0 15-21 15T11 43q0-18 16-26z" fill="#1F2937"/><path d="M20 30q4-6 10-8" stroke="#64748B" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="38" cy="14" r="4" fill="#F59E0B"/><path d="M22 15l-3-5M42 13l4-4" stroke="#84CC16" stroke-width="3" stroke-linecap="round"/><path d="M26 18l-6-3" stroke="#F43F5E" stroke-width="3" stroke-linecap="round"/></svg>';
 /* tin bahan jus (aset tin_<id>): gambar pada pembalut, warna latar pembalut */
 const ST_TIN = [['j_susu', 'a glass of fresh white milk with a milk splash', 'light sky-blue'], ['nanas', 'a whole ripe golden pineapple with a green crown', 'light blue'],
   ['j_kelapa', 'a green young coconut cut open showing white flesh', 'light green'], ['j_pisang', 'a bunch of ripe yellow bananas', 'light blue'],
@@ -10106,6 +10108,7 @@ function storRun(team, mp){
       if (drag.kind === 'it' || drag.kind === 'rt'){ g.innerHTML = icon(drag.id); if (drag.kind === 'rt' && drag.src.dataset.rt) drag.src.classList.add('lifted'); }
       else if (drag.kind === 'tr') g.innerHTML = trayIcon(tray[+drag.id]);
       else if (drag.kind === 'tray'){ g.classList.add('multi'); g.innerHTML = tray.map(x => '<span>' + trayIcon(x) + '</span>').join(''); }   // semua makanan atas kaunter dibawa bersama
+      else if (drag.kind === 'bl'){ g.innerHTML = bl.r ? trayIcon({ jus: bl.r.id }) : ST_BAG; }   /* blender: jus siap = gelas jus; campuran salah/belum lengkap = plastik sampah */
       else if (drag.kind === 'ss'){ const x = stn.dapur[+drag.id.slice(-1)]; g.innerHTML = burnt(x) ? '<span class="st-emo">🔥</span>' : icon(x.id); }
       else { g.classList.add('big'); const r = drag.src.getBoundingClientRect(); g.style.width = r.width + 'px'; g.style.height = r.height + 'px'; g.innerHTML = drag.src.innerHTML; drag.src.classList.add('lifted'); }
       document.body.appendChild(g);
@@ -10140,7 +10143,7 @@ function storRun(team, mp){
       return;
     }
     if (d.kind === 'bl'){
-      if (toBinT) return toBin(() => { bl.ings = []; bl.r = null; bl.blending = false; paintBl(); msg('Blender dikosongkan', '#FDE68A', 900); });
+      if (toBinT) return toBin(() => { bl.ings = []; bl.r = null; bl.blending = false; paintBl(); msg('🗑️ Bahan buangan dibuang — blender kosong semula', '#FDE68A', 1100); });
       if (cu && z === 'k'){ if (bl.r) return serveJus(ci); return msg(bl.blending ? 'Sedang dikisar… tunggu sekejap' : 'Jus belum lengkap — tambah bahan ikut resipi', '#FDE68A', 1300); }
       if (cu) return msg('Jus untuk pelanggan Kedai Sihat.', '#FDE68A', 1100);
       return;
