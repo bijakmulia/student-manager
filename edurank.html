@@ -76,6 +76,22 @@ input[type=range].sl::-webkit-slider-thumb{-webkit-appearance:none;height:26px;w
 input[type=range].sl::-moz-range-track{height:6px;background:linear-gradient(90deg,#E23B3B,#3A4A5C,var(--orange));}
 input[type=range].sl::-moz-range-thumb{height:24px;width:14px;border:0;background:var(--cyan);}
 /* ---- modal ---- */
+#tourRoot{position:fixed;inset:0;z-index:180;pointer-events:none}
+#tourRoot.wait .tr-spot,#tourRoot.wait .tr-blk{opacity:0}
+.tr-blk{position:fixed;background:rgba(4,8,12,.72);pointer-events:auto;transition:all .25s ease}
+.tr-spot{position:fixed;border-radius:14px;box-shadow:0 0 0 3px #FF8A3D,0 0 22px 6px rgba(255,138,61,.75);animation:trPulse 1.4s ease-in-out infinite;transition:all .25s ease}
+@keyframes trPulse{50%{box-shadow:0 0 0 5px #FFC24D,0 0 34px 12px rgba(255,138,61,.55)}}
+.tr-bub{position:fixed;pointer-events:auto;background:#fff;color:#0F172A;border-radius:16px;padding:14px 16px;box-shadow:0 18px 40px rgba(0,0,0,.5);transition:top .25s ease,left .25s ease;font-family:inherit}
+.tr-bub::before{content:"";position:absolute;left:50%;margin-left:-9px;border:9px solid transparent}
+.tr-bub[data-arrow="up"]::before{top:-18px;border-bottom-color:#fff}.tr-bub[data-arrow="down"]::before{bottom:-18px;border-top-color:#fff}
+.tr-step{font-size:11px;font-weight:800;letter-spacing:.12em;color:#FF6B00}
+.tr-ttl{font-size:17px;font-weight:800;margin-top:2px}
+.tr-txt{font-size:14px;line-height:1.5;margin-top:4px;color:#334155}
+.tr-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+.tr-skip{border:0;background:none;color:#94A3B8;font-size:12px;font-weight:700;cursor:pointer;padding:6px 0}
+.tr-next{border:0;background:#FF6B00;color:#fff;border-radius:10px;padding:9px 16px;font-weight:800;font-size:14px;cursor:pointer}
+.tr-tapme{font-size:12px;font-weight:800;color:#FF6B00}
+#tourHint{display:none;position:fixed;left:12px;right:12px;top:calc(12px + var(--safe-t,0px));z-index:260;max-width:520px;margin:0 auto;background:#FFF7ED;color:#7C2D12;border:2px solid #FB923C;border-radius:14px;padding:10px 14px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none}
 .backdrop{position:fixed;inset:0;background:rgba(4,8,12,.78);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;z-index:200;opacity:0;transition:opacity .16s ease;padding-top:var(--safe-t);}
 .backdrop.show{opacity:1;}
 .mpanel{width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#18222F,#0F161F);border:1px solid var(--line);transform:translateY(18px);transition:transform .18s ease;padding-bottom:var(--safe-b);}
@@ -917,6 +933,117 @@ const stamp = () => Date.now().toString(36);
 function setSyncIcon(mode){
   const i = $('#syncIcon'); if(!i) return;
   i.className = 'fa-solid ' + ({ on:'fa-cloud text-cyan', off:'fa-database text-muted', wait:'fa-spinner fa-spin text-muted', err:'fa-triangle-exclamation text-[#E23B3B]' }[mode] || 'fa-database text-muted');
+}
+
+/* ---------- PANDUAN PENGGUNA BAHARU (tour berpandu) ----------
+   Sorot satu elemen demi satu, terangkan, dan minta pengguna tekan sendiri.
+   Langkah: { sel, title, text, wait: 'tap' | 'next' | fungsi syarat, hint (semasa modal terbuka), prep } */
+const TOUR_KEY = 'rk_tour_v1';
+const TOUR = { on:false, i:0, steps:[], el:null, timer:0, tapped:false };
+const tourEl = sel => { const l = typeof sel === 'function' ? sel() : [...document.querySelectorAll(sel)]; const a = Array.isArray(l) ? l : [l];
+  return a.find(e => e && e.offsetParent !== null && e.getBoundingClientRect().width > 0) || null; };
+const modalOpen = () => !!document.querySelector('.backdrop[data-modal]');
+function tourSteps(){
+  const secBtn = id => '[data-act="set-sec"][data-id="' + id + '"]';
+  const st = [
+    { sel:'[data-nav="settings"]', title:'Langkah 1 · Tetapan', text:'Mula dengan menyediakan kelas anda. Tekan <b>TETAPAN</b>.', wait:'tap', prep:() => { S.ui.setGrp = 'asas'; S.ui.setSec = ''; } },
+    { sel:secBtn('pengurusankelas'), title:'Pengurusan Kelas', text:'Tekan <b>Pengurusan Kelas</b> untuk membukanya.', wait:'tap', skip:() => S.ui.setSec === 'pengurusankelas' },
+    { sel:'[data-act="cls-add"]', title:'Tambah kelas', text:'Tekan <b>Tambah Kelas</b>.', wait:() => { if (!S.classes.length) return false; if (!S.ui.activeClassId){ S.ui.activeClassId = S.classes[0].id; save(); renderAll(); } return true; }, hint:'Taip nama kelas — contoh <b>4 Bestari</b> — kemudian tekan <b>Simpan</b>.' },
+    { sel:secBtn('pengurusansubjek'), title:'Langkah 2 · Subjek', text:'Bagus! Sekarang tambah subjek yang anda ajar. Tekan <b>Pengurusan Subjek</b>.', wait:'tap', skip:() => S.ui.setSec === 'pengurusansubjek' },
+    { sel:'[data-act="sub-add"]', title:'Pilih dari DSKP', text:'Tekan <b>Tambah Subjek (DSKP)</b>. Topik & minggu disusun automatik ikut DSKP KSSM.', wait:() => { if (!S.subjects.length) return false; if (!S.ui.activeSubjectId){ S.ui.activeSubjectId = S.subjects[0].id; save(); renderAll(); } return true; }, hint:'Pilih <b>subjek</b> dan <b>tingkatan</b> anda daripada senarai, kemudian simpan.' },
+    { sel:'[data-nav="students"]', title:'Langkah 3 · Murid', text:'Sekarang daftar murid. Tekan <b>PELAJAR</b>.', wait:'tap' },
+    { sel:'[data-act="reg-open"]', title:'Daftar murid', text:'Tekan <b>Daftar</b> untuk tambah murid secara pukal.', wait:() => S.students.length > 0, hint:'Tampal senarai nama dari Excel — <b>satu nama satu baris</b> — kemudian tekan <b>Daftar</b>.' },
+    { sel:'[data-act="eval-one"]', title:'Beri markah', text:'Tekan <b>⚡ NILAI</b> pada mana-mana murid untuk merekod markah & TP. Markah terus dikira untuk ranking dan laporan PBD.', wait:'next' },
+    { sel:'[data-nav="attend"]', title:'Kehadiran', text:'<b>HADIR</b> — rekod kehadiran harian dengan satu tekan.', wait:'next' },
+    { sel:'[data-nav="arena"]', title:'Game kelas', text:'<b>GAME</b> — 9 game berkumpulan untuk dimainkan di projektor. Soalan dari bank soalan anda, markah terus masuk PBD.', wait:'next' },
+    { sel:'[data-nav="sim"]', title:'Simulasi', text:'<b>SIMULASI</b> — 36 animasi PJK, Sains & Kesihatan untuk ditayang atau dijadikan tugasan murid.', wait:'next' },
+    { sel:'[data-nav="report"]', title:'Laporan PBD', text:'<b>LAPORAN</b> — rumusan TP, RPM dan refleksi PdP dijana automatik.', wait:'next' }
+  ];
+  if (BM_FB && !FB.user) st.push({ sel:'[data-nav="settings"]', title:'Simpan di awan (pilihan)', text:'Mahu guna data yang sama di telefon & laptop, atau kongsi app kepada murid? Daftar akaun percuma di <b>Tetapan → DATA → Akaun Awan</b> bila-bila masa.', wait:'next' });
+  return st;
+}
+function tourStart(fromStep){
+  if (MURID || $('#gate')) return;
+  TOUR.steps = tourSteps(); TOUR.i = Math.max(0, Math.min(fromStep || 0, TOUR.steps.length - 1)); TOUR.on = true;
+  if (!$('#tourRoot')) document.body.insertAdjacentHTML('beforeend',
+    '<div id="tourRoot"><div class="tr-blk" data-b="t"></div><div class="tr-blk" data-b="b"></div><div class="tr-blk" data-b="l"></div><div class="tr-blk" data-b="r"></div>' +
+    '<div class="tr-spot"></div><div class="tr-bub"></div></div><div id="tourHint"></div>');
+  tourShow(); clearInterval(TOUR.timer); TOUR.timer = setInterval(tourTick, 250);
+}
+function tourEnd(done){
+  TOUR.on = false; clearInterval(TOUR.timer); const r = $('#tourRoot'), h = $('#tourHint'); if (r) r.remove(); if (h) h.remove();
+  try { localStorage.setItem(TOUR_KEY, done ? 'done' : 'skip'); } catch(e){}
+}
+function tourShow(){
+  const st = TOUR.steps[TOUR.i]; if (!st) return tourFinish();
+  if (st.prep) { st.prep(); renderTab(); }
+  if (st.skip && st.skip()) { TOUR.i++; return tourShow(); }
+  TOUR.tapped = false; TOUR.el = null;
+  const b = $('#tourRoot .tr-bub'), n = TOUR.steps.length;
+  b.innerHTML = '<div class="tr-step">' + (TOUR.i + 1) + ' / ' + n + '</div><div class="tr-ttl">' + st.title + '</div><div class="tr-txt">' + st.text + '</div>' +
+    '<div class="tr-row"><button class="tr-skip" data-tour="skip">Langkau panduan</button>' + (st.wait === 'next' ? '<button class="tr-next" data-tour="next">' + (TOUR.i === n - 1 ? 'Selesai ✓' : 'Seterusnya →') + '</button>' : '<span class="tr-tapme">👆 Tekan yang bercahaya</span>') + '</div>';
+  tourTick();
+}
+function tourNext(){ TOUR.i++; if (TOUR.i >= TOUR.steps.length) return tourFinish(); setTimeout(tourShow, 350); }
+function tourFinish(){
+  tourEnd(true);
+  openModal({ center:true, icon:'fa-flag-checkered', title:'Siap! 🎉',
+    body:'<div class="text-center"><div style="font-size:56px">🏆</div><div class="text-[14px] mt-2 leading-relaxed">Kelas anda sudah sedia. Mula beri markah, mainkan game di projektor dan lihat ranking murid naik!</div>' +
+      '<div class="text-[12px] text-muted mt-3">Panduan ini boleh dimainkan semula di <b>Tetapan → Arahan & Maklumat</b>.</div></div>',
+    footer:'<button class="btn btn-o clip-s flex-1" data-close="1">Mula guna EduRank</button>' });
+}
+function tourTick(){
+  if (!TOUR.on) return;
+  const st = TOUR.steps[TOUR.i]; if (!st) return;
+  const root = $('#tourRoot'), hint = $('#tourHint');
+  if (typeof st.wait === 'function' && st.wait()){ hint.style.display = 'none'; return tourNext(); }
+  if (modalOpen()){                                  /* modal app terbuka: sembunyikan sorotan, papar petunjuk di atas */
+    root.style.display = 'none';
+    if (st.hint){ hint.innerHTML = '💡 ' + st.hint; hint.style.display = 'block'; }
+    return;
+  }
+  hint.style.display = 'none'; root.style.display = '';
+  const el = tourEl(st.sel);
+  if (!el){ root.classList.add('wait'); return; }
+  root.classList.remove('wait');
+  if (el !== TOUR.el){ TOUR.el = el; const r0 = el.getBoundingClientRect(); if (r0.top < 70 || r0.bottom > innerHeight - 90) el.scrollIntoView({ block:'center' }); }
+  const r = el.getBoundingClientRect(), p = 6, x = Math.max(0, r.left - p), y = Math.max(0, r.top - p), w = r.width + p * 2, h = r.height + p * 2;
+  const spot = root.querySelector('.tr-spot'); Object.assign(spot.style, { left:x + 'px', top:y + 'px', width:w + 'px', height:h + 'px' });
+  const blk = k => root.querySelector('[data-b="' + k + '"]').style;
+  Object.assign(blk('t'), { left:0, top:0, width:'100%', height:y + 'px' }); Object.assign(blk('b'), { left:0, top:(y + h) + 'px', width:'100%', bottom:0 });
+  Object.assign(blk('l'), { left:0, top:y + 'px', width:x + 'px', height:h + 'px' }); Object.assign(blk('r'), { left:(x + w) + 'px', top:y + 'px', right:0, height:h + 'px' });
+  /* untuk langkah 'next', sasaran hanya disorot (tidak boleh ditekan) */
+  spot.style.pointerEvents = st.wait === 'next' ? 'auto' : 'none';
+  const bub = root.querySelector('.tr-bub'), bh = bub.offsetHeight || 150, below = y + h + 14 + bh < innerHeight - 8;
+  const bw = Math.min(340, innerWidth - 24); bub.style.width = bw + 'px';
+  bub.style.left = Math.max(12, Math.min(innerWidth - bw - 12, r.left + r.width / 2 - bw / 2)) + 'px';
+  bub.style.top = (below ? y + h + 14 : Math.max(10, y - bh - 14)) + 'px';
+  bub.dataset.arrow = below ? 'up' : 'down';
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tour]');
+  if (t){ e.stopPropagation(); if (t.dataset.tour === 'skip'){ tourEnd(false); toast('Panduan dilangkau. Main semula di Tetapan → Arahan & Maklumat.'); } else if (t.dataset.tour === 'next') tourNext(); return; }
+  if (!TOUR.on || !TOUR.el) return;
+  const st = TOUR.steps[TOUR.i];
+  if (st && st.wait === 'tap' && !TOUR.tapped && TOUR.el.contains(e.target)){ TOUR.tapped = true; tourNext(); }
+}, true);
+function tourWelcome(){
+  const id = openModal({ center:true, icon:'fa-hand-sparkles', title:'Selamat datang ke EduRank! 👋',
+    body:'<div class="text-[14px] leading-relaxed">Mari sediakan kelas pertama anda — <b>3 langkah, kira-kira 2 minit</b>. Kami akan tunjukkan butang mana yang perlu ditekan, satu demi satu.</div>' +
+      '<div class="grid gap-2 mt-3 text-[13px]"><div class="panel clip-s p-2">1️⃣ Tambah <b>kelas</b></div><div class="panel clip-s p-2">2️⃣ Pilih <b>subjek</b> dari DSKP</div><div class="panel clip-s p-2">3️⃣ Daftar <b>murid</b></div></div>' +
+      (BM_FB && !FB.user ? '<div class="text-[12px] text-muted mt-3">Sudah ada akaun dari peranti lain? <a href="#" data-tw="login" class="text-cyan">Log masuk</a> untuk muat turun data anda.</div>' : ''),
+    footer:'<button class="btn clip-s flex-1" data-tw="skip">Langkau</button><button class="btn btn-o clip-s flex-1" data-tw="go">▶ Mula Panduan</button>' });
+  const bd = $('[data-modal="' + id + '"]');
+  bd.addEventListener('click', e => { const b = e.target.closest('[data-tw]'); if (!b) return; e.preventDefault();
+    closeModal(id);
+    if (b.dataset.tw === 'go') setTimeout(() => tourStart(0), 300);
+    else if (b.dataset.tw === 'login'){ tourEnd(false); setTimeout(() => accModal('in'), 300); }
+    else { tourEnd(false); toast('Panduan boleh dimainkan semula di Tetapan → Arahan & Maklumat.'); } });
+}
+function tourAuto(){
+  let seen = null; try { seen = localStorage.getItem(TOUR_KEY); } catch(e){}
+  if (seen || MURID || $('#gate') || S.classes.length || S.students.length) return;
+  tourWelcome();
 }
 
 /* ---------- MODAL MANAGER ---------- */
@@ -2210,6 +2337,7 @@ function viewSettings(){
 
   let h = '';
   h += sec('fa-circle-question','Arahan &amp; Maklumat',
+    '<button class="btn btn-o clip-s w-full !py-2 text-[13px] mb-2" data-act="tour-start"><i class="fa-solid fa-route"></i> Mulakan Panduan Pengguna Baharu</button>' +
     '<div class="flex gap-1">' +
       '<button class="btn clip-s flex-1 !py-1.5 text-[11px]' + (hintsInline() ? '' : ' btn-o') + '" data-act="cfg-hint" data-id="0">' +
         '<span class="hint-q" style="margin:0 4px 0 0;pointer-events:none"><span class="hq">?</span></span> Sorok</button>' +
@@ -17976,7 +18104,7 @@ const ACTS = {
     save(true); renderTab(); toast('Tetapan disimpan.');
   },
   'fld-add': fldAdd, 'fld-edit': d=>fldEdit(d.id), 'fld-del': d=>fldDel(d.id),
-  'fb-cfg': fbCfgForm, 'fb-rules': fbRules, 'acc-reg': () => accModal('reg'), 'acc-in': () => accModal('in'), 'acc-out': accOut,
+  'tour-start': () => { S.ui.setSec = ''; save(); tourStart(0); }, 'fb-cfg': fbCfgForm, 'fb-rules': fbRules, 'acc-reg': () => accModal('reg'), 'acc-in': () => accModal('in'), 'acc-out': accOut,
   'fb-pull': async () => {
     if (!FB.on) return;
     let remote = null;
@@ -18104,7 +18232,7 @@ function installGate(){
   const pcBox = '<div class="lbl text-left mb-2">KOMPUTER / LAPTOP</div>' +
     '<button id="gatePC" class="btn btn-o clip-s w-full !py-3 text-[15px]"><i class="fa-solid fa-desktop"></i> BUKA DI KOMPUTER</button>' +
     '<button id="gateInst" class="btn clip-s w-full !py-2 mt-2 text-[13px]" style="display:none"><i class="fa-solid fa-download text-cyan"></i> Pasang sebagai aplikasi komputer</button>' +
-    '<div class="text-[11px] text-muted mt-2 text-left leading-snug">Data disimpan dalam pelayar komputer ini. Untuk data yang sama dengan telefon, hidupkan <b>Penyegerakan Firebase</b> di Tetapan.</div>';
+    '<div class="text-[11px] text-muted mt-2 text-left leading-snug">Data disimpan dalam pelayar komputer ini. Untuk data yang sama dengan telefon, daftar <b>Akaun Awan</b> (percuma) di Tetapan.</div>';
   document.body.insertAdjacentHTML('beforeend',
     '<div id="gate" style="position:fixed;inset:0;z-index:1000;overflow-y:auto;display:flex;align-items:center;justify-content:center;' +
       'padding:calc(24px + var(--safe-t)) 20px calc(24px + var(--safe-b));background:radial-gradient(circle at 50% 25%,rgba(255,107,0,.14),transparent 60%),#0C1118">' +
@@ -18487,6 +18615,7 @@ async function muridLogout(){
   renderAll();
   setTimeout(autoSubject, 400);
   fbInit();
+  setTimeout(tourAuto, 1500);
   liveWatch(); setInterval(liveWatch, 3000);         // tayangan langsung dari peranti lain
   window.addEventListener('beforeunload', () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} });
   window.addEventListener('storage', e => {
