@@ -14070,23 +14070,19 @@ function simPlay(id){
   }
   function qzFinish(){
     const first = !simOk(sim.id); simOkSet(sim.id); sfx('myth'); vibrate([30, 40, 30]);
-    let note = '', pick = '';
+    let note = '';
     if (!first) note = 'Latihan selesai — tugasan ini sudah ditanda sebelum ini.';
     else if (MURID && MURID.pack && MURID.pack.awam) note = '🌍 Mod Awam: tanda ✅ disimpan di peranti ini sahaja (tiada RP).';
-    else if (MURID && MURID.me){ const q = (() => { try { return JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){ return []; } })();
+    else if (MURID && MURID.me && !/^lawand$/.test(MURID.me.i)){ const q = (() => { try { return JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){ return []; } })();
       q.push({ k: 'sim', s: MURID.me.i, sim: sim.id, t: Date.now() }); try { localStorage.setItem('rk_murid_q', JSON.stringify(q.slice(-50))); } catch(e){} muridFlush();
-      note = '📲 Keputusan dihantar kepada guru: <b style="color:#FB923C">+' + SIM_RP + ' RP</b>.'; }
-    else { const tm = classTeams(); note = 'Rekod RP untuk kumpulan yang menjawab (setiap murid sekali bagi simulasi ini):';
-      pick = '<div class="grid grid-cols-2 gap-2 mt-3">' + tm.map(g => '<button class="btn clip-s !py-2 text-[13px]" data-qt="' + g.id + '">' + esc(g.name) + '</button>').join('') + '</div>' + (tm.length ? '' : '<div class="text-muted text-[12px] mt-2">Tiada kumpulan dalam kelas ini.</div>'); }
+      note = '📲 Tugasan <b>' + esc(MURID.me.n || '') + '</b> dihantar kepada guru: <b style="color:#FB923C">+' + SIM_RP + ' RP</b>.'; }
+    else note = 'Log masuk dengan nama kamu (kod sekolah) supaya tugasan direkod kepada guru.';
     qzCard('<div class="text-center"><div style="font-size:56px">✅</div><div class="font-bold text-[22px]" style="color:#4ADE80">SIMULASI SELESAI!</div>' +
       '<div class="text-[14px] mt-1">' + esc(sim.title) + ' · 3/3 betul' + (QZ.miss ? ' (' + QZ.miss + ' kali tonton semula)' : ' pada cubaan pertama 🌟') + '</div>' +
-      '<div class="text-[13px] mt-3 leading-relaxed">' + note + '</div></div>' + pick + '<div class="flex gap-2 mt-4">' + qzBtn('close', 'Tutup', 'btn') + qzBtn('list', '🎬 Simulasi lain') + '</div>', '#4ADE80');
+      '<div class="text-[13px] mt-3 leading-relaxed">' + note + '</div></div><div class="flex gap-2 mt-4">' + qzBtn('close', 'Tutup', 'btn') + qzBtn('list', '🎬 Simulasi lain') + '</div>', '#4ADE80');
   }
   qzEl.addEventListener('click', e => {
     const o = e.target.closest('[data-qo]'); if (o && !o.disabled) return qzPick(+o.dataset.qo, o);
-    const tb = e.target.closest('[data-qt]');
-    if (tb && !tb.disabled){ const tm = teamOf(tb.dataset.qt); let n = 0; if (tm) tm.members.forEach(st => { if (simCredit(st.id, sim.id)) n++; }); save(true);
-      tb.disabled = true; tb.innerHTML = '✅ ' + esc(tm ? tm.name : '') + ' <small>(+' + SIM_RP + ' RP × ' + n + ')</small>'; toast(n ? '🎬 ' + n + ' murid mendapat +' + SIM_RP + ' RP.' : 'Murid kumpulan ini sudah menerima RP simulasi ini.'); return; }
     const b = e.target.closest('[data-qz]'); if (!b) return; const a = b.dataset.qz; sfx('flip');
     if (a === 'start') return qzStart();
     if (a === 'replay'){ qzHide(); seek(0); setPlay(true); return; }
@@ -17375,7 +17371,7 @@ function muridApp(me){
   muridFlush(); window.addEventListener('online', muridFlush);
   /* pakej terkini setiap kali app dibuka semula (soalan / kumpulan baharu daripada guru) */
   document.addEventListener('visibilitychange', async () => { if (document.hidden || !MURID) return;
-    try { const pk = await muridFetch(MURID.p.t, MURID.kod, MURID.p.f.databaseURL); if (pk && pk.u !== MURID.pack.u && !document.querySelector('.lb,#klRoot,#stRoot,#kmRoot,#kmJoin,#runRoot,#escRoot')){ const s2 = pk.st.find(x => x.i === me.i); if (s2 && (!s2.p || s2.p === (JSON.parse(localStorage.getItem('rk_murid_me') || '{}').ph))){ MURID.pack = pk; muridApp(s2); } } } catch(e){} });
+    try { const pk = await muridFetch(MURID.p.t, MURID.kod, MURID.p.f.databaseURL); if (pk && pk.u !== MURID.pack.u && !document.querySelector('.lb,#klRoot,#stRoot,#kmRoot,#kmJoin,#runRoot,#escRoot,#simRoot,#tkRoot')){ const s2 = pk.st.find(x => x.i === me.i); if (s2 && (!s2.p || s2.p === (JSON.parse(localStorage.getItem('rk_murid_me') || '{}').ph))){ MURID.pack = pk; muridApp(s2); } } } catch(e){} });
 }
 function muridShowcase(){
   const P = MURID && MURID.pack;
