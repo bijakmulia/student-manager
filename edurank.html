@@ -879,10 +879,34 @@ function adoptRemote(remote){
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){}
   renderAll();
 }
+const LS_OWNER = 'rk_owner';                         /* uid akaun yang memiliki data dalam peranti ini */
+async function fbRead(d){                             /* { ok, v } — ralat baca (cth. peraturan Firebase) TIDAK dianggap awan kosong */
+  try { const snap = await (d || FB.mod.d).get((d || FB.mod.d).ref(FB.db, FB.path)); return { ok: true, v: snap.exists() ? snap.val() : null }; }
+  catch(e){ console.warn('Baca awan gagal:', e); return { ok: false, v: null, err: e }; }
+}
+function fbErrBox(e){
+  const perm = /permission|denied/i.test(String((e && (e.code || e.message)) || e));
+  openModal({ center:true, icon:'fa-triangle-exclamation', title:'Awan Tidak Dapat Dicapai',
+    body:'<div class="text-[13px] leading-relaxed">' + (perm
+      ? 'Awan menolak akses ke data akaun anda (<b>permission denied</b>). Pentadbir perlu memasang <b>peraturan keselamatan</b> Realtime Database untuk akaun (<code>ipbd/u/&lt;uid&gt;</code>).'
+      : 'Tiada sambungan ke awan. Semak internet dan buka semula app.') +
+      '<br><br>Data dalam peranti ini <b>tidak diubah</b> dan tidak dihantar ke awan.</div>',
+    footer:'<button class="btn btn-o clip-s flex-1" data-close="1">Faham</button>' });
+}
 async function fbFirstSync(d){
   const key = linkKey(FB.cfg);
-  let remote = null;
-  try { const snap = await d.get(d.ref(FB.db, FB.path)); remote = snap.exists() ? snap.val() : null; } catch(e){}
+  const rd = await fbRead(d), remote = rd.v;
+  if (!rd.ok){ fbErrBox(rd.err); return false; }                      // jangan sekali-kali anggap kosong & tulis ganti
+  if (FB.user){                                                         /* data peranti milik akaun LAIN (log keluar tanpa kosongkan) → jangan campur */
+    let own = null; try { own = localStorage.getItem(LS_OWNER); } catch(e){}
+    if (own && own !== FB.user.uid){
+      if (!isEmptyState(S)) try { expJson(); } catch(e){}                 // sandaran data akaun lain sebelum diganti
+      adoptRemote(isEmptyState(remote) ? blank() : remote);
+      localStorage.setItem(LS_LINK, key); localStorage.setItem(LS_OWNER, FB.user.uid);
+      toast(isEmptyState(remote) ? 'Akaun baharu — bermula dengan data kosong.' : 'Data akaun anda dimuat turun dari awan.'); return true;
+    }
+    try { localStorage.setItem(LS_OWNER, FB.user.uid); } catch(e){}
+  }
   if (localStorage.getItem(LS_LINK) === key) return true;            // peranti ini sudah dipadankan
   const rEmpty = isEmptyState(remote), lEmpty = isEmptyState(S);
   if (rEmpty && lEmpty){ localStorage.setItem(LS_LINK, key); return true; }
@@ -921,7 +945,9 @@ function syncChoice(remote){
 }
 function fbPush(){
   if (!FB.on) return;
-  try { FB.mod.d.set(FB.mod.d.ref(FB.db, FB.path), JSON.parse(JSON.stringify(S))); } catch(e){}
+  try { Promise.resolve(FB.mod.d.set(FB.mod.d.ref(FB.db, FB.path), JSON.parse(JSON.stringify(S))))
+    .then(() => { if (FB.pushErr){ FB.pushErr = false; setSyncIcon('on'); } })
+    .catch(e => { console.warn('Simpan awan gagal:', e); setSyncIcon('err'); if (!FB.pushErr){ FB.pushErr = true; toast('⚠️ Gagal simpan ke awan — data hanya dalam peranti ini.', null, true); } }); } catch(e){}
 }
 async function fbUpload(path, dataUrl){
   const r = FB.mod.s.ref(FB.st, path);
@@ -3091,10 +3117,18 @@ function accModal(mode){
   });
 }
 async function accOut(){
-  const ok = await confirmBox({ title:'Log Keluar', okText:'Log Keluar', message:'Penyegerakan awan akan berhenti di peranti ini. Data kelas masih ada dalam akaun awan anda dan boleh dimuat turun semula selepas log masuk.' });
+  /* data peranti dikosongkan selepas log keluar — hanya jika awan disahkan menyimpan salinan yang sama */
+  const rd = FB.on ? await fbRead() : { ok: false }, r = rd.v;
+  const safe = rd.ok && (isEmptyState(S) || (r && (r.students || []).length === (S.students || []).length && (r.classes || []).length === (S.classes || []).length));
+  const ok = await confirmBox({ danger: !safe, title:'Log Keluar', okText: safe ? 'Log Keluar' : 'Muat Turun JSON & Log Keluar',
+    message: safe ? 'Data kelas selamat dalam akaun awan anda:<br><br>' + summarise(S) + '<br><br>Data akan <b>dikeluarkan dari peranti ini</b> dan dimuat turun semula bila anda log masuk.'
+      : '⚠️ Data dalam peranti ini <b>belum disahkan</b> tersimpan dalam awan:<br><br>' + summarise(S) + '<br><br>Sandaran JSON akan dimuat turun dahulu. Simpan fail itu baik-baik.' });
   if (!ok) return;
+  if (!safe) expJson();
   try { await FB.mod.au.signOut(FB.mod.au.getAuth(FB.app)); } catch(e){}
-  localStorage.removeItem(LS_LINK); toast('Telah log keluar.'); setTimeout(() => location.reload(), 600);
+  localStorage.removeItem(LS_LINK);
+  if (safe){ try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_OWNER); } catch(e){} S = blank(); }
+  toast('Telah log keluar.'); setTimeout(() => location.reload(), safe ? 600 : 1500);
 }
 function fbRules(){
   const rules =
@@ -18126,9 +18160,9 @@ const ACTS = {
   'tour-start': () => { S.ui.setSec = ''; save(); tourStart(0); }, 'fb-cfg': fbCfgForm, 'fb-rules': fbRules, 'acc-reg': () => accModal('reg'), 'acc-in': () => accModal('in'), 'acc-out': accOut,
   'fb-pull': async () => {
     if (!FB.on) return;
-    let remote = null;
-    try { const s = await FB.mod.d.get(FB.mod.d.ref(FB.db, FB.path)); remote = s.exists()?s.val():null; } catch(e){}
-    if (!remote) return toast('Tiada data dalam awan.', null, true);
+    const rd = await fbRead(); if (!rd.ok) return fbErrBox(rd.err);
+    const remote = rd.v;
+    if (isEmptyState(remote)) return toast('Akaun ini belum ada data dalam awan.', null, true);
     const ok = await confirmBox({ danger:true, title:'Tarik dari Awan', okText:'Ganti Data Peranti',
       message:'Data dalam peranti ini akan diganti sepenuhnya dengan data awan:<br><br>'+summarise(remote) });
     if (!ok) return;
@@ -18136,7 +18170,7 @@ const ACTS = {
   },
   'fb-push': async () => {
     if (!FB.on) return;
-    let remote = null; try { const snap = await FB.mod.d.get(FB.mod.d.ref(FB.db, FB.path)); remote = snap.exists() ? snap.val() : null; } catch(e){}
+    const rd = await fbRead(); if (!rd.ok) return fbErrBox(rd.err); const remote = rd.v;
     if (isEmptyState(S) && !isEmptyState(remote)) return confirmBox({ title:'Peranti Ini Kosong', okText:'Faham',
       message:'Peranti ini <b>tiada data</b>, tetapi awan ada:<br><br>' + summarise(remote) + '<br><br>Menghantar sekarang akan memadam data awan, jadi ia dihalang. Tekan <b>Tarik dari Awan</b> untuk muat turun data itu.' });
     const ok = await confirmBox({ danger:true, title:'Hantar ke Awan', okText:'Ganti Data Awan',
