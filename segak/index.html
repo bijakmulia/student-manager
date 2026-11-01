@@ -4,93 +4,100 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SEGAK Injector — Bijak Mulia</title>
-<meta name="description" content="Extension Chrome/Edge percuma untuk isi skor SEGAK & BMI ke SPPB dengan pantas, termasuk autopilot sekelas.">
+<meta name="description" content="Percuma: isi skor SEGAK & BMI ke SPPB dengan 6 nombor setiap murid, termasuk autopilot sekelas. Panduan pasang di Edge Android dan Edge PC.">
 <link rel="icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0B1017;--card:#141E2A;--line:#24344A;--ink:#F1F5F9;--mut:#94A3B8;--ye:#FACC15;--gr:#4ADE80;--cy:#00E5FF;--or:#FF6B00}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;line-height:1.6}
-a{color:inherit}
-.wrap{max-width:900px;margin:0 auto;padding:0 20px}
-header{padding:22px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-header a{text-decoration:none;font-weight:800;color:var(--mut)}
-.hero{padding:56px 0 30px;display:flex;gap:28px;align-items:center;flex-wrap:wrap}
-.hero img{width:110px;height:110px;border-radius:26px;box-shadow:0 20px 50px rgba(250,204,21,.25)}
-h1,h2{font-family:Outfit,sans-serif;line-height:1.1}
-h1{font-size:clamp(34px,6vw,54px)}
-.lead{color:var(--mut);font-size:18px;margin-top:10px;max-width:560px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.chip{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:800;background:#1F2E40}
-.btn{display:inline-flex;align-items:center;gap:10px;padding:16px 26px;border-radius:14px;font-weight:800;font-size:17px;text-decoration:none;background:var(--ye);color:#0B1017;box-shadow:0 14px 34px rgba(250,204,21,.3)}
-.btn.g{background:transparent;color:var(--ink);border:2px solid var(--line);box-shadow:none}
-.row{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0 8px}
-section{padding:40px 0}
-h2{font-size:30px;margin-bottom:16px}
-.steps{display:grid;gap:12px;counter-reset:s}
-.steps li{list-style:none;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px 16px 64px;position:relative}
-.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:18px;top:16px;width:32px;height:32px;border-radius:50%;background:var(--ye);color:#0B1017;font-weight:900;display:flex;align-items:center;justify-content:center}
-.steps b{display:block}
-.steps span{color:var(--mut);font-size:15px}
-code{background:#0B1017;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:14px;color:var(--cy)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:640px){.grid{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
-.card b{display:block;margin-bottom:4px}
-.card span{color:var(--mut);font-size:15px}
-.note{background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.3);border-radius:14px;padding:14px 16px;color:#FDE68A;font-size:15px}
-footer{padding:40px 0 60px;color:var(--mut);font-size:14px}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site/pasang.css">
 </head>
-<body>
-<header><div class="wrap"><a href="../">← Bijak Mulia</a></div></header>
+<body style="--acc:#CA8A04;--acc2:#FACC15">
+<header class="top"><div class="wrap"><a href="../">← Bijak Mulia</a><span class="chip ok">PERCUMA</span></div></header>
 <main class="wrap">
-  <div class="hero">
-    <img src="icon.png" alt="Ikon SEGAK Injector">
+  <section class="hero">
+    <img class="ic" src="icon.png" alt="Ikon SEGAK Injector">
     <div>
       <h1>SEGAK Injector</h1>
-      <p class="lead">Isi skor SEGAK & BMI ke SPPB dengan 6 nombor setiap murid — termasuk <b style="color:var(--ink)">autopilot sekelas</b>. Percuma sepenuhnya.</p>
-      <div class="chips"><span class="chip" style="background:#14532D">PERCUMA</span><span class="chip">Extension Chrome / Edge</span><span class="chip">v1.2.0</span></div>
-    </div>
-  </div>
-  <div class="row">
-    <a class="btn" href="segak-injector-v1.2.0.zip" download>⬇️ Muat turun (ZIP, 41 KB)</a>
-    <a class="btn g" href="#pasang">Cara pasang</a>
-  </div>
-
-  <section>
-    <h2>Apa yang ia buat</h2>
-    <div class="grid">
-      <div class="card"><b>⚡ Suntik pantas</b><span>Taip <code>63 155 120 20 14 46</code> (berat, tinggi, NTB, TT, RTS, JM) — borang SPPB diisi serta-merta.</span></div>
-      <div class="card"><b>📋 Ambil kelas</b><span>Senarai murid & MyID diambil terus dari halaman kelas SPPB.</span></div>
-      <div class="card"><b>🤖 Autopilot sekelas</b><span>Buka murid, isi, Simpan, kembali ke senarai dan teruskan ke murid seterusnya.</span></div>
-      <div class="card"><b>✅ Disahkan</b><span>Setiap murid disahkan dengan popup "Berjaya!" — berhenti sendiri jika berlaku ralat berturut.</span></div>
+      <p class="lead">Isi skor <b>SEGAK & BMI ke SPPB</b> dengan 6 nombor setiap murid — termasuk <b>autopilot sekelas</b> yang isi, simpan dan teruskan ke murid seterusnya sendiri.</p>
     </div>
   </section>
 
-  <section id="pasang">
-    <h2>Cara pasang (komputer)</h2>
-    <ol class="steps">
-      <li><b>Muat turun & ekstrak</b><span>Tekan butang muat turun, kemudian klik kanan fail ZIP → <i>Extract All</i>. Simpan folder itu (jangan padam).</span></li>
-      <li><b>Buka halaman extension</b><span>Chrome: taip <code>chrome://extensions</code> · Edge: taip <code>edge://extensions</code> di bar alamat.</span></li>
-      <li><b>Hidupkan Developer mode</b><span>Suis di penjuru kanan atas (Chrome) atau kiri bawah (Edge).</span></li>
-      <li><b>Load unpacked</b><span>Tekan <i>Load unpacked</i> dan pilih folder yang diekstrak tadi (folder yang ada fail <code>manifest.json</code>).</span></li>
-      <li><b>Buka SPPB</b><span>Log masuk ke <code>moeissppb.moe.gov.my</code>. Panel ⚡ SEGAK Injector akan muncul. Tekan ikon extension jika panel disembunyikan.</span></li>
-    </ol>
-  </section>
+  <div class="alert">
+    <b>ℹ️ Untuk sistem SPPB (moeissppb.moe.gov.my)</b>
+    Berfungsi pada borang SEGAK di SPPB KPM. Anda masih log masuk SPPB seperti biasa — skrip hanya membantu mengisi borang.
+  </div>
 
-  <section>
-    <h2>Cara guna</h2>
+  <h2>Apa yang ia buat</h2>
+  <div class="feats">
+    <div><i>📋</i><b>Ambil kelas</b><span>Nama & MyID murid diambil terus dari halaman kelas.</span></div>
+    <div><i>⌨️</i><b>6 nombor sahaja</b><span><code>63 155 120 20 14 46</code> — berat, tinggi, NTB, TT, RTS, JM.</span></div>
+    <div><i>🤖</i><b>Autopilot</b><span>Buka murid, isi, Simpan, kembali, teruskan.</span></div>
+    <div><i>✅</i><b>Disahkan</b><span>Setiap murid disemak dengan popup "Berjaya!".</span></div>
+  </div>
+
+  <h2 id="pasang">Cara pasang</h2>
+  <p class="sub">Pilih peranti anda. Pemasangan hanya sekali sahaja.</p>
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="and" role="tab">📱 Edge Android</button>
+    <button class="tab" data-tab="pc" role="tab">💻 Edge PC / Laptop</button>
+  </div>
+
+  <div class="pane on" id="p-and">
     <ol class="steps">
-      <li><b>Ambil kelas</b><span>Buka kad kelas → tab <i>Kelas</i> → 📋 Ambil kelas dari halaman ini.</span></li>
-      <li><b>Isi data</b><span>Cari nama murid → taip 6 nilai → Enter. Ulang untuk murid lain. Data disimpan dalam pelayar anda.</span></li>
-      <li><b>Suntik</b><span>Tekan ▶ Suntik Semua. Tekan ■ Henti atau Esc untuk berhenti bila-bila masa.</span></li>
+      <li><div><b>Pasang pelayar Microsoft Edge</b><span>Dari Play Store (jika belum ada). Chrome Android <u>tidak</u> menyokong extension.</span>
+        <a class="btn g" href="https://play.google.com/store/apps/details?id=com.microsoft.emmx" target="_blank" rel="noopener">▶ Buka Play Store: Edge</a></div></li>
+      <li><div><b>Tambah Tampermonkey dalam Edge</b><span>Buka Edge → menu <kbd>☰</kbd> (bawah) → <kbd>Extensions</kbd> → cari <b>Tampermonkey</b> → <kbd>Get</kbd>.</span>
+        <div class="mock"><div class="mbar">☰ Menu</div><div class="mrow">🧩 Extensions</div><div class="mrow hl">Tampermonkey <span>Get</span></div></div></div></li>
+      <li><div><b>Buka halaman ini dalam Edge</b><span>Salin pautan halaman ini dan buka dalam Edge.</span>
+        <button class="btn g" data-copy-url>📋 Salin pautan halaman ini</button></div></li>
+      <li><div><b>Tekan "Pasang skrip"</b><span>Halaman Tampermonkey terbuka → tekan <kbd>Install</kbd>.</span>
+        <a class="btn p" href="segak-injector.user.js">⚡ Pasang skrip SEGAK Injector</a>
+        <details class="alt"><summary>Tiada halaman Install keluar? Guna cara salin kod</summary>
+          <ol><li>Tekan <b>Salin kod</b> di bawah.</li><li>Edge ☰ → Extensions → <b>Tampermonkey</b> → <b>Create a new script</b>.</li><li>Padam semua teks contoh → tekan lama → <b>Paste</b> → ikon 💾 <b>Save</b>.</li></ol>
+          <button class="btn g" data-copy-code="segak-injector.user.js">📋 Salin kod skrip</button></details></div></li>
+      <li><div><b>Buka SPPB</b><span>Log masuk <code>moeissppb.moe.gov.my</code> dalam Edge. Panel ⚡ <b>SEGAK Injector</b> muncul di bucu skrin. Siap! 🎉</span></div></li>
     </ol>
-    <p class="note" style="margin-top:16px">🔒 Cuba 1–2 murid dahulu dan semak nilainya di SPPB. Extension tidak menyimpan kata laluan dan tidak menekan butang <b>Hantar</b> — semak dan hantar sendiri.</p>
-  </section>
+  </div>
+
+  <div class="pane" id="p-pc">
+    <div class="choice">
+      <div><b>Cara A — Extension (disyorkan)</b><span>Paling stabil. Muat turun ZIP & pasang sekali.</span></div>
+      <div><b>Cara B — Tampermonkey</b><span>Jika anda sudah guna Tampermonkey, atau PC sekolah sekat "Load unpacked".</span></div>
+    </div>
+    <h3>Cara A — Extension</h3>
+    <ol class="steps">
+      <li><div><b>Muat turun & ekstrak</b><span>Klik kanan fail ZIP → <kbd>Extract All</kbd>. Simpan folder itu (jangan padam).</span>
+        <a class="btn p" href="segak-injector-v1.2.0.zip" download>⬇️ Muat turun SEGAK Injector (ZIP, 41 KB)</a></div></li>
+      <li><div><b>Buka halaman extension</b><span>Taip <code>edge://extensions</code> (atau <code>chrome://extensions</code>) di bar alamat → hidupkan <b>Developer mode</b>.</span>
+        <div class="mock"><div class="mrow hl">Developer mode <span class="sw on"></span></div></div></div></li>
+      <li><div><b>Load unpacked</b><span>Klik <kbd>Load unpacked</kbd> → pilih folder yang diekstrak (folder yang ada fail <code>manifest.json</code>).</span></div></li>
+      <li><div><b>Buka SPPB</b><span>Panel ⚡ muncul. Jika tersembunyi, klik ikon SEGAK Injector di toolbar.</span></div></li>
+    </ol>
+    <h3>Cara B — Tampermonkey</h3>
+    <ol class="steps">
+      <li><div><b>Pasang Tampermonkey</b><span>Dari kedai Edge Add-ons → <kbd>Get</kbd>.</span>
+        <a class="btn g" href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd" target="_blank" rel="noopener">🧩 Buka Tampermonkey (Edge Add-ons)</a></div></li>
+      <li><div><b>Benarkan skrip pengguna</b><span><code>edge://extensions</code> → <b>Developer mode</b> → <b>Details</b> Tampermonkey → hidupkan <b>Allow user scripts</b>.</span></div></li>
+      <li><div><b>Pasang skrip</b><span>Klik <kbd>Install</kbd> pada tab Tampermonkey yang terbuka.</span>
+        <a class="btn p" href="segak-injector.user.js">⚡ Pasang skrip SEGAK Injector</a></div></li>
+    </ol>
+  </div>
+
+  <h2>Cara guna</h2>
+  <ol class="steps use">
+    <li><div><b>📋 Ambil kelas</b><span>Buka kad kelas di SPPB → panel tab <b>Kelas</b> → <b>Ambil kelas dari halaman ini</b>.</span></div></li>
+    <li><div><b>⌨️ Isi data</b><span>Cari nama murid → taip 6 nilai (berat tinggi NTB TT RTS JM) → Enter. Ulang untuk murid lain.</span></div></li>
+    <li><div><b>▶ Suntik semua</b><span>Autopilot isi & simpan setiap murid. Tekan <b>■ Henti</b> atau <kbd>Esc</kbd> untuk berhenti.</span></div></li>
+  </ol>
+  <p class="note">🔒 Cuba 1–2 murid dahulu dan semak di SPPB. Skrip tidak menyimpan kata laluan dan tidak menekan butang <b>Hantar</b> — semak & hantar sendiri.</p>
+
+  <h2>Masalah biasa</h2>
+  <div class="faq">
+    <details><summary>Panel ⚡ tak muncul</summary><p>(1) Guna <b>Edge</b>. (2) PC + Tampermonkey: pastikan <b>Allow user scripts</b> dihidupkan. (3) Pastikan skrip/extension dihidupkan. (4) Refresh SPPB (<kbd>F5</kbd>).</p></details>
+    <details><summary>Nilai tak masuk ke borang</summary><p>Pastikan suis <b>Ditaksir</b> dihidupkan pada borang SPPB. Kemudian cuba semula.</p></details>
+    <details><summary>Perlu bayar / kod lesen?</summary><p>Tidak. Semua ciri termasuk autopilot percuma sepenuhnya.</p></details>
+  </div>
 </main>
-<footer><div class="wrap">© <span id="yr">2026</span> Bijak Mulia · Percuma untuk cikgu · <a href="../#cadangan">Hantar cadangan</a></div></footer>
-<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+<footer class="wrap">© <span id="yr">2026</span> Bijak Mulia · Percuma untuk cikgu · <a href="../#cadangan">Hantar cadangan</a></footer>
+<script src="../site/pasang.js"></script>
 </body>
 </html>

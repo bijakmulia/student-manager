@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERPH Autofill (AppSheet) — Bijak Mulia</title>
+<meta name="description" content="Skrip percuma untuk isi borang ERPH GURU (AppSheet) secara automatik. Panduan pasang di Edge Android dan Edge PC.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site/pasang.css">
+</head>
+<body style="--acc:#7C3AED;--acc2:#A78BFA">
+<header class="top"><div class="wrap"><a href="../">← Bijak Mulia</a><span class="chip ok">PERCUMA</span></div></header>
+<main class="wrap">
+  <section class="hero">
+    <div class="ic">📝</div>
+    <div>
+      <h1>ERPH Autofill</h1>
+      <p class="lead">Isi borang <b>ERPH GURU (AppSheet)</b> secara automatik — ikut jadual waktu anda, cadangkan SK seterusnya, dan tulis objektif, aktiviti & refleksi dengan bantuan AI.</p>
+    </div>
+  </section>
+
+  <div class="alert">
+    <b>⚠️ Khas untuk pengguna eRPH jenis AppSheet</b>
+    Skrip ini hanya berfungsi pada aplikasi <b>ERPH GURU</b> yang dibuka di <code>appsheet.com</code>. Jika sekolah anda guna sistem eRPH lain (contoh DELIMa / borang lain), skrip ini <b>tidak</b> akan berfungsi — guna <a href="../erph/">eRPH Pintar</a> sebagai ganti.
+  </div>
+
+  <h2>Apa yang ia buat</h2>
+  <div class="feats">
+    <div><i>🗓️</i><b>Ikut jadual waktu</b><span>Tunjuk kelas seterusnya yang belum diisi minggu ini.</span></div>
+    <div><i>⭐</i><b>Cadang SK seterusnya</b><span>Ingat SK terakhir setiap kelas — tak perlu skrol dropdown.</span></div>
+    <div><i>🤖</i><b>Prompt AI siap</b><span>Salin ke ChatGPT / Gemini, tampal jawapan semula.</span></div>
+    <div><i>✍️</i><b>Isi borang automatik</b><span>Subjek, tarikh, kelas, masa, SK, objektif, aktiviti & refleksi.</span></div>
+  </div>
+
+  <h2 id="pasang">Cara pasang</h2>
+  <p class="sub">Pilih peranti anda. Pemasangan hanya sekali sahaja (±3 minit).</p>
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="and" role="tab">📱 Edge Android</button>
+    <button class="tab" data-tab="pc" role="tab">💻 Edge PC / Laptop</button>
+  </div>
+
+  <div class="pane on" id="p-and">
+    <ol class="steps">
+      <li><div><b>Pasang pelayar Microsoft Edge</b><span>Dari Play Store (jika belum ada). Chrome Android <u>tidak</u> menyokong extension.</span>
+        <a class="btn g" href="https://play.google.com/store/apps/details?id=com.microsoft.emmx" target="_blank" rel="noopener">▶ Buka Play Store: Edge</a></div></li>
+      <li><div><b>Tambah Tampermonkey dalam Edge</b><span>Buka Edge → tekan menu <kbd>☰</kbd> (bawah) → <kbd>Extensions</kbd> → cari <b>Tampermonkey</b> → tekan <kbd>Get</kbd> / <kbd>Dapatkan</kbd>.</span>
+        <div class="mock"><div class="mbar">☰ Menu</div><div class="mrow">🧩 Extensions</div><div class="mrow hl">Tampermonkey <span>Get</span></div></div></div></li>
+      <li><div><b>Buka halaman ini dalam Edge</b><span>Salin pautan halaman ini dan buka dalam Edge (bukan Chrome).</span>
+        <button class="btn g" data-copy-url>📋 Salin pautan halaman ini</button></div></li>
+      <li><div><b>Tekan "Pasang skrip"</b><span>Tampermonkey akan buka halaman pemasangan → tekan <kbd>Install</kbd>.</span>
+        <a class="btn p" href="erph-autofill.user.js">⚡ Pasang skrip ERPH Autofill</a>
+        <details class="alt"><summary>Tiada halaman Install keluar? Guna cara salin kod</summary>
+          <ol><li>Tekan <b>Salin kod</b> di bawah.</li><li>Edge ☰ → Extensions → <b>Tampermonkey</b> → <b>Create a new script</b>.</li><li>Padam semua teks contoh → tekan lama → <b>Paste</b> → tekan ikon 💾 <b>Save</b>.</li></ol>
+          <button class="btn g" data-copy-code="erph-autofill.user.js">📋 Salin kod skrip</button></details></div></li>
+      <li><div><b>Buka ERPH GURU di AppSheet</b><span>Buka aplikasi ERPH GURU anda dalam <b>Edge</b> (log masuk seperti biasa). Butang ungu <b>📝</b> muncul di kiri bawah skrin. Siap! 🎉</span></div></li>
+    </ol>
+  </div>
+
+  <div class="pane" id="p-pc">
+    <ol class="steps">
+      <li><div><b>Pasang Tampermonkey dalam Edge</b><span>Buka kedai Edge Add-ons → tekan <kbd>Get</kbd> → <kbd>Add extension</kbd>.</span>
+        <a class="btn g" href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd" target="_blank" rel="noopener">🧩 Buka Tampermonkey (Edge Add-ons)</a></div></li>
+      <li><div><b>Benarkan skrip pengguna (penting!)</b><span>Taip <code>edge://extensions</code> di bar alamat → hidupkan <b>Developer mode</b> (kiri bawah) → klik <b>Details</b> pada Tampermonkey → hidupkan <b>Allow user scripts</b>.</span>
+        <div class="mock"><div class="mrow">Developer mode <span class="sw on"></span></div><div class="mrow hl">Allow user scripts <span class="sw on"></span></div></div>
+        <span class="tip">Tanpa langkah ini, butang 📝 tidak akan muncul.</span></div></li>
+      <li><div><b>Tekan "Pasang skrip"</b><span>Tab Tampermonkey akan terbuka → klik <kbd>Install</kbd>.</span>
+        <a class="btn p" href="erph-autofill.user.js">⚡ Pasang skrip ERPH Autofill</a>
+        <details class="alt"><summary>Tiada halaman Install keluar? Guna cara salin kod</summary>
+          <ol><li>Klik <b>Salin kod</b>.</li><li>Klik ikon Tampermonkey (🧩 di toolbar) → <b>Create a new script</b>.</li><li>Padam teks contoh → <kbd>Ctrl</kbd>+<kbd>V</kbd> → <kbd>Ctrl</kbd>+<kbd>S</kbd>.</li></ol>
+          <button class="btn g" data-copy-code="erph-autofill.user.js">📋 Salin kod skrip</button></details></div></li>
+      <li><div><b>Buka ERPH GURU di AppSheet</b><span>Refresh halaman AppSheet (<kbd>F5</kbd>). Butang ungu <b>📝</b> muncul di kiri bawah. Siap! 🎉</span></div></li>
+    </ol>
+  </div>
+
+  <h2>Cara guna (setiap minggu)</h2>
+  <ol class="steps use">
+    <li><div><b>Kali pertama: isi jadual waktu</b><span>Tekan 📝 → masukkan kelas, hari, masa & subjek anda. Tekan <b>Muat senarai SK</b> semasa borang ERPH dibuka supaya skrip kenal senarai SK.</span></div></li>
+    <li><div><b>Buka borang ERPH baharu</b><span>Tekan 📝 → kelas seterusnya ditanda <b>SETERUSNYA</b> dengan SK dicadangkan ⭐.</span></div></li>
+    <li><div><b>① Salin Prompt → AI</b><span>Tampal dalam ChatGPT / Gemini / Copilot dan salin jawapan (format JSON).</span></div></li>
+    <li><div><b>② Tampal jawapan → ③ Isi Borang</b><span>Skrip isi semua medan. <b>Semak</b>, kemudian tekan <b>Save</b> sendiri.</span></div></li>
+  </ol>
+  <p class="note">🔒 Skrip tidak menekan butang Save dan tidak menyimpan kata laluan. Data jadual disimpan dalam pelayar anda sahaja.</p>
+
+  <h2>Masalah biasa</h2>
+  <div class="faq">
+    <details><summary>Butang 📝 tak muncul</summary><p>(1) Pastikan anda guna <b>Edge</b>, bukan Chrome. (2) Edge PC: semak <b>Allow user scripts</b> dihidupkan. (3) Buka Tampermonkey → pastikan <b>ERPH Autofill (AppSheet)</b> ada dan suisnya hidup. (4) Refresh AppSheet.</p></details>
+    <details><summary>Ada medan keluar ✗ dalam log</summary><p>Tekan butang <b>Salin laporan ralat</b> yang muncul, kemudian hantar melalui <a href="../#cadangan">borang cadangan</a> / WhatsApp. Kami akan betulkan.</p></details>
+    <details><summary>Bagaimana kemas kini skrip?</summary><p>Tampermonkey menyemak kemas kini secara automatik. Atau tekan semula <b>Pasang skrip</b> di halaman ini.</p></details>
+    <details><summary>Perlu kod lesen?</summary><p>Tidak. Edisi Bijak Mulia percuma sepenuhnya.</p></details>
+  </div>
+</main>
+<footer class="wrap">© <span id="yr">2026</span> Bijak Mulia · Percuma untuk cikgu · <a href="../#cadangan">Hantar cadangan</a></footer>
+<script src="../site/pasang.js"></script>
+</body>
+</html>
