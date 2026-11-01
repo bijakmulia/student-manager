@@ -3105,9 +3105,12 @@ function impJson(){
     const rd = new FileReader();
     rd.onload = async () => {
       try {
-        const d = JSON.parse(rd.result);
+        let d = JSON.parse(rd.result);
+        /* fail eksport Firebase Console: terima dari root, nod ipbd, atau nod v12 */
+        if (d && !d.students){ if (d.ipbd && d.ipbd.v12) d = d.ipbd.v12; else if (d.v12 && d.v12.students) d = d.v12; }
+        if (!d || !Array.isArray(d.students)) return toast('Fail ini bukan data EduRank.', null, true);
         const ok = await confirmBox({danger:true,title:'Import JSON',okText:'Ganti Data',
-          message:'Data semasa akan DIGANTI sepenuhnya dengan kandungan fail ini. Teruskan?'});
+          message:'Data semasa akan DIGANTI sepenuhnya dengan kandungan fail ini:<br><br>' + summarise(d) + '<br><br>Teruskan?'});
         if(!ok) return;
         const ph = d.photos || {}; delete d.photos;
         S = migrate(d);
