@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "ipbd": {
+      "v12": {
+        ".read": false,
+        ".write": false
+      },
+      "u": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid && auth.token.firebase.sign_in_provider !== 'anonymous'",
+          ".write": "auth != null && auth.uid === $uid && auth.token.firebase.sign_in_provider !== 'anonymous'"
+        }
+      }
+    },
+    "ipbd_share": {
+      "$token": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  }
+}

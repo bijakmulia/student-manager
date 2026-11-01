@@ -779,12 +779,52 @@ function migrate(d){
 }
 
 /* ---------- FIREBASE (pilihan) ---------- */
-const FB = { on:false, app:null, db:null, st:null, mod:{}, cfg:null, busy:false };
+/* Awan Bijak Mulia: Firebase dikongsi — setiap cikgu daftar akaun (emel/Google) dan datanya disimpan di ipbd/u/<uid>.
+   Cikgu yang tampal config sendiri (Lanjutan) kekal guna ipbd/v12 dalam projek mereka. Kosongkan BM_FB untuk matikan. */
+const BM_FB = null;
+const FB = { on:false, app:null, db:null, st:null, mod:{}, cfg:null, busy:false, mode:'', user:null, path:'ipbd/v12' };
 let MURID = null, MURID_CFG = null;                 /* versi murid: pakej dari guru (baca sahaja) & konfigurasi Firebase untuk bilik bermain */
 function fbCfgGet(){ try { return JSON.parse(localStorage.getItem(LS_FB)||'null'); } catch(e){ return null; } }
+const fbMods = () => Promise.all([
+  import('https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js'),
+  import('https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js'),
+  import('https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js'),
+  import('https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js')
+]);
+/* mod Akaun Bijak Mulia: tunggu sesi log masuk tersimpan (Firebase Auth ingat sesi dalam pelayar) */
+async function fbInitAccount(){
+  try {
+    setSyncIcon('wait');
+    if (!FB.app){ const [a, d, s, au] = await fbMods(); FB.mod = { a, d, s, au }; FB.mode = 'bm'; FB.cfg = BM_FB;
+      FB.app = a.initializeApp(BM_FB); FB.db = d.getDatabase(FB.app); FB.st = s.getStorage(FB.app); }
+    const au = FB.mod.au, d = FB.mod.d, auth = au.getAuth(FB.app);
+    const user = await new Promise(res => { const off = au.onAuthStateChanged(auth, u => { off(); res(u); }); });
+    if (!user || user.isAnonymous){ FB.user = null; setSyncIcon('off'); if (S.ui && S.ui.tab === 'settings') renderTab(); return; }
+    FB.user = { uid: user.uid, email: user.email || '', name: user.displayName || '' }; FB.path = 'ipbd/u/' + user.uid;
+    const proceed = await fbFirstSync(d);
+    if (!proceed){ FB.on = false; setSyncIcon('off'); return; }
+    FB.on = true; setSyncIcon('on'); muridRecvStart(); fbWatch(d);
+    if (S.ui && S.ui.tab === 'settings') renderTab();
+  } catch(e){ FB.on = false; setSyncIcon('err'); console.warn('Akaun awan gagal:', e); }
+}
+function fbWatch(d){
+  d.onValue(d.ref(FB.db, FB.path), snap => {
+    const v = snap.val();
+    if (!v || v.clientId === CLIENT_ID) return;
+    if ((v.rev||0) > (S.rev||0)) {
+      S = migrate(v);
+      localStorage.setItem(LS_KEY, JSON.stringify(S));
+      renderAll(); if (!SHOWCASE_OPEN) toast('Data disegerakkan dari awan.');
+    }
+  });
+}
 async function fbInit(){
-  const cfg = fbCfgGet();
+  let cfg = fbCfgGet();
+  /* config manual yang sama dengan projek Bijak Mulia (contoh peranti pemilik) → beralih ke mod akaun; data peranti dimuat naik selepas log masuk */
+  if (cfg && BM_FB && BM_FB.projectId && cfg.projectId === BM_FB.projectId){ localStorage.removeItem(LS_FB); localStorage.removeItem(LS_LINK); cfg = null; }
+  if ((!cfg || !cfg.apiKey || !cfg.databaseURL) && BM_FB && BM_FB.apiKey) return fbInitAccount();
   if (!cfg || !cfg.apiKey || !cfg.databaseURL) { setSyncIcon('off'); return; }
+  FB.mode = 'own'; FB.path = 'ipbd/v12';
   try {
     setSyncIcon('wait');
     const [a, d, s, au] = await Promise.all([
@@ -804,19 +844,11 @@ async function fbInit(){
     FB.on = true;
     setSyncIcon('on');
     muridRecvStart();
-    d.onValue(d.ref(FB.db, 'ipbd/v12'), snap => {
-      const v = snap.val();
-      if (!v || v.clientId === CLIENT_ID) return;
-      if ((v.rev||0) > (S.rev||0)) {
-        S = migrate(v);
-        localStorage.setItem(LS_KEY, JSON.stringify(S));
-        renderAll(); if (!SHOWCASE_OPEN) toast('Data disegerakkan dari awan.');
-      }
-    });
+    fbWatch(d);
   } catch(e){ FB.on=false; setSyncIcon('err'); console.warn('Firebase gagal:', e); }
 }
 const LS_LINK = 'ipbd_v12_link';
-const linkKey = cfg => (cfg.projectId||'') + '|' + (cfg.databaseURL||'');
+const linkKey = cfg => (cfg.projectId||'') + '|' + (cfg.databaseURL||'') + (FB.user ? '|' + FB.user.uid : '');
 const isEmptyState = d => !d || (!(d.students||[]).length && !(d.classes||[]).length && !(d.subjects||[]).length);
 function summarise(d){
   if (!d) return 'kosong';
@@ -832,7 +864,7 @@ function adoptRemote(remote){
 async function fbFirstSync(d){
   const key = linkKey(FB.cfg);
   let remote = null;
-  try { const snap = await d.get(d.ref(FB.db, 'ipbd/v12')); remote = snap.exists() ? snap.val() : null; } catch(e){}
+  try { const snap = await d.get(d.ref(FB.db, FB.path)); remote = snap.exists() ? snap.val() : null; } catch(e){}
   if (localStorage.getItem(LS_LINK) === key) return true;            // peranti ini sudah dipadankan
   const rEmpty = isEmptyState(remote), lEmpty = isEmptyState(S);
   if (rEmpty && lEmpty){ localStorage.setItem(LS_LINK, key); return true; }
@@ -871,7 +903,7 @@ function syncChoice(remote){
 }
 function fbPush(){
   if (!FB.on) return;
-  try { FB.mod.d.set(FB.mod.d.ref(FB.db, 'ipbd/v12'), JSON.parse(JSON.stringify(S))); } catch(e){}
+  try { FB.mod.d.set(FB.mod.d.ref(FB.db, FB.path), JSON.parse(JSON.stringify(S))); } catch(e){}
 }
 async function fbUpload(path, dataUrl){
   const r = FB.mod.s.ref(FB.st, path);
@@ -2141,7 +2173,7 @@ const SET_GROUPS = [
   { k:'asas', name:'ASAS',    icon:'fa-school',    titles:['Pengurusan Kelas','Pengurusan Subjek','Medan Profil Dinamik','Arahan &amp; Maklumat'] },
   { k:'nilai', name:'NILAI',  icon:'fa-sliders',   titles:['Pengurusan Matrik','Kehadiran &amp; Baseline','Takwim &amp; Minggu Persekolahan','Jadual Hari Kelas','Bab &amp; RPM','Bank Soalan'] },
   { k:'main', name:'GAME',    icon:'fa-gamepad',   titles:['Lencana','Rank &amp; Julat Skor','Muzik &amp; Bunyi','Kad Koleksi &amp; Pack'] },
-  { k:'data', name:'DATA',    icon:'fa-database',  titles:['Penyegerakan Firebase','Data & Tahun Akademik','Data &amp; Tahun Akademik'] }
+  { k:'data', name:'DATA',    icon:'fa-database',  titles:['Akaun Awan Bijak Mulia','Firebase Sendiri (Lanjutan)','Penyegerakan Firebase','Data & Tahun Akademik','Data &amp; Tahun Akademik'] }
 ];
 const secSlug = t => String(t).replace(/&amp;/g,'').replace(/[^A-Za-z0-9]+/g,'').toLowerCase();
 function renderSettings(SECS){
@@ -2331,14 +2363,24 @@ function viewSettings(){
     (S.fields.length ? S.fields.map(f=>listRow(f.label,'fld',f.id)).join('') : '<div class="text-[12px] text-muted">Tiada medan tambahan. Contoh: No. IC, No. Pendaftaran, Alamat.</div>') +
     '<button class="btn btn-o clip-s w-full mt-2 text-[13px]" data-act="fld-add"><i class="fa-solid fa-plus"></i> Tambah Medan Baharu</button>');
 
-  const cfg = fbCfgGet();
-  h += sec('fa-cloud','Penyegerakan Firebase',
-    '<div class="text-[12px] text-muted">Status: <span class="'+(FB.on?'text-cyan':'text-muted')+'">'+(FB.on?'Bersambung (Anonymous Auth)':(cfg?'Tidak bersambung':'Mod tempatan sahaja'))+'</span></div>' +
-    '<div class="flex gap-2 mt-2"><button class="btn clip-s flex-1 text-[13px]" data-act="fb-cfg"><i class="fa-solid fa-key text-cyan"></i> Konfigurasi</button>' +
-    '<button class="btn clip-s flex-1 text-[13px]" data-act="fb-rules"><i class="fa-solid fa-shield-halved text-cyan"></i> Security Rules</button></div>' +
-    (FB.on ? '<div class="flex gap-2 mt-2">' +
+  const cfg = fbCfgGet(), bm = !!(BM_FB && BM_FB.apiKey), pullPush = FB.on ? '<div class="flex gap-2 mt-2">' +
       '<button class="btn clip-s flex-1 text-[12px]" data-act="fb-pull"><i class="fa-solid fa-cloud-arrow-down text-cyan"></i> Tarik dari Awan</button>' +
-      '<button class="btn clip-s flex-1 text-[12px]" data-act="fb-push"><i class="fa-solid fa-cloud-arrow-up text-orange"></i> Hantar ke Awan</button></div>' : ''));
+      '<button class="btn clip-s flex-1 text-[12px]" data-act="fb-push"><i class="fa-solid fa-cloud-arrow-up text-orange"></i> Hantar ke Awan</button></div>' : '';
+  const own = '<div class="flex gap-2 mt-2"><button class="btn clip-s flex-1 text-[13px]" data-act="fb-cfg"><i class="fa-solid fa-key text-cyan"></i> Konfigurasi</button>' +
+    '<button class="btn clip-s flex-1 text-[13px]" data-act="fb-rules"><i class="fa-solid fa-shield-halved text-cyan"></i> Security Rules</button></div>';
+  if (bm && !cfg){
+    h += sec('fa-user-shield','Akaun Awan Bijak Mulia',
+      (FB.user ? '<div class="panel clip-s p-3 flex items-center gap-3"><i class="fa-solid fa-circle-user text-[30px] text-cyan"></i><div class="flex-1 min-w-0"><div class="font-bold truncate">'+esc(FB.user.name || FB.user.email)+'</div><div class="text-[11px] text-muted truncate">'+esc(FB.user.email)+'</div><div class="text-[11px] mt-0.5 '+(FB.on?'text-cyan':'text-[#FCA5A5]')+'">'+(FB.on?'☁️ Bersambung — data anda disegerakkan':'Tidak bersambung')+'</div></div></div>' + pullPush +
+          '<button class="btn clip-s w-full mt-2 text-[12px]" data-act="acc-out"><i class="fa-solid fa-right-from-bracket text-muted"></i> Log Keluar</button>'
+        : '<div class="text-[12px] text-muted leading-relaxed">Daftar akaun percuma untuk <b class="text-cyan">simpan data di awan</b>, guna data yang sama di laptop & telefon, dan <b class="text-cyan">kongsi app kepada murid</b>. Data setiap cikgu disimpan berasingan dan hanya boleh dibaca oleh pemilik akaun.</div>' +
+          '<div class="grid grid-cols-2 gap-2 mt-3"><button class="btn btn-o clip-s text-[13px]" data-act="acc-reg"><i class="fa-solid fa-user-plus"></i> Daftar</button><button class="btn btn-c clip-s text-[13px]" data-act="acc-in"><i class="fa-solid fa-right-to-bracket"></i> Log Masuk</button></div>' +
+          '<div class="text-[11px] text-muted mt-2">Tanpa akaun, app tetap boleh digunakan sepenuhnya di peranti ini (data tempatan).</div>') +
+      '<details class="mt-3"><summary class="text-[12px] text-muted" style="cursor:pointer">Lanjutan: guna projek Firebase sendiri</summary><div class="text-[11px] text-muted mt-2">Untuk pengguna teknikal yang mahu pangkalan data sendiri.</div>' + own + '</details>');
+  } else {
+    h += sec('fa-cloud', bm ? 'Firebase Sendiri (Lanjutan)' : 'Penyegerakan Firebase',
+      '<div class="text-[12px] text-muted">Status: <span class="'+(FB.on?'text-cyan':'text-muted')+'">'+(FB.on?'Bersambung (Anonymous Auth)':(cfg?'Tidak bersambung':'Mod tempatan sahaja'))+'</span></div>' + own + pullPush +
+      (bm && cfg ? '<div class="panel clip-s p-2 mt-3 text-[12px]">💡 Mahu guna <b>Akaun Awan Bijak Mulia</b> (tanpa config)? Kosongkan Konfigurasi di atas, kemudian Daftar / Log Masuk. Data peranti ini akan dimuat naik ke akaun anda.</div>' : ''));
+  }
 
   h += sec('fa-database','Data & Tahun Akademik',
     '<div class="grid grid-cols-2 gap-2">' +
@@ -2858,6 +2900,57 @@ function fbCfgForm(){
     setTimeout(()=>location.reload(), 900);
   });
 }
+/* ---------- Akaun Awan Bijak Mulia: daftar / log masuk ---------- */
+const AUTH_ERR = { 'auth/email-already-in-use':'Emel ini sudah didaftarkan — sila Log Masuk.', 'auth/invalid-email':'Format emel tidak sah.', 'auth/weak-password':'Kata laluan terlalu lemah (sekurang-kurangnya 6 aksara).',
+  'auth/invalid-credential':'Emel atau kata laluan salah.', 'auth/wrong-password':'Kata laluan salah.', 'auth/user-not-found':'Akaun tidak dijumpai — sila Daftar.', 'auth/too-many-requests':'Terlalu banyak cubaan. Cuba lagi sebentar.',
+  'auth/network-request-failed':'Tiada sambungan internet.', 'auth/popup-closed-by-user':'Tetingkap Google ditutup.', 'auth/operation-not-allowed':'Kaedah log masuk ini belum dihidupkan oleh pentadbir.', 'auth/unauthorized-domain':'Domain ini belum dibenarkan oleh pentadbir.' };
+const authMsg = e => AUTH_ERR[e && e.code] || ('Ralat: ' + ((e && (e.code || e.message)) || 'tidak diketahui'));
+async function accAuth(){ if (!FB.mod.au) await fbInitAccount(); return FB.mod.au ? FB.mod.au.getAuth(FB.app) : null; }
+function accModal(mode){
+  const reg = mode === 'reg';
+  const id = openModal({ center:true, icon: reg ? 'fa-user-plus' : 'fa-right-to-bracket', title: reg ? 'Daftar Akaun Bijak Mulia' : 'Log Masuk',
+    body: (reg ? '<label class="lbl">NAMA</label><input id="acN" class="fld clip-s mt-1" placeholder="Cikgu Ahmad" autocomplete="name">' : '') +
+      '<label class="lbl mt-3 block">EMEL</label><input id="acE" type="email" class="fld clip-s mt-1" placeholder="nama@gmail.com" autocomplete="email">' +
+      '<label class="lbl mt-3 block">KATA LALUAN</label><input id="acP" type="password" class="fld clip-s mt-1" placeholder="sekurang-kurangnya 6 aksara" autocomplete="' + (reg ? 'new-password' : 'current-password') + '">' +
+      (reg ? '<label class="lbl mt-3 block">ULANG KATA LALUAN</label><input id="acP2" type="password" class="fld clip-s mt-1" autocomplete="new-password">' +
+        '<label class="flex gap-2 items-start mt-3 text-[11px] text-muted"><input id="acOk" type="checkbox" class="mt-0.5"><span>Saya faham data kelas & murid saya disimpan dalam awan Bijak Mulia, berasingan dan hanya boleh diakses oleh akaun saya.</span></label>' : '') +
+      '<div id="acErr" class="text-[12px] text-[#FCA5A5] mt-2" style="min-height:18px"></div>' +
+      '<div class="flex items-center gap-2 my-3 text-[11px] text-muted"><i class="flex-1 h-px bg-[#2F4257]"></i>ATAU<i class="flex-1 h-px bg-[#2F4257]"></i></div>' +
+      '<button class="btn clip-s w-full text-[13px]" data-ac="google"><i class="fa-brands fa-google text-orange"></i> ' + (reg ? 'Daftar' : 'Log masuk') + ' dengan Google</button>' +
+      '<div class="text-center text-[12px] mt-3">' + (reg ? 'Sudah ada akaun? <a href="#" data-ac="to-in" class="text-cyan">Log Masuk</a>' : 'Belum ada akaun? <a href="#" data-ac="to-reg" class="text-cyan">Daftar</a> · <a href="#" data-ac="forgot" class="text-muted">Lupa kata laluan?</a>') + '</div>',
+    footer: '<button class="btn clip-s flex-1" data-close="1">Batal</button><button class="btn btn-o clip-s flex-1" data-ac="go">' + (reg ? 'Daftar' : 'Log Masuk') + '</button>' });
+  const bd = $('[data-modal="' + id + '"]'), err = t => { $('#acErr', bd).textContent = t || ''; };
+  const done = () => { closeModal(id); toast('✅ Berjaya! Menyambung ke awan…'); setTimeout(() => location.reload(), 700); };
+  bd.addEventListener('click', async e => {
+    const b = e.target.closest('[data-ac]'); if (!b) return; e.preventDefault();
+    const k = b.dataset.ac;
+    if (k === 'to-in' || k === 'to-reg'){ closeModal(id); return setTimeout(() => accModal(k === 'to-reg' ? 'reg' : 'in'), 200); }
+    if (k === 'google' && reg && !$('#acOk', bd).checked) return err('Tandakan kotak persetujuan dahulu.');
+    let auth = null; try { auth = await accAuth(); } catch(x){} if (!auth) return err('Tidak dapat menyambung. Semak internet.');
+    const au = FB.mod.au, em = ($('#acE', bd).value || '').trim(), pw = $('#acP', bd).value || '';
+    try {
+      if (k === 'forgot'){ if (!em) return err('Isi emel dahulu, kemudian tekan "Lupa kata laluan".'); await au.sendPasswordResetEmail(auth, em); err(''); return toast('📧 Pautan set semula kata laluan dihantar ke ' + em); }
+      if (k === 'google'){ b.disabled = true; await au.signInWithPopup(auth, new au.GoogleAuthProvider()); return done(); }
+      if (k !== 'go') return;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return err('Isi emel yang sah.');
+      if (pw.length < 6) return err('Kata laluan sekurang-kurangnya 6 aksara.');
+      if (reg && pw !== $('#acP2', bd).value) return err('Kata laluan tidak sepadan.');
+      if (reg && !$('#acOk', bd).checked) return err('Tandakan kotak persetujuan dahulu.');
+      b.disabled = true;
+      if (reg){
+        const c = await au.createUserWithEmailAndPassword(auth, em, pw);
+        const nm = ($('#acN', bd).value || '').trim(); if (nm) try { await au.updateProfile(c.user, { displayName: nm }); } catch(x){}
+      } else await au.signInWithEmailAndPassword(auth, em, pw);
+      done();
+    } catch(x){ b.disabled = false; err(authMsg(x)); }
+  });
+}
+async function accOut(){
+  const ok = await confirmBox({ title:'Log Keluar', okText:'Log Keluar', message:'Penyegerakan awan akan berhenti di peranti ini. Data kelas masih ada dalam akaun awan anda dan boleh dimuat turun semula selepas log masuk.' });
+  if (!ok) return;
+  try { await FB.mod.au.signOut(FB.mod.au.getAuth(FB.app)); } catch(e){}
+  localStorage.removeItem(LS_LINK); toast('Telah log keluar.'); setTimeout(() => location.reload(), 600);
+}
 function fbRules(){
   const rules =
 '{\n  "rules": {\n    "ipbd": {\n      "v12": {\n        ".read": "auth != null",\n        ".write": "auth != null"\n      }\n    },\n    "ipbd_share": {\n      "$token": {\n        ".read": true,\n        ".write": "auth != null"\n      }\n    }\n  }\n}';
@@ -3090,7 +3183,7 @@ async function pullIfNewer(){
   // peranti lain (Firebase) atau tab lain pada peranti sama (localStorage)
   if (FB.on){
     try {
-      const s = await FB.mod.d.get(FB.mod.d.ref(FB.db, 'ipbd/v12'));
+      const s = await FB.mod.d.get(FB.mod.d.ref(FB.db, FB.path));
       const v = s.exists() ? s.val() : null;
       if (v && (v.rev||0) > (S.rev||0)){ S = migrate(v); try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){} renderAll(); }
     } catch(e){}
@@ -5505,7 +5598,7 @@ const lvCastOn = () => LIVE_ON;
 const lvViewOn = v => !!LVW.allow && !!v && v.by === LVW.allow;   // hos membuka siaran pemain biliknya sahaja
 const lvNote = () => '';
 const lvNoteOld = () => '<div class="lb-note" style="margin-top:8px">📺 <b>Tayangan projektor automatik:</b> peranti yang tekan MULA = pemain; peranti lain yang membuka EduRank (Firebase sama) memaparkan game ini. ' +
-  (FB.on ? '<span style="color:#4ADE80">Firebase aktif ✓</span>' : '<b style="color:#FCA5A5">Firebase belum aktif di peranti ini — Tetapan → Penyegerakan Firebase.</b>') + '</div>';
+  (FB.on ? '<span style="color:#4ADE80">Firebase aktif ✓</span>' : '<b style="color:#FCA5A5">Firebase belum aktif di peranti ini — Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + '.</b>') + '</div>';
 const LV_ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] };
 const LIVE = { frame: null, host: null };
 let LV_BC = null;
@@ -6774,7 +6867,7 @@ async function komboStart(seats, opt){
   let net = null;
   if (opt.multi){                                        // bilik berbilang peranti: kod 4 digit
     const code = String(1000 + Math.floor(Math.random() * 9000));
-    const T = await kmNet(code); if (!T) return toast('Berbilang peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+    const T = await kmNet(code); if (!T) return toast('Berbilang peranti perlukan Firebase (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ').', null, true);
     net = { T, code, hostSeat: -1 };
   }
   komboRun(seats.map(t => t.id), { seats: seats.map(t => ({ id: t.id, bot: !!t.bot })), lvl: opt.lvl }, net);
@@ -6785,6 +6878,7 @@ const KM_APP = {};
 async function kmNet(code, cfg){
   let d = null, db = null;
   if (!cfg && MURID_CFG) cfg = MURID_CFG;
+  if (!cfg && !FB.on && BM_FB && BM_FB.databaseURL) cfg = BM_FB;
   if (FB.on && FB.mod.d){ d = FB.mod.d; db = FB.db; }
   else if (cfg && cfg.databaseURL){
     try {
@@ -7445,7 +7539,7 @@ async function komboJoinAsk(){
   if (!code) return;
   const c = String(code).replace(/\D/g, '').slice(0, 4);
   if (c.length !== 4) return toast('Kod bilik ialah 4 digit.', null, true);
-  const T = await kmNet(c); if (!T) return toast('Sertai perlukan Firebase (Tetapan → Penyegerakan Firebase) dengan tetapan sama seperti peranti hos.', null, true);
+  const T = await kmNet(c); if (!T) return toast('Sertai perlukan Firebase (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ') dengan tetapan sama seperti peranti hos.', null, true);
   toast('Mencari bilik ' + c + '…');
   const kind = await new Promise(res => {                // bilik Tangga Ilmon ('st') atau Sekolah Berhantu ('esc')
     let done = false; const offs = []; const fin = k => { if (done) return; done = true; offs.forEach(o => { try { o && o(); } catch(e){} }); res(k); };
@@ -8499,7 +8593,7 @@ async function tkStart(host){
   let T = null, code = null;
   if (host){
     code = String(1000 + Math.floor(Math.random() * 9000));
-    T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+    T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ').', null, true);
   }
   let THREE; try { THREE = await import(ESC_THREE); } catch(e){ return toast('Gagal memuat enjin 3D. Semak internet.', null, true); }
   await tkProbe();
@@ -10107,7 +10201,7 @@ async function storHost(){
   const o = arenaUi(), t = teamOf(o.team);
   if (!t) return toast('Pilih kumpulan (Pemain) dahulu.', null, true);
   const code = String(1000 + Math.floor(Math.random() * 9000));
-  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ').', null, true);
   const cfg = { g: 'stor', code, team: { id: t.id, name: t.name }, cid: null, joined: false, started: false };
   const offs = [], ov = document.createElement('div'); ov.style.cssText = escRoomCss.replace('#2A0A12,#050206', '#0E2A3A,#04080C');
   document.body.appendChild(ov); lockBody();
@@ -15117,7 +15211,7 @@ async function runHost(){
   const seats = classTeams().slice(0, 8);
   if (!seats.length) return toast('Cipta kumpulan dahulu.', null, true);
   const code = String(1000 + Math.floor(Math.random() * 9000));
-  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ').', null, true);
   const c = runCfg(), qs = [];
   for (let i = 0; i < 30; i++){ const q = runQuestion(); qs.push({ q: q.q, c: q.c, a: q.a }); }
   const cfg = { g: 'run', code, lvl: c.lvl, qt: c.qt, qs, seats: seats.map(g => ({ id: g.id, name: g.name, joined: false, char: null })), started: false };
@@ -16293,7 +16387,7 @@ async function escHost(){
   if (ESC || RUN) return;
   let ac = null; try { ac = (typeof audCtx === 'function' && audCtx()) || null; if (ac && ac.state === 'suspended') ac.resume(); } catch(e){}
   const code = String(1000 + Math.floor(Math.random() * 9000));
-  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → Penyegerakan Firebase).', null, true);
+  const T = await kmNet(code); if (!T) return toast('Banyak peranti perlukan Firebase (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ').', null, true);
   const c = escCfg(), map = +c.peta || 0, gKind = ESC_GHOSTS[c.ghost] ? c.ghost : ['putih', 'pontianak', 'toyol'][Math.floor(Math.random() * 3)];
   const cfg = { g: 'esc', code, map, gKind, diff: c.diff, light: c.light, qt: c.qt, scare: c.scare, code3: [0, 0, 0].map(() => Math.floor(Math.random() * 10)),
     seats: seats.map(g => ({ id: g.id, name: g.name, char: null, joined: false })), started: false };
@@ -17881,11 +17975,11 @@ const ACTS = {
     save(true); renderTab(); toast('Tetapan disimpan.');
   },
   'fld-add': fldAdd, 'fld-edit': d=>fldEdit(d.id), 'fld-del': d=>fldDel(d.id),
-  'fb-cfg': fbCfgForm, 'fb-rules': fbRules,
+  'fb-cfg': fbCfgForm, 'fb-rules': fbRules, 'acc-reg': () => accModal('reg'), 'acc-in': () => accModal('in'), 'acc-out': accOut,
   'fb-pull': async () => {
     if (!FB.on) return;
     let remote = null;
-    try { const s = await FB.mod.d.get(FB.mod.d.ref(FB.db,'ipbd/v12')); remote = s.exists()?s.val():null; } catch(e){}
+    try { const s = await FB.mod.d.get(FB.mod.d.ref(FB.db, FB.path)); remote = s.exists()?s.val():null; } catch(e){}
     if (!remote) return toast('Tiada data dalam awan.', null, true);
     const ok = await confirmBox({ danger:true, title:'Tarik dari Awan', okText:'Ganti Data Peranti',
       message:'Data dalam peranti ini akan diganti sepenuhnya dengan data awan:<br><br>'+summarise(remote) });
@@ -18071,7 +18165,7 @@ async function unpublishMurid(t, kod){ try { await FB.mod.d.set(FB.mod.d.ref(FB.
 const randKod = () => { const a = new Uint8Array(6); crypto.getRandomValues(a); return Array.from(a, x => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[x % 32]).join(''); };
 function muridShareModal(){
   if (!FB.on) return openModal({ center:true, icon:'fa-mobile-screen-button', title:'Kongsi Game kepada Murid',
-    body:'<div class="text-[13px] leading-relaxed">Versi murid memerlukan <b>Firebase</b> (Tetapan → Penyegerakan Firebase) supaya senarai nama, bank soalan dan bilik bermain boleh dibuka dari telefon murid.</div>',
+    body:'<div class="text-[13px] leading-relaxed">Versi murid memerlukan <b>Firebase</b> (Tetapan → ' + (BM_FB ? 'Akaun Awan' : 'Penyegerakan Firebase') + ') supaya senarai nama, bank soalan dan bilik bermain boleh dibuka dari telefon murid.</div>',
     footer:'<button class="btn btn-o clip-s flex-1" data-close="1">Faham</button>' });
   const m = S.murid && S.murid.on ? S.murid : null;
   const nSt = S.students.length, nPin = S.students.filter(x => x.ic4).length;
