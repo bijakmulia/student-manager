@@ -93,6 +93,7 @@ input[type=range].sl::-moz-range-thumb{height:24px;width:14px;border:0;backgroun
 .tr-tapme{font-size:12px;font-weight:800;color:#FF6B00}
 #tourHint{display:none;position:fixed;left:12px;right:12px;top:calc(12px + var(--safe-t,0px));z-index:260;max-width:520px;margin:0 auto;background:#FFF7ED;color:#7C2D12;border:2px solid #FB923C;border-radius:14px;padding:10px 14px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);pointer-events:none}
 .backdrop{position:fixed;inset:0;background:rgba(4,8,12,.78);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;z-index:200;opacity:0;transition:opacity .16s ease;padding-top:var(--safe-t);}
+body:has(#mLogin) #modalRoot .backdrop{z-index:950;}
 .backdrop.show{opacity:1;}
 .mpanel{width:100%;max-width:520px;max-height:92vh;display:flex;flex-direction:column;background:linear-gradient(160deg,#18222F,#0F161F);border:1px solid var(--line);transform:translateY(18px);transition:transform .18s ease;padding-bottom:var(--safe-b);}
 .backdrop.show .mpanel{transform:translateY(0);}
@@ -1041,9 +1042,24 @@ function tourWelcome(){
     else { tourEnd(false); toast('Panduan boleh dimainkan semula di Tetapan → Arahan & Maklumat.'); } });
 }
 function tourAuto(){
-  let seen = null; try { seen = localStorage.getItem(TOUR_KEY); } catch(e){}
-  if (seen || MURID || $('#gate') || S.classes.length || S.students.length) return;
-  tourWelcome();
+  let seen = null, asked = null; try { seen = localStorage.getItem(TOUR_KEY); asked = localStorage.getItem('rk_acc_ask'); } catch(e){}
+  if (MURID || $('#gate') || S.classes.length || S.students.length) return;
+  if (BM_FB && !FB.user && !asked) return accWelcome();
+  if (!seen) tourWelcome();
+}
+/* Pengguna baharu: pilih akaun dahulu (data selamat dalam awan & sama di semua peranti), kemudian panduan */
+function accWelcome(){
+  const id = openModal({ center:true, icon:'fa-cloud', title:'Selamat datang ke EduRank! 👋',
+    body:'<div class="text-[14px] leading-relaxed">Langkah pertama: <b>akaun percuma</b> supaya data kelas anda <b>selamat dalam awan</b> dan sama di telefon, laptop & PC sekolah.</div>' +
+      '<button class="btn btn-o clip-s w-full !py-3 mt-4 text-[15px]" data-aw="reg"><i class="fa-solid fa-user-plus"></i> Daftar Akaun Baharu</button>' +
+      '<div class="text-[11px] text-muted mt-1 text-center">Kali pertama guna EduRank</div>' +
+      '<button class="btn btn-c clip-s w-full !py-3 mt-3 text-[15px]" data-aw="in"><i class="fa-solid fa-right-to-bracket"></i> Log Masuk</button>' +
+      '<div class="text-[11px] text-muted mt-1 text-center">Sudah ada akaun — data dari peranti lain dimuat turun automatik</div>',
+    footer:'<button class="btn clip-s w-full text-[12px]" data-aw="skip">Guna tanpa akaun (data di peranti ini sahaja)</button>' });
+  const bd = $('[data-modal="' + id + '"]');
+  bd.addEventListener('click', e => { const b = e.target.closest('[data-aw]'); if (!b) return; e.preventDefault(); closeModal(id);
+    if (b.dataset.aw === 'skip'){ try { localStorage.setItem('rk_acc_ask', '1'); } catch(x){} return setTimeout(tourAuto, 300); }
+    setTimeout(() => accModal(b.dataset.aw), 250); });
 }
 
 /* ---------- MODAL MANAGER ---------- */
@@ -18120,8 +18136,11 @@ const ACTS = {
   },
   'fb-push': async () => {
     if (!FB.on) return;
+    let remote = null; try { const snap = await FB.mod.d.get(FB.mod.d.ref(FB.db, FB.path)); remote = snap.exists() ? snap.val() : null; } catch(e){}
+    if (isEmptyState(S) && !isEmptyState(remote)) return confirmBox({ title:'Peranti Ini Kosong', okText:'Faham',
+      message:'Peranti ini <b>tiada data</b>, tetapi awan ada:<br><br>' + summarise(remote) + '<br><br>Menghantar sekarang akan memadam data awan, jadi ia dihalang. Tekan <b>Tarik dari Awan</b> untuk muat turun data itu.' });
     const ok = await confirmBox({ danger:true, title:'Hantar ke Awan', okText:'Ganti Data Awan',
-      message:'Data dalam awan akan diganti sepenuhnya dengan data peranti ini:<br><br>'+summarise(S) });
+      message:'Data dalam awan akan diganti sepenuhnya dengan data peranti ini:<br><br><b>Peranti ini:</b> '+summarise(S) + (remote ? '<br><br><b>Awan sekarang (akan dipadam):</b> ' + summarise(remote) : '') });
     if (!ok) return;
     S.rev = Date.now(); save(true); toast('Data peranti dihantar ke awan.');
   },
@@ -18465,7 +18484,11 @@ function muridLogin(step){
       '<button id="mKodGo" class="btn btn-o clip-s w-full !py-3 mt-3 text-[15px]">MASUK</button><div id="mErr" class="text-[12px] text-[#FCA5A5] mt-2 text-center"></div>' +
       '<div class="text-[11px] text-muted mt-4 text-center">Kod sekolah diberi oleh guru kamu.</div>' +
       '<div class="flex items-center gap-2 my-5 text-[11px] text-muted"><i class="flex-1 h-px bg-[#2F4257]"></i>ATAU<i class="flex-1 h-px bg-[#2F4257]"></i></div>' +
-      '<button id="mAwam" class="btn btn-c clip-s w-full !py-3 text-[15px]">🌍 MAIN SEBAGAI AWAM</button><div class="text-[11px] text-muted mt-2 text-center">Tiada kod sekolah? Main saje-saje — markah tidak direkod.</div>');
+      '<button id="mAwam" class="btn btn-c clip-s w-full !py-3 text-[15px]">🌍 MAIN SEBAGAI AWAM</button><div class="text-[11px] text-muted mt-2 text-center">Tiada kod sekolah? Main saje-saje — markah tidak direkod.</div>' +
+      '<button id="mGuru" class="btn clip-s w-full !py-2 mt-8 text-[12px]">👩‍🏫 Saya guru — buka EduRank guru</button>');
+    $('#mGuru').onclick = async () => { if (!await confirmBox({ title:'Tukar ke EduRank Guru', okText:'Ya, saya guru', message:'Peranti ini akan dibuka sebagai <b>EduRank guru</b> (bukan versi murid). Teruskan?' })) return;
+      try { ['rk_murid','rk_murid_me','rk_murid_q','rk_murid_day'].forEach(k => localStorage.removeItem(k)); sessionStorage.removeItem('rk_mgate'); } catch(e){}
+      location.href = location.pathname; };
     $('#mAwam').onclick = async () => { $('#mErr').textContent = 'Memuatkan…';
       try { const pack = await muridFetch(MURID.p.t, AWAM, MURID.p.f.databaseURL); if (!pack || !pack.st) return $('#mErr').textContent = 'Guru belum membuka permainan untuk orang awam.';
         MURID.pack = pack; MURID.kod = AWAM; muridIn(pack.st[0], ''); } catch(e){ $('#mErr').textContent = 'Tiada sambungan internet. Cuba lagi.'; } };
@@ -18617,8 +18640,7 @@ async function muridLogout(){
   $$('.navbtn').forEach(b => b.classList.toggle('on', b.dataset.nav === S.ui.tab));
   renderAll();
   setTimeout(autoSubject, 400);
-  fbInit();
-  setTimeout(tourAuto, 1500);
+  Promise.race([fbInit(), new Promise(r => setTimeout(r, 6000))]).catch(() => {}).then(() => setTimeout(tourAuto, 600));   // tunggu data awan dahulu
   liveWatch(); setInterval(liveWatch, 3000);         // tayangan langsung dari peranti lain
   window.addEventListener('beforeunload', () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} });
   window.addEventListener('storage', e => {
