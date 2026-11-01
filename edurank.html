@@ -17136,7 +17136,7 @@ function muridShareModal(){
     body:
       '<div class="text-[12px] text-muted leading-relaxed">Murid membuka pautan, memasang app, memasukkan <b class="text-cyan">kod sekolah</b>, memilih nama, dan boleh bermain semua game serta melihat showcase. Data guru tidak boleh diubah oleh murid.</div>' +
       '<label class="lbl mt-3 block">TAJUK (cth. nama sekolah)</label><input id="muT" class="fld clip-s mt-1" value="' + esc(m ? m.title : 'EduRank') + '">' +
-      '<label class="lbl mt-3 block">KOD SEKOLAH</label><input id="muK" class="fld clip-s mt-1 num !text-[20px] tracking-[.3em] uppercase" maxlength="8" value="' + esc(m ? m.kod : randKod()) + '">' +
+      '<label class="lbl mt-3 block">KOD SEKOLAH</label><input id="muK" class="fld clip-s mt-1 num !text-[20px] tracking-[.3em] uppercase" maxlength="8" value="' + esc(m ? m.kod : (S.murid && S.murid.kod) || 'PFT1001') + '"><div class="text-[11px] text-muted mt-1">Kod kekal sama setiap kali diterbitkan (kod sekolah: PFT1001). Murid hanya perlu ingat satu kod.</div>' +
       '<div class="panel clip-s p-2 mt-3 text-[12px]">🪪 PIN log masuk: <b>' + nPin + '/' + nSt + '</b> murid ada PIN (4 digit akhir IC). Murid tanpa PIN terus memilih nama.<br><span class="text-muted text-[11px]">Tetapkan PIN: tab Pelajar → Daftar → tampal senarai nama + IC dari Excel → Apply IC.</span></div>' +
       '<label class="panel clip-s p-2 mt-2 text-[12px] flex gap-2 items-start"><input id="muA" type="checkbox" class="mt-1"' + (!m || m.awam !== false ? ' checked' : '') + '><span>🌍 <b>Benarkan orang awam main</b> tanpa kod sekolah — main saje-saje: tiada nama murid, tiada showcase, tiada markah PBD.</span></label>' +
       (S.share && S.share.on ? '' : '<div class="text-[11px] text-[#FFC24D] mt-2"><i class="fa-solid fa-circle-info"></i> Showcase belum dikongsi — terbitkan di butang Showcase supaya murid boleh melihatnya.</div>') +
@@ -17158,7 +17158,7 @@ function muridShareModal(){
       if (kod === AWAM) return toast('Kod AWAM dikhaskan untuk orang awam — pilih kod lain.', null, true);
       b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menerbit...';
       if (m && m.kod !== kod) await unpublishMurid(m.token, m.kod);
-      S.murid = { on: true, token: m ? m.token : newToken(), kod, title: ($('#muT', bd).value || '').trim() || 'EduRank', awam: $('#muA', bd).checked }; save(true);
+      S.murid = { on: true, token: m ? m.token : (S.murid && S.murid.token) || newToken(), kod, title: ($('#muT', bd).value || '').trim() || 'EduRank', awam: $('#muA', bd).checked }; save(true);
       try { await publishMurid(); muridRecvStart(); toast('Versi murid diterbitkan.'); closeModal(id); renderTab(); setTimeout(muridShareModal, 220); }
       catch(err){ b.disabled = false; b.textContent = 'Cuba Lagi'; toast('Gagal menerbit: semak Security Rules (ipbd_share).', null, true); }
     }
