@@ -781,7 +781,8 @@ function migrate(d){
 /* ---------- FIREBASE (pilihan) ---------- */
 /* Awan Bijak Mulia: Firebase dikongsi — setiap cikgu daftar akaun (emel/Google) dan datanya disimpan di ipbd/u/<uid>.
    Cikgu yang tampal config sendiri (Lanjutan) kekal guna ipbd/v12 dalam projek mereka. Kosongkan BM_FB untuk matikan. */
-const BM_FB = null;
+const BM_FB = { apiKey: 'AIzaSyDSMXguTieLbSjXmbgIS1lMIQGW3aVZ2jI', authDomain: 'tota-3e677.firebaseapp.com', databaseURL: 'https://tota-3e677-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'tota-3e677', storageBucket: 'tota-3e677.firebasestorage.app', messagingSenderId: '360713810295', appId: '1:360713810295:web:cbb7f2249f1d18e1d27172' };
 const FB = { on:false, app:null, db:null, st:null, mod:{}, cfg:null, busy:false, mode:'', user:null, path:'ipbd/v12' };
 let MURID = null, MURID_CFG = null;                 /* versi murid: pakej dari guru (baca sahaja) & konfigurasi Firebase untuk bilik bermain */
 function fbCfgGet(){ try { return JSON.parse(localStorage.getItem(LS_FB)||'null'); } catch(e){ return null; } }
