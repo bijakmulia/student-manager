@@ -2,34 +2,455 @@
 <html lang="ms">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sistem Merentas Desa — Bijak Mulia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sistem Merentas Desa v3 — Bijak Mulia</title>
+<meta name="description" content="Sistem pengurusan merentas desa sekolah: daftar rumah & kategori, bib QR, imbas kamera, keputusan & mata rumah serta-merta. Percuma.">
+<meta name="theme-color" content="#1D4ED8">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" defer></script>
 <style>
-:root{--bg:#0B1017;--card:#141E2A;--line:#24344A;--ink:#F1F5F9;--mut:#94A3B8;--cy:#00E5FF}
-*{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 0%,rgba(0,87,255,.35),transparent 60%),var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;padding:24px}
-.box{max-width:520px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:40px 28px}
-.ic{font-size:64px}
-h1{font-family:Outfit,sans-serif;font-size:34px;line-height:1.1;margin:12px 0}
-p{color:var(--mut)}
-.chip{display:inline-block;margin-top:14px;padding:6px 14px;border-radius:999px;background:#0E3A44;color:var(--cy);font-weight:800;font-size:13px}
-.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
-a{display:inline-block;padding:13px 20px;border-radius:14px;font-weight:800;text-decoration:none}
-.p{background:#25D366;color:#0B1017}.g{border:2px solid var(--line);color:var(--ink)}
+:root{--bg:#F1F5F9;--card:#fff;--ink:#0F172A;--mut:#64748B;--line:#E2E8F0;--pri:#1D4ED8;--pri2:#2563EB;--ok:#16A34A;--bad:#DC2626;--warn:#D97706;--r:16px;--safe-b:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-size:15px;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,.cond{font-family:"Barlow Condensed",sans-serif;letter-spacing:.01em}
+.mono{font-family:"JetBrains Mono",monospace}
+#hdr{flex:none;background:linear-gradient(135deg,#1D4ED8,#0EA5E9);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 14px rgba(29,78,216,.25)}
+#hdr img{width:36px;height:36px;border-radius:10px;background:#fff}
+#hdr .t{flex:1;min-width:0}
+#hdr .t b{display:block;font-family:"Barlow Condensed";font-size:22px;line-height:1;letter-spacing:.04em}
+#hdr .t small{font-size:11px;font-weight:700;opacity:.85;letter-spacing:.12em}
+#hdr .clk{font-family:"JetBrains Mono";font-weight:800;font-size:15px;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:10px}
+#app{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 24px}
+.wrap{max-width:760px;margin:0 auto}
+#nav{flex:none;display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(6px + var(--safe-b))}
+#nav button{border:0;background:none;padding:6px 2px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:800;color:var(--mut);cursor:pointer}
+#nav button i{font-style:normal;font-size:20px;line-height:1.1}
+#nav button.on{color:var(--pri);background:#EFF6FF}
+#nav button.scan{background:var(--pri);color:#fff;margin:-18px 6px 0;border-radius:18px;box-shadow:0 8px 20px rgba(29,78,216,.4)}
+#nav button.scan.on{background:#1E3A8A}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.ttl{font-family:"Barlow Condensed";font-size:26px;font-weight:800;line-height:1.05}
+.sub{color:var(--mut);font-size:14px;margin-top:4px}
+.lbl{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--mut);text-transform:uppercase;margin:12px 0 6px;display:flex;align-items:center;gap:6px}
+.fld{width:100%;border:2px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;outline:none}
+.fld:focus{border-color:var(--pri2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;text-decoration:none;color:var(--ink)}
+.btn:active{transform:scale(.98)}
+.btn.p{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.bad{background:#fff;border-color:#FCA5A5;color:var(--bad)}
+.btn.w{width:100%}
+.btn.sm{padding:7px 11px;font-size:13px;border-radius:10px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 18px;font-weight:800;font-size:18px;cursor:pointer;min-width:58px}
+.chip.on{border-color:var(--pri);background:#EFF6FF;color:var(--pri)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;border:2px solid rgba(0,0,0,.12)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:800;background:#EFF6FF;color:var(--pri)}
+.prog{display:flex;gap:4px;margin:4px 0 14px}
+.prog i{flex:1;height:6px;border-radius:6px;background:var(--line)}
+.prog i.on{background:var(--pri)}
+.help{border:0;background:#E0E7FF;color:var(--pri);width:20px;height:20px;border-radius:50%;font-weight:900;font-size:12px;cursor:pointer}
+.tip{background:#FEF9C3;border:1px solid #FDE68A;border-radius:12px;padding:10px 12px;font-size:13px;margin-top:6px}
+.note{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:10px 12px;font-size:13px;color:#1E3A8A}
+.warn{background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:10px 12px;font-size:13px;color:#991B1B}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;letter-spacing:.06em;color:var(--mut);text-align:left;padding:8px 6px;border-bottom:2px solid var(--line);text-transform:uppercase}
+td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tblw{overflow-x:auto}
+.combo{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.combo:last-child{border-bottom:0}
+.combo .n{flex:1;min-width:0;font-weight:800}
+.combo .n small{display:block;color:var(--mut);font-weight:600}
+.bigbtn{display:flex;flex-direction:column;gap:4px;padding:16px;border-radius:16px;border:2px solid var(--line);background:#fff;font-weight:800;cursor:pointer;text-align:left}
+.bigbtn i{font-style:normal;font-size:26px}
+.bigbtn small{color:var(--mut);font-weight:600}
+.timer{font-family:"JetBrains Mono";font-weight:800;font-size:30px}
+details.acc{background:#fff;border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+details.acc summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:800;display:flex;justify-content:space-between}
+details.acc summary::after{content:"＋";color:var(--pri)}
+details.acc[open] summary::after{content:"－"}
+details.acc .in{padding:0 16px 16px}
+.feed{display:grid;gap:6px}
+.feed div{display:flex;gap:8px;align-items:center;background:#F8FAFC;border-radius:10px;padding:8px 10px;font-size:14px}
+.welcome .ban{border-radius:22px;overflow:hidden;background:linear-gradient(135deg,#1D4ED8,#0EA5E9 60%,#22C55E);color:#fff;padding:28px 22px;position:relative;margin-bottom:14px}
+.welcome .ban h1{font-size:44px;line-height:.95;font-weight:800}
+.welcome .ban p{margin-top:10px;font-weight:600;opacity:.92}
+.welcome .ban .run{position:absolute;right:14px;bottom:6px;font-size:84px;opacity:.25}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.feat div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.feat i{font-style:normal;font-size:24px}
+.feat b{display:block;margin-top:4px}
+.feat span{color:var(--mut);font-size:13px}
+/* pengimbas */
+#scanBox{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:58vh;margin:0 auto}
+#scanBox video{width:100%;height:100%;object-fit:cover}
+#scanBox .frame{position:absolute;inset:18%;border:4px solid rgba(255,255,255,.9);border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.25)}
+#scanBox .msg{position:absolute;left:0;right:0;bottom:10px;text-align:center;color:#fff;font-weight:800;text-shadow:0 2px 6px #000}
+#pop{position:fixed;left:12px;right:12px;bottom:calc(84px + var(--safe-b));z-index:60;max-width:520px;margin:0 auto;border-radius:20px;padding:16px 18px;color:#fff;box-shadow:0 18px 40px rgba(0,0,0,.35);display:none}
+#pop.ok{background:#15803D}#pop.dup{background:#B45309}#pop.err{background:#B91C1C}
+#pop b{display:block;font-size:22px;font-family:"Barlow Condensed"}
+#pop .big{font-family:"JetBrains Mono";font-size:26px;font-weight:800}
+#modal{position:fixed;inset:0;z-index:80;background:rgba(15,23,42,.55);display:none;align-items:flex-end;justify-content:center}
+#modal .box{background:#fff;width:100%;max-width:560px;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + var(--safe-b));max-height:88vh;overflow:auto}
+@media(min-width:700px){#modal{align-items:center}#modal .box{border-radius:22px}}
+/* cetak bib */
+#print{display:none}
+@media print{
+  body{display:block;overflow:visible;background:#fff}
+  #hdr,#nav,#app,#pop,#modal{display:none!important}
+  #print{display:block}
+  .bib{width:100%;height:46vh;border:3px solid #000;border-radius:14px;margin:0 0 3vh;display:flex;overflow:hidden;page-break-inside:avoid}
+  .bib:nth-child(2n){page-break-after:always}
+}
+.bib .side{-webkit-print-color-adjust:exact;print-color-adjust:exact;width:16mm;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;font-family:"Barlow Condensed";font-weight:800;font-size:22pt;letter-spacing:.1em}
+.bib .mid{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6mm}
+.bib .no{font-family:"Barlow Condensed";font-weight:800;font-size:96pt;line-height:.9}
+.bib .nm{font-weight:800;font-size:16pt;text-align:center;margin-top:3mm}
+.bib .ct{font-size:13pt;margin-top:2mm}
+.bib .qr{width:55mm;display:flex;align-items:center;justify-content:center;padding:4mm}
+.bib .qr img{width:100%;image-rendering:pixelated}
+.prevbib{display:flex;border:2px solid #000;border-radius:12px;overflow:hidden;background:#fff;margin-bottom:10px}
+.prevbib .side{width:34px;writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed";letter-spacing:.08em}
+.prevbib .mid{flex:1;padding:10px;text-align:center}
+.prevbib .no{font-family:"Barlow Condensed";font-weight:800;font-size:52px;line-height:.9}
+.prevbib .qr{width:96px;padding:8px}
+.prevbib .qr img{width:100%;image-rendering:pixelated}
 </style>
 </head>
 <body>
-  <div class="box">
-    <div class="ic">🏃</div>
-    <h1>Sistem Merentas Desa v3</h1>
-    <p>Versi baharu sedang disiapkan untuk diterbitkan di sini — wizard rumah & kategori, bib QR automatik, imbasan kamera dan mata rumah serta-merta.</p>
-    <span class="chip">🔧 Dibuka tidak lama lagi · Percuma</span>
-    <div class="row">
-      <a class="p" href="https://wa.me/60108349753?text=Salam%20Bijak%20Mulia%2C%20saya%20nak%20guna%20Sistem%20Merentas%20Desa.%20Bila%20boleh%20diakses%3F">💬 Maklumkan saya</a>
-      <a class="g" href="../">← Bijak Mulia</a>
-    </div>
-  </div>
+<header id="hdr"><img src="icon.svg" alt=""><div class="t"><b>MERENTAS DESA</b><small>PENGURUSAN SEKOLAH · V3</small></div><span class="clk" id="clk">--:--:--</span></header>
+<main id="app"></main>
+<nav id="nav">
+  <button data-go="welcome"><i>🏠</i>Utama</button>
+  <button data-go="daftar"><i>📋</i>Daftar</button>
+  <button data-go="scan" class="scan"><i>📷</i>Imbas</button>
+  <button data-go="race"><i>⏱️</i>Lumba</button>
+  <button data-go="results"><i>🏆</i>Keputusan</button>
+</nav>
+<div id="pop"></div>
+<div id="modal"><div class="box" id="mbox"></div></div>
+<div id="print"></div>
+
+<script>
+/* ============================================================
+   Sistem Pengurusan Merentas Desa v3 — Bijak Mulia (percuma)
+   Data disimpan dalam peranti (localStorage). Tiada pelayan.
+   Bib: <huruf rumah><no. kategori><no. pelajar 3 digit>  cth R1001
+   ============================================================ */
+const KEY = 'xc3', VKEY = 'xc3_view';
+const PALET = ['#DC2626', '#2563EB', '#16A34A', '#EAB308', '#9333EA', '#EA580C', '#0891B2', '#DB2777', '#334155'];
+const DEF_HOUSE = [['Merah', 'R', '#DC2626'], ['Biru', 'B', '#2563EB'], ['Hijau', 'G', '#16A34A'], ['Kuning', 'Y', '#EAB308'], ['Ungu', 'U', '#9333EA'], ['Jingga', 'J', '#EA580C']];
+const DEF_CAT = [['L15', 3], ['L18', 5], ['P15', 3], ['P18', 4], ['Terbuka', 5]];
+const blank = () => ({ v: 3, done: false, houses: [], cats: [], scoring: { n: 10, hi: 10, lo: 1, cap: 0 }, students: [], starts: {}, fin: [], wiz: 1 });
+let S; try { S = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || 'null') || {}); } catch (e) { S = blank(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Storan penuh!', 'err'); } };
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 9);
+const H = id => S.houses.find(h => h.id === id), C = id => S.cats.find(c => c.id === id);
+const pad = (n, l) => String(n).padStart(l || 3, '0');
+let view = localStorage.getItem(VKEY) || (S.done ? 'welcome' : 'welcome');
+
+/* ---------- masa & mata ---------- */
+const fmtT = ms => { if (ms == null || ms < 0) return '--:--'; const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + pad(m, 2) : m) + ':' + pad(x, 2); };
+const fmtClock = t => { const d = new Date(t); return pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2) + ':' + pad(d.getSeconds(), 2); };
+const pace = (ms, km) => { if (!km || ms == null) return '-'; const p = ms / 1000 / km, m = Math.floor(p / 60), s = Math.round(p % 60); return m + ':' + pad(s === 60 ? 59 : s, 2) + '/km'; };
+const step = () => { const { n, hi, lo } = S.scoring; return n > 1 ? (hi - lo) / (n - 1) : 0; };
+const ptsFor = place => { const { n, hi } = S.scoring; if (place > n) return 0; return Math.round((hi - (place - 1) * step()) * 100) / 100; };
+
+/* ---------- bib ---------- */
+function rebib(){
+  S.cats.forEach((c, ci) => S.houses.forEach(h => {
+    S.students.filter(s => s.house === h.id && s.cat === c.id).forEach((s, i) => { s.bib = h.letter + (ci + 1) + pad(i + 1); });
+  }));
+}
+const byBib = b => S.students.find(s => s.bib === String(b || '').trim().toUpperCase());
+
+/* ---------- keputusan ---------- */
+function catResults(cid){
+  const st = S.starts[cid]; if (!st) return [];
+  const rows = S.fin.map(f => ({ f, s: byBib(f.bib) })).filter(x => x.s && x.s.cat === cid).sort((a, b) => a.f.t - b.f.t);
+  return rows.map((x, i) => ({ place: i + 1, s: x.s, t: x.f.t, ms: x.f.t - st, pts: ptsFor(i + 1) }));
+}
+function houseScores(){
+  const tot = {}; S.houses.forEach(h => tot[h.id] = { pts: 0, by: {} });
+  S.cats.forEach(c => { const used = {};
+    catResults(c.id).forEach(r => { if (!r.pts) return; const hid = r.s.house; used[hid] = (used[hid] || 0) + 1; if (S.scoring.cap && used[hid] > S.scoring.cap) return;
+      tot[hid].pts += r.pts; tot[hid].by[c.id] = (tot[hid].by[c.id] || 0) + r.pts; }); });
+  return S.houses.map(h => ({ h, pts: Math.round(tot[h.id].pts * 100) / 100, by: tot[h.id].by })).sort((a, b) => b.pts - a.pts);
+}
+
+/* ---------- utiliti UI ---------- */
+let popT;
+function pop(kind, html){ const p = $('#pop'); p.className = kind; p.innerHTML = html; p.style.display = 'block'; clearTimeout(popT); popT = setTimeout(() => p.style.display = 'none', kind === 'ok' ? 4200 : 3200); }
+function toast(msg, kind){ pop(kind || 'ok', '<div style="font-weight:800">' + esc(msg) + '</div>'); }
+function modal(html){ $('#mbox').innerHTML = html; $('#modal').style.display = 'flex'; }
+function closeModal(){ $('#modal').style.display = 'none'; }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal(); });
+function ask(msg, ok){ modal('<div class="ttl">Pengesahan</div><p class="sub" style="margin:8px 0 16px">' + msg + '</p><div class="grid2"><button class="btn" data-close>Batal</button><button class="btn p" id="askOk">Ya, teruskan</button></div>'); $('#askOk').onclick = () => { closeModal(); ok(); }; }
+function helpTip(t){ modal('<div class="ttl">ℹ️ Penerangan</div><p style="margin:10px 0 16px">' + t + '</p><button class="btn p w" data-close>Faham</button>'); }
+function download(name, text, type){ const b = new Blob([text], { type: type || 'text/csv;charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+const csvCell = v => /[",\n;]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+function parseCSV(text){
+  text = text.replace(/^﻿/, ''); const first = text.split(/\r?\n/)[0] || '', d = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ';' : (first.includes('\t') ? '\t' : ',');
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++){ const c = text[i];
+    if (q){ if (c === '"'){ if (text[i + 1] === '"'){ f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true; else if (c === d){ row.push(f); f = ''; } else if (c === '\n' || c === '\r'){ if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; } else f += c; }
+  if (f || row.length){ row.push(f); rows.push(row); }
+  return rows.map(r => r.map(x => x.trim())).filter(r => r.some(x => x));
+}
+
+/* ---------- navigasi ---------- */
+function go(v){ view = v; try { localStorage.setItem(VKEY, v); } catch (e) {} if (v !== 'scan') stopCam(); render(); $('#app').scrollTop = 0; }
+document.querySelectorAll('#nav [data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+function render(){
+  document.querySelectorAll('#nav [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === view || (view === 'wizard' && b.dataset.go === 'daftar') || (view === 'bib' && b.dataset.go === 'daftar')));
+  const V = { welcome, daftar, wizard, race, scan, results, bib }[view] || welcome;
+  $('#app').innerHTML = '<div class="wrap">' + V() + '</div>'; (V.after || (() => {}))();
+  if (view === 'scan') startCam();
+}
+const needSetup = () => !S.done ? '<div class="card"><div class="ttl">Belum disediakan</div><p class="sub">Lengkapkan pendaftaran rumah, kategori dan pelajar dahulu.</p><button class="btn p w" style="margin-top:12px" onclick="go(\'wizard\')">📋 Mula Pendaftaran</button></div>' : '';
+
+/* ---------- UTAMA ---------- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; if (view === 'welcome') render(); });
+function welcome(){
+  const n = S.students.length, fin = S.fin.length;
+  return '<div class="welcome"><div class="ban"><div class="cond" style="font-weight:700;letter-spacing:.2em;font-size:14px">SELAMAT DATANG KE</div><h1>SISTEM MERENTAS<br>DESA SEKOLAH</h1><p>Daftar · Jana bib QR · Imbas di garisan penamat · Keputusan & mata rumah serta-merta.</p><div class="run">🏃</div></div>' +
+    (S.done ? '<div class="card"><div class="row" style="justify-content:space-between"><div><div class="ttl">' + S.houses.length + ' rumah · ' + S.cats.length + ' kategori</div><div class="sub">' + n + ' pelajar berdaftar · ' + fin + ' tamat larian</div></div><span class="pill">✅ Sedia</span></div></div>' : '') +
+    '<div class="feat"><div><i>🧙</i><b>Wizard pendaftaran</b><span>Rumah, warna, kategori, jarak & sistem mata.</span></div><div><i>🔳</i><b>Bib QR automatik</b><span>Contoh R1001 — rumah & kategori dikenal pasti sendiri.</span></div><div><i>📷</i><b>Imbas mana-mana kamera</b><span>Masa, pace & kedudukan terus keluar.</span></div><div><i>🏆</i><b>Mata rumah</b><span>Dikira automatik · eksport CSV.</span></div></div>' +
+    '<button class="btn p w" style="padding:16px;font-size:17px" onclick="go(\'' + (S.done ? 'race' : 'wizard') + '\')">' + (S.done ? '⏱️ Pergi ke Lumba' : '🚀 Mula Sekarang') + '</button>' +
+    (deferredPrompt ? '<button class="btn w" style="margin-top:10px" id="inst">📲 Pasang app ke skrin utama</button>' : '<p class="sub" style="text-align:center;margin-top:12px">📲 Untuk pasang: menu pelayar → <b>Add to Home screen / Pasang app</b></p>') +
+    '<p class="sub" style="text-align:center;margin-top:18px">Percuma · Data disimpan dalam peranti ini · <a href="../" style="color:var(--pri);font-weight:800">Bijak Mulia</a></p></div>';
+}
+welcome.after = () => { const b = $('#inst'); if (b) b.onclick = async () => { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; render(); }; };
+
+/* ---------- DAFTAR (landing) ---------- */
+function daftar(){
+  if (!S.done) return wizard();
+  return '<div class="ttl">Pendaftaran</div><p class="sub">Konfigurasi semasa — boleh dikemas kini bila-bila masa.</p>' +
+    '<div class="card" style="margin-top:12px"><div class="lbl">Rumah</div><div class="row">' + S.houses.map(h => '<span class="pill" style="background:' + h.color + '22;color:' + h.color + '"><span class="dot" style="background:' + h.color + '"></span>' + esc(h.name) + ' (' + esc(h.letter) + ')</span>').join('') + '</div>' +
+    '<div class="lbl">Kategori</div><div class="row">' + S.cats.map((c, i) => '<span class="pill">' + (i + 1) + ' · ' + esc(c.name) + ' · ' + c.km + ' km</span>').join('') + '</div>' +
+    '<div class="lbl">Sistem mata</div><div class="sub" style="margin:0">Top ' + S.scoring.n + ' · tertinggi ' + S.scoring.hi + ' · terendah ' + S.scoring.lo + (S.scoring.cap ? ' · had ' + S.scoring.cap + ' penyumbang/rumah' : '') + '</div>' +
+    '<div class="lbl">Pelajar</div><div class="sub" style="margin:0">' + S.students.length + ' pelajar berdaftar</div></div>' +
+    '<div class="grid2"><button class="bigbtn" onclick="wizGo(2)"><i>🏠</i>Rumah & kategori<small>Nama, huruf, warna, jarak</small></button><button class="bigbtn" onclick="wizGo(6)"><i>👥</i>Senarai pelajar<small>Muat naik / tampal nama</small></button>' +
+    '<button class="bigbtn" onclick="wizGo(5)"><i>🏆</i>Sistem mata<small>Layak mata, tertinggi, terendah</small></button><button class="bigbtn" onclick="go(\'bib\')"><i>🔳</i>Jana bib QR<small>Cetak / simpan PDF</small></button></div>' +
+    '<details class="acc" style="margin-top:12px"><summary>📖 Tutorial penggunaan</summary><div class="in">' + tutorial() + '</div></details>' +
+    '<div class="card"><button class="btn w" onclick="download(\'senarai-pelajar.csv\', listCSV())">⬇️ Muat turun senarai penuh (CSV)</button>' +
+    '<button class="btn bad w" style="margin-top:8px" onclick="ask(\'Mulakan pendaftaran semula? Konfigurasi rumah/kategori diset semula, senarai pelajar & keputusan dipadam.\', () => { S = blank(); save(); go(\'wizard\'); })">♻️ Setup semula dari mula</button></div>';
+}
+daftar.after = () => { if (!S.done) wizard.after(); };
+const tutorial = () => '<ol style="padding-left:18px;display:grid;gap:8px;font-size:14px">' +
+  '<li><b>Daftar</b> — jawab soalan wizard: bilangan rumah, warna & huruf bib, kategori & jarak, sistem mata.</li>' +
+  '<li><b>Senarai pelajar</b> — muat turun templat CSV bagi setiap rumah & kategori, isi nama, muat naik semula (atau tampal senarai nama).</li>' +
+  '<li><b>Jana bib</b> — cetak bib QR. QR hanya mengandungi nombor bib, contoh <b>R1001</b> = rumah huruf R, kategori 1, pelajar 001.</li>' +
+  '<li><b>Lumba</b> — tekan MULA bagi setiap kategori ketika wisel ditiup (atau Mula Semua).</li>' +
+  '<li><b>Imbas</b> — imbas bib pelari di garisan penamat. Nama, masa, pace & kedudukan terus keluar. Boleh taip bib secara manual.</li>' +
+  '<li><b>Keputusan</b> — kedudukan setiap kategori & mata rumah dikira automatik. Eksport CSV.</li></ol>';
+function listCSV(){ return '﻿Bib,Nama,Kelas,Rumah,Kategori\n' + S.students.slice().sort((a, b) => a.bib.localeCompare(b.bib)).map(s => [s.bib, s.name, s.kelas || '', (H(s.house) || {}).name || '', (C(s.cat) || {}).name || ''].map(csvCell).join(',')).join('\n'); }
+
+/* ---------- WIZARD ---------- */
+const WZ = 7;
+function wizGo(n){ S.wiz = n; save(); go('wizard'); }
+function wizNav(back, next, nextLbl){ return '<div class="grid2" style="margin-top:16px"><button class="btn" onclick="' + back + '">← Kembali</button><button class="btn p" id="wzNext" onclick="' + next + '">' + (nextLbl || 'Seterusnya →') + '</button></div>'; }
+function wizard(){
+  const p = S.wiz || 1, bar = '<div class="prog">' + Array.from({ length: WZ }, (_, i) => '<i class="' + (i < p ? 'on' : '') + '"></i>').join('') + '</div>';
+  const head = (t, s) => '<div class="sub" style="font-weight:800;margin:0">LANGKAH ' + p + ' / ' + WZ + '</div>' + bar + '<div class="ttl">' + t + '</div><p class="sub">' + s + '</p>';
+  if (p === 1) return head('Berapa rumah sukan?', 'Pilih bilangan rumah yang bertanding.') + '<div class="card"><div class="chips">' + [3, 4, 5, 6].map(n => '<button class="chip' + (S.houses.length === n ? ' on' : '') + '" onclick="setHouses(' + n + ')">' + n + '</button>').join('') + '</div></div>' + wizNav('go(\'welcome\')', 'wizNext()');
+  if (p === 2) return head('Nama, huruf bib & warna rumah', 'Huruf bib mestilah unik — ia menjadi huruf pertama nombor bib (contoh <b>R</b>1001).') +
+    S.houses.map((h, i) => '<div class="card"><div class="row"><span class="dot" style="background:' + h.color + ';width:22px;height:22px"></span><b>Rumah ' + (i + 1) + '</b></div><div class="grid2" style="grid-template-columns:2fr 1fr"><div><div class="lbl">Nama</div><input class="fld" value="' + esc(h.name) + '" oninput="S.houses[' + i + '].name=this.value;save()"></div><div><div class="lbl">Huruf</div><input class="fld mono" maxlength="1" style="text-transform:uppercase;text-align:center;font-size:20px" value="' + esc(h.letter) + '" oninput="S.houses[' + i + '].letter=this.value.toUpperCase().replace(/[^A-Z]/g,\'\');save()"></div></div>' +
+      '<div class="lbl">Warna</div><div class="row">' + PALET.map(c => '<button style="width:34px;height:34px;border-radius:50%;border:3px solid ' + (h.color === c ? '#0F172A' : '#fff') + ';background:' + c + ';box-shadow:0 0 0 1px #CBD5E1;cursor:pointer" onclick="S.houses[' + i + '].color=\'' + c + '\';save();render()"></button>').join('') + '<input type="color" value="' + h.color + '" style="width:40px;height:34px;border:0;background:none" onchange="S.houses[' + i + '].color=this.value;save();render()"></div></div>').join('') +
+    (S.students.length ? '<div class="warn">⚠️ Menukar huruf akan menukar nombor bib pelajar. Cetak semula bib jika sudah dicetak.</div>' : '') + wizNav('wizGo(1)', 'wizNext()');
+  if (p === 3) return head('Berapa kategori?', 'Kategori yang sama digunakan oleh semua rumah (contoh L15, L18, P15, P18).') + '<div class="card"><div class="chips">' + [1, 2, 3, 4, 5].map(n => '<button class="chip' + (S.cats.length === n ? ' on' : '') + '" onclick="setCats(' + n + ')">' + n + '</button>').join('') + '</div></div>' + wizNav('wizGo(2)', 'wizNext()');
+  if (p === 4) return head('Nama & jarak kategori', 'Nombor kategori menjadi digit kedua bib (kategori 1 → R<b>1</b>001). Jarak digunakan untuk kira pace.') +
+    S.cats.map((c, i) => '<div class="card"><b>Kategori ' + (i + 1) + '</b><div class="grid2" style="grid-template-columns:2fr 1fr"><div><div class="lbl">Nama</div><input class="fld" value="' + esc(c.name) + '" placeholder="cth L15" oninput="S.cats[' + i + '].name=this.value;save()"></div><div><div class="lbl">Jarak (km)</div><input class="fld mono" type="number" min="0.1" step="0.1" value="' + c.km + '" oninput="S.cats[' + i + '].km=+this.value||0;save()"></div></div></div>').join('') +
+    (S.students.length ? '<div class="warn">⚠️ Susunan kategori menentukan nombor bib.</div>' : '') + wizNav('wizGo(3)', 'wizNext()');
+  if (p === 5){ const sc = S.scoring;
+    return head('Sistem mata', 'Tetapkan berapa pelari layak mendapat mata. Susutan mata dikira automatik.') +
+      '<div class="card"><div class="lbl">Bilangan layak mata <button class="help" onclick="helpTip(\'Bilangan peserta yang layak menerima mata berdasarkan tempat dalam larian.\')">?</button></div><div class="chips">' + [5, 10, 20, 30].map(n => '<button class="chip' + (sc.n === n ? ' on' : '') + '" onclick="setN(' + n + ')">Top ' + n + '</button>').join('') + '</div>' +
+      '<div class="grid2"><div><div class="lbl">Mata tertinggi <button class="help" onclick="helpTip(\'Mata tertinggi yang diperolehi oleh peserta tempat pertama.\')">?</button></div><input class="fld mono" type="number" min="1" value="' + sc.hi + '" oninput="S.scoring.hi=Math.max(1,+this.value||1);save();scPrev()"></div>' +
+      '<div><div class="lbl">Mata terendah <button class="help" onclick="helpTip(\'Mata terendah bagi kedudukan terakhir yang masih layak memperolehi mata.\')">?</button></div><input class="fld mono" type="number" min="0" value="' + sc.lo + '" oninput="S.scoring.lo=Math.max(0,+this.value||0);save();scPrev()"></div></div>' +
+      '<div class="lbl">Had penyumbang mata setiap rumah / kategori <button class="help" onclick="helpTip(\'Contoh 3: hanya 3 pelari terbaik setiap rumah dalam setiap kategori dikira untuk mata rumah. 0 = tiada had.\')">?</button></div><input class="fld mono" type="number" min="0" value="' + sc.cap + '" oninput="S.scoring.cap=Math.max(0,+this.value||0);save()">' +
+      '<div class="note" style="margin-top:12px" id="scPrev"></div></div>' + wizNav('wizGo(4)', 'wizNext()'); }
+  if (p === 6) return head('Senarai pelajar', 'Bagi setiap rumah & kategori: muat turun templat CSV, isi nama, kemudian muat naik. Atau tampal senarai nama terus.') +
+    '<div class="card">' + S.houses.map(h => S.cats.map((c, ci) => { const n = S.students.filter(s => s.house === h.id && s.cat === c.id).length;
+      return '<div class="combo"><span class="dot" style="background:' + h.color + ';width:18px;height:18px"></span><div class="n">' + esc(h.name) + ' · ' + esc(c.name) + '<small>Bib ' + esc(h.letter) + (ci + 1) + '001… · ' + (n ? '<b style="color:var(--ok)">' + n + ' pelajar</b>' : 'belum ada') + '</small></div>' +
+        '<button class="btn sm" title="Templat" onclick="tplCSV(\'' + h.id + '\',\'' + c.id + '\')">⬇️</button><button class="btn sm" onclick="upCSV(\'' + h.id + '\',\'' + c.id + '\')">⬆️ CSV</button><button class="btn sm" onclick="pasteNames(\'' + h.id + '\',\'' + c.id + '\')">📝</button></div>'; }).join('')).join('') + '</div>' +
+    '<p class="sub">⬇️ templat · ⬆️ muat naik CSV (lajur Nama, Kelas) · 📝 tampal nama, satu baris seorang. Muat naik semula menggantikan senarai lama bagi kombinasi itu.</p>' + wizNav('wizGo(5)', 'wizNext()');
+  if (p === 7){ const tot = S.students.length;
+    return head('Ringkasan', 'Semak sebelum mula. Anda boleh kembali ke mana-mana langkah.') +
+      '<div class="card"><table><tr><th>Rumah</th>' + S.cats.map(c => '<th>' + esc(c.name) + '</th>').join('') + '<th>Jumlah</th></tr>' +
+      S.houses.map(h => '<tr><td><span class="dot" style="background:' + h.color + '"></span> ' + esc(h.name) + '</td>' + S.cats.map(c => '<td class="mono">' + S.students.filter(s => s.house === h.id && s.cat === c.id).length + '</td>').join('') + '<td class="mono"><b>' + S.students.filter(s => s.house === h.id).length + '</b></td></tr>').join('') + '</table>' +
+      '<p class="sub" style="margin-top:10px">Jumlah: <b>' + tot + '</b> pelajar · Top ' + S.scoring.n + ' layak mata</p></div>' +
+      (tot ? '' : '<div class="warn">Belum ada pelajar. Anda masih boleh teruskan dan muat naik kemudian.</div>') +
+      '<div class="grid2" style="margin-top:12px"><button class="btn" onclick="download(\'senarai-pelajar.csv\', listCSV())">⬇️ Senarai penuh</button><button class="btn" onclick="finishWiz(\'bib\')">🔳 Jana bib</button></div>' +
+      wizNav('wizGo(6)', 'finishWiz(\'race\')', '✅ Selesai'); }
+  return '';
+}
+wizard.after = () => { if (S.wiz === 5) scPrev(); };
+function wizNext(){
+  const p = S.wiz;
+  if (p === 1 && !S.houses.length) return toast('Pilih bilangan rumah', 'err');
+  if (p === 2){ const L = S.houses.map(h => h.letter); if (L.some(x => !x)) return toast('Setiap rumah perlukan huruf bib', 'err'); if (new Set(L).size !== L.length) return toast('Huruf bib mesti unik', 'err'); if (S.houses.some(h => !h.name.trim())) return toast('Isi nama semua rumah', 'err'); }
+  if (p === 3 && !S.cats.length) return toast('Pilih bilangan kategori', 'err');
+  if (p === 4 && S.cats.some(c => !c.name.trim() || !(c.km > 0))) return toast('Isi nama & jarak setiap kategori', 'err');
+  if (p === 5 && S.scoring.lo > S.scoring.hi) return toast('Mata terendah tidak boleh melebihi mata tertinggi', 'err');
+  if (p === 2 || p === 4) rebib();
+  wizGo(Math.min(WZ, p + 1));
+}
+function finishWiz(to){ rebib(); S.done = true; S.wiz = 1; save(); toast('Pendaftaran disimpan ✅'); go(to); }
+function setHouses(n){ const old = S.houses; S.houses = Array.from({ length: n }, (_, i) => old[i] || { id: uid(), name: DEF_HOUSE[i][0], letter: DEF_HOUSE[i][1], color: DEF_HOUSE[i][2] });
+  const ids = new Set(S.houses.map(h => h.id)); S.students = S.students.filter(s => ids.has(s.house)); save(); render(); }
+function setCats(n){ const old = S.cats; S.cats = Array.from({ length: n }, (_, i) => old[i] || { id: uid(), name: DEF_CAT[i][0], km: DEF_CAT[i][1] });
+  const ids = new Set(S.cats.map(c => c.id)); S.students = S.students.filter(s => ids.has(s.cat)); save(); render(); }
+function setN(n){ S.scoring.n = n; S.scoring.hi = n; S.scoring.lo = 1; save(); render(); }
+function scPrev(){ const el = $('#scPrev'); if (!el) return; const sc = S.scoring;
+  el.innerHTML = '<b>Pratonton mata:</b> ' + [1, 2, 3, 4, 5].filter(p => p <= sc.n).map(p => 'Tempat ' + p + ' = <b>' + ptsFor(p) + '</b>').join(' · ') + (sc.n > 5 ? ' … tempat ' + sc.n + ' = <b>' + ptsFor(sc.n) + '</b>' : '') + '<br>Susutan auto: <b>' + (Math.round(step() * 100) / 100) + '</b> mata setiap tempat = (' + sc.hi + ' − ' + sc.lo + ') ÷ (' + sc.n + ' − 1)'; }
+function tplCSV(hid, cid){ const h = H(hid), c = C(cid); download('templat-' + h.name + '-' + c.name + '.csv', '﻿Nama,Kelas\nAHMAD BIN ALI,4 Bestari\nSITI BINTI ABU,4 Cemerlang\n'); }
+function setCombo(hid, cid, rows){
+  const hdr = rows[0] && /nama|name/i.test(rows[0][0]) ? 1 : 0, list = rows.slice(hdr).filter(r => r[0]).map(r => ({ name: r[0].toUpperCase(), kelas: r[1] || '' }));
+  S.students = S.students.filter(s => !(s.house === hid && s.cat === cid)).concat(list.map(x => ({ id: uid(), name: x.name, kelas: x.kelas, house: hid, cat: cid, bib: '' })));
+  rebib(); save(); render(); toast(list.length + ' pelajar disimpan untuk ' + H(hid).name + ' · ' + C(cid).name);
+}
+function upCSV(hid, cid){ const i = document.createElement('input'); i.type = 'file'; i.accept = '.csv,text/csv,text/plain';
+  i.onchange = () => { const f = i.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const rows = parseCSV(r.result); if (!rows.length) return toast('Fail kosong', 'err'); setCombo(hid, cid, rows); }; r.readAsText(f); }; i.click(); }
+function pasteNames(hid, cid){ const cur = S.students.filter(s => s.house === hid && s.cat === cid).map(s => s.name + (s.kelas ? ', ' + s.kelas : '')).join('\n');
+  modal('<div class="ttl">📝 ' + esc(H(hid).name) + ' · ' + esc(C(cid).name) + '</div><p class="sub">Satu baris seorang. Pilihan: tambah kelas selepas koma — <i>ALI BIN ABU, 4 Bestari</i></p><textarea class="fld" id="pn" rows="10" style="margin-top:10px">' + esc(cur) + '</textarea><div class="grid2" style="margin-top:12px"><button class="btn" data-close>Batal</button><button class="btn p" id="pnOk">Simpan</button></div>');
+  $('#pnOk').onclick = () => { const rows = $('#pn').value.split(/\r?\n/).map(l => l.split(/[,;\t]/).map(x => x.trim())).filter(r => r[0]); closeModal(); setCombo(hid, cid, rows); }; }
+
+/* ---------- JANA BIB ---------- */
+let bibF = { h: '', c: '' };
+function bib(){
+  if (!S.done && !S.students.length) return needSetup();
+  const list = S.students.filter(s => (!bibF.h || s.house === bibF.h) && (!bibF.c || s.cat === bibF.c)).sort((a, b) => a.bib.localeCompare(b.bib));
+  return '<div class="row" style="justify-content:space-between"><div class="ttl">🔳 Jana Bib QR</div><button class="btn sm" onclick="go(\'daftar\')">← Daftar</button></div><p class="sub">QR mengandungi nombor bib sahaja. Cetak 2 bib setiap halaman A4 — atau pilih <b>Simpan sebagai PDF</b> dalam dialog cetak.</p>' +
+    '<div class="card"><div class="grid2"><select class="fld" onchange="bibF.h=this.value;render()"><option value="">Semua rumah</option>' + S.houses.map(h => '<option value="' + h.id + '"' + (bibF.h === h.id ? ' selected' : '') + '>' + esc(h.name) + '</option>').join('') + '</select>' +
+    '<select class="fld" onchange="bibF.c=this.value;render()"><option value="">Semua kategori</option>' + S.cats.map(c => '<option value="' + c.id + '"' + (bibF.c === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select></div>' +
+    '<button class="btn p w" style="margin-top:10px" onclick="printBibs()"' + (list.length ? '' : ' disabled') + '>🖨️ Cetak ' + list.length + ' bib</button></div>' +
+    (list.length ? '<div class="lbl">Pratonton</div>' + list.slice(0, 6).map(s => bibHTML(s, true)).join('') + (list.length > 6 ? '<p class="sub">… dan ' + (list.length - 6) + ' lagi</p>' : '') : '<div class="note">Tiada pelajar untuk ditapis.</div>');
+}
+function qrImg(text){ if (!window.qrcode) return ''; const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createDataURL(8, 2); }
+function bibHTML(s, prev){ const h = H(s.house) || {}, c = C(s.cat) || {}, q = qrImg(s.bib);
+  return '<div class="' + (prev ? 'prevbib' : 'bib') + '"><div class="side" style="background:' + h.color + '">' + esc((h.name || '').toUpperCase()) + '</div><div class="mid"><div class="no">' + esc(s.bib) + '</div><div class="nm"' + (prev ? ' style="font-weight:800"' : '') + '>' + esc(s.name) + '</div><div class="ct"' + (prev ? ' style="color:#64748B;font-size:13px"' : '') + '>' + esc(c.name || '') + ' · ' + (c.km || '') + ' km' + (s.kelas ? ' · ' + esc(s.kelas) : '') + '</div></div><div class="qr">' + (q ? '<img src="' + q + '" alt="QR ' + esc(s.bib) + '">' : '') + '</div></div>'; }
+function printBibs(){ const list = S.students.filter(s => (!bibF.h || s.house === bibF.h) && (!bibF.c || s.cat === bibF.c)).sort((a, b) => a.bib.localeCompare(b.bib));
+  $('#print').innerHTML = list.map(s => bibHTML(s, false)).join(''); setTimeout(() => window.print(), 300); }
+
+/* ---------- LUMBA ---------- */
+let tick = null;
+function race(){
+  if (!S.done) return needSetup();
+  const anyNot = S.cats.some(c => !S.starts[c.id]);
+  return '<div class="ttl">⏱️ Kawalan Lumba</div><p class="sub">Tekan MULA tepat ketika wisel ditiup bagi setiap kategori.</p>' +
+    (anyNot ? '<button class="btn ok w" style="margin:12px 0;padding:15px;font-size:17px" onclick="ask(\'Mulakan SEMUA kategori yang belum bermula sekarang?\', () => { const t = Date.now(); S.cats.forEach(c => { if (!S.starts[c.id]) S.starts[c.id] = t; }); save(); render(); })">🚦 MULA SEMUA</button>' : '') +
+    S.cats.map(c => { const st = S.starts[c.id], n = S.students.filter(s => s.cat === c.id).length, f = catResults(c.id).length;
+      return '<div class="card"><div class="row" style="justify-content:space-between"><div><div class="ttl" style="font-size:24px">' + esc(c.name) + ' <span class="sub" style="font-family:Plus Jakarta Sans">' + c.km + ' km</span></div><div class="sub">' + f + ' / ' + n + ' tamat' + (st ? ' · mula ' + fmtClock(st) : '') + '</div></div>' +
+        (st ? '<div class="timer" data-st="' + st + '">' + fmtT(Date.now() - st) + '</div>' : '<button class="btn ok" onclick="startCat(\'' + c.id + '\')">▶ MULA</button>') + '</div>' +
+        '<div style="height:8px;border-radius:8px;background:var(--line);margin-top:10px;overflow:hidden"><i style="display:block;height:100%;width:' + (n ? Math.round(f / n * 100) : 0) + '%;background:var(--ok)"></i></div></div>'; }).join('') +
+    '<div class="lbl">Penamat terkini</div><div class="feed">' + (S.fin.slice(-10).reverse().map(x => { const s = byBib(x.bib); if (!s) return ''; const h = H(s.house) || {}, c = C(s.cat) || {};
+      return '<div><span class="dot" style="background:' + h.color + '"></span><b class="mono">' + esc(s.bib) + '</b><span style="flex:1">' + esc(s.name) + '</span><span class="pill">' + esc(c.name) + '</span><span class="mono">' + fmtT(x.t - (S.starts[s.cat] || x.t)) + '</span></div>'; }).join('') || '<div class="sub">Belum ada penamat.</div>') + '</div>' +
+    '<button class="btn bad w" style="margin-top:18px" onclick="ask(\'Set semula larian? Semua masa mula & rekod penamat akan dipadam. Senarai pelajar kekal.\', () => { S.starts = {}; S.fin = []; save(); render(); })">♻️ Set semula larian</button>';
+}
+race.after = () => { clearInterval(tick); tick = setInterval(() => { if (view !== 'race') return clearInterval(tick); document.querySelectorAll('[data-st]').forEach(e => e.textContent = fmtT(Date.now() - +e.dataset.st)); }, 250); };
+function startCat(cid){ S.starts[cid] = Date.now(); save(); render(); toast('🚦 ' + C(cid).name + ' bermula!'); }
+
+/* ---------- IMBAS ---------- */
+let stream = null, raf = 0, lastCode = '', lastAt = 0, camId = localStorage.getItem('xc3_cam') || '', cams = [], mirror = false;
+function scan(){
+  if (!S.done) return needSetup();
+  return '<div class="row" style="justify-content:space-between"><div class="ttl">📷 Imbas Penamat</div><span class="pill" id="camLbl">Kamera</span></div>' +
+    '<div id="scanBox" style="margin-top:10px"><video id="vid" playsinline muted></video><div class="frame"></div><div class="msg" id="scMsg">Memulakan kamera…</div></div>' +
+    '<div class="grid2" style="margin-top:10px"><select class="fld" id="camSel"><option value="">Kamera…</option></select><button class="btn" id="camFlip">🔄 Tukar kamera</button></div>' +
+    '<div class="card" style="margin-top:12px"><div class="lbl" style="margin-top:0">Masukkan bib secara manual</div><div class="row"><input class="fld mono" id="manBib" placeholder="cth R1001" style="flex:1;text-transform:uppercase;font-size:18px" autocomplete="off"><button class="btn p" id="manGo">Rekod</button></div></div>' +
+    '<div class="lbl">Penamat terkini</div><div class="feed" id="scFeed">' + feedHTML() + '</div>';
+}
+const feedHTML = () => S.fin.slice(-5).reverse().map(x => { const s = byBib(x.bib); if (!s) return ''; const h = H(s.house) || {}; return '<div><span class="dot" style="background:' + h.color + '"></span><b class="mono">' + esc(s.bib) + '</b><span style="flex:1">' + esc(s.name) + '</span><span class="mono">' + fmtClock(x.t) + '</span></div>'; }).join('') || '<div class="sub">Belum ada penamat.</div>';
+scan.after = () => {
+  $('#manGo').onclick = () => { const v = $('#manBib').value.trim().toUpperCase(); if (v){ record(v); $('#manBib').value = ''; $('#manBib').focus(); } };
+  $('#manBib').addEventListener('keydown', e => { if (e.key === 'Enter') $('#manGo').click(); });
+  $('#camFlip').onclick = () => { if (cams.length < 2) return toast('Hanya satu kamera dikesan', 'dup'); const i = cams.findIndex(c => c.deviceId === camId); camId = cams[(i + 1) % cams.length].deviceId; localStorage.setItem('xc3_cam', camId); restartCam(); };
+  $('#camSel').onchange = e => { camId = e.target.value; localStorage.setItem('xc3_cam', camId); restartCam(); };
+};
+function stopCam(){ cancelAnimationFrame(raf); if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+function restartCam(){ stopCam(); startCam(); }
+async function startCam(){
+  const msg = t => { const m = $('#scMsg'); if (m) m.textContent = t; };
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg('Kamera tidak disokong — guna input manual'); return; }
+  const tries = camId ? [{ video: { deviceId: { exact: camId } } }] : [];
+  tries.push({ video: { facingMode: { exact: 'environment' } } }, { video: { facingMode: 'environment' } }, { video: true });
+  for (const c of tries){ try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, ...c }); break; } catch (e) {} }
+  if (!stream){ msg('Kamera tidak dapat dibuka — benarkan akses kamera atau guna input manual'); return; }
+  if (view !== 'scan'){ stopCam(); return; }
+  const tr = stream.getVideoTracks()[0], set = tr.getSettings ? tr.getSettings() : {};
+  camId = set.deviceId || camId; mirror = set.facingMode === 'user' || /front|depan|user|facetime/i.test(tr.label);
+  try { cams = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'); } catch (e) { cams = []; }
+  const sel = $('#camSel'); if (sel) sel.innerHTML = cams.map((d, i) => '<option value="' + d.deviceId + '"' + (d.deviceId === camId ? ' selected' : '') + '>' + esc(d.label || 'Kamera ' + (i + 1)) + '</option>').join('');
+  const lb = $('#camLbl'); if (lb) lb.textContent = mirror ? '📷 Kamera depan' : '📷 Kamera belakang';
+  const v = $('#vid'); if (!v){ stopCam(); return; } v.srcObject = stream; v.style.transform = mirror ? 'scaleX(-1)' : ''; try { await v.play(); } catch (e) {}
+  msg('Halakan QR bib ke dalam kotak');
+  const cv = document.createElement('canvas'), g = cv.getContext('2d', { willReadFrequently: true });
+  const loop = () => { if (!stream || view !== 'scan') return;
+    if (v.readyState >= 2 && window.jsQR){ const w = 480, h = Math.round(w * v.videoHeight / v.videoWidth) || 360; cv.width = w; cv.height = h; g.drawImage(v, 0, 0, w, h);
+      const d = g.getImageData(0, 0, w, h), q = jsQR(d.data, w, h, { inversionAttempts: 'attemptBoth' });
+      if (q && q.data){ const code = q.data.trim().toUpperCase(), now = Date.now(); if (code !== lastCode || now - lastAt > 3500){ lastCode = code; lastAt = now; record(code); } } }
+    raf = requestAnimationFrame(loop); };
+  loop();
+}
+let actx;
+function beep(ok){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = ok ? 1046 : 220; o.type = ok ? 'sine' : 'square'; g.gain.setValueAtTime(.25, actx.currentTime); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + (ok ? .18 : .4)); o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + .4); } catch (e) {} if (navigator.vibrate) navigator.vibrate(ok ? 60 : [80, 60, 80]); }
+function record(code){
+  const s = byBib(code);
+  if (!s){ beep(false); return pop('err', '<b>❌ Bib tidak dijumpai</b><div class="mono">' + esc(code) + '</div><div>Semak nombor bib atau senarai pelajar.</div>'); }
+  const h = H(s.house) || {}, c = C(s.cat) || {}, st = S.starts[s.cat];
+  if (!st){ beep(false); return pop('err', '<b>⏸️ ' + esc(c.name) + ' belum bermula</b><div>' + esc(s.name) + ' (' + esc(s.bib) + ')</div><div>Tekan MULA di tab Lumba dahulu.</div>'); }
+  const ex = S.fin.find(f => f.bib === s.bib);
+  if (ex){ const r = catResults(s.cat).find(x => x.s.bib === s.bib); beep(false); return pop('dup', '<b>⚠️ Sudah direkod</b><div>' + esc(s.name) + ' · ' + esc(s.bib) + '</div><div>Tempat <b>' + (r ? r.place : '-') + '</b> · ' + fmtT(ex.t - st) + '</div>'); }
+  const t = Date.now(); S.fin.push({ bib: s.bib, t }); save(); beep(true);
+  const r = catResults(s.cat).find(x => x.s.bib === s.bib), ms = t - st;
+  pop('ok', '<div class="row" style="justify-content:space-between"><b>✅ ' + esc(s.name) + '</b><span class="pill" style="background:#fff;color:' + (h.color || '#000') + '">' + esc(h.name || '') + '</span></div>' +
+    '<div class="row" style="justify-content:space-between;margin-top:6px"><span class="big">#' + r.place + '</span><span class="big">' + fmtT(ms) + '</span></div>' +
+    '<div class="row" style="justify-content:space-between;font-weight:700"><span>' + esc(c.name) + ' · ' + esc(s.bib) + '</span><span>Pace ' + pace(ms, c.km) + '</span><span>' + fmtClock(t) + '</span></div>' + (r.pts ? '<div style="font-weight:800;margin-top:4px">+' + r.pts + ' mata untuk ' + esc(h.name || '') + '</div>' : ''));
+  const fd = $('#scFeed'); if (fd) fd.innerHTML = feedHTML();
+}
+
+/* ---------- KEPUTUSAN ---------- */
+let resTab = 'rumah';
+function results(){
+  if (!S.done) return needSetup();
+  const tabs = '<div class="chips" style="margin:10px 0">' + [['rumah', '🏠 Rumah']].concat(S.cats.map(c => [c.id, c.name])).map(([k, n]) => '<button class="chip" style="font-size:15px;padding:9px 14px' + (resTab === k ? ';border-color:var(--pri);background:#EFF6FF;color:var(--pri)' : '') + '" onclick="resTab=\'' + k + '\';render()">' + esc(n) + '</button>').join('') + '</div>';
+  let body;
+  if (resTab === 'rumah'){ const hs = houseScores();
+    body = '<div class="card"><div class="ttl" style="font-size:22px">Kedudukan Rumah</div><table style="margin-top:8px"><tr><th>#</th><th>Rumah</th>' + S.cats.map(c => '<th>' + esc(c.name) + '</th>').join('') + '<th>Jumlah</th></tr>' +
+      hs.map((x, i) => '<tr><td class="mono"><b>' + (['🥇', '🥈', '🥉'][i] || i + 1) + '</b></td><td><span class="dot" style="background:' + x.h.color + '"></span> <b>' + esc(x.h.name) + '</b></td>' + S.cats.map(c => '<td class="mono">' + (Math.round((x.by[c.id] || 0) * 100) / 100) + '</td>').join('') + '<td class="mono"><b>' + x.pts + '</b></td></tr>').join('') + '</table></div>'; }
+  else { const c = C(resTab); if (!c){ resTab = 'rumah'; return results(); } const rs = catResults(c.id);
+    body = '<div class="card"><div class="ttl" style="font-size:22px">' + esc(c.name) + ' · ' + c.km + ' km</div>' + (S.starts[c.id] ? '' : '<div class="note" style="margin-top:8px">Kategori ini belum bermula.</div>') +
+      '<div class="tblw"><table style="margin-top:8px"><tr><th>#</th><th>Bib</th><th>Nama</th><th>Masa</th><th>Pace</th><th>Mata</th><th></th></tr>' +
+      rs.map(r => { const h = H(r.s.house) || {}; return '<tr><td class="mono"><b>' + (['🥇', '🥈', '🥉'][r.place - 1] || r.place) + '</b></td><td class="mono"><span class="dot" style="background:' + h.color + '"></span> ' + esc(r.s.bib) + '</td><td>' + esc(r.s.name) + '</td><td class="mono">' + fmtT(r.ms) + '</td><td class="mono" style="font-size:12px">' + pace(r.ms, c.km) + '</td><td class="mono"><b>' + (r.pts || '') + '</b></td><td><button class="btn sm bad" title="Padam" onclick="delFin(\'' + r.s.bib + '\')">✕</button></td></tr>'; }).join('') +
+      (rs.length ? '' : '<tr><td colspan="7" class="sub">Belum ada penamat.</td></tr>') + '</table></div></div>'; }
+  return '<div class="row" style="justify-content:space-between"><div class="ttl">🏆 Keputusan</div><button class="btn sm" onclick="download(\'keputusan-merentas-desa.csv\', resCSV())">⬇️ CSV</button></div>' + tabs + body;
+}
+function delFin(bib){ ask('Padam rekod penamat ' + esc(bib) + '? Kedudukan lain akan dikira semula.', () => { S.fin = S.fin.filter(f => f.bib !== bib); save(); render(); }); }
+function resCSV(){ let o = '﻿Kategori,Tempat,Bib,Nama,Kelas,Rumah,Masa,Pace,Mata\n';
+  S.cats.forEach(c => catResults(c.id).forEach(r => { o += [c.name, r.place, r.s.bib, r.s.name, r.s.kelas || '', (H(r.s.house) || {}).name || '', fmtT(r.ms), pace(r.ms, c.km), r.pts].map(csvCell).join(',') + '\n'; }));
+  o += '\nKedudukan Rumah,,,,,,,,\nTempat,Rumah,' + S.cats.map(c => csvCell(c.name)).join(',') + ',Jumlah\n';
+  houseScores().forEach((x, i) => { o += [i + 1, x.h.name].concat(S.cats.map(c => Math.round((x.by[c.id] || 0) * 100) / 100), [x.pts]).map(csvCell).join(',') + '\n'; });
+  return o; }
+
+/* ---------- jam & mula ---------- */
+setInterval(() => { const c = $('#clk'); if (c) c.textContent = fmtClock(Date.now()); }, 500);
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+window.addEventListener('load', render);
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopCam(); else if (view === 'scan') startCam(); });
+</script>
 </body>
 </html>
