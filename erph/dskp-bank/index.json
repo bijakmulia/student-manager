@@ -1,0 +1,3093 @@
+{
+"versi": "2026-10-20",
+"sumber": "DSKP KSSM",
+"dskp": [
+{
+"subjek": "ADDITIONAL MATHEMATICS",
+"ting": "4",
+"file": "additional-mathematics-t4.json",
+"sp": 93,
+"tajuk": 10
+},
+{
+"subjek": "ADDITIONAL MATHEMATICS",
+"ting": "5",
+"file": "additional-mathematics-t5.json",
+"sp": 78,
+"tajuk": 8
+},
+{
+"subjek": "ADDITIONAL MATHEMATICS DLP",
+"ting": "4",
+"file": "additional-mathematics-dlp-t4.json",
+"sp": 94,
+"tajuk": 10
+},
+{
+"subjek": "ADDITIONAL MATHEMATICS DLP",
+"ting": "5",
+"file": "additional-mathematics-dlp-t5.json",
+"sp": 77,
+"tajuk": 8
+},
+{
+"subjek": "AL-ADAB WA AL-BALAGHAH",
+"ting": "4",
+"file": "al-adab-wa-al-balaghah-t4.json",
+"sp": 74,
+"tajuk": 2
+},
+{
+"subjek": "AL-ADAB WA AL-BALAGHAH",
+"ting": "5",
+"file": "al-adab-wa-al-balaghah-t5.json",
+"sp": 41,
+"tajuk": 2
+},
+{
+"subjek": "AL-ADAB WA AL-NUSUS",
+"ting": "6",
+"file": "al-adab-wa-al-nusus-t6.json",
+"sp": 68,
+"tajuk": 2
+},
+{
+"subjek": "AL-ARUDH WA AL-QAFIAH",
+"ting": "6",
+"file": "al-arudh-wa-al-qafiah-t6.json",
+"sp": 35,
+"tajuk": 2
+},
+{
+"subjek": "AL-HADITH",
+"ting": "6",
+"file": "al-hadith-t6.json",
+"sp": 113,
+"tajuk": 4
+},
+{
+"subjek": "AL-INSYA AL-AZHARI",
+"ting": "6",
+"file": "al-insya-al-azhari-t6.json",
+"sp": 96,
+"tajuk": 13
+},
+{
+"subjek": "AL-LUGHAH AL-ARABIAH AL-MUASIRAH",
+"ting": "1",
+"file": "al-lughah-al-arabiah-al-muasirah-t1.json",
+"sp": 104,
+"tajuk": 3
+},
+{
+"subjek": "AL-LUGHAH AL-ARABIAH AL-MUASIRAH",
+"ting": "2",
+"file": "al-lughah-al-arabiah-al-muasirah-t2.json",
+"sp": 82,
+"tajuk": 3
+},
+{
+"subjek": "AL-LUGHAH AL-ARABIAH AL-MUASIRAH",
+"ting": "3",
+"file": "al-lughah-al-arabiah-al-muasirah-t3.json",
+"sp": 222,
+"tajuk": 6
+},
+{
+"subjek": "AL-LUGHAH AL-ARABIAH AL-MUASIRAH",
+"ting": "4",
+"file": "al-lughah-al-arabiah-al-muasirah-t4.json",
+"sp": 58,
+"tajuk": 3
+},
+{
+"subjek": "AL-LUGHAH AL-ARABIAH AL-MUASIRAH",
+"ting": "5",
+"file": "al-lughah-al-arabiah-al-muasirah-t5.json",
+"sp": 86,
+"tajuk": 3
+},
+{
+"subjek": "AL-MAWAD AL-DINIAH (IDADIAH)",
+"ting": "1",
+"file": "al-mawad-al-diniah-idadiah-t1.json",
+"sp": 57,
+"tajuk": 57
+},
+{
+"subjek": "AL-MAWAD AL-DINIAH (IDADIAH)",
+"ting": "2",
+"file": "al-mawad-al-diniah-idadiah-t2.json",
+"sp": 51,
+"tajuk": 51
+},
+{
+"subjek": "AL-MUTALAAH AL-AZHARIAH",
+"ting": "6",
+"file": "al-mutalaah-al-azhariah-t6.json",
+"sp": 110,
+"tajuk": 5
+},
+{
+"subjek": "AL-NAHU WA AL-SARF",
+"ting": "6",
+"file": "al-nahu-wa-al-sarf-t6.json",
+"sp": 90,
+"tajuk": 2
+},
+{
+"subjek": "AL-QURAN (KBD)",
+"ting": "1",
+"file": "al-quran-kbd-t1.json",
+"sp": 36,
+"tajuk": 36
+},
+{
+"subjek": "AL-QURAN (KBD)",
+"ting": "2",
+"file": "al-quran-kbd-t2.json",
+"sp": 11,
+"tajuk": 11
+},
+{
+"subjek": "AL-QURAN (KBD)",
+"ting": "3",
+"file": "al-quran-kbd-t3.json",
+"sp": 15,
+"tajuk": 15
+},
+{
+"subjek": "AL-QURAN (KBD)",
+"ting": "4",
+"file": "al-quran-kbd-t4.json",
+"sp": 14,
+"tajuk": 14
+},
+{
+"subjek": "AL-QURAN (KBD)",
+"ting": "5",
+"file": "al-quran-kbd-t5.json",
+"sp": 11,
+"tajuk": 11
+},
+{
+"subjek": "AL-SYARIAH",
+"ting": "1",
+"file": "al-syariah-t1.json",
+"sp": 96,
+"tajuk": 14
+},
+{
+"subjek": "AL-SYARIAH",
+"ting": "2",
+"file": "al-syariah-t2.json",
+"sp": 146,
+"tajuk": 18
+},
+{
+"subjek": "AL-SYARIAH",
+"ting": "3",
+"file": "al-syariah-t3.json",
+"sp": 179,
+"tajuk": 23
+},
+{
+"subjek": "AL-SYARIAH",
+"ting": "4",
+"file": "al-syariah-t4.json",
+"sp": 87,
+"tajuk": 20
+},
+{
+"subjek": "AL-SYARIAH",
+"ting": "5",
+"file": "al-syariah-t5.json",
+"sp": 87,
+"tajuk": 16
+},
+{
+"subjek": "AL-TAFSIR WA ULUMUH",
+"ting": "6",
+"file": "al-tafsir-wa-ulumuh-t6.json",
+"sp": 169,
+"tajuk": 2
+},
+{
+"subjek": "AL-TAJWID",
+"ting": "6",
+"file": "al-tajwid-t6.json",
+"sp": 128,
+"tajuk": 15
+},
+{
+"subjek": "AL-TAUHID WA AL-MANTIQ",
+"ting": "6",
+"file": "al-tauhid-wa-al-mantiq-t6.json",
+"sp": 71,
+"tajuk": 2
+},
+{
+"subjek": "ASAS AKUAKULTUR",
+"ting": "1",
+"file": "asas-akuakultur-t1.json",
+"sp": 66,
+"tajuk": 4
+},
+{
+"subjek": "ASAS JAHITAN PPKI",
+"ting": "1",
+"file": "asas-jahitan-ppki-t1.json",
+"sp": 30,
+"tajuk": 6
+},
+{
+"subjek": "ASAS KELESTARIAN",
+"ting": "4",
+"file": "asas-kelestarian-t4.json",
+"sp": 58,
+"tajuk": 4
+},
+{
+"subjek": "ASAS KELESTARIAN",
+"ting": "5",
+"file": "asas-kelestarian-t5.json",
+"sp": 49,
+"tajuk": 3
+},
+{
+"subjek": "ASAS MASAKAN PPKI",
+"ting": "1",
+"file": "asas-masakan-ppki-t1.json",
+"sp": 103,
+"tajuk": 11
+},
+{
+"subjek": "ASAS MULTIMEDIA PPKI",
+"ting": "1",
+"file": "asas-multimedia-ppki-t1.json",
+"sp": 60,
+"tajuk": 7
+},
+{
+"subjek": "ASAS PEMBUATAN PERABOT PPKI",
+"ting": "1",
+"file": "asas-pembuatan-perabot-ppki-t1.json",
+"sp": 20,
+"tajuk": 1
+},
+{
+"subjek": "ASAS PEMBUATAN PERABOT PPKI",
+"ting": "2",
+"file": "asas-pembuatan-perabot-ppki-t2.json",
+"sp": 20,
+"tajuk": 1
+},
+{
+"subjek": "ASAS PEMBUATAN PERABOT PPKI",
+"ting": "3",
+"file": "asas-pembuatan-perabot-ppki-t3.json",
+"sp": 20,
+"tajuk": 1
+},
+{
+"subjek": "ASAS PEMBUATAN PERABOT PPKI",
+"ting": "4",
+"file": "asas-pembuatan-perabot-ppki-t4.json",
+"sp": 20,
+"tajuk": 1
+},
+{
+"subjek": "ASAS PEMBUATAN PERABOT PPKI",
+"ting": "5",
+"file": "asas-pembuatan-perabot-ppki-t5.json",
+"sp": 20,
+"tajuk": 1
+},
+{
+"subjek": "ASAS REFLEKSOLOGI PPKI",
+"ting": "1",
+"file": "asas-refleksologi-ppki-t1.json",
+"sp": 10,
+"tajuk": 1
+},
+{
+"subjek": "ASAS SAINS KOMPUTER",
+"ting": "1",
+"file": "asas-sains-komputer-t1.json",
+"sp": 36,
+"tajuk": 4
+},
+{
+"subjek": "ASAS SAINS KOMPUTER",
+"ting": "2",
+"file": "asas-sains-komputer-t2.json",
+"sp": 19,
+"tajuk": 3
+},
+{
+"subjek": "ASAS SAINS KOMPUTER",
+"ting": "3",
+"file": "asas-sains-komputer-t3.json",
+"sp": 30,
+"tajuk": 4
+},
+{
+"subjek": "ASAS TANAMAN PPKI",
+"ting": "1",
+"file": "asas-tanaman-ppki-t1.json",
+"sp": 31,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA ARAB",
+"ting": "1",
+"file": "bahasa-arab-t1.json",
+"sp": 65,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA ARAB",
+"ting": "2",
+"file": "bahasa-arab-t2.json",
+"sp": 100,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA ARAB",
+"ting": "3",
+"file": "bahasa-arab-t3.json",
+"sp": 158,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA ARAB",
+"ting": "4",
+"file": "bahasa-arab-t4.json",
+"sp": 86,
+"tajuk": 3
+},
+{
+"subjek": "BAHASA ARAB",
+"ting": "5",
+"file": "bahasa-arab-t5.json",
+"sp": 133,
+"tajuk": 3
+},
+{
+"subjek": "BAHASA ARAB",
+"ting": "6",
+"file": "bahasa-arab-t6.json",
+"sp": 264,
+"tajuk": 9
+},
+{
+"subjek": "BAHASA CINA",
+"ting": "1",
+"file": "bahasa-cina-t1.json",
+"sp": 19,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA",
+"ting": "2",
+"file": "bahasa-cina-t2.json",
+"sp": 19,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA",
+"ting": "3",
+"file": "bahasa-cina-t3.json",
+"sp": 18,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA",
+"ting": "4",
+"file": "bahasa-cina-t4.json",
+"sp": 19,
+"tajuk": 7
+},
+{
+"subjek": "BAHASA CINA",
+"ting": "5",
+"file": "bahasa-cina-t5.json",
+"sp": 191,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA",
+"ting": "6",
+"file": "bahasa-cina-t6.json",
+"sp": 89,
+"tajuk": 34
+},
+{
+"subjek": "BAHASA CINA KOMUNIKASI",
+"ting": "1",
+"file": "bahasa-cina-komunikasi-t1.json",
+"sp": 24,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA KOMUNIKASI",
+"ting": "2",
+"file": "bahasa-cina-komunikasi-t2.json",
+"sp": 26,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA KOMUNIKASI",
+"ting": "3",
+"file": "bahasa-cina-komunikasi-t3.json",
+"sp": 23,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA KOMUNIKASI",
+"ting": "4",
+"file": "bahasa-cina-komunikasi-t4.json",
+"sp": 23,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA CINA KOMUNIKASI",
+"ting": "5",
+"file": "bahasa-cina-komunikasi-t5.json",
+"sp": 23,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA INGGERIS",
+"ting": "1",
+"file": "bahasa-inggeris-t1.json",
+"sp": 34,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA INGGERIS",
+"ting": "2",
+"file": "bahasa-inggeris-t2.json",
+"sp": 37,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA INGGERIS",
+"ting": "3",
+"file": "bahasa-inggeris-t3.json",
+"sp": 38,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA INGGERIS",
+"ting": "4",
+"file": "bahasa-inggeris-t4.json",
+"sp": 38,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA INGGERIS",
+"ting": "5",
+"file": "bahasa-inggeris-t5.json",
+"sp": 37,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA INGGERIS",
+"ting": "6",
+"file": "bahasa-inggeris-t6.json",
+"sp": 76,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JEPUN",
+"ting": "1",
+"file": "bahasa-jepun-t1.json",
+"sp": 36,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA JEPUN",
+"ting": "2",
+"file": "bahasa-jepun-t2.json",
+"sp": 54,
+"tajuk": 6
+},
+{
+"subjek": "BAHASA JEPUN",
+"ting": "3",
+"file": "bahasa-jepun-t3.json",
+"sp": 36,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JEPUN",
+"ting": "4",
+"file": "bahasa-jepun-t4.json",
+"sp": 41,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JEPUN",
+"ting": "5",
+"file": "bahasa-jepun-t5.json",
+"sp": 42,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JERMAN",
+"ting": "1",
+"file": "bahasa-jerman-t1.json",
+"sp": 59,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JERMAN",
+"ting": "2",
+"file": "bahasa-jerman-t2.json",
+"sp": 66,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JERMAN",
+"ting": "3",
+"file": "bahasa-jerman-t3.json",
+"sp": 64,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JERMAN",
+"ting": "4",
+"file": "bahasa-jerman-t4.json",
+"sp": 66,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA JERMAN",
+"ting": "5",
+"file": "bahasa-jerman-t5.json",
+"sp": 48,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA KADAZAN",
+"ting": "1",
+"file": "bahasa-kadazan-t1.json",
+"sp": 72,
+"tajuk": 9
+},
+{
+"subjek": "BAHASA KADAZAN",
+"ting": "2",
+"file": "bahasa-kadazan-t2.json",
+"sp": 69,
+"tajuk": 10
+},
+{
+"subjek": "BAHASA KADAZAN",
+"ting": "3",
+"file": "bahasa-kadazan-t3.json",
+"sp": 91,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA KADAZAN",
+"ting": "4",
+"file": "bahasa-kadazan-t4.json",
+"sp": 136,
+"tajuk": 16
+},
+{
+"subjek": "BAHASA KADAZAN",
+"ting": "5",
+"file": "bahasa-kadazan-t5.json",
+"sp": 106,
+"tajuk": 12
+},
+{
+"subjek": "BAHASA KOREA",
+"ting": "1",
+"file": "bahasa-korea-t1.json",
+"sp": 14,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA KOREA",
+"ting": "2",
+"file": "bahasa-korea-t2.json",
+"sp": 21,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA KOREA",
+"ting": "3",
+"file": "bahasa-korea-t3.json",
+"sp": 26,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA KOREA",
+"ting": "4",
+"file": "bahasa-korea-t4.json",
+"sp": 19,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA KOREA",
+"ting": "5",
+"file": "bahasa-korea-t5.json",
+"sp": 19,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA MELAYU",
+"ting": "1",
+"file": "bahasa-melayu-t1.json",
+"sp": 100,
+"tajuk": 10
+},
+{
+"subjek": "BAHASA MELAYU",
+"ting": "2",
+"file": "bahasa-melayu-t2.json",
+"sp": 101,
+"tajuk": 10
+},
+{
+"subjek": "BAHASA MELAYU",
+"ting": "3",
+"file": "bahasa-melayu-t3.json",
+"sp": 100,
+"tajuk": 11
+},
+{
+"subjek": "BAHASA MELAYU",
+"ting": "4",
+"file": "bahasa-melayu-t4.json",
+"sp": 54,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA MELAYU",
+"ting": "5",
+"file": "bahasa-melayu-t5.json",
+"sp": 48,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA MELAYU",
+"ting": "6",
+"file": "bahasa-melayu-t6.json",
+"sp": 511,
+"tajuk": 45
+},
+{
+"subjek": "BAHASA MELAYU PPKI",
+"ting": "1",
+"file": "bahasa-melayu-ppki-t1.json",
+"sp": 23,
+"tajuk": 3
+},
+{
+"subjek": "BAHASA MELAYU PPKI",
+"ting": "2",
+"file": "bahasa-melayu-ppki-t2.json",
+"sp": 26,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA MELAYU PPKI",
+"ting": "3",
+"file": "bahasa-melayu-ppki-t3.json",
+"sp": 33,
+"tajuk": 4
+},
+{
+"subjek": "BAHASA MELAYU PPKI",
+"ting": "4",
+"file": "bahasa-melayu-ppki-t4.json",
+"sp": 27,
+"tajuk": 3
+},
+{
+"subjek": "BAHASA MELAYU PPKI",
+"ting": "5",
+"file": "bahasa-melayu-ppki-t5.json",
+"sp": 25,
+"tajuk": 3
+},
+{
+"subjek": "BAHASA PERANCIS",
+"ting": "1",
+"file": "bahasa-perancis-t1.json",
+"sp": 43,
+"tajuk": 7
+},
+{
+"subjek": "BAHASA PERANCIS",
+"ting": "2",
+"file": "bahasa-perancis-t2.json",
+"sp": 43,
+"tajuk": 7
+},
+{
+"subjek": "BAHASA PERANCIS",
+"ting": "3",
+"file": "bahasa-perancis-t3.json",
+"sp": 46,
+"tajuk": 7
+},
+{
+"subjek": "BAHASA PERANCIS",
+"ting": "4",
+"file": "bahasa-perancis-t4.json",
+"sp": 65,
+"tajuk": 7
+},
+{
+"subjek": "BAHASA PERANCIS",
+"ting": "5",
+"file": "bahasa-perancis-t5.json",
+"sp": 43,
+"tajuk": 7
+},
+{
+"subjek": "BAHASA TAMIL",
+"ting": "1",
+"file": "bahasa-tamil-t1.json",
+"sp": 41,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA TAMIL",
+"ting": "2",
+"file": "bahasa-tamil-t2.json",
+"sp": 43,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA TAMIL",
+"ting": "3",
+"file": "bahasa-tamil-t3.json",
+"sp": 38,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA TAMIL",
+"ting": "4",
+"file": "bahasa-tamil-t4.json",
+"sp": 46,
+"tajuk": 5
+},
+{
+"subjek": "BAHASA TAMIL",
+"ting": "5",
+"file": "bahasa-tamil-t5.json",
+"sp": 38,
+"tajuk": 5
+},
+{
+"subjek": "BIOLOGI",
+"ting": "4",
+"file": "biologi-t4.json",
+"sp": 225,
+"tajuk": 15
+},
+{
+"subjek": "BIOLOGI",
+"ting": "5",
+"file": "biologi-t5.json",
+"sp": 142,
+"tajuk": 13
+},
+{
+"subjek": "BIOLOGI",
+"ting": "6",
+"file": "biologi-t6.json",
+"sp": 219,
+"tajuk": 19
+},
+{
+"subjek": "BIOLOGY DLP",
+"ting": "4",
+"file": "biology-dlp-t4.json",
+"sp": 306,
+"tajuk": 15
+},
+{
+"subjek": "BIOLOGY DLP",
+"ting": "5",
+"file": "biology-dlp-t5.json",
+"sp": 141,
+"tajuk": 13
+},
+{
+"subjek": "CHEMISTRY",
+"ting": "6",
+"file": "chemistry-t6.json",
+"sp": 361,
+"tajuk": 21
+},
+{
+"subjek": "CHEMISTRY DLP",
+"ting": "4",
+"file": "chemistry-dlp-t4.json",
+"sp": 119,
+"tajuk": 8
+},
+{
+"subjek": "CHEMISTRY DLP",
+"ting": "5",
+"file": "chemistry-dlp-t5.json",
+"sp": 59,
+"tajuk": 5
+},
+{
+"subjek": "EKONOMI",
+"ting": "4",
+"file": "ekonomi-t4.json",
+"sp": 67,
+"tajuk": 4
+},
+{
+"subjek": "EKONOMI",
+"ting": "5",
+"file": "ekonomi-t5.json",
+"sp": 42,
+"tajuk": 2
+},
+{
+"subjek": "EKONOMI",
+"ting": "6",
+"file": "ekonomi-t6.json",
+"sp": 398,
+"tajuk": 16
+},
+{
+"subjek": "ENGLISH (MUET)",
+"ting": "6",
+"file": "english-muet-t6.json",
+"sp": 68,
+"tajuk": 4
+},
+{
+"subjek": "ENGLISH PPKI",
+"ting": "1",
+"file": "english-ppki-t1.json",
+"sp": 29,
+"tajuk": 3
+},
+{
+"subjek": "ENGLISH PPKI",
+"ting": "2",
+"file": "english-ppki-t2.json",
+"sp": 18,
+"tajuk": 3
+},
+{
+"subjek": "ENGLISH PPKI",
+"ting": "3",
+"file": "english-ppki-t3.json",
+"sp": 23,
+"tajuk": 3
+},
+{
+"subjek": "ENGLISH PPKI",
+"ting": "4",
+"file": "english-ppki-t4.json",
+"sp": 18,
+"tajuk": 11
+},
+{
+"subjek": "ENGLISH PPKI",
+"ting": "5",
+"file": "english-ppki-t5.json",
+"sp": 17,
+"tajuk": 4
+},
+{
+"subjek": "FIZIK",
+"ting": "4",
+"file": "fizik-t4.json",
+"sp": 108,
+"tajuk": 6
+},
+{
+"subjek": "FIZIK",
+"ting": "5",
+"file": "fizik-t5.json",
+"sp": 97,
+"tajuk": 7
+},
+{
+"subjek": "FIZIK DLP",
+"ting": "4",
+"file": "fizik-dlp-t4.json",
+"sp": 108,
+"tajuk": 6
+},
+{
+"subjek": "FIZIK DLP",
+"ting": "5",
+"file": "fizik-dlp-t5.json",
+"sp": 97,
+"tajuk": 7
+},
+{
+"subjek": "GEOGRAFI",
+"ting": "1",
+"file": "geografi-t1.json",
+"sp": 41,
+"tajuk": 5
+},
+{
+"subjek": "GEOGRAFI",
+"ting": "2",
+"file": "geografi-t2.json",
+"sp": 51,
+"tajuk": 5
+},
+{
+"subjek": "GEOGRAFI",
+"ting": "3",
+"file": "geografi-t3.json",
+"sp": 44,
+"tajuk": 5
+},
+{
+"subjek": "GEOGRAFI",
+"ting": "4",
+"file": "geografi-t4.json",
+"sp": 66,
+"tajuk": 15
+},
+{
+"subjek": "GEOGRAFI",
+"ting": "5",
+"file": "geografi-t5.json",
+"sp": 38,
+"tajuk": 3
+},
+{
+"subjek": "GEOGRAFI",
+"ting": "6",
+"file": "geografi-t6.json",
+"sp": 266,
+"tajuk": 14
+},
+{
+"subjek": "GRAFIK KOM. TEKNIKAL",
+"ting": "4",
+"file": "grafik-kom-teknikal-t4.json",
+"sp": 175,
+"tajuk": 9
+},
+{
+"subjek": "GRAFIK KOM. TEKNIKAL",
+"ting": "5",
+"file": "grafik-kom-teknikal-t5.json",
+"sp": 67,
+"tajuk": 7
+},
+{
+"subjek": "HIASAN DALAMAN",
+"ting": "4",
+"file": "hiasan-dalaman-t4.json",
+"sp": 54,
+"tajuk": 4
+},
+{
+"subjek": "HIASAN DALAMAN",
+"ting": "5",
+"file": "hiasan-dalaman-t5.json",
+"sp": 61,
+"tajuk": 3
+},
+{
+"subjek": "HIFZ AL-QURAN",
+"ting": "1",
+"file": "hifz-al-quran-t1.json",
+"sp": 5,
+"tajuk": 1
+},
+{
+"subjek": "HIFZ AL-QURAN",
+"ting": "3",
+"file": "hifz-al-quran-t3.json",
+"sp": 15,
+"tajuk": 1
+},
+{
+"subjek": "HIFZ AL-QURAN",
+"ting": "4",
+"file": "hifz-al-quran-t4.json",
+"sp": 22,
+"tajuk": 1
+},
+{
+"subjek": "HIFZ AL-QURAN",
+"ting": "6",
+"file": "hifz-al-quran-t6.json",
+"sp": 16,
+"tajuk": 4
+},
+{
+"subjek": "HIFZ AL-QURAN WA AL-TAJWID",
+"ting": "6",
+"file": "hifz-al-quran-wa-al-tajwid-t6.json",
+"sp": 126,
+"tajuk": 2
+},
+{
+"subjek": "ICT",
+"ting": "6",
+"file": "ict-t6.json",
+"sp": 155,
+"tajuk": 16
+},
+{
+"subjek": "KATERING DAN PENYAJIAN",
+"ting": "4",
+"file": "katering-dan-penyajian-t4.json",
+"sp": 140,
+"tajuk": 4
+},
+{
+"subjek": "KATERING DAN PENYAJIAN",
+"ting": "5",
+"file": "katering-dan-penyajian-t5.json",
+"sp": 100,
+"tajuk": 4
+},
+{
+"subjek": "KESUSASTERAAN CINA",
+"ting": "4",
+"file": "kesusasteraan-cina-t4.json",
+"sp": 12,
+"tajuk": 4
+},
+{
+"subjek": "KESUSASTERAAN CINA",
+"ting": "5",
+"file": "kesusasteraan-cina-t5.json",
+"sp": 12,
+"tajuk": 4
+},
+{
+"subjek": "KESUSASTERAAN INGGERIS",
+"ting": "4",
+"file": "kesusasteraan-inggeris-t4.json",
+"sp": 30,
+"tajuk": 3
+},
+{
+"subjek": "KESUSASTERAAN INGGERIS",
+"ting": "5",
+"file": "kesusasteraan-inggeris-t5.json",
+"sp": 30,
+"tajuk": 3
+},
+{
+"subjek": "KESUSASTERAAN MELAYU",
+"ting": "5",
+"file": "kesusasteraan-melayu-t5.json",
+"sp": 248,
+"tajuk": 28
+},
+{
+"subjek": "KESUSASTERAAN MELAYU KOMUNIKATIF",
+"ting": "4",
+"file": "kesusasteraan-melayu-komunikatif-t4.json",
+"sp": 41,
+"tajuk": 3
+},
+{
+"subjek": "KESUSASTERAAN MELAYU KOMUNIKATIF",
+"ting": "5",
+"file": "kesusasteraan-melayu-komunikatif-t5.json",
+"sp": 41,
+"tajuk": 3
+},
+{
+"subjek": "KESUSASTERAAN MELAYU KOMUNIKATIF",
+"ting": "6",
+"file": "kesusasteraan-melayu-komunikatif-t6.json",
+"sp": 40,
+"tajuk": 5
+},
+{
+"subjek": "KESUSASTERAAN TAMIL",
+"ting": "4",
+"file": "kesusasteraan-tamil-t4.json",
+"sp": 53,
+"tajuk": 3
+},
+{
+"subjek": "KESUSASTERAAN TAMIL",
+"ting": "5",
+"file": "kesusasteraan-tamil-t5.json",
+"sp": 53,
+"tajuk": 3
+},
+{
+"subjek": "KIMIA",
+"ting": "4",
+"file": "kimia-t4.json",
+"sp": 124,
+"tajuk": 8
+},
+{
+"subjek": "KIMIA",
+"ting": "5",
+"file": "kimia-t5.json",
+"sp": 59,
+"tajuk": 5
+},
+{
+"subjek": "KKQ",
+"ting": "1",
+"file": "kkq-t1.json",
+"sp": 155,
+"tajuk": 25
+},
+{
+"subjek": "KKQ",
+"ting": "2",
+"file": "kkq-t2.json",
+"sp": 162,
+"tajuk": 19
+},
+{
+"subjek": "KKQ",
+"ting": "3",
+"file": "kkq-t3.json",
+"sp": 113,
+"tajuk": 9
+},
+{
+"subjek": "KKQ",
+"ting": "4",
+"file": "kkq-t4.json",
+"sp": 152,
+"tajuk": 18
+},
+{
+"subjek": "KKQ",
+"ting": "5",
+"file": "kkq-t5.json",
+"sp": 65,
+"tajuk": 13
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 1(CASUAL WEAR)",
+"ting": "2",
+"file": "kvs-asas-jahitan-pakaian-cocu-1-casual-wear-t2.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 1(CASUAL WEAR)",
+"ting": "3",
+"file": "kvs-asas-jahitan-pakaian-cocu-1-casual-wear-t3.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 1(CASUAL WEAR)",
+"ting": "4",
+"file": "kvs-asas-jahitan-pakaian-cocu-1-casual-wear-t4.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 1(CASUAL WEAR)",
+"ting": "5",
+"file": "kvs-asas-jahitan-pakaian-cocu-1-casual-wear-t5.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 4(CHILDREN WEAR)",
+"ting": "2",
+"file": "kvs-asas-jahitan-pakaian-cocu-4-children-wear-t2.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 4(CHILDREN WEAR)",
+"ting": "3",
+"file": "kvs-asas-jahitan-pakaian-cocu-4-children-wear-t3.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 4(CHILDREN WEAR)",
+"ting": "4",
+"file": "kvs-asas-jahitan-pakaian-cocu-4-children-wear-t4.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 4(CHILDREN WEAR)",
+"ting": "5",
+"file": "kvs-asas-jahitan-pakaian-cocu-4-children-wear-t5.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 5(MATERNITY WEAR)",
+"ting": "2",
+"file": "kvs-asas-jahitan-pakaian-cocu-5-maternity-wear-t2.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 5(MATERNITY WEAR)",
+"ting": "3",
+"file": "kvs-asas-jahitan-pakaian-cocu-5-maternity-wear-t3.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 5(MATERNITY WEAR)",
+"ting": "4",
+"file": "kvs-asas-jahitan-pakaian-cocu-5-maternity-wear-t4.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS JAHITAN PAKAIAN COCU 5(MATERNITY WEAR)",
+"ting": "5",
+"file": "kvs-asas-jahitan-pakaian-cocu-5-maternity-wear-t5.json",
+"sp": 43,
+"tajuk": 1
+},
+{
+"subjek": "KVS ASAS TANAMAN",
+"ting": "2",
+"file": "kvs-asas-tanaman-t2.json",
+"sp": 320,
+"tajuk": 3
+},
+{
+"subjek": "KVS ASAS TANAMAN",
+"ting": "3",
+"file": "kvs-asas-tanaman-t3.json",
+"sp": 320,
+"tajuk": 3
+},
+{
+"subjek": "KVS ASAS TANAMAN",
+"ting": "4",
+"file": "kvs-asas-tanaman-t4.json",
+"sp": 320,
+"tajuk": 3
+},
+{
+"subjek": "KVS ASAS TANAMAN",
+"ting": "5",
+"file": "kvs-asas-tanaman-t5.json",
+"sp": 320,
+"tajuk": 3
+},
+{
+"subjek": "KVS ASAS URUTAN C01 (REFLEKSOLOGI KAKI)",
+"ting": "2",
+"file": "kvs-asas-urutan-c01-refleksologi-kaki-t2.json",
+"sp": 75,
+"tajuk": 13
+},
+{
+"subjek": "KVS OPERASI PENGELUARAN TANAMAN PPKI",
+"ting": "2",
+"file": "kvs-operasi-pengeluaran-tanaman-ppki-t2.json",
+"sp": 71,
+"tajuk": 6
+},
+{
+"subjek": "KVS OPERASI PENGELUARAN TANAMAN PPKI",
+"ting": "3",
+"file": "kvs-operasi-pengeluaran-tanaman-ppki-t3.json",
+"sp": 63,
+"tajuk": 4
+},
+{
+"subjek": "KVS PEMBUATAN ROTI PPKI",
+"ting": "2",
+"file": "kvs-pembuatan-roti-ppki-t2.json",
+"sp": 21,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI PPKI",
+"ting": "4",
+"file": "kvs-pembuatan-roti-ppki-t4.json",
+"sp": 47,
+"tajuk": 2
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 3 (PENYEDIAAN DONUT)",
+"ting": "2",
+"file": "kvs-pembuatan-roti-cocu-3-penyediaan-donut-t2.json",
+"sp": 31,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 3 (PENYEDIAAN DONUT)",
+"ting": "3",
+"file": "kvs-pembuatan-roti-cocu-3-penyediaan-donut-t3.json",
+"sp": 31,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 3 (PENYEDIAAN DONUT)",
+"ting": "4",
+"file": "kvs-pembuatan-roti-cocu-3-penyediaan-donut-t4.json",
+"sp": 31,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 3 (PENYEDIAAN DONUT)",
+"ting": "5",
+"file": "kvs-pembuatan-roti-cocu-3-penyediaan-donut-t5.json",
+"sp": 31,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 4 (PENYEDIAAN BUN)",
+"ting": "2",
+"file": "kvs-pembuatan-roti-cocu-4-penyediaan-bun-t2.json",
+"sp": 32,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 4 (PENYEDIAAN BUN)",
+"ting": "3",
+"file": "kvs-pembuatan-roti-cocu-4-penyediaan-bun-t3.json",
+"sp": 32,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 4 (PENYEDIAAN BUN)",
+"ting": "4",
+"file": "kvs-pembuatan-roti-cocu-4-penyediaan-bun-t4.json",
+"sp": 32,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 4 (PENYEDIAAN BUN)",
+"ting": "5",
+"file": "kvs-pembuatan-roti-cocu-4-penyediaan-bun-t5.json",
+"sp": 32,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 5 (PENYEDIAAN PIZZA)",
+"ting": "2",
+"file": "kvs-pembuatan-roti-cocu-5-penyediaan-pizza-t2.json",
+"sp": 30,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 5 (PENYEDIAAN PIZZA)",
+"ting": "3",
+"file": "kvs-pembuatan-roti-cocu-5-penyediaan-pizza-t3.json",
+"sp": 30,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 5 (PENYEDIAAN PIZZA)",
+"ting": "4",
+"file": "kvs-pembuatan-roti-cocu-5-penyediaan-pizza-t4.json",
+"sp": 30,
+"tajuk": 1
+},
+{
+"subjek": "KVS PEMBUATAN ROTI – COCU 5 (PENYEDIAAN PIZZA)",
+"ting": "5",
+"file": "kvs-pembuatan-roti-cocu-5-penyediaan-pizza-t5.json",
+"sp": 30,
+"tajuk": 1
+},
+{
+"subjek": "LUKISAN KEJURUTERAAN",
+"ting": "4",
+"file": "lukisan-kejuruteraan-t4.json",
+"sp": 122,
+"tajuk": 9
+},
+{
+"subjek": "LUKISAN KEJURUTERAAN",
+"ting": "5",
+"file": "lukisan-kejuruteraan-t5.json",
+"sp": 58,
+"tajuk": 7
+},
+{
+"subjek": "MAHARAT AL-QURAN",
+"ting": "1",
+"file": "maharat-al-quran-t1.json",
+"sp": 117,
+"tajuk": 1
+},
+{
+"subjek": "MAHARAT AL-QURAN",
+"ting": "2",
+"file": "maharat-al-quran-t2.json",
+"sp": 74,
+"tajuk": 2
+},
+{
+"subjek": "MAHARAT AL-QURAN",
+"ting": "3",
+"file": "maharat-al-quran-t3.json",
+"sp": 115,
+"tajuk": 1
+},
+{
+"subjek": "MAHARAT AL-QURAN",
+"ting": "4",
+"file": "maharat-al-quran-t4.json",
+"sp": 230,
+"tajuk": 2
+},
+{
+"subjek": "MAHARAT AL-QURAN",
+"ting": "5",
+"file": "maharat-al-quran-t5.json",
+"sp": 115,
+"tajuk": 10
+},
+{
+"subjek": "MANAHIJ AL-ULUM AL-ISLAMIAH",
+"ting": "4",
+"file": "manahij-al-ulum-al-islamiah-t4.json",
+"sp": 121,
+"tajuk": 3
+},
+{
+"subjek": "MANAHIJ AL-ULUM AL-ISLAMIAH",
+"ting": "5",
+"file": "manahij-al-ulum-al-islamiah-t5.json",
+"sp": 125,
+"tajuk": 2
+},
+{
+"subjek": "MATEMATIK",
+"ting": "1",
+"file": "matematik-t1.json",
+"sp": 139,
+"tajuk": 13
+},
+{
+"subjek": "MATEMATIK",
+"ting": "2",
+"file": "matematik-t2.json",
+"sp": 103,
+"tajuk": 13
+},
+{
+"subjek": "MATEMATIK",
+"ting": "3",
+"file": "matematik-t3.json",
+"sp": 63,
+"tajuk": 9
+},
+{
+"subjek": "MATEMATIK",
+"ting": "4",
+"file": "matematik-t4.json",
+"sp": 72,
+"tajuk": 10
+},
+{
+"subjek": "MATEMATIK",
+"ting": "5",
+"file": "matematik-t5.json",
+"sp": 58,
+"tajuk": 8
+},
+{
+"subjek": "MATEMATIK ALIRAN KEMAHIRAN",
+"ting": "4",
+"file": "matematik-aliran-kemahiran-t4.json",
+"sp": 46,
+"tajuk": 6
+},
+{
+"subjek": "MATEMATIK ALIRAN KEMAHIRAN",
+"ting": "5",
+"file": "matematik-aliran-kemahiran-t5.json",
+"sp": 46,
+"tajuk": 5
+},
+{
+"subjek": "MATEMATIK KSSMPK",
+"ting": "2",
+"file": "matematik-kssmpk-t2.json",
+"sp": 22,
+"tajuk": 4
+},
+{
+"subjek": "MATEMATIK MPAK",
+"ting": "4",
+"file": "matematik-mpak-t4.json",
+"sp": 37,
+"tajuk": 6
+},
+{
+"subjek": "MATEMATIK MPAK",
+"ting": "5",
+"file": "matematik-mpak-t5.json",
+"sp": 50,
+"tajuk": 5
+},
+{
+"subjek": "MATEMATIK PIMA",
+"ting": "4",
+"file": "matematik-pima-t4.json",
+"sp": 39,
+"tajuk": 6
+},
+{
+"subjek": "MATEMATIK PIMA",
+"ting": "5",
+"file": "matematik-pima-t5.json",
+"sp": 14,
+"tajuk": 4
+},
+{
+"subjek": "MATEMATIK PPKI",
+"ting": "1",
+"file": "matematik-ppki-t1.json",
+"sp": 46,
+"tajuk": 4
+},
+{
+"subjek": "MATEMATIK PPKI",
+"ting": "2",
+"file": "matematik-ppki-t2.json",
+"sp": 22,
+"tajuk": 4
+},
+{
+"subjek": "MATEMATIK PPKI",
+"ting": "3",
+"file": "matematik-ppki-t3.json",
+"sp": 18,
+"tajuk": 4
+},
+{
+"subjek": "MATEMATIK PPKI",
+"ting": "4",
+"file": "matematik-ppki-t4.json",
+"sp": 21,
+"tajuk": 4
+},
+{
+"subjek": "MATEMATIK PPKI",
+"ting": "5",
+"file": "matematik-ppki-t5.json",
+"sp": 11,
+"tajuk": 3
+},
+{
+"subjek": "MATEMATIK PVMA",
+"ting": "4",
+"file": "matematik-pvma-t4.json",
+"sp": 44,
+"tajuk": 6
+},
+{
+"subjek": "MATEMATIK PVMA",
+"ting": "5",
+"file": "matematik-pvma-t5.json",
+"sp": 50,
+"tajuk": 5
+},
+{
+"subjek": "MATEMATIK TAMBAHAN",
+"ting": "4",
+"file": "matematik-tambahan-t4.json",
+"sp": 94,
+"tajuk": 10
+},
+{
+"subjek": "MATEMATIK TAMBAHAN",
+"ting": "5",
+"file": "matematik-tambahan-t5.json",
+"sp": 77,
+"tajuk": 8
+},
+{
+"subjek": "MATEMATIK TEKNIKAL",
+"ting": "6",
+"file": "matematik-teknikal-t6.json",
+"sp": 155,
+"tajuk": 18
+},
+{
+"subjek": "MATHEMATICS DLP",
+"ting": "1",
+"file": "mathematics-dlp-t1.json",
+"sp": 154,
+"tajuk": 13
+},
+{
+"subjek": "MATHEMATICS DLP",
+"ting": "2",
+"file": "mathematics-dlp-t2.json",
+"sp": 107,
+"tajuk": 13
+},
+{
+"subjek": "MATHEMATICS DLP",
+"ting": "3",
+"file": "mathematics-dlp-t3.json",
+"sp": 67,
+"tajuk": 9
+},
+{
+"subjek": "MATHEMATICS DLP",
+"ting": "4",
+"file": "mathematics-dlp-t4.json",
+"sp": 70,
+"tajuk": 10
+},
+{
+"subjek": "MATHEMATICS DLP",
+"ting": "5",
+"file": "mathematics-dlp-t5.json",
+"sp": 57,
+"tajuk": 8
+},
+{
+"subjek": "MATHEMATICS DLP",
+"ting": "6",
+"file": "mathematics-dlp-t6.json",
+"sp": 156,
+"tajuk": 18
+},
+{
+"subjek": "MATHEMATICS M",
+"ting": "6",
+"file": "mathematics-m-t6.json",
+"sp": 173,
+"tajuk": 19
+},
+{
+"subjek": "MATHEMATICS T",
+"ting": "6",
+"file": "mathematics-t-t6.json",
+"sp": 165,
+"tajuk": 19
+},
+{
+"subjek": "MPV (MENSERVIS MOTOSIKAL)",
+"ting": "4",
+"file": "mpv-menservis-motosikal-t4.json",
+"sp": 60,
+"tajuk": 4
+},
+{
+"subjek": "MPV (MENSERVIS MOTOSIKAL)",
+"ting": "5",
+"file": "mpv-menservis-motosikal-t5.json",
+"sp": 61,
+"tajuk": 4
+},
+{
+"subjek": "MPV (PENJAGAAN MUKA & DANDANAN RAMBUT)",
+"ting": "5",
+"file": "mpv-penjagaan-muka-dandanan-rambut-t5.json",
+"sp": 224,
+"tajuk": 12
+},
+{
+"subjek": "MPV (PENJAGAAN MUKA DAN PENGGAYAAN RAMBUT)",
+"ting": "4",
+"file": "mpv-penjagaan-muka-dan-penggayaan-rambut-t4.json",
+"sp": 48,
+"tajuk": 11
+},
+{
+"subjek": "MPV AKUAKULTUR DAN HAIWAN REKREASI",
+"ting": "4",
+"file": "mpv-akuakultur-dan-haiwan-rekreasi-t4.json",
+"sp": 81,
+"tajuk": 4
+},
+{
+"subjek": "MPV AKUAKULTUR DAN HAIWAN REKREASI",
+"ting": "5",
+"file": "mpv-akuakultur-dan-haiwan-rekreasi-t5.json",
+"sp": 63,
+"tajuk": 4
+},
+{
+"subjek": "MPV APAK",
+"ting": "4",
+"file": "mpv-apak-t4.json",
+"sp": 237,
+"tajuk": 7
+},
+{
+"subjek": "MPV APAK",
+"ting": "5",
+"file": "mpv-apak-t5.json",
+"sp": 215,
+"tajuk": 6
+},
+{
+"subjek": "MPV AUTOMOTIF",
+"ting": "4",
+"file": "mpv-automotif-t4.json",
+"sp": 88,
+"tajuk": 10
+},
+{
+"subjek": "MPV KERJA PAIP DOMESTIK",
+"ting": "4",
+"file": "mpv-kerja-paip-domestik-t4.json",
+"sp": 63,
+"tajuk": 4
+},
+{
+"subjek": "MPV KERJA PAIP DOMESTIK",
+"ting": "5",
+"file": "mpv-kerja-paip-domestik-t5.json",
+"sp": 78,
+"tajuk": 4
+},
+{
+"subjek": "MPV LANDSKAP & NURSERI",
+"ting": "4",
+"file": "mpv-landskap-nurseri-t4.json",
+"sp": 98,
+"tajuk": 4
+},
+{
+"subjek": "MPV LANDSKAP & NURSERI",
+"ting": "5",
+"file": "mpv-landskap-nurseri-t5.json",
+"sp": 83,
+"tajuk": 3
+},
+{
+"subjek": "MPV MENSERVIS PERALATAN ELEKTRIK DOMESTIK",
+"ting": "4",
+"file": "mpv-menservis-peralatan-elektrik-domestik-t4.json",
+"sp": 348,
+"tajuk": 7
+},
+{
+"subjek": "MPV MENSERVIS PERALATAN ELEKTRIK DOMESTIK",
+"ting": "5",
+"file": "mpv-menservis-peralatan-elektrik-domestik-t5.json",
+"sp": 78,
+"tajuk": 4
+},
+{
+"subjek": "MPV PEMBINAAN DOMESTIK",
+"ting": "4",
+"file": "mpv-pembinaan-domestik-t4.json",
+"sp": 61,
+"tajuk": 6
+},
+{
+"subjek": "MPV PEMBINAAN DOMESTIK",
+"ting": "5",
+"file": "mpv-pembinaan-domestik-t5.json",
+"sp": 51,
+"tajuk": 4
+},
+{
+"subjek": "MPV PEMBUATAN PERABOT",
+"ting": "4",
+"file": "mpv-pembuatan-perabot-t4.json",
+"sp": 38,
+"tajuk": 4
+},
+{
+"subjek": "MPV PEMBUATAN PERABOT",
+"ting": "5",
+"file": "mpv-pembuatan-perabot-t5.json",
+"sp": 123,
+"tajuk": 19
+},
+{
+"subjek": "MPV PEMPROSESAN MAKANAN",
+"ting": "4",
+"file": "mpv-pemprosesan-makanan-t4.json",
+"sp": 197,
+"tajuk": 4
+},
+{
+"subjek": "MPV PEMPROSESAN MAKANAN",
+"ting": "5",
+"file": "mpv-pemprosesan-makanan-t5.json",
+"sp": 45,
+"tajuk": 3
+},
+{
+"subjek": "MPV PENDAWAIAN DOMESTIK",
+"ting": "4",
+"file": "mpv-pendawaian-domestik-t4.json",
+"sp": 41,
+"tajuk": 4
+},
+{
+"subjek": "MPV PENDAWAIAN DOMESTIK",
+"ting": "5",
+"file": "mpv-pendawaian-domestik-t5.json",
+"sp": 59,
+"tajuk": 3
+},
+{
+"subjek": "MPV PRODUKSI MULTIMEDIA",
+"ting": "4",
+"file": "mpv-produksi-multimedia-t4.json",
+"sp": 81,
+"tajuk": 5
+},
+{
+"subjek": "MPV PRODUKSI MULTIMEDIA",
+"ting": "5",
+"file": "mpv-produksi-multimedia-t5.json",
+"sp": 63,
+"tajuk": 3
+},
+{
+"subjek": "MPV PRODUKSI REKA TANDA",
+"ting": "4",
+"file": "mpv-produksi-reka-tanda-t4.json",
+"sp": 65,
+"tajuk": 4
+},
+{
+"subjek": "MPV PRODUKSI REKA TANDA",
+"ting": "5",
+"file": "mpv-produksi-reka-tanda-t5.json",
+"sp": 37,
+"tajuk": 4
+},
+{
+"subjek": "MPV REKA BENTUK GRAFIK DIGITAL",
+"ting": "4",
+"file": "mpv-reka-bentuk-grafik-digital-t4.json",
+"sp": 118,
+"tajuk": 4
+},
+{
+"subjek": "MPV REKA BENTUK GRAFIK DIGITAL",
+"ting": "5",
+"file": "mpv-reka-bentuk-grafik-digital-t5.json",
+"sp": 68,
+"tajuk": 3
+},
+{
+"subjek": "MPV REKAAN DAN JAHITAN PAKAIAN",
+"ting": "4",
+"file": "mpv-rekaan-dan-jahitan-pakaian-t4.json",
+"sp": 101,
+"tajuk": 7
+},
+{
+"subjek": "MPV REKAAN DAN JAHITAN PAKAIAN",
+"ting": "5",
+"file": "mpv-rekaan-dan-jahitan-pakaian-t5.json",
+"sp": 38,
+"tajuk": 4
+},
+{
+"subjek": "MPV TANAMAN MAKANAN",
+"ting": "4",
+"file": "mpv-tanaman-makanan-t4.json",
+"sp": 92,
+"tajuk": 5
+},
+{
+"subjek": "MPV TANAMAN MAKANAN",
+"ting": "5",
+"file": "mpv-tanaman-makanan-t5.json",
+"sp": 57,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN AL-QURAN DAN AL-SUNNAH",
+"ting": "4",
+"file": "pendidikan-al-quran-dan-al-sunnah-t4.json",
+"sp": 167,
+"tajuk": 31
+},
+{
+"subjek": "PENDIDIKAN AL-QURAN DAN AL-SUNNAH",
+"ting": "5",
+"file": "pendidikan-al-quran-dan-al-sunnah-t5.json",
+"sp": 147,
+"tajuk": 33
+},
+{
+"subjek": "PENDIDIKAN ISLAM",
+"ting": "1",
+"file": "pendidikan-islam-t1.json",
+"sp": 197,
+"tajuk": 30
+},
+{
+"subjek": "PENDIDIKAN ISLAM",
+"ting": "2",
+"file": "pendidikan-islam-t2.json",
+"sp": 197,
+"tajuk": 44
+},
+{
+"subjek": "PENDIDIKAN ISLAM",
+"ting": "3",
+"file": "pendidikan-islam-t3.json",
+"sp": 152,
+"tajuk": 26
+},
+{
+"subjek": "PENDIDIKAN ISLAM",
+"ting": "4",
+"file": "pendidikan-islam-t4.json",
+"sp": 132,
+"tajuk": 28
+},
+{
+"subjek": "PENDIDIKAN ISLAM",
+"ting": "5",
+"file": "pendidikan-islam-t5.json",
+"sp": 106,
+"tajuk": 22
+},
+{
+"subjek": "PENDIDIKAN ISLAM MPAK",
+"ting": "4",
+"file": "pendidikan-islam-mpak-t4.json",
+"sp": 66,
+"tajuk": 6
+},
+{
+"subjek": "PENDIDIKAN ISLAM MPAK",
+"ting": "5",
+"file": "pendidikan-islam-mpak-t5.json",
+"sp": 75,
+"tajuk": 6
+},
+{
+"subjek": "PENDIDIKAN ISLAM PPKI",
+"ting": "1",
+"file": "pendidikan-islam-ppki-t1.json",
+"sp": 72,
+"tajuk": 8
+},
+{
+"subjek": "PENDIDIKAN ISLAM PPKI",
+"ting": "2",
+"file": "pendidikan-islam-ppki-t2.json",
+"sp": 55,
+"tajuk": 8
+},
+{
+"subjek": "PENDIDIKAN ISLAM PPKI",
+"ting": "3",
+"file": "pendidikan-islam-ppki-t3.json",
+"sp": 50,
+"tajuk": 8
+},
+{
+"subjek": "PENDIDIKAN ISLAM PPKI",
+"ting": "4",
+"file": "pendidikan-islam-ppki-t4.json",
+"sp": 54,
+"tajuk": 8
+},
+{
+"subjek": "PENDIDIKAN ISLAM PPKI",
+"ting": "5",
+"file": "pendidikan-islam-ppki-t5.json",
+"sp": 58,
+"tajuk": 8
+},
+{
+"subjek": "PENDIDIKAN ISLAM PVMA",
+"ting": "4",
+"file": "pendidikan-islam-pvma-t4.json",
+"sp": 66,
+"tajuk": 12
+},
+{
+"subjek": "PENDIDIKAN ISLAM PVMA",
+"ting": "5",
+"file": "pendidikan-islam-pvma-t5.json",
+"sp": 70,
+"tajuk": 6
+},
+{
+"subjek": "PENDIDIKAN JASMANI",
+"ting": "1",
+"file": "pendidikan-jasmani-t1.json",
+"sp": 110,
+"tajuk": 10
+},
+{
+"subjek": "PENDIDIKAN JASMANI",
+"ting": "2",
+"file": "pendidikan-jasmani-t2.json",
+"sp": 99,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN JASMANI",
+"ting": "3",
+"file": "pendidikan-jasmani-t3.json",
+"sp": 114,
+"tajuk": 10
+},
+{
+"subjek": "PENDIDIKAN JASMANI",
+"ting": "4",
+"file": "pendidikan-jasmani-t4.json",
+"sp": 77,
+"tajuk": 10
+},
+{
+"subjek": "PENDIDIKAN JASMANI",
+"ting": "5",
+"file": "pendidikan-jasmani-t5.json",
+"sp": 78,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN JASMANI PPKI",
+"ting": "1",
+"file": "pendidikan-jasmani-ppki-t1.json",
+"sp": 117,
+"tajuk": 11
+},
+{
+"subjek": "PENDIDIKAN JASMANI PPKI",
+"ting": "2",
+"file": "pendidikan-jasmani-ppki-t2.json",
+"sp": 92,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN JASMANI PPKI",
+"ting": "3",
+"file": "pendidikan-jasmani-ppki-t3.json",
+"sp": 96,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN JASMANI PPKI",
+"ting": "4",
+"file": "pendidikan-jasmani-ppki-t4.json",
+"sp": 74,
+"tajuk": 1
+},
+{
+"subjek": "PENDIDIKAN JASMANI PPKI",
+"ting": "5",
+"file": "pendidikan-jasmani-ppki-t5.json",
+"sp": 102,
+"tajuk": 11
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN",
+"ting": "1",
+"file": "pendidikan-kesihatan-t1.json",
+"sp": 37,
+"tajuk": 10
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN",
+"ting": "2",
+"file": "pendidikan-kesihatan-t2.json",
+"sp": 31,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN",
+"ting": "3",
+"file": "pendidikan-kesihatan-t3.json",
+"sp": 36,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN",
+"ting": "4",
+"file": "pendidikan-kesihatan-t4.json",
+"sp": 36,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN",
+"ting": "5",
+"file": "pendidikan-kesihatan-t5.json",
+"sp": 33,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN PPKI",
+"ting": "1",
+"file": "pendidikan-kesihatan-ppki-t1.json",
+"sp": 11,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN PPKI",
+"ting": "2",
+"file": "pendidikan-kesihatan-ppki-t2.json",
+"sp": 29,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN PPKI",
+"ting": "3",
+"file": "pendidikan-kesihatan-ppki-t3.json",
+"sp": 34,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN PPKI",
+"ting": "4",
+"file": "pendidikan-kesihatan-ppki-t4.json",
+"sp": 36,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN KESIHATAN PPKI",
+"ting": "5",
+"file": "pendidikan-kesihatan-ppki-t5.json",
+"sp": 57,
+"tajuk": 19
+},
+{
+"subjek": "PENDIDIKAN MORAL",
+"ting": "1",
+"file": "pendidikan-moral-t1.json",
+"sp": 91,
+"tajuk": 17
+},
+{
+"subjek": "PENDIDIKAN MORAL",
+"ting": "2",
+"file": "pendidikan-moral-t2.json",
+"sp": 90,
+"tajuk": 15
+},
+{
+"subjek": "PENDIDIKAN MORAL",
+"ting": "3",
+"file": "pendidikan-moral-t3.json",
+"sp": 84,
+"tajuk": 14
+},
+{
+"subjek": "PENDIDIKAN MORAL",
+"ting": "4",
+"file": "pendidikan-moral-t4.json",
+"sp": 72,
+"tajuk": 12
+},
+{
+"subjek": "PENDIDIKAN MORAL",
+"ting": "5",
+"file": "pendidikan-moral-t5.json",
+"sp": 71,
+"tajuk": 12
+},
+{
+"subjek": "PENDIDIKAN MORAL MPAK",
+"ting": "4",
+"file": "pendidikan-moral-mpak-t4.json",
+"sp": 50,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN MORAL MPAK",
+"ting": "5",
+"file": "pendidikan-moral-mpak-t5.json",
+"sp": 55,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN MORAL PPKI",
+"ting": "1",
+"file": "pendidikan-moral-ppki-t1.json",
+"sp": 44,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN MORAL PPKI",
+"ting": "2",
+"file": "pendidikan-moral-ppki-t2.json",
+"sp": 39,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN MORAL PPKI",
+"ting": "3",
+"file": "pendidikan-moral-ppki-t3.json",
+"sp": 49,
+"tajuk": 3
+},
+{
+"subjek": "PENDIDIKAN MORAL PPKI",
+"ting": "4",
+"file": "pendidikan-moral-ppki-t4.json",
+"sp": 38,
+"tajuk": 2
+},
+{
+"subjek": "PENDIDIKAN MORAL PPKI",
+"ting": "5",
+"file": "pendidikan-moral-ppki-t5.json",
+"sp": 34,
+"tajuk": 2
+},
+{
+"subjek": "PENDIDIKAN MORAL PVMA",
+"ting": "4",
+"file": "pendidikan-moral-pvma-t4.json",
+"sp": 55,
+"tajuk": 1
+},
+{
+"subjek": "PENDIDIKAN MORAL PVMA",
+"ting": "5",
+"file": "pendidikan-moral-pvma-t5.json",
+"sp": 54,
+"tajuk": 1
+},
+{
+"subjek": "PENDIDIKAN MUZIK",
+"ting": "1",
+"file": "pendidikan-muzik-t1.json",
+"sp": 26,
+"tajuk": 5
+},
+{
+"subjek": "PENDIDIKAN MUZIK",
+"ting": "2",
+"file": "pendidikan-muzik-t2.json",
+"sp": 33,
+"tajuk": 5
+},
+{
+"subjek": "PENDIDIKAN MUZIK",
+"ting": "3",
+"file": "pendidikan-muzik-t3.json",
+"sp": 33,
+"tajuk": 5
+},
+{
+"subjek": "PENDIDIKAN MUZIK",
+"ting": "4",
+"file": "pendidikan-muzik-t4.json",
+"sp": 24,
+"tajuk": 5
+},
+{
+"subjek": "PENDIDIKAN MUZIK",
+"ting": "5",
+"file": "pendidikan-muzik-t5.json",
+"sp": 33,
+"tajuk": 4
+},
+{
+"subjek": "PENDIDIKAN MUZIK PPKI",
+"ting": "1",
+"file": "pendidikan-muzik-ppki-t1.json",
+"sp": 24,
+"tajuk": 4
+},
+{
+"subjek": "PENDIDIKAN MUZIK PPKI",
+"ting": "2",
+"file": "pendidikan-muzik-ppki-t2.json",
+"sp": 22,
+"tajuk": 4
+},
+{
+"subjek": "PENDIDIKAN MUZIK PPKI",
+"ting": "3",
+"file": "pendidikan-muzik-ppki-t3.json",
+"sp": 24,
+"tajuk": 4
+},
+{
+"subjek": "PENDIDIKAN MUZIK PPKI",
+"ting": "4",
+"file": "pendidikan-muzik-ppki-t4.json",
+"sp": 24,
+"tajuk": 5
+},
+{
+"subjek": "PENDIDIKAN MUZIK PPKI",
+"ting": "5",
+"file": "pendidikan-muzik-ppki-t5.json",
+"sp": 33,
+"tajuk": 5
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL",
+"ting": "1",
+"file": "pendidikan-seni-visual-t1.json",
+"sp": 87,
+"tajuk": 17
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL",
+"ting": "2",
+"file": "pendidikan-seni-visual-t2.json",
+"sp": 88,
+"tajuk": 11
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL",
+"ting": "3",
+"file": "pendidikan-seni-visual-t3.json",
+"sp": 90,
+"tajuk": 11
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL",
+"ting": "4",
+"file": "pendidikan-seni-visual-t4.json",
+"sp": 64,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL",
+"ting": "5",
+"file": "pendidikan-seni-visual-t5.json",
+"sp": 56,
+"tajuk": 8
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL",
+"ting": "6",
+"file": "pendidikan-seni-visual-t6.json",
+"sp": 35,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL PPKI",
+"ting": "1",
+"file": "pendidikan-seni-visual-ppki-t1.json",
+"sp": 78,
+"tajuk": 2
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL PPKI",
+"ting": "2",
+"file": "pendidikan-seni-visual-ppki-t2.json",
+"sp": 72,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL PPKI",
+"ting": "3",
+"file": "pendidikan-seni-visual-ppki-t3.json",
+"sp": 77,
+"tajuk": 9
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL PPKI",
+"ting": "4",
+"file": "pendidikan-seni-visual-ppki-t4.json",
+"sp": 66,
+"tajuk": 7
+},
+{
+"subjek": "PENDIDIKAN SENI VISUAL PPKI",
+"ting": "5",
+"file": "pendidikan-seni-visual-ppki-t5.json",
+"sp": 47,
+"tajuk": 47
+},
+{
+"subjek": "PENDIDIKAN SYARIAH ISLAMIAH",
+"ting": "4",
+"file": "pendidikan-syariah-islamiah-t4.json",
+"sp": 133,
+"tajuk": 6
+},
+{
+"subjek": "PENDIDIKAN SYARIAH ISLAMIAH",
+"ting": "5",
+"file": "pendidikan-syariah-islamiah-t5.json",
+"sp": 97,
+"tajuk": 5
+},
+{
+"subjek": "PENGAJIAN AM",
+"ting": "6",
+"file": "pengajian-am-t6.json",
+"sp": 190,
+"tajuk": 7
+},
+{
+"subjek": "PENGAJIAN KEJURUTERAAN AWAM",
+"ting": "4",
+"file": "pengajian-kejuruteraan-awam-t4.json",
+"sp": 52,
+"tajuk": 4
+},
+{
+"subjek": "PENGAJIAN KEJURUTERAAN AWAM",
+"ting": "5",
+"file": "pengajian-kejuruteraan-awam-t5.json",
+"sp": 41,
+"tajuk": 3
+},
+{
+"subjek": "PENGAJIAN KEJURUTERAAN ELEKTRIK DAN ELEKTRONIK",
+"ting": "4",
+"file": "pengajian-kejuruteraan-elektrik-dan-elektronik-t4.json",
+"sp": 64,
+"tajuk": 3
+},
+{
+"subjek": "PENGAJIAN KEJURUTERAAN ELEKTRIK DAN ELEKTRONIK",
+"ting": "5",
+"file": "pengajian-kejuruteraan-elektrik-dan-elektronik-t5.json",
+"sp": 58,
+"tajuk": 3
+},
+{
+"subjek": "PENGAJIAN KEJURUTERAAN MEKANIKAL",
+"ting": "4",
+"file": "pengajian-kejuruteraan-mekanikal-t4.json",
+"sp": 42,
+"tajuk": 4
+},
+{
+"subjek": "PENGAJIAN KEJURUTERAAN MEKANIKAL",
+"ting": "5",
+"file": "pengajian-kejuruteraan-mekanikal-t5.json",
+"sp": 37,
+"tajuk": 3
+},
+{
+"subjek": "PENGAJIAN KEUSAHAWANAN",
+"ting": "4",
+"file": "pengajian-keusahawanan-t4.json",
+"sp": 55,
+"tajuk": 5
+},
+{
+"subjek": "PENGAJIAN KEUSAHAWANAN",
+"ting": "5",
+"file": "pengajian-keusahawanan-t5.json",
+"sp": 37,
+"tajuk": 4
+},
+{
+"subjek": "PENGAJIAN PERNIAGAAN",
+"ting": "6",
+"file": "pengajian-perniagaan-t6.json",
+"sp": 245,
+"tajuk": 54
+},
+{
+"subjek": "PENGURUSAN DIRI PPKI",
+"ting": "1",
+"file": "pengurusan-diri-ppki-t1.json",
+"sp": 101,
+"tajuk": 6
+},
+{
+"subjek": "PENYEDIAAN DAN PEMBUATAN MAKANAN (KSSMPK KVS)",
+"ting": "2",
+"file": "penyediaan-dan-pembuatan-makanan-kssmpk-kvs-t2.json",
+"sp": 76,
+"tajuk": 2
+},
+{
+"subjek": "PENYEDIAAN DAN PEMBUATAN MAKANAN (KSSMPK KVS)",
+"ting": "3",
+"file": "penyediaan-dan-pembuatan-makanan-kssmpk-kvs-t3.json",
+"sp": 24,
+"tajuk": 1
+},
+{
+"subjek": "PENYEDIAAN DAN PEMBUATAN MAKANAN (KSSMPK KVS)",
+"ting": "4",
+"file": "penyediaan-dan-pembuatan-makanan-kssmpk-kvs-t4.json",
+"sp": 77,
+"tajuk": 3
+},
+{
+"subjek": "PENYEDIAAN MAKANAN PVMA",
+"ting": "4",
+"file": "penyediaan-makanan-pvma-t4.json",
+"sp": 244,
+"tajuk": 9
+},
+{
+"subjek": "PENYEDIAAN MAKANAN PVMA",
+"ting": "5",
+"file": "penyediaan-makanan-pvma-t5.json",
+"sp": 230,
+"tajuk": 99
+},
+{
+"subjek": "PERNIAGAAN",
+"ting": "4",
+"file": "perniagaan-t4.json",
+"sp": 25,
+"tajuk": 4
+},
+{
+"subjek": "PERNIAGAAN",
+"ting": "5",
+"file": "perniagaan-t5.json",
+"sp": 42,
+"tajuk": 7
+},
+{
+"subjek": "PERTANIAN",
+"ting": "4",
+"file": "pertanian-t4.json",
+"sp": 36,
+"tajuk": 2
+},
+{
+"subjek": "PERTANIAN",
+"ting": "5",
+"file": "pertanian-t5.json",
+"sp": 35,
+"tajuk": 2
+},
+{
+"subjek": "PERTANIAN & ASAS TANI",
+"ting": "3",
+"file": "pertanian-asas-tani-t3.json",
+"sp": 44,
+"tajuk": 3
+},
+{
+"subjek": "PHYSICS",
+"ting": "6",
+"file": "physics-t6.json",
+"sp": 296,
+"tajuk": 25
+},
+{
+"subjek": "PRINSIP PERAKAUNAN",
+"ting": "4",
+"file": "prinsip-perakaunan-t4.json",
+"sp": 240,
+"tajuk": 9
+},
+{
+"subjek": "PRINSIP PERAKAUNAN",
+"ting": "5",
+"file": "prinsip-perakaunan-t5.json",
+"sp": 152,
+"tajuk": 7
+},
+{
+"subjek": "PRINSIP PERAKAUNAN",
+"ting": "6",
+"file": "prinsip-perakaunan-t6.json",
+"sp": 381,
+"tajuk": 17
+},
+{
+"subjek": "PROGRAM ASASI ULUL ALBAB",
+"ting": "1",
+"file": "program-asasi-ulul-albab-t1.json",
+"sp": 24,
+"tajuk": 24
+},
+{
+"subjek": "PSSAS PPKI",
+"ting": "1",
+"file": "pssas-ppki-t1.json",
+"sp": 27,
+"tajuk": 10
+},
+{
+"subjek": "PSSAS PPKI",
+"ting": "2",
+"file": "pssas-ppki-t2.json",
+"sp": 30,
+"tajuk": 9
+},
+{
+"subjek": "PSSAS PPKI",
+"ting": "3",
+"file": "pssas-ppki-t3.json",
+"sp": 35,
+"tajuk": 9
+},
+{
+"subjek": "PSSAS PPKI",
+"ting": "4",
+"file": "pssas-ppki-t4.json",
+"sp": 31,
+"tajuk": 22
+},
+{
+"subjek": "PSSAS PPKI",
+"ting": "5",
+"file": "pssas-ppki-t5.json",
+"sp": 41,
+"tajuk": 9
+},
+{
+"subjek": "PVMA",
+"ting": "4",
+"file": "pvma-t4.json",
+"sp": 411,
+"tajuk": 78
+},
+{
+"subjek": "PVMA",
+"ting": "5",
+"file": "pvma-t5.json",
+"sp": 307,
+"tajuk": 56
+},
+{
+"subjek": "PVMA MEMBUAT PAKAIAN",
+"ting": "4",
+"file": "pvma-membuat-pakaian-t4.json",
+"sp": 43,
+"tajuk": 7
+},
+{
+"subjek": "PVMA MEMBUAT PAKAIAN",
+"ting": "5",
+"file": "pvma-membuat-pakaian-t5.json",
+"sp": 31,
+"tajuk": 5
+},
+{
+"subjek": "PVMA TANAMAN",
+"ting": "4",
+"file": "pvma-tanaman-t4.json",
+"sp": 90,
+"tajuk": 25
+},
+{
+"subjek": "PVMA TANAMAN",
+"ting": "5",
+"file": "pvma-tanaman-t5.json",
+"sp": 102,
+"tajuk": 17
+},
+{
+"subjek": "REKA BENTUK DAN TEKNOLOGI",
+"ting": "1",
+"file": "reka-bentuk-dan-teknologi-t1.json",
+"sp": 47,
+"tajuk": 5
+},
+{
+"subjek": "REKA BENTUK DAN TEKNOLOGI",
+"ting": "2",
+"file": "reka-bentuk-dan-teknologi-t2.json",
+"sp": 57,
+"tajuk": 2
+},
+{
+"subjek": "REKA BENTUK DAN TEKNOLOGI",
+"ting": "3",
+"file": "reka-bentuk-dan-teknologi-t3.json",
+"sp": 24,
+"tajuk": 3
+},
+{
+"subjek": "REKA CIPTA",
+"ting": "4",
+"file": "reka-cipta-t4.json",
+"sp": 57,
+"tajuk": 8
+},
+{
+"subjek": "REKA CIPTA",
+"ting": "5",
+"file": "reka-cipta-t5.json",
+"sp": 98,
+"tajuk": 8
+},
+{
+"subjek": "REKA TANDA JAHITAN PAKAIAN",
+"ting": "4",
+"file": "reka-tanda-jahitan-pakaian-t4.json",
+"sp": 100,
+"tajuk": 7
+},
+{
+"subjek": "REKA TANDA JAHITAN PAKAIAN",
+"ting": "5",
+"file": "reka-tanda-jahitan-pakaian-t5.json",
+"sp": 38,
+"tajuk": 4
+},
+{
+"subjek": "SAINS",
+"ting": "1",
+"file": "sains-t1.json",
+"sp": 154,
+"tajuk": 10
+},
+{
+"subjek": "SAINS",
+"ting": "2",
+"file": "sains-t2.json",
+"sp": 101,
+"tajuk": 13
+},
+{
+"subjek": "SAINS",
+"ting": "3",
+"file": "sains-t3.json",
+"sp": 88,
+"tajuk": 10
+},
+{
+"subjek": "SAINS",
+"ting": "4",
+"file": "sains-t4.json",
+"sp": 121,
+"tajuk": 12
+},
+{
+"subjek": "SAINS",
+"ting": "5",
+"file": "sains-t5.json",
+"sp": 85,
+"tajuk": 9
+},
+{
+"subjek": "SAINS KOMPUTER",
+"ting": "4",
+"file": "sains-komputer-t4.json",
+"sp": 49,
+"tajuk": 3
+},
+{
+"subjek": "SAINS KOMPUTER",
+"ting": "5",
+"file": "sains-komputer-t5.json",
+"sp": 52,
+"tajuk": 3
+},
+{
+"subjek": "SAINS PERTANIAN",
+"ting": "4",
+"file": "sains-pertanian-t4.json",
+"sp": 39,
+"tajuk": 2
+},
+{
+"subjek": "SAINS PERTANIAN",
+"ting": "5",
+"file": "sains-pertanian-t5.json",
+"sp": 35,
+"tajuk": 2
+},
+{
+"subjek": "SAINS RUMAHTANGGA",
+"ting": "4",
+"file": "sains-rumahtangga-t4.json",
+"sp": 146,
+"tajuk": 5
+},
+{
+"subjek": "SAINS RUMAHTANGGA",
+"ting": "5",
+"file": "sains-rumahtangga-t5.json",
+"sp": 157,
+"tajuk": 4
+},
+{
+"subjek": "SAINS SUKAN",
+"ting": "4",
+"file": "sains-sukan-t4.json",
+"sp": 73,
+"tajuk": 3
+},
+{
+"subjek": "SAINS SUKAN",
+"ting": "5",
+"file": "sains-sukan-t5.json",
+"sp": 70,
+"tajuk": 19
+},
+{
+"subjek": "SAINS SUKAN",
+"ting": "6",
+"file": "sains-sukan-t6.json",
+"sp": 282,
+"tajuk": 78
+},
+{
+"subjek": "SAINS TAMBAHAN",
+"ting": "4",
+"file": "sains-tambahan-t4.json",
+"sp": 104,
+"tajuk": 8
+},
+{
+"subjek": "SAINS TAMBAHAN",
+"ting": "5",
+"file": "sains-tambahan-t5.json",
+"sp": 92,
+"tajuk": 8
+},
+{
+"subjek": "SCIENCE DLP",
+"ting": "1",
+"file": "science-dlp-t1.json",
+"sp": 154,
+"tajuk": 9
+},
+{
+"subjek": "SCIENCE DLP",
+"ting": "2",
+"file": "science-dlp-t2.json",
+"sp": 99,
+"tajuk": 13
+},
+{
+"subjek": "SCIENCE DLP",
+"ting": "3",
+"file": "science-dlp-t3.json",
+"sp": 88,
+"tajuk": 10
+},
+{
+"subjek": "SCIENCE DLP",
+"ting": "4",
+"file": "science-dlp-t4.json",
+"sp": 121,
+"tajuk": 12
+},
+{
+"subjek": "SCIENCE DLP",
+"ting": "5",
+"file": "science-dlp-t5.json",
+"sp": 85,
+"tajuk": 9
+},
+{
+"subjek": "SEJARAH",
+"ting": "1",
+"file": "sejarah-t1.json",
+"sp": 57,
+"tajuk": 6
+},
+{
+"subjek": "SEJARAH",
+"ting": "2",
+"file": "sejarah-t2.json",
+"sp": 48,
+"tajuk": 6
+},
+{
+"subjek": "SEJARAH",
+"ting": "3",
+"file": "sejarah-t3.json",
+"sp": 64,
+"tajuk": 8
+},
+{
+"subjek": "SEJARAH",
+"ting": "4",
+"file": "sejarah-t4.json",
+"sp": 102,
+"tajuk": 3
+},
+{
+"subjek": "SEJARAH",
+"ting": "5",
+"file": "sejarah-t5.json",
+"sp": 96,
+"tajuk": 4
+},
+{
+"subjek": "SEJARAH",
+"ting": "6",
+"file": "sejarah-t6.json",
+"sp": 102,
+"tajuk": 5
+},
+{
+"subjek": "SIVIK",
+"ting": "4",
+"file": "sivik-t4.json",
+"sp": 249,
+"tajuk": 12
+},
+{
+"subjek": "SIVIK",
+"ting": "5",
+"file": "sivik-t5.json",
+"sp": 208,
+"tajuk": 12
+},
+{
+"subjek": "SYARIAH",
+"ting": "6",
+"file": "syariah-t6.json",
+"sp": 63,
+"tajuk": 2
+},
+{
+"subjek": "TASAWWUR ISLAM",
+"ting": "4",
+"file": "tasawwur-islam-t4.json",
+"sp": 64,
+"tajuk": 3
+},
+{
+"subjek": "TASAWWUR ISLAM",
+"ting": "5",
+"file": "tasawwur-islam-t5.json",
+"sp": 31,
+"tajuk": 3
+},
+{
+"subjek": "TEKNOLOGI VOKASIONAL",
+"ting": "3",
+"file": "teknologi-vokasional-t3.json",
+"sp": 23,
+"tajuk": 4
+},
+{
+"subjek": "TURATH AL-DIRASAT AL-ISLAMIAH (ULYA)",
+"ting": "4",
+"file": "turath-al-dirasat-al-islamiah-ulya-t4.json",
+"sp": 188,
+"tajuk": 4
+},
+{
+"subjek": "TURATH AL-DIRASAT AL-ISLAMIAH (ULYA)",
+"ting": "5",
+"file": "turath-al-dirasat-al-islamiah-ulya-t5.json",
+"sp": 88,
+"tajuk": 4
+},
+{
+"subjek": "TURATH AL-LUGHAH AL-ARABIAH (ULYA)",
+"ting": "4",
+"file": "turath-al-lughah-al-arabiah-ulya-t4.json",
+"sp": 147,
+"tajuk": 3
+},
+{
+"subjek": "TURATH AL-LUGHAH AL-ARABIAH (ULYA)",
+"ting": "5",
+"file": "turath-al-lughah-al-arabiah-ulya-t5.json",
+"sp": 183,
+"tajuk": 3
+},
+{
+"subjek": "TURATH AL-QURAN WA AL-SUNNAH (ULYA)",
+"ting": "4",
+"file": "turath-al-quran-wa-al-sunnah-ulya-t4.json",
+"sp": 281,
+"tajuk": 5
+},
+{
+"subjek": "TURATH AL-QURAN WA AL-SUNNAH (ULYA)",
+"ting": "5",
+"file": "turath-al-quran-wa-al-sunnah-ulya-t5.json",
+"sp": 119,
+"tajuk": 5
+},
+{
+"subjek": "USUL AL-DIN",
+"ting": "1",
+"file": "usul-al-din-t1.json",
+"sp": 176,
+"tajuk": 26
+},
+{
+"subjek": "USUL AL-DIN",
+"ting": "2",
+"file": "usul-al-din-t2.json",
+"sp": 255,
+"tajuk": 41
+},
+{
+"subjek": "USUL AL-DIN",
+"ting": "3",
+"file": "usul-al-din-t3.json",
+"sp": 258,
+"tajuk": 42
+},
+{
+"subjek": "USUL AL-DIN",
+"ting": "4",
+"file": "usul-al-din-t4.json",
+"sp": 167,
+"tajuk": 4
+},
+{
+"subjek": "USUL AL-DIN",
+"ting": "5",
+"file": "usul-al-din-t5.json",
+"sp": 126,
+"tajuk": 4
+},
+{
+"subjek": "USULUDDIN",
+"ting": "6",
+"file": "usuluddin-t6.json",
+"sp": 115,
+"tajuk": 10
+},
+{
+"subjek": "الأدب والنصوص (للشهادة الدينية العالية الماليزية)",
+"ting": "6",
+"file": "x-t6.json",
+"sp": 28,
+"tajuk": 3
+},
+{
+"subjek": "البلاغة (الشهادة الدينية العالية الماليزية)",
+"ting": "6",
+"file": "x-t6.json",
+"sp": 244,
+"tajuk": 10
+},
+{
+"subjek": "الحديث و المصطلح (الشهادة الدينية العالية الماليزية)",
+"ting": "6",
+"file": "x-t6.json",
+"sp": 137,
+"tajuk": 28
+},
+{
+"subjek": "العروض والقافية للشهادة الدينية العالية الماليزية",
+"ting": "6",
+"file": "x-t6.json",
+"sp": 91,
+"tajuk": 2
+},
+{
+"subjek": "الفقه (للشهادة الدينية العالية الماليزية)",
+"ting": "6",
+"file": "x-t6.json",
+"sp": 144,
+"tajuk": 6
+},
+{
+"subjek": "النحو والصرف (للشهادة الدينية العالية الماليزية)",
+"ting": "6",
+"file": "x-t6.json",
+"sp": 65,
+"tajuk": 2
+}
+]
+}
