@@ -19510,9 +19510,9 @@ function worldGame(THREE, W, NET){
     { ev: 'cook', t: 'Makan di 🍲 Dapur', tgt: () => bldPos('dapur'), hint: 'Pilih <b>🍽️ Pinggan Sihat</b> (ikan + buah + air). Makanan seimbang beri tenaga paling banyak!', rew: { energy: 10, txt: '+10 ⚡' } },
     { ev: 'npc', t: 'Kembali kepada Cikgu Ilmu', tgt: () => NPC, say: 'Bagus! Kamu dah tahu asasnya. Ambil <b>🪵 30 kayu</b> sebagai hadiah.<br><br><b>Bab 2: Membina &amp; menawan</b> — kamu akan masuk Dewan Misi, bina pondok, tawan haiwan dan bina kandang.', rew: { wood: 30, txt: '+30 🪵' } },
     { ev: 'misi', t: 'Masuk 🎬 Dewan Misi', tgt: () => bldPos('misi'), hint: 'Di sini kamu tonton simulasi &amp; jawab kuiz → dapat <b>mata kemahiran</b> (💪 Kekuatan, 🧠 Kepintaran, ❤️ Stamina). Inilah cara jadi kuat!', rew: { energy: 10, txt: '+10 ⚡' } },
-    { ev: 'hut', t: 'Bina 🛖 Pondok di Pangkalan Saya', tgt: () => bldPos('base'), hint: 'Pangkalan kamu ada di cincin luar kampung (lihat peta kecil — petak berbingkai putih). Tekan butang di sana → 🛖 Pondok (🪵 20).', rew: { energy: 10, txt: '+10 ⚡' } },
+    { ev: 'hut', t: 'Bina 🛖 Pondok di Pangkalan Saya', tgt: () => bldPos('base'), hint: 'Pangkalan kamu ada di cincin luar kampung (lihat peta kecil — petak berbingkai putih). Tekan butang di sana → 🛖 Pondok.', req: () => reqLine({ wood: 20 }), rew: { energy: 10, txt: '+10 ⚡' } },
     { ev: 'tame', t: 'Tawan seekor haiwan 🐇', tgt: () => nearestOf(WILD, A => A.alive && (A.t === 'arnab' || A.t === 'kancil')), hint: 'Dekati haiwan → <b>⚔️ Tawan</b> → jawab soalan kuiz. Betul = haiwan lemah; salah = hilang ❤️. Belajar membuat duel lebih mudah!', rew: { wood: 40, bulu: 6, txt: '+40 🪵 +6 🧶 (untuk kandang)' } },
-    { ev: 'kandang', t: 'Bina 🏠 Kandang di tempat lapang', tgt: null, hint: 'Buka 🏕️ Pangkalan → <b>Rombongan &amp; Kandang</b> → Bina. Gerak mencari bulatan <span style="color:#4ADE80">hijau</span>; <span style="color:#F87171">merah</span> = terlalu sempit. Boleh di mana-mana dalam peta!', rew: { energy: 20, txt: '+20 ⚡' } },
+    { ev: 'kandang', t: 'Bina 🏠 Kandang di tempat lapang', tgt: null, hint: '<b>Cara:</b> 🏕️ Pangkalan → <b>Rombongan &amp; Kandang</b> → 📍 Bina Kandang. Gerak mencari bulatan <span style="color:#4ADE80">hijau</span> (<span style="color:#F87171">merah</span> = sempit) lalu tekan Bina.<br><b>Tempat:</b> kawasan luar kampung, jauh dari kolam, bangunan &amp; pangkalan lain — boleh di mana-mana dalam peta. Ruang dikhaskan cukup untuk Lv 10.<br><b>Bulu:</b> tawan haiwan atau sikat bulu di Kandang.', req: () => reqLine({ wood: 40, bulu: 5 }), rew: { energy: 20, txt: '+20 ⚡' } },
     { ev: 'npc', t: 'Kembali kepada Cikgu Ilmu', tgt: () => NPC, say: 'Hebat! Kini kamu ada kandang. <b>Rombongan</b> (maks 10 ekor) mengikut kamu &amp; membantu menyerang; yang di kandang selamat.<br><br><b>Bab 3: Perang &amp; kawan</b> — hidupkan <b>Mod Perang</b> untuk bertarung dengan pemain lain. Pagar kandang mesti dipecahkan dahulu sebelum kandang boleh dihancurkan. Ada juga 💬 chat &amp; 🎙️ suara berdekatan.', rew: { bulu: 5, txt: '+5 🧶' } },
     { ev: 'perang', t: 'Buka 🏆 Akademi → ⚔️ Perang', tgt: () => bldPos('akademi'), hint: 'Masuk Akademi dan tekan tab <b>⚔️ Perang</b> untuk lihat peraturan &amp; hidupkan Mod Perang (pilihan).', rew: { energy: 10, txt: '+10 ⚡' } },
     { ev: 'npc', t: 'Tamat latihan!', tgt: () => NPC, say: '🎉 Tahniah! Kamu kini <b>Pelajar Dunia Ilmu</b>. Ingat: <b>belajar</b> di Dewan Misi menjadikan kamu kuat; kuat memudahkan menawan haiwan &amp; menang perang. Selamat meneroka!', rew: { wood: 50, bulu: 10, txt: '+50 🪵 +10 🧶' } }
@@ -19524,6 +19524,8 @@ function worldGame(THREE, W, NET){
     const mk = new THREE.Sprite(new THREE.SpriteMaterial({ map: NPC.tq, depthTest: false, transparent: true })); mk.scale.set(1.5, 1.5, 1); mk.position.set(0, 3.9, 0); mk.renderOrder = 6; A.g.add(mk); NPC.mk = mk;
     COL.push({ x: NPC.x, z: NPC.z, r: .6 }); }
   const tutCur = () => W.tut < TUT.length ? TUT[W.tut] : null;
+  /* baris syarat langsung: ✅ cukup / ❌ kurang, ikut bahan yang kamu ada */
+  const reqLine = c => 'Syarat bahan: ' + Object.keys(c).map(k => { const ic = { wood: '🪵', bulu: '🧶', fish: '🐟', fruit: '🍓', water: '💧' }[k], ok = W[k] >= c[k]; return '<span style="color:' + (ok ? '#4ADE80' : '#F87171') + '">' + (ok ? '✅' : '❌') + ' ' + ic + ' ' + W[k] + '/' + c[k] + '</span>'; }).join(' &nbsp;');
   const tutAdvance = () => {
     const s = tutCur(); if (!s) return; const r = s.rew || {};
     ['wood', 'fish', 'fruit', 'water', 'bulu'].forEach(k => { if (r[k]) W[k] += r[k]; }); if (r.energy) W.energy = Math.min(wMaxE(W), W.energy + r.energy);
@@ -19538,19 +19540,19 @@ function worldGame(THREE, W, NET){
       panel(head('🧑‍🏫', 'CIKGU ILMU', s.say) + (s.rew && s.rew.txt ? '<div class="text-center mt-2 font-bold" style="color:#FDE68A">Hadiah: ' + s.rew.txt + '</div>' : '') + btn('ok', 'Faham! ▶', 'btn-o') + (W.tut === 0 ? btn('skip', 'Saya sudah tahu — langkau latihan', '') : ''), a => {
         if (a === 'skip'){ W.tut = TUT.length; save(); tutPaint(); return closePanel(); }
         if (a === 'ok'){ closePanel(); tutAdvance(); } }); return; }
-    panel(head('🧑‍🏫', 'CIKGU ILMU', 'Misi kamu sekarang:') + '<div class="panel clip-s p-3 mt-3 text-[14px] leading-relaxed"><b style="color:#FDE68A">' + s.t + '</b><br>' + (s.hint || '') + '</div><div class="text-[11px] text-muted mt-2 text-center">Ikut anak panah ▲ di atas skrin. Kemajuan: ' + W.tut + ' / ' + TUT.length + '</div>' + btn('skip', 'Langkau latihan', '') + btn('close', 'Teruskan', 'btn-o'), a => {
+    panel(head('🧑‍🏫', 'CIKGU ILMU', 'Misi kamu sekarang:') + '<div class="panel clip-s p-3 mt-3 text-[14px] leading-relaxed"><b style="color:#FDE68A">' + s.t + '</b><br>' + (s.req ? '<b>' + s.req() + '</b><br>' : '') + (s.hint || '') + '</div><div class="text-[11px] text-muted mt-2 text-center">Ikut anak panah ▲ di atas skrin. Kemajuan: ' + W.tut + ' / ' + TUT.length + '</div>' + btn('skip', 'Langkau latihan', '') + btn('close', 'Teruskan', 'btn-o'), a => {
       if (a === 'close') return closePanel(); if (a === 'skip'){ W.tut = TUT.length; save(); tutPaint(); closePanel(); } });
   }
   function tutPaint(){
     const s = tutCur(), el = $w('#wQuest'); if (!el) return;
     NPC.mk.visible = !!s && s.ev === 'npc'; NPC.mk.material.map = W.tut > 0 ? NPC.te : NPC.tq; NPC.mk.material.needsUpdate = true;
     if (!s){ el.style.display = 'none'; return; }
-    el.style.display = 'flex'; $w('#wQTx').innerHTML = '<div style="font-size:10px;opacity:.75;letter-spacing:.08em">📜 MISI ' + (W.tut + 1) + '/' + TUT.length + '</div><div style="font-size:13px;font-weight:800;line-height:1.25">' + s.t + '</div>' + (s.hint && !land ? '<div style="font-size:10.5px;opacity:.85;line-height:1.3;margin-top:2px">' + s.hint + '</div>' : '');
+    el.style.display = 'flex'; $w('#wQTx').innerHTML = '<div style="font-size:10px;opacity:.75;letter-spacing:.08em">📜 MISI ' + (W.tut + 1) + '/' + TUT.length + '</div><div style="font-size:13px;font-weight:800;line-height:1.25">' + s.t + '</div>' + (s.req ? '<div style="font-size:11px;font-weight:700;margin-top:3px">' + s.req() + '</div>' : '') + (s.hint && !land ? '<div style="font-size:10.5px;opacity:.85;line-height:1.3;margin-top:2px">' + s.hint + '</div>' : '');
   }
-  let qT = 0;
+  let qT = 0, tutReq = '';
   function tutTick(dt){
     const s = tutCur(); NPC.A.mixer && NPC.A.mixer.update(dt); if (NPC.mk.visible) NPC.mk.position.y = 3.9 + Math.sin(performance.now() / 300) * .18;
-    qT += dt; if (qT < .12 || !s) return; qT = 0; const el = $w('#wQArr'), tg = s.tgt ? s.tgt() : null;
+    qT += dt; if (qT < .12 || !s) return; qT = 0; if (s.req){ const rq = s.req(); if (rq !== tutReq){ tutReq = rq; tutPaint(); } } const el = $w('#wQArr'), tg = s.tgt ? s.tgt() : null;
     if (!tg){ el.style.opacity = 0; return; }
     const dx = tg.x - P.x, dz = tg.z - P.z, d = Math.hypot(dx, dz), fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
     const ang = Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz);
