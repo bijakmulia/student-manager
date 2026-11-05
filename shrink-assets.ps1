@@ -68,7 +68,7 @@ $changed = 0
 Get-ChildItem $Dir -File | Where-Object { $_.Extension -match '^\.(png|jpe?g)$' } | ForEach-Object {
     $file = $_
     # 1) tidy the name
-    $base = $file.BaseName.Trim().ToLower() -replace '[\s\-]+', '_'
+    $base = $file.BaseName.Trim().ToLower() -replace '[\s\-]+', '_' -replace ('^edurank__' + (Split-Path $Dir -Leaf) + '__'), ''   # fail yang disimpan terus ke folder dengan awalan edurank__<folder>__ pun dikenali
     $ext = $file.Extension.ToLower(); if ($ext -eq '.jpeg') { $ext = '.jpg' }
     $path = $file.FullName
     if ("$base$ext" -cne $file.Name) {
