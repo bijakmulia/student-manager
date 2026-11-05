@@ -37,6 +37,13 @@ if ($known.Count -and (Test-Path $dlDir)) {
 }
 
 function Get-MaxSize([string]$id) {
+    # assets\dunia (Dunia Ilmu): tiling textures, sky panoramas, portraits, kandang previews, building icons
+    if ($id -like 'bg_tex_*' -or $id -eq 'bg_perkamen') { return @(512, 512) }
+    if ($id -like 'bg_langit_*') { return @(2048, 1024) }
+    if ($id -like 'ani_*' -or $id -like 'ui_*') { return @(512, 512) }
+    if ($id -like 'npc_*') { return @(512, 768) }
+    if ($id -like 'kd_*') { return @(640, 512) }
+    if ($id -like 'bld_*') { return @(384, 384) }
     if ($id -like 'bg_*') { return @(1600, 1000) }
     if ($id -like 'rak_*' -or $id -like 'atl_*' -or $id -like 'org_*' -or $id -like 'pekerja_*' -or $id -like 'pesakit_*' -or $id -like 'doktor_*' -or $id -like 'pintu_*' -or $id -eq 'pembekal') { return @(512, 768) }
     if ($id -like 'kaunter_*') { return @(768, 512) }
@@ -239,3 +246,5 @@ Shrink-Art (Join-Path $PSScriptRoot 'assets\seram') 'seram' 'PROMPT-SERAM.txt' 9
 Shrink-Art (Join-Path $PSScriptRoot 'assets\taikun') 'taikun' 'PROMPT-TAIKUN.txt' 1024.0 '^(edurank__taikun__)?(logo_taikun|tengah_papan|bg_taikun)( \(\d+\))?\.(png|jpe?g)$' 'guna nama dalam PROMPT-TAIKUN.txt'
 # assets\klinik: Klinik Remaja (pesakit_*, doktor_*, bg_klinik) - same magenta keying & sizes as assets\stor.
 if ($Dir -eq (Join-Path $PSScriptRoot 'assets\stor')) { & $PSCommandPath -Dir (Join-Path $PSScriptRoot 'assets\klinik') }
+# assets\dunia: Dunia Ilmu open world (bg_tex_*, bg_langit_*, ico_*, ani_*, gear_*, kd_*, bld_*, deco_*, fx_*, npc_*) - same keying & sizes logic as assets\stor.
+if ($Dir -eq (Join-Path $PSScriptRoot 'assets\stor')) { & $PSCommandPath -Dir (Join-Path $PSScriptRoot 'assets\dunia') }

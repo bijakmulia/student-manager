@@ -1,0 +1,94 @@
+FOLDER ASET: DUNIA ILMU (open world 3D) — EduRank
+====================================================
+
+70 aset gambar. Semua prompt ada dalam PROMPT-ASET.txt (nombor, nama fail, nisbah, prompt).
+
+CARA
+ 1. Jana gambar dengan prompt itu (Gemini / ChatGPT / lain-lain).
+ 2. Simpan dengan NAMA FAIL TEPAT (huruf kecil), contoh: ico_kayu.png  bg_tex_rumput.png  ani_harimau.png
+ 3. Letak dalam folder ini. Auto-push (setiap ~5 min) akan sendiri:
+      - kemas nama fail, buang latar magenta (ikon/potret/gear/bangunan/kandang), potong ruang kosong
+      - kecilkan saiz (tekstur 512, ikon 256, potret 512, langit 2048x1024 ...)
+      - tukar bg_* kepada JPG, kemas kini senarai.json dan hantar ke GitHub
+ 4. Game guna gambar yang ada sahaja; yang belum ada guna ikon emoji / warna lalai.
+    (Selepas gambar siap, minta Claude "pasang aset Dunia Ilmu" supaya game memakainya.)
+
+PERIKSA: pastikan tekstur (bg_tex_*) tiada objek besar di tengah dan bersambung rata; langit tiada matahari.
+
+GELOMBANG 1 — buat dahulu (27)
+  bg_tex_rumput
+  bg_tex_tanah
+  bg_tex_dataran
+  bg_tex_air
+  bg_tex_kayu
+  bg_tex_batu
+  bg_tex_bumbung
+  bg_tex_dinding
+  bg_langit_siang
+  ico_kayu
+  ico_ikan
+  ico_buah
+  ico_air
+  ico_bulu
+  ico_tenaga
+  ico_hp
+  ico_kuasa
+  ico_kenyang
+  ico_bintang
+  ico_kuat
+  ico_pintar
+  ico_stamina
+  ani_arnab
+  ani_kancil
+  ani_tapir
+  ani_harimau
+  npc_cikgu_ilmu
+
+GELOMBANG 2 — gear, kandang, bangunan, hiasan (28)
+  gear_jaket_bulu
+  gear_perisai_bulu
+  gear_perisai_harimau
+  gear_perisai_tapir
+  gear_perisai_raja
+  gear_tongkat
+  gear_lembing
+  gear_parang
+  gear_taring
+  kd_lv1
+  kd_lv3
+  kd_lv5
+  kd_lv8
+  kd_lv10
+  bld_misi
+  bld_arkad
+  bld_akademi
+  bld_dapur
+  bld_bengkel
+  deco_bunga
+  deco_lampu
+  deco_patung
+  deco_pancut
+  ico_menara
+  ico_perangkap
+  ico_pagar
+  ico_perang
+  ico_hadiah
+
+GELOMBANG 3 — kemasan (15)
+  bg_tex_bulu_harimau
+  bg_tex_bulu_kancil
+  bg_tex_bulu_arnab
+  bg_tex_bulu_tapir
+  bg_tex_daun
+  bg_tex_kulit_kayu
+  bg_perkamen
+  bg_langit_senja
+  bg_dunia_tajuk
+  ico_logo_dunia
+  ui_bingkai_peta
+  fx_pukul
+  fx_debu
+  fx_cipratan
+  fx_bintang
+
+Amaran: ikon & potret JANGAN guna warna merah jambu / magenta / ungu pada objek (akan dibuang bersama latar).

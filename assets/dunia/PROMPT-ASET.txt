@@ -1,0 +1,263 @@
+PROMPT ASET — DUNIA ILMU (EduRank)
+70 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini (assets\dunia).
+
+LATAR MAGENTA: semua prompt ikon / potret / gear / bangunan / kandang meminta latar magenta tulen #FF00FF.
+Letak sahaja gambar magenta dalam folder ini — auto-push membuang latar magenta secara automatik.
+Fail bernama bg_* (tekstur, langit, tajuk, perkamen) ialah gambar penuh — TIDAK dibuang latarnya dan disimpan sebagai JPG.
+
+TEKSTUR (bg_tex_*): mesti BOLEH DISAMBUNG (seamless). Game menggunakan ulang-cermin supaya jahitan tidak ketara,
+tetapi tekstur yang sambung dengan baik nampak jauh lebih cantik. Jana beberapa kali dan pilih yang paling rata.
+
+LANGIT (bg_langit_*): nisbah 2:1; tepi kiri & kanan mesti sama supaya langit bersambung 360 darjah.
+
+GAYA SERAGAM: semua prompt berkongsi blok gaya yang sama (kartun tebal, lukisan tangan, garis luar coklat tua, palet tropika).
+Kalau satu aset keluar gaya lain, jana semula supaya set kelihatan seragam. Jangan campur gaya realistik.
+
+KEUTAMAAN: gelombang 1 (paling besar kesan) → 2 → 3. Game tetap boleh dimain tanpa aset; yang tiada guna ikon emoji / warna lalai.
+
+
+==================== GELOMBANG 1 (utama — buat dahulu) ====================
+
+---- TEKSTUR ----
+
+1. bg_tex_rumput.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Lush tropical green grass ground: a mix of three greens with tiny lighter blades and a few tiny pale clover flowers evenly scattered. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+2. bg_tex_tanah.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Packed brown-orange dirt path ground (Malaysian laterite soil) with small pebbles and subtle cracks evenly scattered. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+3. bg_tex_dataran.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Village square paving of warm sandy-beige flagstones with thin darker grout lines in a slightly irregular pattern. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+4. bg_tex_air.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Calm tropical pond water surface, turquoise blue with soft lighter ripple lines and tiny sparkles. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+5. bg_tex_kayu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Weathered warm brown wooden planks laid horizontally, visible wood grain and a few nail heads, planks of roughly equal width. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+6. bg_tex_batu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Grey stone block wall: rounded rectangular blocks in running bond with darker mortar lines and a few light moss specks. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+7. bg_tex_bumbung.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Traditional Malay terracotta roof tiles in overlapping rows, warm red-orange with slight colour variation between tiles. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+8. bg_tex_dinding.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG tanpa jahitan)]
+Malay kampung house wall: vertical cream-yellow painted wooden boards with thin dark gaps and subtle wear. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+---- LANGIT ----
+
+9. bg_langit_siang.png   [nisbah 2:1 panorama melintang (2048×1024, JPG; tepi kiri dan kanan mesti sama/bersambung)]
+Equirectangular 360-degree panoramic sky texture, stylized hand-painted game look. Tropical morning sky: soft clear blue at the top fading to a pale warm cream near the horizon, a handful of fluffy stylized white clouds spread evenly around the whole panorama. No sun disc, no ground, no mountains, no trees, no birds, no text. The left and right edges must match perfectly so it wraps seamlessly. Wide 2:1 image (2048x1024).
+
+---- IKON SUMBER & STATISTIK ----
+
+10. ico_kayu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a neat stack of three cut tree logs with visible growth rings and warm brown bark. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+11. ico_ikan.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a plump silver-blue freshwater fish with a bright eye and a small happy glint. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+12. ico_buah.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a small cluster of three glossy red wild berries with a green leaf. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+13. ico_air.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: one big blue water droplet with a white highlight. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+14. ico_bulu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a ball of soft orange-and-cream yarn/fur tuft with one loose strand curling out. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+15. ico_tenaga.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a bright yellow lightning bolt. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+16. ico_hp.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a glossy red heart (health). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+17. ico_kuasa.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a golden shield badge with a bold orange flame in the middle (power rating). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+18. ico_kenyang.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a juicy roasted meat drumstick with a bone handle and one bite taken out (animal food / fullness). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+19. ico_bintang.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a shiny gold five-point star (level). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+---- IKON KEMAHIRAN ----
+
+20. ico_kuat.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a flexed muscular arm showing the biceps, simple tan cartoon skin tone (strength skill). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+21. ico_pintar.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a light-blue stylized brain with small golden sparkles (intelligence skill). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+22. ico_stamina.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a bright green apple with a small white heart shape on it (stamina and health skill). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+---- POTRET HAIWAN ----
+
+23. ani_arnab.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Cute animal character portrait: a fluffy white rabbit (arnab) with long upright ears, pale cream inner ears and a small black nose. Friendly three-quarter pose, full body visible, big expressive eyes, chunky readable shapes. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+24. ani_kancil.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Cute animal character portrait: a Malaysian mouse-deer (kancil), small chestnut-brown body with cream spots, thin legs, large dark eyes, clever little smile. Friendly three-quarter pose, full body visible, big expressive eyes, chunky readable shapes. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+25. ani_tapir.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Cute animal character portrait: a Malayan tapir, black front and back body with a white middle saddle, short trunk-like snout, small round ears with white tips. Friendly three-quarter pose, full body visible, big expressive eyes, chunky readable shapes. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+26. ani_harimau.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Cute animal character portrait: a Malayan tiger (harimau), orange coat with bold black stripes, strong but friendly face, white chin, powerful stance. Friendly three-quarter pose, full body visible, big expressive eyes, chunky readable shapes. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+---- WATAK NPC ----
+
+27. npc_cikgu_ilmu.png   [nisbah 2:3 menegak (1024×1536 → simpan 512×768, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Original friendly Malaysian male teacher character named Cikgu Ilmu, chibi proportions, kind smile, round glasses, wearing a colourful batik shirt and neat trousers, holding a glowing open book in one hand and waving with the other, standing full body, welcoming pose, looks like a wise village guide. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Tall portrait 2:3 image (1024x1536).
+
+==================== GELOMBANG 2 (gear, kandang, bangunan, hiasan) ====================
+
+---- GEAR (Bengkel) ----
+
+28. gear_jaket_bulu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a cosy small jacket made of orange-and-cream fur with a wooden toggle button (armour tier 1). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+29. gear_perisai_bulu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a round wooden shield with tufts of soft fur around the rim (armour tier 2). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+30. gear_perisai_harimau.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a round shield painted orange with black tiger stripes and a tiger face emblem (armour tier 3). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+31. gear_perisai_tapir.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a tall rounded shield in bold black and white bands like a Malayan tapir, with leather straps (armour tier 4). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+32. gear_perisai_raja.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a golden royal shield with a green jungle crown emblem and small jewels, shining (armour tier 5, the best). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+33. gear_tongkat.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a simple sturdy wooden club with a knobbed head (weapon tier 1). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+34. gear_lembing.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a wooden spear with a sharp stone tip and a red cloth tassel (weapon tier 2). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+35. gear_parang.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a Malay parang with a carved wooden handle and a polished steel blade, cartoon style, kid-friendly (weapon tier 3). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+36. gear_taring.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a curved blade shaped like a tiger fang, ivory-white with a golden hilt, glowing slightly (weapon tier 4, the best). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+---- PRATONTON KANDANG ----
+
+37. kd_lv1.png   [nisbah 4:3 melintang (1536×1152 → simpan 640×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Three-quarter overhead view of an animal pen (kandang) game building: a small round pen with a low simple light-brown wooden fence and a gate. Level 1. The ground inside is packed dirt with a hay bale and a wooden trough. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Wide 4:3 image (1536x1152).
+
+38. kd_lv3.png   [nisbah 4:3 melintang (1536×1152 → simpan 640×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Three-quarter overhead view of an animal pen (kandang) game building: a larger round pen with a taller darker-brown wooden fence with two rails, a blue flag by the gate. Level 3. The ground inside is packed dirt with a hay bale and a wooden trough. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Wide 4:3 image (1536x1152).
+
+39. kd_lv5.png   [nisbah 4:3 melintang (1536×1152 → simpan 640×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Three-quarter overhead view of an animal pen (kandang) game building: a big round pen with grey stone fence posts and wooden rails between them, a flag by the gate. Level 5. The ground inside is packed dirt with a hay bale and a wooden trough. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Wide 4:3 image (1536x1152).
+
+40. kd_lv8.png   [nisbah 4:3 melintang (1536×1152 → simpan 640×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Three-quarter overhead view of an animal pen (kandang) game building: a big fortified round pen with dark stone walls and four corner watch towers with red roofs, wooden archer platform. Level 8. The ground inside is packed dirt with a hay bale and a wooden trough. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Wide 4:3 image (1536x1152).
+
+41. kd_lv10.png   [nisbah 4:3 melintang (1536×1152 → simpan 640×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Three-quarter overhead view of an animal pen (kandang) game building: a grand royal round pen with golden-trimmed walls and four golden-roofed towers, banners and glowing gate, the most magnificent level. Level 10. The ground inside is packed dirt with a hay bale and a wooden trough. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Wide 4:3 image (1536x1152).
+
+---- BANGUNAN ----
+
+42. bld_misi.png   [nisbah 1:1 segi empat (1024×1024 → simpan 384×384, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Small stylized building icon, three-quarter view, chunky roof: a large cream hall with a red tiled roof and a film clapperboard sign above the door (Dewan Misi). Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+43. bld_arkad.png   [nisbah 1:1 segi empat (1024×1024 → simpan 384×384, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Small stylized building icon, three-quarter view, chunky roof: an arcade house with a blue roof, glowing windows and a big joystick sign (Rumah Arkad). Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+44. bld_akademi.png   [nisbah 1:1 segi empat (1024×1024 → simpan 384×384, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Small stylized building icon, three-quarter view, chunky roof: a white academy with columns, a blue roof and a golden trophy on top (Akademi). Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+45. bld_dapur.png   [nisbah 1:1 segi empat (1024×1024 → simpan 384×384, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Small stylized building icon, three-quarter view, chunky roof: a cosy orange kitchen house with a smoking chimney and a cooking pot sign (Dapur). Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+46. bld_bengkel.png   [nisbah 1:1 segi empat (1024×1024 → simpan 384×384, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Small stylized building icon, three-quarter view, chunky roof: a wooden workshop with a big anvil and hammer sign and an open front (Bengkel). Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+---- HIASAN & PERTAHANAN ----
+
+47. deco_bunga.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a round garden bed full of colourful flowers (yellow, orange, red and white) with green leaves (flower garden decoration). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+48. deco_lampu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a tall wooden pole with a warmly glowing yellow lantern on top (lamp decoration). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+49. deco_patung.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a grey stone statue of a sitting tiger on a square stone pedestal (animal statue decoration). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+50. deco_pancut.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a small round stone fountain with a jet of sparkling blue water (fountain decoration). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+51. ico_menara.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a wooden archer watchtower with a small red roof and an archer silhouette on the platform. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+52. ico_perangkap.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a wooden board covered with sharp wooden stakes, a spike trap, cartoon and not bloody. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+53. ico_pagar.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a short section of sturdy wooden fence with pointed posts and two rails. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+54. ico_perang.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: two crossed swords with a small round shield in the middle (war mode). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+55. ico_hadiah.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a green gift box with a golden ribbon and bow. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+==================== GELOMBANG 3 (kemasan) ====================
+
+---- TEKSTUR LANJUTAN ----
+
+56. bg_tex_bulu_harimau.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Tiger fur: orange coat with bold black vertical stripes and soft fur strokes. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+57. bg_tex_bulu_kancil.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Mouse-deer fur: warm chestnut brown with small cream-white spots scattered. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+58. bg_tex_bulu_arnab.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Rabbit fur: soft fluffy white to light grey with subtle fur strokes. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+59. bg_tex_bulu_tapir.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Dense short coarse charcoal-black animal fur with subtle lighter strokes. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+60. bg_tex_daun.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Dense tropical tree foliage seen from above: overlapping layers of leaves in three greens. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+61. bg_tex_kulit_kayu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Dark brown tree bark with vertical ridges and a few lighter cracks. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+62. bg_perkamen.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, JPG, mesti SAMBUNG)]
+Warm aged parchment paper with faint fibres and very subtle stains, evenly toned so text can be placed on it. Seamless tileable texture, perfectly flat top-down view with no perspective, no shadows, no lighting gradient, no focal object, no vignette and no border, so it repeats with no visible seams. Stylized hand-painted low-poly mobile game look, soft slightly muted colours with gentle brush-stroke variation, evenly distributed detail. No text, no watermark. Square 1:1 image (1024x1024).
+
+---- LANGIT ----
+
+63. bg_langit_senja.png   [nisbah 2:1 panorama melintang (2048×1024, JPG; tepi kiri dan kanan mesti sama)]
+Equirectangular 360-degree panoramic sky texture, stylized hand-painted game look. Tropical sunset sky: deep indigo-blue at the top blending into orange and golden tones near the horizon, stylized streaked clouds lit warmly from below spread evenly around. No sun disc, no ground, no mountains, no trees, no birds, no text. The left and right edges must match perfectly so it wraps seamlessly. Wide 2:1 image (2048x1024).
+
+---- TAJUK ----
+
+64. bg_dunia_tajuk.png   [nisbah 3:2 melintang (1536×1024 → simpan 1600×1000, JPG)]
+Stylized hand-painted game title-screen illustration, warm bright morning: a tropical Malaysian rainforest valley with a small kampung village of wooden stilt houses, a calm lake, green mountains with mist, and small friendly animals in the distance (a Malayan tapir, a tiger, a mouse-deer and a rabbit). Keep important details in the middle and leave calm empty space at the top centre for a logo. No text, no watermark. Wide landscape 3:2 image (1536x1024).
+
+65. ico_logo_dunia.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a round emblem badge showing a glowing open book with a small green tree growing from it and a tiger paw print, golden rim (Dunia Ilmu logo emblem, no text). ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+---- ANTARAMUKA ----
+
+66. ui_bingkai_peta.png   [nisbah 1:1 segi empat (1024×1024 → simpan 512×512, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. A decorative round minimap frame ring made of carved wood with small gold studs, seen straight from the front; the inside of the ring is empty. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. The empty centre inside the ring is also solid magenta (#FF00FF). Square 1:1 image (1024x1024).
+
+---- KESAN ----
+
+67. fx_pukul.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Single stylized game visual-effect sprite, hand-painted cartoon look: a bold starburst hit impact with sharp yellow-white spikes and an orange core. Centred, filling about 80% of the image. Use only yellow, white, orange or blue in the effect. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+68. fx_debu.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Single stylized game visual-effect sprite, hand-painted cartoon look: a soft round puff of dust cloud made of cream-white cartoon puffs. Centred, filling about 80% of the image. Use only yellow, white, orange or blue in the effect. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+69. fx_cipratan.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Single stylized game visual-effect sprite, hand-painted cartoon look: a splash of blue water with droplets flying outward in a crown shape. Centred, filling about 80% of the image. Use only yellow, white, orange or blue in the effect. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+70. fx_bintang.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Single stylized game visual-effect sprite, hand-painted cartoon look: a cluster of glittering golden four-point sparkles of different sizes (level-up shine). Centred, filling about 80% of the image. Use only yellow, white, orange or blue in the effect. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
