@@ -18653,6 +18653,8 @@ async function muridLogout(){
    Fasa 1: kampung, sumber (kayu / ikan / buah / air), tenaga & makan, bangunan misi, arkad, akademi, dapur, pangkalan.
    Fasa 2: dunia besar, simpanan awan, pemain lain (satu dunia untuk satu kelas, maks 25), pangkalan setiap murid,
            bendera = pasukan (perbendaharaan kayu pasukan beri bonus), papan kedudukan kelas.
+   Fasa 3: haiwan liar (Arnab, Kancil, Tapir, Harimau) — tawan melalui duel kuiz, kandang, haiwan jaga pangkalan,
+           Bengkel (bulu + kayu → jaket / perisai / senjata), kuasa = tahap + gear + haiwan. Paparan landskap.
    Belajar = jadi kuat: simulasi yang selesai menambah mata kemahiran (Kekuatan / Kepintaran / Stamina).
    Rangkaian: ipbd_share/__kombo_<bilik>/… melalui kmNet (anonymous auth). Bilik = hash(token|kod|kelas). */
 const WSK = { kuat: { n: 'Kekuatan', ico: '💪', d: 'PJK — menebang lebih pantas, kayu lebih banyak' },
@@ -18663,15 +18665,29 @@ const wFlagCols = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC48
 const wFlagName = { '#EF4444': 'Merah', '#3B82F6': 'Biru', '#22C55E': 'Hijau', '#F59E0B': 'Kuning', '#A855F7': 'Ungu', '#EC4899': 'Merah Jambu' };
 const wPtsSum = o => o && o.pts ? (o.pts.kuat | 0) + (o.pts.pint | 0) + (o.pts.stam | 0) : 0;
 function wNorm(w, key){
-  const d = { v: 2, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0 };
+  const d = { v: 3, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0,
+    bulu: 0, gear: { a: 0, w: 0 }, pets: [], brush: '', nTame: 0, intro2: 0 };
   w = w || {};
-  const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {} }); delete W._t;
+  const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 4) : [] }); delete W._t;
   const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + Math.max(0, Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
   W.t = Date.now(); W.key = key; return W;
 }
 const wLvl = (W, k) => Math.min(10, 1 + Math.floor((W.pts[k] || 0) / 2));
 const wMaxE = W => 100 + 10 * (wLvl(W, 'stam') - 1);
 const wTotalLvl = W => 1 + ['kuat', 'pint', 'stam'].reduce((a, k) => a + wLvl(W, k) - 1, 0);
+/* Fasa 3 — haiwan: hp = soalan betul untuk menjinak (sebelum diskaun), pw = kuasa, gate = tahap jumlah minimum, bulu = ganjaran */
+const WAN = {
+  arnab: { n: 'Arnab', ico: '🐇', hp: 2, pw: 1, gate: 1, bulu: 1, fact: 'Arnab makan sayur dan rumput — kaya serat, macam separuh pinggan sayur &amp; buah kita!' },
+  kancil: { n: 'Kancil', ico: '🦌', hp: 3, pw: 2, gate: 3, bulu: 1, fact: 'Kancil ialah rusa paling kecil di dunia dan terkenal bijak dalam cerita rakyat Malaysia.' },
+  tapir: { n: 'Tapir Malaya', ico: '🐾', hp: 4, pw: 4, gate: 5, bulu: 2, fact: 'Tapir Malaya (cipan) berwarna hitam-putih sebagai penyamaran di hutan. Ia terancam — hutan perlu dilindungi.' },
+  harimau: { n: 'Harimau Malaya', ico: '🐅', hp: 5, pw: 7, gate: 8, bulu: 3, fact: 'Harimau Malaya ialah haiwan kebangsaan Malaysia dan sangat terancam; tinggal sekitar 150 ekor atau kurang di hutan.' } };
+const WGEAR = { a: [['🧥 Jaket Bulu', 5, 8], ['🛡️ Perisai Bulu', 12, 20], ['🐅 Perisai Harimau', 24, 40]], w: [['🏏 Tongkat Kayu', 2, 10], ['🔱 Lembing Kayu', 8, 25]] };   /* [nama, bulu, kayu] */
+const wPetPw = W => (W.pets || []).reduce((a, p) => a + ((WAN[p.t] || {}).pw | 0) * (p.g ? 2 : 1), 0);
+const wPower = W => wTotalLvl(W) * 3 + (W.gear.a | 0) * 5 + (W.gear.w | 0) * 5 + wPetPw(W);
+const wGuardMax = W => 1 + (W.built.hut ? 1 : 0) + (W.built.fence ? 1 : 0);
+const wDuelNeed = (W, t) => Math.max(Math.ceil(WAN[t].hp / 2), WAN[t].hp - Math.floor((wLvl(W, 'kuat') - 1) / 4) - (W.gear.w | 0));
+const wDuelHearts = W => 3 + Math.floor((wLvl(W, 'stam') - 1) / 4) + (W.gear.a | 0);
+const wHintN = W => { const l = wLvl(W, 'pint'); return l >= 8 ? 2 : l >= 4 ? 1 : 0; };
 const wDailyQuests = () => {                                 /* 5 misi sehari, berubah setiap hari, campuran PJK / Sains / Kesihatan */
   const day = todayKey(), by = {};
   SIM_LIB.forEach(x => (by[wSkillOf(x)] = by[wSkillOf(x)] || []).push(x));
@@ -18725,12 +18741,12 @@ function worldGame(THREE, W, NET){
   root.style.cssText = 'position:fixed;inset:0;z-index:940;background:#9BD3F0;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit;color:#fff';
   root.innerHTML =
     '<canvas id="wCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
-    '<div id="wHud" style="position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;display:flex;gap:8px;align-items:flex-start;pointer-events:none;text-shadow:0 1px 3px #000;padding-right:64px;flex-wrap:wrap"></div>' +
-    '<button data-w="x" class="btn clip-s !px-3 !py-1" style="position:absolute;right:10px;top:calc(8px + var(--safe-t,0px))"><i class="fa-solid fa-xmark"></i></button>' +
-    '<canvas id="wMap" width="200" height="200" style="position:absolute;right:10px;top:calc(52px + var(--safe-t,0px));width:96px;height:96px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(10,16,24,.55);pointer-events:none"></canvas>' +
+    '<div id="wHud" style="position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;padding-left:calc(10px + env(safe-area-inset-left,0px));display:flex;gap:8px;align-items:flex-start;pointer-events:none;text-shadow:0 1px 3px #000;padding-right:calc(64px + env(safe-area-inset-right,0px));flex-wrap:wrap"></div>' +
+    '<button data-w="x" class="btn clip-s !px-3 !py-1" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px))"><i class="fa-solid fa-xmark"></i></button>' +
+    '<canvas id="wMap" width="200" height="200" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(52px + var(--safe-t,0px));width:96px;height:96px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(10,16,24,.55);pointer-events:none"></canvas>' +
     '<div id="wMsg" style="position:absolute;left:16px;right:16px;top:30%;text-align:center;font-size:20px;font-weight:800;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .25s"></div>' +
     '<div id="wJoy" style="position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.4);display:none;pointer-events:none"><i id="wKnob" style="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.7)"></i></div>' +
-    '<button data-w="act" id="wAct" class="btn btn-o clip-s" style="position:absolute;right:16px;bottom:calc(26px + var(--safe-b,0px));min-width:112px;height:76px;font-size:15px;font-weight:800;display:none;line-height:1.15;padding:6px 10px"></button>' +
+    '<button data-w="act" id="wAct" class="btn btn-o clip-s" style="position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(26px + var(--safe-b,0px));min-width:112px;height:76px;font-size:15px;font-weight:800;display:none;line-height:1.15;padding:6px 10px"></button>' +
     '<div id="wHint" style="position:absolute;left:0;right:0;bottom:calc(8px + var(--safe-b,0px));text-align:center;font-size:11px;color:rgba(255,255,255,.85);pointer-events:none;text-shadow:0 1px 3px #000"></div>' +
     '<div id="wPanel" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(2,6,14,.7);overflow:auto"></div>';
   document.body.appendChild(root); lockBody(); orientFree();
@@ -18747,8 +18763,15 @@ function worldGame(THREE, W, NET){
     gr.addColorStop(0, '#5BA8E6'); gr.addColorStop(.6, '#A9DAF5'); gr.addColorStop(1, '#F3F0D8'); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
   scene.background = sky; scene.fog = new THREE.Fog(0xDDEBDD, 55, 170);
   const cam = new THREE.PerspectiveCamera(58, 1, .1, 260);
-  const resize = () => { const w = root.clientWidth, h = root.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 70 : 58; cam.updateProjectionMatrix(); };
-  resize(); window.addEventListener('resize', resize);
+  /* landskap (telefon dipusing): HUD & peta dikecilkan, butang aksi lebih rendah, panel dua lajur, kamera lebih dekat */
+  let land = false;
+  const resize = () => { const w = root.clientWidth, h = root.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 70 : 58; cam.updateProjectionMatrix();
+    land = w > h && h < 520; root.dataset.land = land ? '1' : '';
+    const hd = $w('#wHud'), mp = $w('#wMap'), ab = $w('#wAct'), pi = $w('#wPanel > div');
+    hd.style.zoom = land ? '.8' : ''; mp.style.width = mp.style.height = land ? '74px' : '96px'; mp.style.top = land ? 'calc(40px + var(--safe-t,0px))' : 'calc(52px + var(--safe-t,0px))';
+    ab.style.height = land ? '60px' : '76px'; ab.style.bottom = land ? 'calc(12px + var(--safe-b,0px))' : 'calc(26px + var(--safe-b,0px))'; ab.style.minWidth = land ? '104px' : '112px';
+    $w('#wHint').style.display = land ? 'none' : ''; if (pi) pi.style.zoom = land ? '.86' : ''; };
+  resize(); window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250));
   scene.add(new THREE.HemisphereLight(0xFFFFFF, 0x6B8F5A, 1.25));
   const sun = new THREE.DirectionalLight(0xFFF1D0, 1.6); sun.position.set(30, 50, 20); scene.add(sun);
   const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .85, flatShading: true }, o || {}));
@@ -18777,7 +18800,7 @@ function worldGame(THREE, W, NET){
 
   /* ---------- pokok & semak (InstancedMesh: ratusan pokok tanpa menjejas telefon) ---------- */
   const COL = [];                                              /* penghalang bulat: { x, z, r } */
-  const clearP = (x, z) => Math.hypot(x, z) > 20 && PONDS.every(p => Math.hypot(x - p.x, z - p.z) > p.r + 3) && SLOTS.every(s => Math.hypot(x - s.x, z - s.z) > 11) && Math.hypot(x - 14, z - 12) > 9;
+  const clearP = (x, z) => Math.hypot(x, z) > 20 && PONDS.every(p => Math.hypot(x - p.x, z - p.z) > p.r + 3) && SLOTS.every(s => Math.hypot(x - s.x, z - s.z) > 11) && Math.hypot(x - 14, z - 12) > 9 && Math.hypot(x + 22, z - 20) > 9;
   const TREES = [];
   for (let i = 0; i < 420 && TREES.length < 300; i++){
     const a = rnd() * Math.PI * 2, r = 24 + rnd() * (RW - 26), x = Math.cos(a) * r, z = Math.sin(a) * r; if (!clearP(x, z)) continue;
@@ -18823,10 +18846,43 @@ function worldGame(THREE, W, NET){
   house('arkad', 'Rumah Arkad', '🕹️', 24, -4, 7, 6, 3.6, 0xC9A7F5, 0x5B3FA0, -Math.PI / 2);
   house('akademi', 'Akademi', '🏆', -24, -4, 8, 6, 4, 0xE7EEF7, 0x2F5F9E, Math.PI / 2);
   house('dapur', 'Dapur', '🍲', 20, 14, 6.5, 5.5, 3.3, 0xF6C8A0, 0xA33A2A, -Math.PI / 2 - .3);
+  house('bengkel', 'Bengkel', '🔨', -22, 20, 7, 5.5, 3.5, 0xD8C3A5, 0x6B4A2F, 2.3);
   const well = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.1, .9, 10), M(0x8A8A8A)); b.position.y = .45; well.add(b); const wt = new THREE.Mesh(new THREE.CylinderGeometry(.8, .8, .05, 10), new THREE.MeshStandardMaterial({ color: 0x3C9BD6 })); wt.position.y = .88; well.add(wt);
     [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.BoxGeometry(.12, 1.8, .12), M(0x6B4423)); p.position.set(s * .95, 1.4, 0); well.add(p); }); const rf = new THREE.Mesh(new THREE.BoxGeometry(2.4, .12, 1.3), M(0xB5472E)); rf.position.y = 2.3; well.add(rf);
     const lb = label('💧 Perigi', '#7DD3FC', 3.2, .8); lb.position.y = 3.4; well.add(lb); well.position.set(-8, 0, 6); scene.add(well); COL.push({ x: -8, z: 6, r: 1.2 }); }
   const WELL = { x: -8, z: 6 };
+
+  /* ---------- haiwan (model poligon rendah dari kotak; menghadap +x) ---------- */
+  function makeAnimal(t){
+    const g = new THREE.Group(), legs = [];
+    const bl = { arnab: .8, kancil: 1.1, tapir: 1.5, harimau: 1.6 }[t], bh = { arnab: .55, kancil: .5, tapir: .8, harimau: .7 }[t], lh = { arnab: .18, kancil: .75, tapir: .5, harimau: .5 }[t];
+    const col = { arnab: 0xF1EFEA, kancil: 0xB07A45, tapir: 0x2B2B30, harimau: 0xE8872A }[t], bx = (w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); g.add(m); return m; };
+    bx(bl, bh, bh * 1.05, col, 0, lh + bh / 2, 0);
+    if (t === 'tapir') bx(bl * .45, bh * 1.03, bh * 1.09, 0xEDEDED, 0, lh + bh / 2, 0);
+    if (t === 'kancil') bx(bl * .8, bh * .35, bh * 1.08, 0xF3E6CF, 0, lh + bh * .2, 0);
+    if (t === 'harimau') for (let i = -2; i <= 2; i++) bx(.1, bh * 1.03, bh * 1.1, 0x1A1A1A, i * bl * .18, lh + bh / 2, 0);
+    const hs = bh * .8, hy = lh + bh + hs * .1, hx = bl / 2 + hs * .3;
+    bx(hs, hs, hs, t === 'tapir' ? 0x2B2B30 : col, hx, hy, 0);
+    if (t === 'tapir') bx(hs * .7, hs * .45, hs * .55, 0x3A3A40, hx + hs * .6, hy - hs * .1, 0);
+    if (t === 'harimau') bx(hs * .35, hs * .3, hs * .6, 0xF5E6D0, hx + hs * .45, hy - hs * .2, 0);
+    [-1, 1].forEach(s => { bx(.06, .08, .06, 0x111111, hx + hs * .5, hy + hs * .1, s * hs * .3);
+      if (t === 'arnab') bx(.1, .5, .1, col, hx - hs * .1, hy + hs * .8, s * hs * .25); else bx(.12, .14, .1, col, hx - hs * .1, hy + hs * .55, s * hs * .35); });
+    if (t === 'kancil') [-1, 1].forEach(s => bx(.05, .22, .05, 0x6B4423, hx - hs * .2, hy + hs * .9, s * hs * .2));
+    bx(t === 'harimau' ? bl * .9 : .2, t === 'harimau' ? .1 : .2, t === 'harimau' ? .1 : .2, t === 'harimau' ? col : (t === 'arnab' ? 0xFFFFFF : col), -bl / 2 - (t === 'harimau' ? bl * .4 : .05), lh + bh * (t === 'harimau' ? .75 : .8), 0);
+    [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) => { const lg = new THREE.Group(); lg.position.set(sx * bl * .36, lh, sz * bh * .36); const m = new THREE.Mesh(new THREE.BoxGeometry(.13, lh, .13), M(t === 'harimau' ? col : (t === 'tapir' ? 0x2B2B30 : col))); m.position.y = -lh / 2; lg.add(m); g.add(lg); legs.push(lg); });
+    return { g, legs, t };
+  }
+  const ALAB = {};
+  const animLabel = t => { if (!ALAB[t]) ALAB[t] = label(WAN[t].ico + ' ' + WAN[t].n + ' · Lvl ' + WAN[t].gate, '#FCA5A5', 5.2, 1, 40).material;
+    const s = new THREE.Sprite(ALAB[t]); s.scale.set(3.1, .62, 1); s.renderOrder = 5; return s; };
+  const aFace = (m, f, dt) => { let d = f - m.g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); m.g.rotation.y += d * Math.min(1, dt * 8); };
+  const aLegs = (m, moving, ph) => m.legs.forEach((l, i) => { l.rotation.z = moving ? Math.sin(ph * 9 + (i % 3 === 0 ? 0 : Math.PI)) * .6 : 0; });
+  /* haiwan liar: tersebar ikut jarak dari kampung (harimau paling jauh); tidak dikongsi antara pemain */
+  const WILD = [];
+  { const plan = [['arnab', 14, 24, 95], ['kancil', 12, 38, 135], ['tapir', 8, 60, 142], ['harimau', 5, 90, 146]];
+    plan.forEach(([t, n, r0, r1]) => { for (let i = 0, c = 0; i < 80 && c < n; i++){ const a = rnd() * Math.PI * 2, r = r0 + rnd() * (r1 - r0), x = Math.cos(a) * r, z = Math.sin(a) * r; if (!clearP(x, z)) continue; c++;
+      const m = makeAnimal(t), lb = animLabel(t); lb.position.set(0, { arnab: 1.5, kancil: 2.3, tapir: 2.1, harimau: 2.1 }[t], 0); m.g.add(lb); m.g.position.set(x, 0, z); scene.add(m.g);
+      WILD.push({ t, m, x, z, hx: x, hz: z, tx: x, tz: z, go: false, wait: Math.random() * 4, sp: { arnab: 2.2, kancil: 2, tapir: 1.3, harimau: 1.8 }[t], alive: true, back: 0, face: rnd() * 6, ph: Math.random() * 6 }); } }); }
 
   /* ---------- pangkalan (setiap murid ada satu) ---------- */
   const BASES = new Map();
@@ -18840,11 +18896,15 @@ function worldGame(THREE, W, NET){
     const fence = new THREE.Group(); for (let i = 0; i < 22; i++){ const a = i / 22 * Math.PI * 2; if (Math.abs(a - Math.PI / 2) < .35) continue; const p = new THREE.Mesh(new THREE.BoxGeometry(.2, 1.3, .2), M(0x8A5A2B)); p.position.set(Math.cos(a) * 7.4, .65, Math.sin(a) * 7.4); fence.add(p);
       const b = new THREE.Mesh(new THREE.BoxGeometry(2.2, .14, .1), M(0xA0703A)); b.position.set(Math.cos(a + .14) * 7.4, .9, Math.sin(a + .14) * 7.4); b.rotation.y = -(a + .14) - Math.PI / 2; fence.add(b); } g.add(fence);
     const lb = label('🏕️ ' + name, '#86EFAC', 5.6, 1.1, 46); lb.position.set(0, 6.6, 0); g.add(lb);
-    const B = { id, g, slot, set(info){ hut.visible = !!(info && info.h); fence.visible = !!(info && info.f); const f = info && info.fl; flag.visible = !!f; if (f) flag.material.color.set(f); } };
+    const gg = new THREE.Group(); g.add(gg); const GPOS = [[-2.8, 3.4], [2.8, 3.4], [0, 5.4]];
+    const B = { id, g, slot, gs: [], gsig: '', set(info){ hut.visible = !!(info && info.h); fence.visible = !!(info && info.f); const f = info && info.fl; flag.visible = !!f; if (f) flag.material.color.set(f);
+      const gl = (info && info.g) || [], sig = gl.join(','); if (sig !== B.gsig){ B.gsig = sig; B.gs.forEach(m => gg.remove(m.g)); B.gs = gl.slice(0, 3).filter(t => WAN[t]).map((t, i) => { const m = makeAnimal(t); m.g.position.set(GPOS[i][0], 0, GPOS[i][1]); m.g.rotation.y = -Math.PI / 2; gg.add(m.g); return m; }); } },
+      tick(tm){ B.gs.forEach((m, i) => { m.g.position.y = Math.abs(Math.sin(tm * 1.6 + i)) * .04; }); } };
     B.set(null); BASES.set(id, B); return B;
   }
   const myBase = makeBase(me.id, me.n.split(' ')[0], MYSLOT);
-  const refreshBase = () => myBase.set({ h: W.built.hut, f: W.built.fence, fl: W.built.flag });
+  const guardsOf = () => (W.pets || []).filter(p => p.g).map(p => p.t);
+  const refreshBase = () => myBase.set({ h: W.built.hut, f: W.built.fence, fl: W.built.flag, g: guardsOf() });
   refreshBase(); BLD.push({ id: 'base', name: 'Pangkalan Saya', x: MYSLOT.x, z: MYSLOT.z, rr: 9 });
   mates.forEach(m => { if (m.id !== me.id) makeBase(m.id, m.n.split(' ')[0], SLOTS[slotOf(m.id)]); });
   if (NET && me.id !== 'guru' && !mates.some(m => m.id === 'guru')){ /* pangkalan guru (tapak ke-26) — hanya jika guru sedang bermain */ }
@@ -18877,7 +18937,7 @@ function worldGame(THREE, W, NET){
   const unsubs = [];
   let infoSent = '';
   function pushInfo(force){
-    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), s: Object.keys(W.q).length };
+    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), s: Object.keys(W.q).length, g: guardsOf().join(','), pw: wPower(W) };
     const sig = JSON.stringify(info); if (!force && sig === infoSent) return; infoSent = sig; try { NET.net.set('wb/' + me.id, Object.assign({ u: Date.now() }, info)); } catch(e){}
   }
   if (NET){
@@ -18889,7 +18949,7 @@ function worldGame(THREE, W, NET){
         r.tx = +a[0]; r.tz = +a[1]; r.tf = +a[2]; r.t = t; });
       REM.forEach((r, id) => { if (!seen.has(id)){ scene.remove(r.A.g); scene.remove(r.A.shadow); REM.delete(id); } });
     }));
-    unsubs.push(NET.net.on('wb', v => { Object.assign(WB, v || {}); Object.keys(v || {}).forEach(id => { const b = BASES.get(id); if (b && id !== me.id) b.set({ h: v[id].h, f: v[id].f, fl: v[id].fl }); }); }));
+    unsubs.push(NET.net.on('wb', v => { Object.assign(WB, v || {}); Object.keys(v || {}).forEach(id => { const b = BASES.get(id); if (b && id !== me.id) b.set({ h: v[id].h, f: v[id].f, fl: v[id].fl, g: v[id].g ? String(v[id].g).split(',') : [] }); }); }));
     unsubs.push(NET.net.on('wt', v => { Object.keys(WT).forEach(k => delete WT[k]); Object.assign(WT, v || {}); hud(); }));
     pushInfo(true);
   }
@@ -18900,15 +18960,16 @@ function worldGame(THREE, W, NET){
     $w('#wHud').innerHTML = '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;min-width:150px"><div style="font-size:12px;font-weight:800">⭐ Lvl ' + wTotalLvl(W) + ' <span style="opacity:.7;font-weight:600;font-size:11px">· ' + ['kuat', 'pint', 'stam'].map(k => WSK[k].ico + wLvl(W, k)).join(' ') + '</span></div>' +
       '<div style="margin-top:4px;height:10px;border-radius:6px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:' + (pc < 25 ? '#EF4444' : '#FACC15') + '"></i></div>' +
       '<div style="font-size:11px;margin-top:2px">⚡ ' + Math.floor(W.energy) + ' / ' + mx + '</div></div>' +
-      '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water +
+      '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + ' &nbsp;🧶 ' + W.bulu +
       (NET ? '<div style="font-size:10px;font-weight:600;opacity:.8">👥 ' + (REM.size + 1) + ' dalam talian' + (W.built.flag ? ' · 🚩 ' + (wFlagName[W.built.flag] || '') + (tt ? ' ★' + tt : '') : '') + '</div>' : '') + '</div>';
   }
   let msgT = 0; const say = (t, ms) => { const m = $w('#wMsg'); m.innerHTML = t; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => { m.style.opacity = 0; }, ms || 1600); };
   const useE = n => { if (W.energy < n){ say('⚡ Tenaga habis! Makan di 🍲 Dapur dahulu.', 2200); vibrate(30); return false; } W.energy -= n; return true; };
   let PANEL = false, PANEL_LOCK = false;
-  const panel = (h, onclick) => { const p = $w('#wPanel'); p.innerHTML = '<div class="panel clip p-4 w-full" style="max-width:560px;max-height:92%;overflow:auto;background:linear-gradient(180deg,#1E293B,#0F172A);border-color:#F5E08A;color:#fff">' + h + '</div>'; p.style.display = 'flex'; p.onclick = e => { if (e.target === p && !PANEL_LOCK) closePanel(); const b = e.target.closest('[data-p]'); if (b && onclick) onclick(b.dataset.p, b); }; PANEL = true; stopMove(); };
+  const panel = (h, onclick) => { const p = $w('#wPanel'); p.innerHTML = '<div class="panel clip p-4 w-full" style="max-width:560px;max-height:92%;overflow:auto;background:linear-gradient(180deg,#1E293B,#0F172A);border-color:#F5E08A;color:#fff' + (land ? ';zoom:.86' : '') + '">' + h + '</div>'; p.style.display = 'flex'; p.onclick = e => { if (e.target === p && !PANEL_LOCK) closePanel(); const b = e.target.closest('[data-p]'); if (b && onclick) onclick(b.dataset.p, b); }; PANEL = true; stopMove(); };
   const closePanel = () => { $w('#wPanel').style.display = 'none'; $w('#wPanel').innerHTML = ''; PANEL = false; PANEL_LOCK = false; };
   const btn = (a, label, cls, dis) => '<button class="btn ' + (cls || '') + ' clip-s w-full !py-3 text-[14px] font-bold mt-2" data-p="' + a + '"' + (dis ? ' disabled style="opacity:.45"' : '') + '>' + label + '</button>';
+  const grid2 = h => '<div style="display:grid;gap:0 8px;grid-template-columns:' + (land ? '1fr 1fr' : '1fr') + '">' + h + '</div>';   /* pilihan jawapan: dua lajur dalam landskap */
   const head = (ico, t, sub) => '<div class="text-center"><div style="font-size:40px;line-height:1">' + ico + '</div><div class="font-bold text-[20px] mt-1" style="color:#F5E08A">' + t + '</div>' + (sub ? '<div class="text-[12px] text-muted mt-1 leading-snug">' + sub + '</div>' : '') + '</div>';
   const pts = (k, n) => { const before = wLvl(W, k); W.pts[k] = (W.pts[k] || 0) + (n || 1); const after = wLvl(W, k); if (after > before){ sfx('myth'); say(WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + after + '!', 2600); vibrate([30, 40, 30]); } pushInfo(); };
 
@@ -18936,7 +18997,7 @@ function worldGame(THREE, W, NET){
     let q; try { q = runQuestion(); } catch(e){ q = null; } if (!q || !q.c){ closePanel(); return say('Tiada soalan dalam bank. Tambah soalan di app guru.', 2400); }
     const opts = q.c.map((t, j) => ({ t, ok: j === q.a })).sort(() => Math.random() - .5);
     panel('<div class="text-[12px] font-bold tracking-widest" style="color:#93C5FD">🕹️ SOALAN ' + (i + 1) + ' / 5 &nbsp; ✔ ' + ok + '</div><div class="font-bold text-[18px] mt-2 leading-snug">' + esc(q.q) + '</div>' +
-      opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join(''), (a, b) => {
+      grid2(opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join('')), (a, b) => {
       if (a.indexOf('o:') !== 0 || PANEL_LOCK) return; PANEL_LOCK = true; const o = opts[+a.slice(2)]; const good = o.ok;
       b.style.background = good ? '#15803D' : '#991B1B'; if (!good){ const k = opts.findIndex(z => z.ok); const bb = $w('#wPanel [data-p="o:' + k + '"]'); if (bb) bb.style.background = '#15803D'; }
       sfx(good ? 'hi' : 'low'); if (good){ W.wood++; W.fish++; }
@@ -18953,11 +19014,12 @@ function worldGame(THREE, W, NET){
         '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + ((W.pts[k] || 0) % 2 * 50) + '%;background:#22C55E"></i></div><div class="text-[11px] text-muted mt-1">' + WSK[k].d + '</div></div>';
       const tt = teamTier(W.built.flag);
       body = ['kuat', 'pint', 'stam'].map(row).join('') + '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat') + tt) + ' 🪵</b>' + (tt ? ' <span style="color:#FDE68A">(+' + tt + ' bonus pasukan)</span>' : '') + '<br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>' +
+        '<div class="panel clip-s p-2 mt-2 text-[12px] leading-relaxed">⚔️ Kuasa: <b style="color:#FDE68A">' + wPower(W) + '</b> <span class="text-muted">(tahap ×3 + gear + haiwan)</span><br>🐾 Haiwan: <b>' + W.pets.length + '/4</b> (jaga pangkalan: ' + guardsOf().length + '/' + wGuardMax(W) + ') · Ditawan: <b>' + (W.nTame | 0) + '</b><br>🛡️ Gear: ' + (W.gear.a ? WGEAR.a[W.gear.a - 1][0] : '—') + ' · ' + (W.gear.w ? WGEAR.w[W.gear.w - 1][0] : '—') + '</div>' +
         '<div class="text-[12px] text-muted mt-3">Misi selesai hari ini: <b style="color:#fff">' + wDailyQuests().filter(x => W.q[x.id] === TODAY).length + '/5</b> · Simulasi pernah diselesaikan: <b style="color:#fff">' + Object.keys(W.q).length + '</b></div>' + btn('char', '🧍 Tukar watak', '');
     } else if (tab === 'kelas'){
-      const rows = Object.keys(WB).map(id => Object.assign({ id }, WB[id])); if (!rows.some(r => r.id === me.id)) rows.push({ id: me.id, n: me.n, l: wTotalLvl(W), s: Object.keys(W.q).length, fl: W.built.flag });
+      const rows = Object.keys(WB).map(id => Object.assign({ id }, WB[id])); if (!rows.some(r => r.id === me.id)) rows.push({ id: me.id, n: me.n, l: wTotalLvl(W), s: Object.keys(W.q).length, fl: W.built.flag, pw: wPower(W) });
       rows.sort((a, b) => (b.l | 0) - (a.l | 0) || (b.s | 0) - (a.s | 0));
-      body = NET ? '<div class="text-[12px] text-muted mt-3">Kelas <b style="color:#fff">' + esc(NET.cls) + '</b> — kedudukan ikut tahap.</div>' + rows.map((r, i) => '<div class="panel clip-s p-2 mt-2 flex items-center gap-2" style="border-color:' + (r.id === me.id ? '#F5E08A' : '#334155') + '"><span class="num font-bold w-6 text-center">' + (i + 1) + '</span><span style="width:12px;height:12px;border-radius:50%;background:' + (r.fl || '#475569') + '"></span><span class="flex-1 truncate text-[13px] font-bold">' + esc(r.n || '?') + '</span><span class="text-[12px]" style="color:#FDE68A">⭐ ' + (r.l | 0) + '</span><span class="text-[11px] text-muted">🎬' + (r.s | 0) + '</span></div>').join('')
+      body = NET ? '<div class="text-[12px] text-muted mt-3">Kelas <b style="color:#fff">' + esc(NET.cls) + '</b> — kedudukan ikut tahap.</div>' + rows.map((r, i) => '<div class="panel clip-s p-2 mt-2 flex items-center gap-2" style="border-color:' + (r.id === me.id ? '#F5E08A' : '#334155') + '"><span class="num font-bold w-6 text-center">' + (i + 1) + '</span><span style="width:12px;height:12px;border-radius:50%;background:' + (r.fl || '#475569') + '"></span><span class="flex-1 truncate text-[13px] font-bold">' + esc(r.n || '?') + '</span><span class="text-[12px]" style="color:#FDE68A">⭐ ' + (r.l | 0) + '</span><span class="text-[11px]" style="color:#FCA5A5">⚔️' + (r.pw | 0) + '</span><span class="text-[11px] text-muted">🎬' + (r.s | 0) + '</span></div>').join('')
         : '<div class="text-[13px] text-muted mt-4 text-center leading-relaxed">Kedudukan kelas keluar bila dunia dimainkan dalam <b>mod kelas</b>:<br>murid log masuk dengan kod sekolah, atau guru hidupkan Kongsi Murid.</div>';
     } else {
       const fl = W.built.flag, mem = Object.keys(WB).filter(id => fl && WB[id].fl === fl).map(id => WB[id]), tot = teamTotal(fl), tt = teamTier(fl);
@@ -18989,14 +19051,90 @@ function worldGame(THREE, W, NET){
     const it = [['hut', '🛖 Pondok', 20, W.built.hut > 0, 'Rumah kecil di pangkalan kamu.'], ['fence', '🪵 Pagar', 30, W.built.fence > 0, 'Melindungi pangkalan (Fasa 4: tahan serangan).']], fl = W.built.flag;
     panel(head('🏕️', 'PANGKALAN SAYA', 'Kumpul 🪵 kayu untuk membina. Pasang bendera — warna sama = satu pasukan.') +
       it.map(r => btn('b:' + r[0], r[3] ? '✅ ' + r[1] + ' — siap' : r[1] + ' &nbsp;(🪵 ' + r[2] + ')<br><span style="font-weight:500;font-size:11px;opacity:.7">' + r[4] + '</span>', !r[3] && W.wood >= r[2] ? 'btn-o' : '', r[3] || W.wood < r[2])).join('') +
+      btn('pets', '🐾 Kandang haiwan (' + W.pets.length + '/4)' + (guardsOf().length ? ' · 🛡️' + guardsOf().length : ''), W.pets.length ? 'btn-c' : '') +
       '<div class="text-[12px] font-bold mt-3">🚩 Bendera pasukan (🪵 10 kali pertama)</div><div class="flex gap-2 mt-1 flex-wrap">' + wFlagCols.map(c => '<button data-p="f:' + c + '" style="width:38px;height:38px;border-radius:8px;background:' + c + ';border:3px solid ' + (fl === c ? '#fff' : 'transparent') + '"></button>').join('') + '</div>' +
       (fl && NET ? '<div class="panel clip-s p-2 mt-3 text-[12px]">Perbendaharaan pasukan ' + (wFlagName[fl] || '') + ': <b style="color:#FDE68A">' + teamTotal(fl) + ' 🪵</b> (bonus ★' + teamTier(fl) + ')</div>' + btn('don', '🎁 Sumbang 10 🪵 kepada pasukan', W.wood >= 10 ? 'btn-o' : '', W.wood < 10) : '') + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
+      if (a === 'pets') return kandang();
       if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; sfx('myth'); save(); hud(); refreshBase(); pushInfo(); pangkalan(); say(r[1] + ' siap dibina!', 1800); }
       if (a.indexOf('f:') === 0){ const c = a.slice(2); if (W.built.flag !== c){ if (!W.built.flag && W.wood < 10) return say('Perlu 🪵 10 untuk bendera.', 1800); if (!W.built.flag) W.wood -= 10; W.built.flag = c; save(); hud(); refreshBase(); pushInfo(); pangkalan(); } }
       if (a === 'don' && NET && fl && W.wood >= 10){ W.wood -= 10; const k = flagKey(fl); WT[k] = WT[k] || {}; WT[k][me.id] = (+WT[k][me.id] || 0) + 10; try { NET.net.set('wt/' + k + '/' + me.id, WT[k][me.id]); } catch(e){} sfx('hi'); save(); hud(); pangkalan(); say('🎁 Terima kasih! Pasukan ' + teamTotal(fl) + ' 🪵', 1800); } });
   }
-  const OPEN = { misi, arkad, akademi: () => akademi(), dapur, base: pangkalan };
+  /* ---------- Fasa 3: haiwan peliharaan (ikut / jaga pangkalan) ---------- */
+  const FOL = [];
+  function syncPets(){
+    FOL.forEach(f => scene.remove(f.m.g)); FOL.length = 0;
+    W.pets.filter(p => !p.g).slice(0, 2).forEach((p, i) => { const m = makeAnimal(p.t); m.g.position.set(P.x - 2, 0, P.z - 2); scene.add(m.g); FOL.push({ m, x: P.x - 2, z: P.z - 2, i, ph: 0 }); });
+    refreshBase();
+  }
+  function kandang(ask){
+    const gm = wGuardMax(W), gn = guardsOf().length, br = W.brush !== TODAY && W.pets.length > 0, gain = W.pets.reduce((a, p) => a + Math.ceil(WAN[p.t].pw / 2), 0);
+    panel(head('🐾', 'KANDANG HAIWAN', 'Haiwan yang kamu jinakkan. <b>🛡️ Jaga</b> = berdiri di pangkalan (rakan nampak; kuasa ×2). <b>🚶 Ikut</b> = berjalan bersama kamu. Pangkalan muat <b>' + gm + '</b> penjaga (pondok &amp; pagar tambah petak).') +
+      (W.pets.length ? W.pets.map((p, i) => { const D = WAN[p.t];
+        return '<div class="panel clip-s p-2 mt-2 flex items-center gap-2"><span style="font-size:28px">' + D.ico + '</span><span class="flex-1 min-w-0"><span class="block font-bold text-[14px]">' + D.n + '</span><span class="block text-[11px] text-muted">⚔️ ' + D.pw * (p.g ? 2 : 1) + (p.g ? ' · 🛡️ menjaga' : ' · 🚶 mengikut') + '</span></span>' +
+          '<button class="btn clip-s !px-2 !py-1 text-[12px]" data-p="g:' + i + '">' + (p.g ? '🚶 Ikut' : '🛡️ Jaga') + '</button><button class="btn clip-s !px-2 !py-1 text-[12px]" data-p="' + (ask === i ? 'R:' : 'r:') + i + '">' + (ask === i ? '⚠️ Pasti?' : '🕊️') + '</button></div>'; }).join('')
+        : '<div class="text-[13px] text-muted mt-3 text-center">Belum ada haiwan. Cari di hutan dan menangkan duel kuiz!</div>') +
+      '<div class="text-[11px] text-muted mt-2">Penjaga: ' + gn + ' / ' + gm + ' · 🕊️ = lepaskan ke hutan</div>' +
+      btn('brush', br ? '🪮 Sikat bulu hari ini (+' + gain + ' 🧶)' : '🪮 Bulu sudah disikat hari ini', br ? 'btn-o' : '', !br) + btn('back', '‹ Pangkalan', '') + btn('close', 'Tutup', ''), a => {
+      if (a === 'close') return closePanel(); if (a === 'back') return pangkalan();
+      if (a === 'brush' && br){ W.bulu += gain; W.brush = TODAY; sfx('hi'); save(); hud(); say('🪮 +' + gain + ' 🧶 bulu', 1500); return kandang(); }
+      const i = +a.slice(2), p = W.pets[i]; if (!p) return;
+      if (a[0] === 'g'){ if (!p.g && gn >= gm){ say('🛡️ Pangkalan hanya muat ' + gm + ' penjaga. Bina pondok / pagar untuk tambah.', 2600); return; } p.g = p.g ? 0 : 1; sfx('flip'); save(); pushInfo(); syncPets(); kandang(); }
+      else if (a[0] === 'r') kandang(i);
+      else if (a[0] === 'R'){ W.pets.splice(i, 1); save(); pushInfo(); syncPets(); say('🕊️ ' + WAN[p.t].n + ' dilepaskan', 1600); kandang(); } });
+  }
+  /* ---------- Bengkel ---------- */
+  function bengkel(){
+    const row = k => { const cur = W.gear[k] | 0, list = WGEAR[k], nx = list[cur];
+      if (!nx) return '<div class="panel clip-s p-2 mt-2 text-[13px]">✅ ' + list[cur - 1][0] + ' — tahap maksimum</div>';
+      const ok = W.bulu >= nx[1] && W.wood >= nx[2];
+      return btn('g:' + k, nx[0] + ' &nbsp;(🧶 ' + nx[1] + ' + 🪵 ' + nx[2] + ')<br><span style="font-weight:500;font-size:11px;opacity:.75">' + (k === 'a' ? '+1 ❤️ dalam duel haiwan' : '−1 soalan perlu dijawab dalam duel') + '</span>', ok ? 'btn-o' : '', !ok); };
+    panel(head('🔨', 'BENGKEL', 'Tukar <b>🧶 bulu</b> &amp; <b>🪵 kayu</b> kepada gear. Bulu didapati daripada menjinak &amp; menyikat haiwan.') +
+      '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">Ada: 🧶 <b>' + W.bulu + '</b> · 🪵 <b>' + W.wood + '</b><br>🛡️ ' + (W.gear.a ? WGEAR.a[W.gear.a - 1][0] : 'Belum ada perlindungan') + '<br>🗡️ ' + (W.gear.w ? WGEAR.w[W.gear.w - 1][0] : 'Belum ada senjata') + '</div>' +
+      '<div class="lbl mt-3">PERLINDUNGAN</div>' + row('a') + '<div class="lbl mt-3">SENJATA</div>' + row('w') + btn('close', 'Tutup', ''), a => {
+      if (a === 'close') return closePanel();
+      if (a.indexOf('g:') === 0){ const k = a[2], nx = WGEAR[k][W.gear[k] | 0]; if (!nx || W.bulu < nx[1] || W.wood < nx[2]) return; W.bulu -= nx[1]; W.wood -= nx[2]; W.gear[k] = (W.gear[k] | 0) + 1; sfx('myth'); vibrate([20, 30, 20]); save(); hud(); pushInfo(); bengkel(); say(nx[0] + ' siap!', 1800); } });
+  }
+  /* ---------- duel kuiz: jawab betul untuk menjinak, salah = hilang ❤️ ---------- */
+  function duelIntro(A){
+    const D = WAN[A.t], lv = wTotalLvl(W);
+    if (lv < D.gate){ say(D.ico + ' ' + D.n + ' terlalu kuat! Perlu Lvl ' + D.gate + ' (kamu Lvl ' + lv + '). Belajar di 🎬 Dewan Misi dahulu.', 3200); vibrate(30); return; }
+    const need = wDuelNeed(W, A.t), hearts = wDuelHearts(W), hn = wHintN(W);
+    panel(head(D.ico, 'TAWAN ' + D.n.toUpperCase(), D.fact) +
+      '<div class="panel clip-s p-3 mt-3 text-[13px] leading-relaxed">Jawab <b>' + need + ' soalan betul</b> untuk menjinakkannya (asal ' + D.hp + ').<br>Kamu ada <b>' + '❤️'.repeat(hearts) + '</b> — jawapan salah = hilang 1 ❤️.<br>' +
+      (hn ? '🧠 Kepintaran: <b>' + hn + ' jawapan salah dibuang</b> setiap soalan.<br>' : '<span class="text-muted">🧠 Kepintaran Lvl 4 → 1 jawapan salah dibuang setiap soalan.</span><br>') +
+      '<span class="text-muted">💪 Kekuatan &amp; 🗡️ senjata kurangkan soalan · ❤️ Stamina &amp; 🛡️ perisai tambah nyawa.</span><br>Kos: −6 ⚡</div>' +
+      btn('go', '⚔️ MULA DUEL', 'btn-o') + btn('close', 'Lari', ''), a => {
+      if (a === 'close') return closePanel();
+      if (a === 'go'){ if (!A.alive) return closePanel(); if (!useE(6)){ closePanel(); return hud(); } hud(); duelQ(A, { need, got: 0, hearts, max: hearts }); } });
+  }
+  function duelQ(A, st){
+    const D = WAN[A.t];
+    if (st.got >= st.need) return duelWin(A);
+    if (st.hearts <= 0) return duelLose(A);
+    let q; try { q = runQuestion(); } catch(e){ q = null; } if (!q || !q.c){ closePanel(); return say('Tiada soalan dalam bank. Tambah soalan di app guru.', 2400); }
+    let opts = q.c.map((t, j) => ({ t, ok: j === q.a })).sort(() => Math.random() - .5), rm = Math.min(wHintN(W), opts.length - 2);
+    opts = opts.filter(o => o.ok || (rm > 0 ? (rm--, false) : true));
+    panel('<div class="flex items-center justify-between text-[13px] font-bold"><span>' + D.ico + ' ' + D.n + ' &nbsp;' + '🟥'.repeat(st.need - st.got) + '⬜'.repeat(st.got) + '</span><span>' + '❤️'.repeat(st.hearts) + '🖤'.repeat(st.max - st.hearts) + '</span></div>' +
+      '<div class="font-bold text-[18px] mt-3 leading-snug">' + esc(q.q) + '</div>' +
+      grid2(opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join('')), (a, b) => {
+      if (a.indexOf('o:') !== 0 || PANEL_LOCK) return; PANEL_LOCK = true; const good = opts[+a.slice(2)].ok;
+      b.style.background = good ? '#15803D' : '#991B1B'; if (!good){ const k = opts.findIndex(z => z.ok), bb = $w('#wPanel [data-p="o:' + k + '"]'); if (bb) bb.style.background = '#15803D'; vibrate(40); }
+      sfx(good ? 'hi' : 'low'); if (good) st.got++; else st.hearts--;
+      setTimeout(() => { PANEL_LOCK = false; duelQ(A, st); }, 1000); });
+  }
+  function hideAnimal(A, back){ A.alive = false; A.back = back; A.m.g.visible = false; A.go = false; }
+  function duelWin(A){
+    const D = WAN[A.t]; hideAnimal(A, 90); let note;
+    if (W.pets.length < 4){ W.pets.push({ t: A.t, g: 0 }); note = 'Kini ia kawan kamu! Urus di 🏕️ Pangkalan → Kandang.'; } else { W.bulu += 2; note = 'Kandang penuh (4/4), jadi ia dilepaskan semula ke hutan (+2 🧶 bonus).'; }
+    W.bulu += D.bulu; W.nTame = (W.nTame | 0) + 1; sfx('myth'); vibrate([30, 40, 30, 40]); save(); hud(); pushInfo(); syncPets();
+    panel(head('🤝', D.n.toUpperCase() + ' DIJINAKKAN!', note) + '<div class="text-center mt-2 font-bold" style="color:#FDE68A">+' + D.bulu + ' 🧶 bulu · ⚔️ +' + D.pw + ' kuasa</div><div class="text-[11px] text-muted mt-2 leading-snug">📖 ' + D.fact + '</div>' + btn('close', 'Teruskan', 'btn-o'), a => { if (a === 'close') closePanel(); });
+  }
+  function duelLose(A){
+    const D = WAN[A.t]; hideAnimal(A, 40); W.energy = Math.max(0, W.energy - 10); save(); hud();
+    panel(head('💨', D.n.toUpperCase() + ' LARI!', 'Nyawa kamu habis (−10 ⚡). Belajar lagi di 🎬 Dewan Misi untuk jadi lebih kuat, buat gear di 🔨 Bengkel, kemudian cuba lagi.') + btn('close', 'Teruskan', 'btn-o'), a => { if (a === 'close') closePanel(); });
+  }
+  const OPEN = { misi, arkad, akademi: () => akademi(), dapur, base: pangkalan, bengkel };
 
   /* ---------- tindakan ---------- */
   const near = { k: '', o: null };
@@ -19010,6 +19148,7 @@ function worldGame(THREE, W, NET){
     if (near.k === 'bush'){ const B = near.o; if (!B.has || !useE(1)) return hud(); B.has = false; B.back = 40; setBush(B, false); W.fruit += 2; sfx('flip'); say('🍓 +2 buah', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); return; }
     if (near.k === 'well'){ if (!useE(1)) return hud(); W.water += 2; sfx('flip'); say('💧 +2 air', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); return; }
     if (near.k === 'pond'){ if (!useE(4)) return hud(); fishing = { state: 'wait', t: 1.6 + Math.random() * 2.6, since: 0 }; say('🎣 Menunggu ikan…  (tekan apabila nampak ❗)', 1800); return; }
+    if (near.k === 'animal'){ if (near.o.alive) duelIntro(near.o); return; }
     if (near.k === 'bld'){ const f = OPEN[near.o.id]; if (f) f(); }
   }
   /* ---------- kawalan ---------- */
@@ -19080,8 +19219,23 @@ function worldGame(THREE, W, NET){
     REM.forEach(r => { const ox = r.x, oz = r.z; r.x += (r.tx - r.x) * Math.min(1, dt * 5); r.z += (r.tz - r.z) * Math.min(1, dt * 5); const v = Math.hypot(r.x - ox, r.z - oz) / Math.max(dt, .001);
       let d2 = r.tf - r.A.body.rotation.y; d2 = Math.atan2(Math.sin(d2), Math.cos(d2)); r.A.body.rotation.y += d2 * Math.min(1, dt * 10);
       r.A.g.position.set(r.x, 0, r.z); r.A.shadow.position.set(r.x, .05, r.z); if (r.A.mixer){ r.A.play(v > 5.5 ? 'sprint' : v > .6 ? 'walk' : 'idle'); r.A.mixer.update(dt); } });
+    /* haiwan liar berkeliaran; haiwan peliharaan mengikut; penjaga di pangkalan bernafas */
+    const tm = performance.now() / 1000;
+    WILD.forEach(A => {
+      if (!A.alive){ A.back -= dt; if (A.back <= 0){ A.alive = true; A.x = A.hx; A.z = A.hz; A.m.g.visible = true; A.m.g.position.set(A.x, 0, A.z); } return; }
+      const far = Math.abs(A.x - P.x) > 75 || Math.abs(A.z - P.z) > 75; A.m.g.visible = !far; if (far) return;
+      let mv = false;
+      if (!A.go){ A.wait -= dt; if (A.wait <= 0){ const a = Math.random() * 6.28, r = 2 + Math.random() * 7, tx = A.hx + Math.cos(a) * r, tz = A.hz + Math.sin(a) * r;
+        if (PONDS.every(p => Math.hypot(tx - p.x, tz - p.z) > p.r + 1.5) && Math.hypot(tx - P.x, tz - P.z) > 2){ A.tx = tx; A.tz = tz; A.go = true; } else A.wait = .5; } }
+      if (A.go){ const dx = A.tx - A.x, dz = A.tz - A.z, d = Math.hypot(dx, dz); if (d < .35){ A.go = false; A.wait = 2 + Math.random() * 5; } else { const s = Math.min(d, A.sp * dt); A.x += dx / d * s; A.z += dz / d * s; A.face = Math.atan2(-dz, dx); mv = true; A.ph += dt; } }
+      A.m.g.position.set(A.x, 0, A.z); aFace(A.m, A.face, dt); aLegs(A.m, mv, A.ph);
+    });
+    FOL.forEach(f => { const bx = P.x - Math.sin(P.face) * (2.4 + f.i * 1.7) + (f.i ? 1 : -1) * 1.1, bz = P.z - Math.cos(P.face) * (2.4 + f.i * 1.7), ox = f.x, oz = f.z;
+      f.x += (bx - f.x) * Math.min(1, dt * 3.5); f.z += (bz - f.z) * Math.min(1, dt * 3.5); const dx = f.x - ox, dz = f.z - oz, v = Math.hypot(dx, dz) / Math.max(dt, .001), mv = v > .5;
+      if (mv){ f.ph += dt * Math.min(2.2, v / 3); aFace(f.m, Math.atan2(-dz, dx), dt); } f.m.g.position.set(f.x, 0, f.z); aLegs(f.m, mv, f.ph); });
+    BASES.forEach(b => b.tick(tm));
     /* kamera */
-    const D = root.clientWidth < root.clientHeight ? 9.5 : 8, H = 5.2;
+    const D = land ? 7 : root.clientWidth < root.clientHeight ? 9.5 : 8, H = land ? 4.3 : 5.2;
     camP.set(P.x + Math.sin(P.yaw) * D, H, P.z + Math.cos(P.yaw) * D); cam.position.lerp(camP, Math.min(1, dt * 8)); cam.lookAt(P.x, 1.4, P.z);
     /* pokok & semak: kesan pukul, tumbuh semula */
     chopCd = Math.max(0, chopCd - dt);
@@ -19101,6 +19255,7 @@ function worldGame(THREE, W, NET){
       cand('well', WELL, Math.hypot(P.x - WELL.x, P.z - WELL.z), 3.2, '💧 Timba air');
       const pdn = pondDist(); cand('pond', pdn.p, pdn.d, 2.6, '🎣 Pancing<br><span style="font-size:11px;font-weight:500">−4 ⚡</span>');
       BLD.forEach(b => cand('bld', b, Math.hypot(P.x - b.x, P.z - b.z), b.rr, b.id === 'base' ? '🏕️ Pangkalan' : '🚪 Masuk<br><span style="font-size:11px;font-weight:500">' + esc(b.name) + '</span>'));
+      WILD.forEach(A => { if (A.alive && Math.abs(P.x - A.x) < 4 && Math.abs(P.z - A.z) < 4) cand('animal', A, Math.hypot(P.x - A.x, P.z - A.z) - .6, 3, '⚔️ Tawan<br><span style="font-size:11px;font-weight:500">' + WAN[A.t].ico + ' ' + WAN[A.t].n + '</span>'); });
       near.k = best ? best.k : ''; near.o = best ? best.o : null;
       const a = $w('#wAct'); if (best){ a.style.display = 'block'; if (a.dataset.l !== best.label){ a.innerHTML = best.label; a.dataset.l = best.label; } } else { a.style.display = 'none'; a.dataset.l = ''; }
       if (holdAct && near.k === 'tree') act();
@@ -19116,10 +19271,12 @@ function worldGame(THREE, W, NET){
       cloudT += dt; if (cloudT > 15){ cloudT = 0; cloudSave(); pushInfo(); } }
     R.render(scene, cam);
   }
-  hud(); frame(); drawMap();
-  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  syncPets(); hud(); frame(); drawMap();
+  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
+  if (W.intro && !W.intro2){ W.intro2 = 1; save(); panel(head('🐾', 'BARU: HAIWAN & BENGKEL', 'Haiwan liar kini berkeliaran di hutan!') +
+    '<div class="text-[13px] leading-relaxed mt-3">⚔️ <b>Duel kuiz</b>: dekati haiwan → jawab soalan betul untuk menjinak<br>🧠 Kepintaran, 💪 Kekuatan &amp; ❤️ Stamina menjadikan duel lebih mudah — belajar = kuat!<br>🐅 Haiwan lebih besar perlukan tahap lebih tinggi<br>🐾 <b>Kandang</b> di Pangkalan: haiwan boleh ikut kamu atau <b>jaga pangkalan</b><br>🔨 <b>Bengkel</b>: 🧶 bulu + 🪵 kayu → jaket, perisai &amp; senjata<br>📱 Pusing telefon ke <b>landskap</b> untuk skrin lebih luas</div>' + btn('close', '▶ Mari!', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (NET) say('👥 Dunia kelas ' + esc(NET.cls), 2200);
 }
 
