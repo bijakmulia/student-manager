@@ -38,7 +38,7 @@
     seram:  { n: 'Muka Hantu (Seram)',    url: SITE + 'assets/seram/PROMPT-SERAM.txt' },
     taikun: { n: 'Taikun Ilmu',           url: SITE + 'assets/taikun/PROMPT-TAIKUN.txt' }
   };
-  const K = { list: 'ej_list', folder: 'ej_folder', done: 'ej_done', fail: 'ej_fail', run: 'ej_run', opt: 'ej_opt', tpl: 'ej_tpl', lock: 'ej_lock' };
+  const K = { list: 'ej_list', folder: 'ej_folder', done: 'ej_done', fail: 'ej_fail', run: 'ej_run', opt: 'ej_opt', tpl: 'ej_tpl', lock: 'ej_lock', pend: 'ej_pend' };
   const get = (k, d) => { try { const v = GM_getValue(k); return v === undefined ? d : v; } catch (e) { return d; } };
   const set = (k, v) => { try { GM_setValue(k, v); } catch (e) {} };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -95,11 +95,11 @@
   const LIMIT_RX = /(reached|hit|exceeded).{0,50}limit|usage limit|too many (requests|images)|try again (later|in|after|tomorrow)|image generation.{0,40}(limit|unavailable)|had (penjanaan|jana)|terlalu banyak|cuba lagi (nanti|selepas)/i;
 
   /* ---------- keadaan ---------- */
-  let list = get(K.list, []), folder = get(K.folder, 'dunia'), done = get(K.done, {}), fail = get(K.fail, {});
-  let opt = Object.assign({ auto: true, newChat: true, cont: true, prefix: true, gap: 8, pre: '' }, get(K.opt, {}));
+  let list = get(K.list, []), folder = get(K.folder, 'dunia'), done = get(K.done, {}), fail = get(K.fail, {}), pend = get(K.pend, {});
+  let opt = Object.assign({ auto: true, newChat: true, cont: true, prefix: true, gap: 8, pre: '', dir: true }, get(K.opt, {}));
   const tplCache = {};
   let running = null, looping = false, stopReq = false, lastStatus = '', draft = '';
-  const save = () => { set(K.list, list); set(K.folder, folder); set(K.done, done); set(K.fail, fail); set(K.opt, opt); };
+  const save = () => { set(K.list, list); set(K.folder, folder); set(K.done, done); set(K.fail, fail); set(K.pend, pend); set(K.opt, opt); };
   const dk = n => folder + '/' + n;
 
   /* ---------- UI (tanpa innerHTML: laman ini menyekat Trusted Types) ---------- */
@@ -144,7 +144,7 @@
     return e;
   }
   const status = t => { lastStatus = t; const s = $('#ejSt'); if (s) s.textContent = t; console.log('[EduRank]', t); };
-  const counts = () => { const nd = list.filter(p => done[dk(p.name)]).length, nf = list.filter(p => !done[dk(p.name)] && fail[dk(p.name)]).length; return { nd, nf, n: list.length }; };
+  const counts = () => { const nd = list.filter(p => done[dk(p.name)]).length, nf = list.filter(p => !done[dk(p.name)] && fail[dk(p.name)]).length, np = list.filter(p => done[dk(p.name)] && pend[dk(p.name)]).length; return { nd, nf, np, n: list.length }; };
   const queued = () => { const st = get(K.run, null); return st && st.q ? st.q.length : 0; };
 
   function paint() {
@@ -155,27 +155,33 @@
     const rows = list.length ? list.map((p, i) => {
       const d = done[dk(p.name)], f = fail[dk(p.name)], now = running === p.name;
       return el('div', { cls: 'it' + (now ? ' now' : '') + (!d && f ? ' bad' : '') },
-        el('span', { text: d ? '✅' : now ? '⏳' : f ? '❌' : '⬜' }),
-        el('span', { cls: 'nm', title: (f && !d ? f.msg + ' — ' : '') + p.text, text: p.name + '.png' }),
+        el('span', { text: d ? (pend[dk(p.name)] ? '⚠️' : '✅') : now ? '⏳' : f ? '❌' : '⬜' }),
+        el('span', { cls: 'nm', title: (f && !d ? f.msg + ' — ' : '') + (d && pend[dk(p.name)] ? 'Belum disahkan disimpan (dialog Simpan Sebagai?) — ' : '') + p.text, text: p.name + '.png' }),
         el('button', { cls: 'go', 'data-g': String(i), disabled: !!(looping || running), title: 'Jana yang ini sahaja' }, '▶'));
     }) : [el('div', { cls: 'it', text: 'Belum ada senarai — tekan "Muat dari EduRank".' })];
     pan.replaceChildren(
-      el('div', { cls: 'hd' }, '🎨 EduRank · Jana Gambar', el('span', { cls: 'site', text: A().name }), el('span', { text: c.nd + '/' + c.n + ' siap' + (c.nf ? ' · ' + c.nf + ' gagal' : '') })),
+      el('div', { cls: 'hd' }, '🎨 EduRank · Jana Gambar', el('span', { cls: 'site', text: A().name }), el('span', { text: c.nd + '/' + c.n + ' siap' + (c.nf ? ' · ' + c.nf + ' gagal' : '') + (c.np ? ' · ' + c.np + ' ⚠' : '') })),
       el('div', { cls: 'bd' },
         el('div', { cls: 'bar' }, el('i', { style: 'width:' + pct + '%' })),
         el('div', { cls: 'row' }, el('select', { id: 'ejF' }, Object.keys(LISTS).map(k => el('option', { value: k, selected: k === folder }, LISTS[k].n))), B('ejLoad', '⬇ Muat dari EduRank')),
+        el('div', { cls: 'row' },
+          dirH && dirPerm === 'granted' ? el('span', { text: '📁 ' + dirH.name + ' ✓' }) : null,
+          dirH && dirPerm !== 'granted' ? B('ejAllow', '🔓 Benarkan folder ' + dirH.name) : null,
+          B('ejDir', dirH ? '📁 Tukar folder' : '📁 Pilih folder simpan (tanpa dialog)'),
+          CK('ejO5', opt.dir, 'Simpan terus ke folder')),
         el('textarea', { id: 'ejTxt', placeholder: '…atau tampal prompt (### nama.png + prompt) → "Guna teks"; atau tampal progres JSON → "Import progres"', value: draft }),
         el('div', { cls: 'row' }, B('ejUse', 'Guna teks'), B('ejExp', 'Salin progres'), B('ejImp', 'Import progres')),
         el('div', { cls: 'lst' }, rows),
         el('div', { cls: 'row' }, CK('ejO1', opt.auto, 'Hantar automatik'), CK('ejO2', opt.newChat, 'Chat baharu setiap gambar'), CK('ejO3', opt.cont, 'Teruskan jika gagal'), CK('ejO4', opt.prefix, 'Awalan "jana gambar"')),
         el('div', { cls: 'row' }, 'Jeda (saat):', el('input', { type: 'number', id: 'ejGap', min: 0, max: 120, value: opt.gap, style: 'width:60px' }), 'Hanya bermula dengan:', el('input', { type: 'text', id: 'ejPre', value: opt.pre, placeholder: 'cth. bg_tex_, ico_', style: 'width:110px' })),
-        el('div', { cls: 'row' }, B('ejGo', (q ? '▶▶ Sambung (' + q + ' lagi)' : '▶▶ Mula / Sambung'), 'o', looping), B('ejStop', '■ Henti', 'r', !looping), B('ejRetry', 'Cuba semula yang gagal', '', looping || !c.nf), B('ejReset', 'Set semula ✅', '', looping)),
+        el('div', { cls: 'row' }, B('ejGo', (q ? '▶▶ Sambung (' + q + ' lagi)' : '▶▶ Mula / Sambung'), 'o', looping), B('ejStop', '■ Henti', 'r', !looping), B('ejRetry', 'Cuba semula yang gagal', '', looping || !c.nf), B('ejRegen', 'Jana semula ⚠ (' + c.np + ')', '', looping || !c.np), B('ejReset', 'Set semula ✅', '', looping)),
         el('div', { cls: 'st', id: 'ejSt', text: lastStatus })));
   }
   pan.addEventListener('input', e => { if (e.target.id === 'ejTxt') draft = e.target.value; });
   pan.addEventListener('change', e => {
     const t = e.target;
-    if (t.id === 'ejF') { folder = t.value; list = []; save(); paint(); loadList(); return; }
+    if (t.id === 'ejF') { folder = t.value; list = []; save(); paint(); dirLoad(); loadList(); return; }
+    if (t.id === 'ejO5') { opt.dir = t.checked; save(); }
     if (t.id === 'ejO1') opt.auto = t.checked; if (t.id === 'ejO2') opt.newChat = t.checked; if (t.id === 'ejO3') opt.cont = t.checked; if (t.id === 'ejO4') opt.prefix = t.checked;
     if (t.id === 'ejGap') opt.gap = Math.max(0, Math.min(120, +t.value || 0));
     if (t.id === 'ejPre') opt.pre = t.value.trim();
@@ -190,6 +196,9 @@
     if (b.id === 'ejReset') { list.forEach(p => { delete done[dk(p.name)]; delete fail[dk(p.name)]; }); save(); return paint(); }
     if (b.id === 'ejStop') { stopReq = true; set(K.lock, null); return status('Akan berhenti selepas gambar ini… (progres disimpan; tekan Sambung nanti)'); }
     if (b.id === 'ejRetry') { list.forEach(p => { delete fail[dk(p.name)]; }); save(); return startQueue(false); }
+    if (b.id === 'ejDir') return dirPick();
+    if (b.id === 'ejAllow') return dirAllow();
+    if (b.id === 'ejRegen') { list.forEach(p => { if (done[dk(p.name)] && pend[dk(p.name)]) { delete done[dk(p.name)]; delete pend[dk(p.name)]; } }); save(); return startQueue(false); }
     if (b.id === 'ejGo') return startQueue(false);
     if (b.dataset.g != null) return startQueue(list[+b.dataset.g].name);
   });
@@ -248,9 +257,40 @@
       GM_xmlhttpRequest({ method: 'GET', url: full, responseType: 'blob', onload: r => r.status === 200 && r.response ? res(r.response) : rej(new Error('Gagal muat turun gambar (' + r.status + ')')), onerror: () => rej(new Error('Gagal muat turun gambar')) });
     });
   }
-  async function download(src, file) {
-    const blob = await toPng(await fetchBlob(src)), url = URL.createObjectURL(blob);
-    await new Promise((res, rej) => GM_download({ url, name: file, saveAs: false, onload: () => { URL.revokeObjectURL(url); res(); }, onerror: e => rej(new Error('Simpan gagal: ' + (e && (e.error || e.details))))}));
+  /* ---------- simpan terus ke folder projek (File System Access) — tiada dialog "Save As", tiada Downloads ---------- */
+  const idb = () => new Promise((res, rej) => { const r = indexedDB.open('ej_dir', 1); r.onupgradeneeded = () => r.result.createObjectStore('h'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const idbGet = async k => { try { const d = await idb(); return await new Promise(res => { const q = d.transaction('h').objectStore('h').get(k); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch (e) { return null; } };
+  const idbSet = async (k, v) => { try { const d = await idb(); await new Promise(res => { const t = d.transaction('h', 'readwrite'); t.objectStore('h').put(v, k); t.oncomplete = res; t.onerror = res; }); } catch (e) {} };
+  let dirH = null, dirPerm = '';
+  async function dirLoad() {
+    dirH = (window.__EJG_DIRP ? await window.__EJG_DIRP : null) || await idbGet('dir:' + folder); dirPerm = '';
+    if (dirH) { try { dirPerm = await dirH.queryPermission({ mode: 'readwrite' }); } catch (e) { dirPerm = 'denied'; } }
+    paint();
+  }
+  async function dirPick() {
+    try {
+      const h = await window.showDirectoryPicker({ id: 'ej_' + folder, mode: 'readwrite' }); await idbSet('dir:' + folder, h); dirH = h;
+      dirPerm = await h.queryPermission({ mode: 'readwrite' }); if (dirPerm !== 'granted') dirPerm = await h.requestPermission({ mode: 'readwrite' });
+      status('Folder dipilih: ' + h.name + ' (' + dirPerm + '). Pilih folder assets\\' + folder + ' dalam projek EduRank — gambar akan disimpan terus ke situ.');
+    } catch (e) { status('Pilih folder dibatalkan / pelayar tidak menyokong (guna Chrome atau Edge): ' + (e && e.message)); }
+    paint();
+  }
+  async function dirAllow() { try { dirPerm = await dirH.requestPermission({ mode: 'readwrite' }); } catch (e) { dirPerm = 'denied'; } paint(); }
+  const DLWAIT = window.__EJG_DLWAIT || 12000;
+  /* Pulangkan 'dir' (tulis terus ke folder), 'saved' (muat turun disahkan), 'pending' (dialog Simpan Sebagai masih terbuka — JANGAN tunggu, teruskan) atau 'error:...' */
+  async function saveFile(blob, p) {
+    if (opt.dir && dirH && dirPerm === 'granted') {
+      try { const fh = await dirH.getFileHandle(p.name + '.png', { create: true }), w = await fh.createWritable(); await w.write(blob); await w.close(); return 'dir'; }
+      catch (e) { status('Simpan ke folder gagal (' + (e && e.message) + ') — guna muat turun biasa.'); }
+    }
+    return new Promise(res => {
+      const url = URL.createObjectURL(blob), name = 'edurank__' + folder + '__' + p.name + '.png'; let settled = false;
+      const fin = r => { if (!settled) { settled = true; res(r); } };
+      GM_download({ url, name, saveAs: false,
+        onload: () => { URL.revokeObjectURL(url); if (pend[dk(p.name)]) { delete pend[dk(p.name)]; save(); paint(); } fin('saved'); },
+        onerror: e => fin('error:' + (e && (e.error || e.details || 'tidak diketahui'))) });
+      setTimeout(() => fin('pending'), DLWAIT);
+    });
   }
 
   async function runOne(p) {
@@ -281,8 +321,11 @@
       if (LIMIT_RX.test(txt)) { const e = new Error('Had penjanaan dicapai: ' + txt.replace(/\s+/g, ' ').slice(0, 120)); e.limit = true; throw e; }
       throw new Error('Tiada gambar' + (txt ? ' — jawapan: ' + txt.replace(/\s+/g, ' ').slice(0, 100) : ''));
     }
-    const name = 'edurank__' + folder + '__' + p.name + '.png';
-    status('💾 Menyimpan ' + name + '…'); await download(im.src, name);
+    status('💾 Menyimpan ' + p.name + '.png…');
+    const r = await saveFile(await toPng(await fetchBlob(im.src)), p);
+    if (/^error:/.test(r)) throw new Error('Simpan gagal: ' + r.slice(6));
+    if (r === 'pending') { pend[dk(p.name)] = Date.now(); save(); }
+    else if (pend[dk(p.name)]) { delete pend[dk(p.name)]; save(); }
   }
 
   /* ---------- barisan (tahan muat semula & tukar laman; satu tab sahaja memegang kunci) ---------- */
@@ -316,7 +359,7 @@
           await runOne(p);
           done[dk(name)] = Date.now(); delete fail[dk(name)]; save();
           st = get(K.run, null) || st; st.q.shift(); set(K.run, st.q.length ? st : null); running = null; paint();
-          status('✅ ' + name + '.png siap (' + counts().nd + '/' + counts().n + ')');
+          status((pend[dk(name)] ? '⚠️ ' + name + '.png dijana TETAPI dialog "Simpan Sebagai" belum disimpan — simpan failnya (atau pilih folder / matikan "Ask where to save"). ' : '✅ ' + name + '.png siap ') + '(' + counts().nd + '/' + counts().n + ')');
           if (st.single || !st.q.length) break;
           if (opt.gap) { status('✅ ' + name + ' siap — jeda ' + opt.gap + 's…'); await sleep(opt.gap * 1000); }
           if (opt.newChat) { clearInterval(hb); looping = false; set(K.lock, null); location.href = HOME(); return; }
@@ -341,11 +384,12 @@
     looping = false; running = null;
     const left = queued();
     if (stopReq) { set(K.lock, null); status('■ Dihentikan. Progres disimpan' + (left ? ' (' + left + ' lagi dalam barisan — tekan Sambung).' : '.')); }
-    else if (!left) { set(K.run, null); set(K.lock, null); const c = counts(); status(c.nf ? '✅ Selesai, ' + c.nf + ' gagal — tekan "Cuba semula yang gagal".' : '✅ Selesai semua. Gambar ada dalam Downloads — auto-push akan memprosesnya.'); }
+    else if (!left) { set(K.run, null); set(K.lock, null); const c = counts(); status((c.nf ? '✅ Selesai, ' + c.nf + ' gagal — tekan "Cuba semula yang gagal". ' : '✅ Selesai semua. ') + (c.np ? '⚠️ ' + c.np + ' fail belum disahkan disimpan (dialog "Simpan Sebagai" tidak disimpan?) — semak, atau tekan "Jana semula ⚠". ' : '') + (opt.dir && dirH && dirPerm === 'granted' ? 'Gambar disimpan terus ke folder ' + dirH.name + ' — auto-push akan memprosesnya.' : 'Gambar yang disimpan ada dalam Downloads — auto-push akan memprosesnya.')); }
     else set(K.lock, null);
     paint();
   }
 
+  dirLoad();
   /* sambung sendiri selepas halaman dimuat (chat baharu / tukar laman) jika barisan masih aktif */
   if (get(K.run, null) && lockOk()) { pan.classList.add('on'); paint(); status('Menyambung barisan…'); setTimeout(loop, RESUME); }
   else if (get(K.run, null)) { paint(); }
