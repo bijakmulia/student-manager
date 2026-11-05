@@ -18668,10 +18668,11 @@ function wNorm(w, key){
   const d = { v: 3, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0,
     bulu: 0, gear: { a: 0, w: 0 }, pets: [], brush: '', nTame: 0, intro2: 0,
     war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0, intro4: 0, mute: {}, kd: null, tut: 0, intro5: 0, fed: 100, deco: {}, gift: { d: '', n: 0 }, gT: 0, intro6: 0 };
-  w = w || {};
+  const isNew = !w || !Object.keys(w).length; w = w || {};
   const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), rc: w.rc || {}, mute: w.mute || {}, rd: Object.assign(d.rd, w.rd || {}), log: Array.isArray(w.log) ? w.log.slice(0, 12) : [], pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 130).map(p => ({ t: p.t, g: w.kd && p.g ? 1 : 0 })) : [],
     kd: w.kd && typeof w.kd.x === 'number' ? { x: w.kd.x, z: w.kd.z, lv: Math.max(1, Math.min(WKD_MAXLV, w.kd.lv | 0 || 1)), fh: +w.kd.fh || 0, kh: +w.kd.kh || 0 } : null }); delete W._t;
   if (W.kd){ const lv = W.kd.lv; if (!W.kd.fh) W.kd.fh = wFenceMax(lv); if (!W.kd.kh) W.kd.kh = wKdHpMax(lv); W.kd.tw = Math.max(0, Math.min(4, W.kd.tw | 0)); W.kd.tp = Math.max(0, Math.min(3, W.kd.tp | 0)); }
+  W.t0 = +w.t0 || (isNew ? Date.now() : 1); W.wipe = +w.wipe || 0;      /* t0 = masa mula bermain (data lama = 1) — untuk reset oleh guru */
   W.deco = W.deco || {}; W.gift = Object.assign({ d: '', n: 0 }, W.gift || {}); W.fed = Math.max(0, Math.min(100, +W.fed || 0));
   W.fed = Math.max(0, W.fed - wFedRate(W) * Math.max(0, Date.now() - (+W.t || Date.now())) / 3.6e6);   /* haiwan lapar walaupun app ditutup */
   const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + Math.max(0, Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
@@ -19119,7 +19120,7 @@ function worldGame(THREE, W, NET){
           (WCFG.p ? '<div class="panel clip-s p-2 mt-2 text-[13px] text-center" style="border-color:#F59E0B">⏸️ Cikgu menjeda perang buat masa ini.</div>' : '') +
           (isT ? '' : btn('wtog', W.war ? '⚔️ Mod Perang: HIDUP — tekan untuk matikan' : '⚔️ Hidupkan Mod Perang', W.war ? 'btn-o' : '')) +
           (sh > Date.now() ? '<div class="text-[12px] mt-2 text-center" style="color:#7DD3FC">🛡️ Dilindungi lagi ' + (left > 90 ? Math.ceil(left / 60) + ' jam' : left + ' minit') + '</div>' : '') +
-          (isT ? '<div class="lbl mt-3">KAWALAN CIKGU</div>' + btn('wpause', WCFG.p ? '▶ Sambung perang' : '⏸️ Jeda perang untuk semua', '') + btn('wreset', '🔄 Set semula perang (semua: Mod Perang mati, log kosong, lindungan 30 min)', '') : '') +
+          (isT ? '<div class="lbl mt-3">KAWALAN CIKGU</div>' + btn('wpause', WCFG.p ? '▶ Sambung perang' : '⏸️ Jeda perang untuk semua', '') + btn('wreset', '🔄 Set semula perang (semua: Mod Perang mati, log kosong, lindungan 30 min)', '') + btn('wwipe', '🗑️ RESET DUNIA ILMU — padam semua kemajuan murid', '') : '') +
           '<div class="lbl mt-3">SEJARAH (' + W.log.length + ')</div>' + (W.log.length ? W.log.map(l => '<div class="panel clip-s p-2 mt-1 text-[12px]" style="border-color:' + (l.k === 'atk' ? (l.ok ? '#22C55E' : '#EF4444') : (l.ok ? '#EF4444' : '#22C55E')) + '">' + (l.k === 'atk' ? '🏆 Kamu menewaskan <b>' + esc(l.n) + '</b>' + (l.ev === 'k' ? ' &amp; memecahkan kandangnya' : '') + ' — ' + ((l.an || []).length ? (l.an || []).map(t => (WAN[t] || {}).ico || '').join('') + ' ' : '') + wLootTxt(l.l || []) : '💀 <b>' + esc(l.n) + '</b> ' + (l.ev === 'k' ? 'merosakkan kandang kamu' : 'menewaskan kamu') + ' — hilang ' + ((l.an || []).length ? (l.an || []).map(t => (WAN[t] || {}).ico || '').join('') + ' ' : '') + wLootTxt(l.l || [])) + '</div>').join('') : '<div class="text-[12px] text-muted mt-1">Belum ada.</div>');
     } else {
       const fl = W.built.flag, mem =Object.keys(WB).filter(id => fl && WB[id].fl === fl).map(id => WB[id]), tot = teamTotal(fl), tt = teamTier(fl);
@@ -19133,6 +19134,7 @@ function worldGame(THREE, W, NET){
       if (a.indexOf('gf:') === 0) return gift(a.slice(3));
       if (a === 'wtog'){ if (W.war && (+W.warLock || 0) > Date.now()) return say('Tidak boleh matikan Mod Perang semasa pertempuran. Tunggu seminit.', 2600); W.war = W.war ? 0 : 1; save(); pushInfo(true); sfx('flip'); return akademi('perang'); }
       if (a === 'wpause' && NET){ WCFG.p = WCFG.p ? 0 : 1; try { NET.net.set('wcfg/p', WCFG.p); } catch(e){} return akademi('perang'); }
+      if (a === 'wwipe' && NET){ if (!confirm('RESET DUNIA ILMU?\n\nSemua kemajuan SEMUA murid (tahap, sumber, haiwan, kandang, tutorial) akan DIPADAM dan mula dari kosong. Tidak boleh dibatalkan.')) return; if (!confirm('Pasti? Ini memadam semua data Dunia Ilmu kelas ini.')) return; return wipeAll(); }
       if (a === 'wreset' && NET){ if (!confirm('Set semula perang untuk SEMUA murid? (sumber & haiwan tidak dipadam)')) return; WCFG.rs = Date.now(); try { NET.net.set('wcfg/rs', WCFG.rs); } catch(e){} W.rs = WCFG.rs; W.war = 0; W.log = []; W.rc = {}; W.shield = Date.now() + 30 * 60000; save(); pushInfo(true); say('🔄 Perang disetkan semula', 2000); return akademi('perang'); }
       if (a === 'char'){ const i = KN_CHARS.indexOf(W.char); W.char = KN_CHARS[(i + 1) % KN_CHARS.length]; ME.setChar(W.char); save(); pushInfo(); say('🧍 ' + KN_NAME(W.char), 1200); akademi('diri'); } });
   }
@@ -19412,6 +19414,18 @@ function worldGame(THREE, W, NET){
     panel(head('🏆', last.ev === 'k' ? 'KANDANG DIHANCURKAN!' : 'KEMENANGAN!', 'Kamu menewaskan <b>' + esc(last.n) + '</b>' + (last.ev === 'k' ? ' dan memecahkan kandangnya!' : '!')) + '<div class="text-center mt-2 text-[15px]">' + (last.an.length ? 'Haiwan diperoleh: ' + last.an.map(t => WAN[t].ico).join(' ') : 'Tiada haiwan baharu (ruang penuh atau tiada).') + (last.l.some(x => x) ? '<br>Sumber: ' + wLootTxt(last.l) : '') + '</div>' + btn('close', 'Teruskan', 'btn-o'), a => { if (a === 'close') closePanel(); });
   }
   const tgtBar = (pc, col) => '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, pc)) + '%;background:' + col + '"></i></div>';
+  /* Reset Dunia Ilmu oleh guru: semua kemajuan murid (tempatan & awan) dikosongkan; pemain baharu selepas reset tidak terjejas */
+  function wipeSelf(ts){
+    const key = W.key; try { if (NET) NET.net.set('ws/' + me.id, null); } catch(e){}
+    Object.keys(W).forEach(k => { delete W[k]; }); Object.assign(W, wNorm(null, key)); W.wipe = ts;
+    try { localStorage.setItem(key, JSON.stringify(W)); } catch(e){}
+    exit(); setTimeout(() => { toast('🔄 Dunia Ilmu disetkan semula — mula dari kosong!'); worldOpen(); }, 450);
+  }
+  function wipeAll(){
+    if (!NET || me.id !== 'guru') return; const ts = Date.now(); WCFG.wipe = ts;
+    try { ['wb', 'wp', 'wt', 'wc', 'wd', 'wk', 'wh', 'wg', 'wv', 'ws'].forEach(k => NET.net.set(k, null)); NET.net.set('wcfg/wipe', ts); } catch(e){}
+    wipeSelf(ts);
+  }
   function warTick(dt){
     hitCd = Math.max(0, hitCd - dt); hpQuiet += dt;
     if (hpQuiet > 5 && HP < wHpMax(W)) HP = Math.min(wHpMax(W), HP + dt * 3);
@@ -19437,6 +19451,7 @@ function worldGame(THREE, W, NET){
       wdInit = true; }));
     unsubs.push(NET.net.on('wk/' + me.id, takeAck));
     unsubs.push(NET.net.on('wcfg', v => { WCFG = v || {}; if (WCFG.v === 0 && MIC){ micOff(); say('🎙️ Cikgu mematikan suara.', 2400); }
+      if ((+WCFG.wipe || 0) > (+W.wipe || 0)){ const ts = +WCFG.wipe; if ((+W.t0 || 0) < ts) return wipeSelf(ts); W.wipe = ts; save(); }
       if ((+WCFG.rs || 0) > (+W.rs || 0)){ W.rs = +WCFG.rs || 0; W.war = 0; W.log = []; W.shield = Date.now() + 30 * 60000; HP = wHpMax(W); save(); pushInfo(true); say('🔄 Cikgu menyetkan semula perang. Mod Perang dimatikan.', 3000); } }));
   }
   /* ---------- Fasa 5: chat kelas (gelembung atas kepala) & suara berdekatan ---------- */
@@ -19720,7 +19735,7 @@ function worldGame(THREE, W, NET){
     R.render(scene, cam);
   }
   syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, gift, TOW, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
