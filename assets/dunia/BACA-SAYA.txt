@@ -15,16 +15,9 @@ CARA
 
 PERIKSA: pastikan tekstur (bg_tex_*) tiada objek besar di tengah dan bersambung rata; langit tiada matahari.
 
-GELOMBANG 1 — buat dahulu (27)
-  bg_tex_rumput
-  bg_tex_tanah
-  bg_tex_dataran
-  bg_tex_air
-  bg_tex_kayu
-  bg_tex_batu
-  bg_tex_bumbung
-  bg_tex_dinding
-  bg_langit_siang
+Senarai ini sudah disusun ikut KEUTAMAAN (pertama → terakhir). Jana mengikut nombor dalam PROMPT-ASET.txt.
+
+10 UTAMA — IKON HUD (buat dahulu) (10)
   ico_kayu
   ico_ikan
   ico_buah
@@ -35,16 +28,24 @@ GELOMBANG 1 — buat dahulu (27)
   ico_kuasa
   ico_kenyang
   ico_bintang
+
+PENTING — ikon lain, NPC & potret haiwan (14)
   ico_kuat
   ico_pintar
   ico_stamina
-  ani_arnab
-  ani_kancil
-  ani_tapir
-  ani_harimau
+  ico_perang
+  ico_hadiah
+  ico_menara
+  ico_perangkap
+  ico_pagar
+  ico_logo_dunia
   npc_cikgu_ilmu
+  ani_harimau
+  ani_tapir
+  ani_kancil
+  ani_arnab
 
-GELOMBANG 2 — gear, kandang, bangunan, hiasan (28)
+TAMBAHAN — gear, kandang, hiasan, bangunan, kesan (29)
   gear_jaket_bulu
   gear_perisai_bulu
   gear_perisai_harimau
@@ -55,45 +56,43 @@ GELOMBANG 2 — gear, kandang, bangunan, hiasan (28)
   gear_parang
   gear_taring
   kd_lv1
+  kd_lv10
+  deco_bunga
+  deco_lampu
+  deco_patung
+  deco_pancut
   kd_lv3
   kd_lv5
   kd_lv8
-  kd_lv10
   bld_misi
   bld_arkad
   bld_akademi
   bld_dapur
   bld_bengkel
-  deco_bunga
-  deco_lampu
-  deco_patung
-  deco_pancut
-  ico_menara
-  ico_perangkap
-  ico_pagar
-  ico_perang
-  ico_hadiah
+  bg_dunia_tajuk
+  ui_bingkai_peta
+  fx_pukul
+  fx_cipratan
+  fx_bintang
+  fx_debu
 
-GELOMBANG 3 — kemasan (15)
+PALING AKHIR — tekstur & langit (kesan paling kecil) (17)
+  bg_tex_rumput
+  bg_tex_dataran
+  bg_tex_bumbung
+  bg_tex_dinding
+  bg_langit_siang
+  bg_tex_tanah
+  bg_tex_kayu
+  bg_tex_batu
+  bg_tex_air
+  bg_tex_daun
+  bg_tex_kulit_kayu
   bg_tex_bulu_harimau
   bg_tex_bulu_kancil
   bg_tex_bulu_arnab
   bg_tex_bulu_tapir
-  bg_tex_daun
-  bg_tex_kulit_kayu
   bg_perkamen
   bg_langit_senja
-  bg_dunia_tajuk
-  ico_logo_dunia
-  ui_bingkai_peta
-  fx_pukul
-  fx_debu
-  fx_cipratan
-  fx_bintang
 
 Amaran: ikon & potret JANGAN guna warna merah jambu / magenta / ungu pada objek (akan dibuang bersama latar).
-
-JANA AUTOMATIK (pilihan)
-  Skrip Tampermonkey tools/jana-gambar-edurank.user.js membaca PROMPT-ASET.txt dan menjana gambar sendiri
-  di Gemini atau ChatGPT (dikesan automatik), menyimpan sebagai edurank__dunia__<nama>.png dalam Downloads.
-  Auto-push memindahkan, membuang latar magenta dan mengecilkan. Progres disimpan; boleh sambung bila-bila masa.
