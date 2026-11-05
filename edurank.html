@@ -19681,7 +19681,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
   });
   root.addEventListener('pointermove', e => {
     if (e.pointerId === joyId){ let dx = e.clientX - jo.x, dy = e.clientY - jo.y; const l = Math.hypot(dx, dy), m = 48; if (l > m){ dx = dx / l * m; dy = dy / l * m; } IN.x = dx / m; IN.y = -dy / m; $w('#wKnob').style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; }
-    else if (e.pointerId === camId){ P.yaw -= (e.clientX - lastCam.x) * .008; P.pitch = Math.max(-.3, Math.min(1.25, P.pitch - (e.clientY - lastCam.y) * .006)); lastCam = { x: e.clientX, y: e.clientY }; }
+    else if (e.pointerId === camId){ P.yaw -= (e.clientX - lastCam.x) * .008; P.pitch = Math.max(-.3, Math.min(1.25, P.pitch + (e.clientY - lastCam.y) * .006)); lastCam = { x: e.clientX, y: e.clientY }; }
   });
   const up = e => { if (e.pointerId === joyId) stopMove(); if (e.pointerId === camId) camId = null; };
   root.addEventListener('pointerup', up); root.addEventListener('pointercancel', up);
@@ -19756,7 +19756,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     BASES.forEach(b => b.tick(tm)); KDS.forEach(K => { K.an.forEach(o => { o.m.g.position.y = Math.abs(Math.sin(tm * 1.5 + o.ph)) * .03; }); });
     warTick(dt); tutTick(dt); if (PL){ plT += dt; if (plT > .15){ plT = 0; paintPlace(); } }
     /* kamera */
-    if (!PANEL){ if (keys.pageup) P.pitch = Math.min(1.25, P.pitch + dt); if (keys.pagedown) P.pitch = Math.max(-.3, P.pitch - dt); }
+    if (!PANEL){ if (keys.pageup) P.pitch = Math.max(-.3, P.pitch - dt); if (keys.pagedown) P.pitch = Math.min(1.25, P.pitch + dt); }
     const Dd = land ? 7 : root.clientWidth < root.clientHeight ? 9.5 : 8, Hd = land ? 4.3 : 5.2, R0 = Math.hypot(Dd, Hd - 1.4), D = R0 * Math.cos(P.pitch), H = Math.max(.5, 1.4 + R0 * Math.sin(P.pitch));
     /* kamera tidak tersekat di dalam pokok / bangunan: dekatkan jika ada penghalang di belakang pemain */
     nearT -= dt; if (nearT <= 0){ nearT = .3; NEARC = COL.filter(c => !(c.T && !c.T.alive) && Math.abs(c.x - P.x) < 14 && Math.abs(c.z - P.z) < 14); }
@@ -19818,7 +19818,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
   if (W.intro && W.intro5 && !W.intro6 && !PANEL){ W.intro6 = 1; save(); panel(head('🍖', 'BARU: MAKANAN, UBAT & PERTAHANAN', 'Sumber kamu kini lebih berguna!') +
     '<div class="text-[13px] leading-relaxed mt-3">🍖 <b>Beri makan haiwan</b> (Kandang): 🐟🍓💧 — haiwan lapar kuasanya menurun (tak pernah hilang)<br>🔧 <b>Baiki</b> pagar &amp; kandang dengan 🪵<br>🌿 <b>Ubat</b> di Dapur memulihkan ❤️ HP semasa perang<br>🏹 <b>Menara</b> &amp; 🪤 <b>perangkap</b> menyerang penyerang kandang<br>🎁 <b>Hantar hadiah</b> kepada kawan (Akademi → Kelas)<br>🔨 Gear baharu tahap tinggi (perlu 🐟🍓💧)<br>🎀 <b>Hiasan</b> pangkalan: bunga, lampu, patung, air pancut</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro6 && !W.intro7 && !PANEL){ W.intro7 = 1; save(); panel(head('🎒', 'BARU: BEG, TUNGGANG & LIHAT ATAS-BAWAH', 'Lebih banyak cara bermain!') +
-    '<div class="text-[13px] leading-relaxed mt-3">👀 <b>Lihat atas &amp; bawah</b>: seret skrin ke atas / bawah (komputer: roda tetikus atau PageUp/PageDown)<br>🎒 <b>Beg galas</b>: buat di 🔨 Bengkel; masak di 🍲 Dapur dan tekan 🎒 untuk simpan makanan &amp; ubat; guna di mana-mana (butang 🎒 kiri bawah)<br>⚒️ <b>Asah senjata</b> di Bengkel: setiap + beri +4 pukulan<br>🏇 <b>Tunggang</b> kancil, tapir atau harimau dalam rombongan (butang 🏇) — lebih laju; turun untuk bekerja</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
+    '<div class="text-[13px] leading-relaxed mt-3">👀 <b>Lihat atas &amp; bawah</b>: seret jari ke atas = lihat atas, ke bawah = lihat bawah (komputer: roda tetikus atau PageUp/PageDown)<br>🎒 <b>Beg galas</b>: buat di 🔨 Bengkel; masak di 🍲 Dapur dan tekan 🎒 untuk simpan makanan &amp; ubat; guna di mana-mana (butang 🎒 kiri bawah)<br>⚒️ <b>Asah senjata</b> di Bengkel: setiap + beri +4 pukulan<br>🏇 <b>Tunggang</b> kancil, tapir atau harimau dalam rombongan (butang 🏇) — lebih laju; turun untuk bekerja</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (NET && W.intro3 && !W.intro4 && !PANEL){ W.intro4 = 1; save(); panel(head('💬', 'BARU: CHAT & SUARA', 'Bercakap dengan rakan dalam dunia!') +
     '<div class="text-[13px] leading-relaxed mt-3">💬 <b>Chat</b> (butang kiri bawah): mesej muncul atas kepala &amp; dalam log kelas<br>🎙️ <b>Suara</b>: tekan untuk hidupkan mikrofon — hanya rakan yang <b>berdekatan</b> boleh dengar, makin jauh makin perlahan<br>🔇 Boleh bisukan sesiapa · tiada rakaman suara disimpan<br>🚫 Jangan kongsi nombor telefon / pautan<br>👩‍🏫 Cikgu boleh matikan chat atau suara bila-bila masa<br>🎥 Kamera tidak lagi tersekat di dalam pokok</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && !W.intro2 && !PANEL){ W.intro2 = 1; save(); panel(head('🐾', 'BARU: HAIWAN & BENGKEL', 'Haiwan liar kini berkeliaran di hutan!') +
