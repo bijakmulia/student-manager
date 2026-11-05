@@ -18667,9 +18667,9 @@ const wPtsSum = o => o && o.pts ? (o.pts.kuat | 0) + (o.pts.pint | 0) + (o.pts.s
 function wNorm(w, key){
   const d = { v: 3, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0,
     bulu: 0, gear: { a: 0, w: 0 }, pets: [], brush: '', nTame: 0, intro2: 0,
-    war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0 };
+    war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0, intro4: 0, mute: {} };
   w = w || {};
-  const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), rc: w.rc || {}, rd: Object.assign(d.rd, w.rd || {}), log: Array.isArray(w.log) ? w.log.slice(0, 12) : [], pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 4) : [] }); delete W._t;
+  const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), rc: w.rc || {}, mute: w.mute || {}, rd: Object.assign(d.rd, w.rd || {}), log: Array.isArray(w.log) ? w.log.slice(0, 12) : [], pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 4) : [] }); delete W._t;
   const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + Math.max(0, Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
   W.t = Date.now(); W.key = key; return W;
 }
@@ -18727,6 +18727,47 @@ const wCloudLoad = NET => new Promise(res => { let done = false; let un = null;
   try { un = NET.net.on('ws/' + NET.me.id, v => { if (done) return; done = true; try { un && un(); } catch(e){} res(v); }); } catch(e){ return res(null); }
   setTimeout(() => { if (!done){ done = true; res(null); } }, 4500); });
 
+/* ---------- Fasa 5: suara berdekatan ----------
+   WebRTC terus antara telefon (audio sahaja, tiada rakaman, tiada pelayan media). Firebase hanya membawa isyarat sambungan (offer/answer)
+   yang dipadam sebaik dibaca. Pendengar menyambung kepada penutur yang hidupkan mikrofon & berada dalam jejari R; kelantangan ikut jarak. */
+function wVoice(o){
+  const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }, R = o.radius || 20, MAXP = 6;
+  const Ls = new Map(), Ss = new Map(), seen = {}, cool = {}; let stream = null, speaking = false, dead = false;
+  const send = (to, obj) => { try { o.net.set('wv/' + to + '/' + o.me, obj); } catch(e){} };
+  const ice = pc => new Promise(res => { if (pc.iceGatheringState === 'complete') return res(); const t = setTimeout(res, 2500); pc.addEventListener('icegatheringstatechange', () => { if (pc.iceGatheringState === 'complete'){ clearTimeout(t); res(); } }); });
+  const drop = (map, id, bo) => { const P = map.get(id); if (!P) return; map.delete(id); try { P.pc.close(); } catch(e){} if (P.audio){ try { P.audio.pause(); P.audio.srcObject = null; } catch(e){} } if (bo) cool[id] = Date.now() + 15000; };
+  async function listen(id){
+    if (Ls.has(id) || (cool[id] || 0) > Date.now()) return;
+    const pc = new RTCPeerConnection(ICE), P = { pc, t: Date.now(), audio: null, ok: false, sd: 0 }; Ls.set(id, P);
+    pc.addTransceiver('audio', { direction: 'recvonly' });
+    pc.ontrack = e => { const a = new Audio(); a.autoplay = true; a.srcObject = e.streams[0] || new MediaStream([e.track]); a.volume = 0; P.audio = a; a.play().catch(() => {}); };
+    pc.onconnectionstatechange = () => { if (pc.connectionState === 'connected') P.ok = true; if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) drop(Ls, id, true); };
+    try { await pc.setLocalDescription(await pc.createOffer()); await ice(pc); if (dead || Ls.get(id) !== P) return; send(id, { k: 'o', s: pc.localDescription.sdp, t: Date.now() }); } catch(e){ drop(Ls, id, true); }
+  }
+  async function answer(from, msg){
+    if (!speaking || !stream || dead) return; if (Ss.has(from)) drop(Ss, from);
+    const pc = new RTCPeerConnection(ICE), P = { pc, t: Date.now() }; Ss.set(from, P);
+    pc.onconnectionstatechange = () => { if (['failed', 'closed', 'disconnected'].includes(pc.connectionState)) drop(Ss, from); };
+    try { stream.getAudioTracks().forEach(t => pc.addTrack(t, stream)); await pc.setRemoteDescription({ type: 'offer', sdp: msg.s }); await pc.setLocalDescription(await pc.createAnswer()); await ice(pc);
+      if (Ss.get(from) !== P) return; send(from, { k: 'a', s: pc.localDescription.sdp, t: Date.now() }); } catch(e){ drop(Ss, from); }
+  }
+  const un = o.net.on('wv/' + o.me, v => { Object.keys(v || {}).forEach(from => { const m = v[from]; if (!m || !m.k || !m.s) return; const t = +m.t || 0; if (t <= (seen[from + m.k] || 0)) return; seen[from + m.k] = t;
+    try { o.net.set('wv/' + o.me + '/' + from, null); } catch(e){}
+    if (Date.now() - t > 25000) return;
+    if (m.k === 'o') answer(from, m); else if (m.k === 'a'){ const P = Ls.get(from); if (P && !P.sd){ P.sd = 1; P.pc.setRemoteDescription({ type: 'answer', sdp: m.s }).catch(() => drop(Ls, from, true)); } } }); });
+  return {
+    update(list){ const by = {}; list.forEach(x => { by[x.id] = x; }); const ok = o.allowed();
+      list.forEach(x => { if (ok && x.vo && x.d < R && !o.muted(x.id) && Ls.size < MAXP) listen(x.id); });
+      Ls.forEach((P, id) => { const x = by[id]; if (!ok || !x || !x.vo || x.d > R + 6 || o.muted(id)) drop(Ls, id); else if (!P.ok && Date.now() - P.t > 12000) drop(Ls, id, true); });
+      Ss.forEach((P, id) => { const x = by[id]; if (!speaking || !ok || !x || x.d > R + 8) drop(Ss, id); }); },
+    vol(list){ list.forEach(x => { const P = Ls.get(x.id); if (P && P.audio) P.audio.volume = Math.max(0, Math.min(1, Math.pow(Math.max(0, 1 - x.d / R), 1.3))); }); },
+    hearing(){ let n = 0; Ls.forEach(P => { if (P.ok && P.audio && P.audio.volume > .02) n++; }); return n; },
+    async speak(on){ if (on && !stream){ stream = await o.getMic(); speaking = true; } else if (!on){ speaking = false; if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } Ss.forEach((P, id) => drop(Ss, id)); } return speaking; },
+    get speaking(){ return speaking; }, get ls(){ return Ls; }, get ss(){ return Ss; },
+    close(){ dead = true; speaking = false; try { un && un(); } catch(e){} Ls.forEach((P, id) => drop(Ls, id)); Ss.forEach((P, id) => drop(Ss, id)); if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+  };
+}
+
 async function worldOpen(){
   if (document.getElementById('wldRoot')) return;
   orientFree();                                    // landskap mesti dibuka semasa sentuhan, sebelum sebarang await
@@ -18755,6 +18796,7 @@ function worldGame(THREE, W, NET){
     '<div id="wJoy" style="position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.4);display:none;pointer-events:none"><i id="wKnob" style="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.7)"></i></div>' +
     '<button data-w="act" id="wAct" class="btn btn-o clip-s" style="position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(26px + var(--safe-b,0px));min-width:112px;height:76px;font-size:15px;font-weight:800;display:none;line-height:1.15;padding:6px 10px"></button>' +
     '<div id="wHint" style="position:absolute;left:0;right:0;bottom:calc(8px + var(--safe-b,0px));text-align:center;font-size:11px;color:rgba(255,255,255,.85);pointer-events:none;text-shadow:0 1px 3px #000"></div>' +
+    (NET ? '<div id="wTalk" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(26px + var(--safe-b,0px));display:flex;gap:8px"><button data-w="chat" id="wChatB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">💬</button><button data-w="mic" id="wMicB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎙️</button></div><div id="wHear" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(84px + var(--safe-b,0px));font-size:11px;font-weight:700;text-shadow:0 1px 3px #000;pointer-events:none"></div>' : '') +
     '<div id="wPanel" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(2,6,14,.7);overflow:auto"></div>';
   document.body.appendChild(root); lockBody(); orientFree();
   const $w = s => root.querySelector(s);
@@ -18937,14 +18979,14 @@ function worldGame(THREE, W, NET){
   const play = (n, once) => ME.play(n, once);
 
   /* ---------- rangkaian: pemain lain, maklumat awam, perbendaharaan pasukan ---------- */
-  const REM = new Map(), WB = {}, WT = {}; let WCFG = {};
+  const REM = new Map(), WB = {}, WT = {}; let WCFG = {}, MIC = false;
   const flagKey = c => String(c || '').replace('#', '');
   const teamTotal = c => c ? Object.values(WT[flagKey(c)] || {}).reduce((a, v) => a + (+v || 0), 0) : 0;
   const teamTier = c => { const t = teamTotal(c); return t >= 150 ? 2 : t >= 50 ? 1 : 0; };
   const unsubs = [];
   let infoSent = '';
   function pushInfo(force){
-    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), s: Object.keys(W.q).length, g: guardsOf().join(','), pw: wPower(W), wr: W.war && me.id !== 'guru' ? 1 : 0, sh: wShieldOf(W), st: [W.wood, W.fish, W.fruit, W.water, W.bulu].map(x => x | 0) };
+    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), s: Object.keys(W.q).length, g: guardsOf().join(','), pw: wPower(W), vo: MIC ? 1 : 0, wr: W.war && me.id !== 'guru' ? 1 : 0, sh: wShieldOf(W), st: [W.wood, W.fish, W.fruit, W.water, W.bulu].map(x => x | 0) };
     const sig = JSON.stringify(info); if (!force && sig === infoSent) return; infoSent = sig; try { NET.net.set('wb/' + me.id, Object.assign({ u: Date.now() }, info)); } catch(e){}
   }
   if (NET){
@@ -19196,8 +19238,52 @@ function worldGame(THREE, W, NET){
   }
   if (NET){
     unsubs.push(NET.net.on('wr/' + me.id, raidIn));
-    unsubs.push(NET.net.on('wcfg', v => { WCFG = v || {}; if ((+WCFG.rs || 0) > (+W.rs || 0)){ W.rs = +WCFG.rs || 0; W.war = 0; W.log = []; W.rc = {}; W.shield = Date.now() + 30 * 60000; save(); pushInfo(true); say('🔄 Cikgu menyetkan semula perang. Mod Perang dimatikan.', 3000); } }));
+    unsubs.push(NET.net.on('wcfg', v => { WCFG = v || {}; if (WCFG.v === 0 && MIC){ micOff(); say('🎙️ Cikgu mematikan suara.', 2400); } if ((+WCFG.rs || 0) > (+W.rs || 0)){ W.rs = +WCFG.rs || 0; W.war = 0; W.log = []; W.rc = {}; W.shield = Date.now() + 30 * 60000; save(); pushInfo(true); say('🔄 Cikgu menyetkan semula perang. Mod Perang dimatikan.', 3000); } }));
   }
+  /* ---------- Fasa 5: chat kelas (gelembung atas kepala) & suara berdekatan ---------- */
+  const MUTE = W.mute || (W.mute = {}), CHAT = [], lastC = {}; let lastSend = 0, unread = 0, wcInit = false;
+  const chatOk = () => WCFG.c !== 0, voiceOk = () => WCFG.v !== 0, badMsg = m => /https?:|www\.|\.com\b|\d{8,}/i.test(m);
+  const nameOf = id => id === me.id ? me.n : ((WB[id] || {}).n || (mates.find(m => m.id === id) || {}).n || '?');
+  const bub = (g, txt) => {
+    const ud = g.userData, rm = () => { if (ud.bub){ g.remove(ud.bub); ud.bub.material.map.dispose(); ud.bub.material.dispose(); ud.bub = null; } };
+    rm(); const s = label(txt.length > 44 ? txt.slice(0, 43) + '…' : txt, '#FDE68A', Math.min(8, 1.6 + txt.length * .14), .9, 40); s.position.y = 3.4; g.add(s); ud.bub = s; clearTimeout(ud.bt); ud.bt = setTimeout(rm, 6500); };
+  function chatPaint(){
+    const el = $w('#wChatLog'); if (!el) return;
+    el.innerHTML = CHAT.slice(-30).map(c => '<div class="text-[13px] mt-1 leading-snug"><b style="color:' + (c.id === me.id ? '#FDE68A' : '#7DD3FC') + '">' + esc(c.n) + '</b> ' + esc(c.m) + (c.id !== me.id ? ' <button data-p="m:' + c.id + '" style="opacity:.55;font-size:12px" title="Bisukan">🔇</button>' : '') + '</div>').join('') || '<div class="text-[12px] text-muted">Belum ada mesej. Sapa rakan kamu!</div>';
+    el.scrollTop = el.scrollHeight; }
+  function chatAdd(id, n, m, t){ CHAT.push({ id, n, m, t }); if (CHAT.length > 60) CHAT.shift(); chatPaint(); }
+  function chatSend(){
+    const inp = $w('#wChatIn'); if (!inp || !chatOk()) return; const m = inp.value.trim().slice(0, 80); if (!m) return;
+    if (Date.now() - lastSend < 1500) return say('Terlalu laju — tunggu sebentar.', 1200);
+    if (badMsg(m)) return say('🚫 Jangan kongsi pautan atau nombor telefon.', 2400);
+    lastSend = Date.now(); inp.value = ''; const nm = me.n.split(' ')[0]; chatAdd(me.id, nm, m, Date.now()); bub(ME.g, m);
+    try { NET.net.set('wc/' + me.id, { t: Date.now(), m, n: nm }); } catch(e){} }
+  function chat(){
+    const isT = me.id === 'guru', muted = Object.keys(MUTE).filter(k => MUTE[k]); unread = 0; chatBadge();
+    panel('<div class="font-bold text-[16px]" style="color:#F5E08A">💬 Chat kelas</div><div class="text-[11px] text-muted leading-snug">Semua dalam kelas nampak mesej. Suara 🎙️ hanya didengari rakan yang berdekatan. Jaga adab — jangan kongsi nombor telefon atau pautan. Tekan 🔇 untuk bisukan seseorang.</div>' +
+      '<div id="wChatLog" style="height:' + (land ? '24vh' : '34vh') + ';overflow:auto;margin-top:8px;padding:6px;border-radius:10px;background:rgba(0,0,0,.25)"></div>' +
+      (chatOk() ? '<div class="flex gap-2 mt-2"><input id="wChatIn" maxlength="80" class="fld clip-s flex-1" placeholder="Taip mesej…" autocomplete="off"><button class="btn btn-o clip-s !px-4" data-p="send">Hantar</button></div>' : '<div class="text-[12px] text-center mt-2" style="color:#F59E0B">💬 Chat dimatikan oleh cikgu.</div>') +
+      (muted.length ? '<div class="text-[11px] text-muted mt-2">Dibisukan (tekan untuk buka): ' + muted.map(id => '<button class="btn clip-s !px-2 !py-0 text-[11px]" data-p="u:' + id + '">' + esc(nameOf(id)) + ' 🔊</button>').join(' ') + '</div>' : '') +
+      (isT ? '<div class="flex gap-2 mt-2"><button class="btn clip-s flex-1 !py-2 text-[12px]" data-p="tc">💬 Chat: ' + (chatOk() ? 'HIDUP' : 'MATI') + '</button><button class="btn clip-s flex-1 !py-2 text-[12px]" data-p="tv">🎙️ Suara: ' + (voiceOk() ? 'HIDUP' : 'MATI') + '</button></div>' : '') + btn('close', 'Tutup', ''), a => {
+      if (a === 'close') return closePanel(); if (a === 'send') return chatSend();
+      if (a.indexOf('m:') === 0){ MUTE[a.slice(2)] = 1; save(); return chat(); }
+      if (a.indexOf('u:') === 0){ delete MUTE[a.slice(2)]; save(); return chat(); }
+      if (a === 'tc' || a === 'tv'){ const k = a === 'tc' ? 'c' : 'v', nv = (WCFG[k] === 0) ? 1 : 0; WCFG[k] = nv; try { NET.net.set('wcfg/' + k, nv); } catch(e){} if (k === 'v' && !nv && MIC) micOff(); return chat(); } });
+    chatPaint(); const inp = $w('#wChatIn'); if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); chatSend(); } });
+  }
+  const chatBadge = () => { const b = $w('#wChatB'); if (b) b.textContent = unread ? '💬' + (unread > 9 ? '9+' : unread) : '💬'; };
+  if (NET) unsubs.push(NET.net.on('wc', v => {
+    Object.keys(v || {}).forEach(id => { if (id === me.id) return; const c = v[id]; if (!c || !c.m) return; const t = +c.t || 0; if (t <= (lastC[id] || 0)) return; lastC[id] = t;
+      if (!wcInit || MUTE[id]) return; const m = String(c.m).slice(0, 80), r = REM.get(id); chatAdd(id, String(c.n || nameOf(id)).slice(0, 20), m, t); if (r) bub(r.A.g, m); if (!PANEL || !$w('#wChatLog')){ unread++; chatBadge(); } });
+    wcInit = true; }));
+  const VOICE = NET && window.RTCPeerConnection ? wVoice({ net: NET.net, me: me.id, allowed: voiceOk, muted: id => !!MUTE[id], getMic: () => navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }) }) : null;
+  const micPaint = () => { const bt = $w('#wMicB'); if (bt){ bt.style.background = MIC ? '#DC2626' : ''; bt.textContent = MIC ? '🔴' : '🎙️'; } };
+  function micOff(){ if (VOICE) VOICE.speak(false); MIC = false; micPaint(); pushInfo(true); }
+  async function micToggle(){
+    if (!VOICE || !navigator.mediaDevices) return say('🎙️ Suara tidak disokong pada peranti / pelayar ini.', 2400);
+    if (MIC) return micOff(); if (!voiceOk()) return say('🎙️ Suara dimatikan oleh cikgu.', 2200);
+    try { await VOICE.speak(true); } catch(e){ return say('🎙️ Mikrofon tidak dibenarkan. Benarkan akses mikrofon untuk app ini.', 3200); }
+    MIC = true; micPaint(); pushInfo(true); say('🎙️ Mikrofon HIDUP — rakan berdekatan boleh dengar kamu. Tekan 🔴 untuk senyap.', 3000); }
   const OPEN = { misi, arkad, akademi: () => akademi(), dapur, base: pangkalan, bengkel };
 
   /* ---------- tindakan ---------- */
@@ -19218,7 +19304,7 @@ function worldGame(THREE, W, NET){
   }
   /* ---------- kawalan ---------- */
   const keys = {}; const IN = { x: 0, y: 0 };
-  const kd = e => { const k = e.key.toLowerCase(); keys[k] = true; if (k === 'escape'){ if (PANEL) closePanel(); else exit(); }
+  const kd = e => { if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)){ if (e.key === 'Escape') e.target.blur(); return; } const k = e.key.toLowerCase(); keys[k] = true; if (k === 'escape'){ if (PANEL) closePanel(); else exit(); }
     if ((k === 'e' || k === ' ') && !e.repeat){ e.preventDefault(); act(); } };
   const ku = e => { keys[e.key.toLowerCase()] = false; };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
@@ -19237,9 +19323,9 @@ function worldGame(THREE, W, NET){
   });
   const up = e => { if (e.pointerId === joyId) stopMove(); if (e.pointerId === camId) camId = null; };
   root.addEventListener('pointerup', up); root.addEventListener('pointercancel', up);
-  const exit = () => { alive = false; save(); dirty = true; cloudSave(); if (NET){ try { NET.net.set('wp/' + me.id, null); } catch(e){} unsubs.forEach(u => { try { u && u(); } catch(e){} }); }
+  const exit = () => { alive = false; save(); dirty = true; cloudSave(); if (VOICE) VOICE.close(); if (NET){ try { NET.net.set('wp/' + me.id, null); NET.net.set('wc/' + me.id, null); NET.net.set('wb/' + me.id + '/vo', 0); } catch(e){} unsubs.forEach(u => { try { u && u(); } catch(e){} }); }
     window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('resize', resize); R.dispose(); root.remove(); unlockBody(); orientBack(); if (S.ui.tab === 'sim') renderTab(); };
-  root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); });
+  root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); else if (b.dataset.w === 'chat'){ if (!PANEL) chat(); } else if (b.dataset.w === 'mic') micToggle(); });
   $w('#wAct').addEventListener('pointerdown', () => { holdAct = true; }); const rel = () => { holdAct = false; }; $w('#wAct').addEventListener('pointerup', rel); $w('#wAct').addEventListener('pointerleave', rel);
 
   /* ---------- peta mini ---------- */
@@ -19257,6 +19343,7 @@ function worldGame(THREE, W, NET){
   }
 
   /* ---------- gelung ---------- */
+  let NEARC = [], nearT = 0, voT = 0, voU = 0;
   const clock = new THREE.Clock(); let hudT = 0, regenT = 0, presT = 0, mapT = 0, lastSent = { x: 1e9, z: 1e9 };
   const hint = $w('#wHint'); hint.textContent = 'Gerak: joystick kiri / W A S D · Pusing kamera: seret skrin · Aksi: butang / E';
   const camP = new THREE.Vector3();
@@ -19301,7 +19388,14 @@ function worldGame(THREE, W, NET){
     BASES.forEach(b => b.tick(tm));
     /* kamera */
     const D = land ? 7 : root.clientWidth < root.clientHeight ? 9.5 : 8, H = land ? 4.3 : 5.2;
-    camP.set(P.x + Math.sin(P.yaw) * D, H, P.z + Math.cos(P.yaw) * D); cam.position.lerp(camP, Math.min(1, dt * 8)); cam.lookAt(P.x, 1.4, P.z);
+    /* kamera tidak tersekat di dalam pokok / bangunan: dekatkan jika ada penghalang di belakang pemain */
+    nearT -= dt; if (nearT <= 0){ nearT = .3; NEARC = COL.filter(c => !(c.T && !c.T.alive) && Math.abs(c.x - P.x) < 14 && Math.abs(c.z - P.z) < 14); }
+    const sx = Math.sin(P.yaw), sz = Math.cos(P.yaw); let Dm = D;
+    for (let t = 1.6; t < D; t += .7){ const qx = P.x + sx * t, qz = P.z + sz * t; if (NEARC.some(c => { const dx = qx - c.x, dz = qz - c.z, rr = c.r + .9; return dx * dx + dz * dz < rr * rr; })){ Dm = Math.max(2.4, t - .9); break; } }
+    camP.set(P.x + sx * Dm, H, P.z + sz * Dm);
+    /* suara: senarai rakan berdekatan (kelantangan ikut jarak; sambungan disemak setiap saat) */
+    if (VOICE){ voT += dt; if (voT > .25){ voU += voT; voT = 0; const lst = []; REM.forEach((r, id) => lst.push({ id, d: Math.hypot(r.x - P.x, r.z - P.z), vo: WB[id] && WB[id].vo ? 1 : 0 })); VOICE.vol(lst); if (voU >= 1){ voU = 0; VOICE.update(lst); }
+      const hn = VOICE.hearing(), he = $w('#wHear'); if (he){ const tx = hn ? '🔊 mendengar ' + hn + ' rakan' : ''; if (he.textContent !== tx) he.textContent = tx; } } } cam.position.lerp(camP, Math.min(1, dt * 8)); cam.lookAt(P.x, 1.4, P.z);
     /* pokok & semak: kesan pukul, tumbuh semula */
     chopCd = Math.max(0, chopCd - dt);
     TREES.forEach(T => { let ch = false;
@@ -19338,12 +19432,14 @@ function worldGame(THREE, W, NET){
     R.render(scene, cam);
   }
   syncPets(); hud(); frame(); drawMap();
-  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, raidIntro, raidWhy, raidIn, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, raidIntro, raidWhy, raidIn, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
-  if (W.intro && W.intro2 && !W.intro3 && NET){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
+  if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
     '<div class="text-[13px] leading-relaxed mt-3">🔘 Hidupkan <b>Mod Perang</b>: Akademi → ⚔️ Perang<br>🏕️ Pergi ke pangkalan pemain lain dalam Mod Perang → <b>Serang</b><br>🧠 Jawab kuiz menentang pertahanannya (kuasa = tahap + gear + haiwan penjaga)<br>🎁 Menang = curi sehingga 15% sumber. <b>Pangkalan tidak pernah musnah.</b><br>🛡️ Pemain baharu 24 jam &amp; selepas diserang 20 minit dilindungi; rakan sepasukan tidak boleh saling serang<br>👩‍🏫 Cikgu boleh jeda atau set semula perang</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
-  if (W.intro && !W.intro2){ W.intro2 = 1; save(); panel(head('🐾', 'BARU: HAIWAN & BENGKEL', 'Haiwan liar kini berkeliaran di hutan!') +
+  if (NET && W.intro3 && !W.intro4 && !PANEL){ W.intro4 = 1; save(); panel(head('💬', 'BARU: CHAT & SUARA', 'Bercakap dengan rakan dalam dunia!') +
+    '<div class="text-[13px] leading-relaxed mt-3">💬 <b>Chat</b> (butang kiri bawah): mesej muncul atas kepala &amp; dalam log kelas<br>🎙️ <b>Suara</b>: tekan untuk hidupkan mikrofon — hanya rakan yang <b>berdekatan</b> boleh dengar, makin jauh makin perlahan<br>🔇 Boleh bisukan sesiapa · tiada rakaman suara disimpan<br>🚫 Jangan kongsi nombor telefon / pautan<br>👩‍🏫 Cikgu boleh matikan chat atau suara bila-bila masa<br>🎥 Kamera tidak lagi tersekat di dalam pokok</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
+  if (W.intro && !W.intro2 && !PANEL){ W.intro2 = 1; save(); panel(head('🐾', 'BARU: HAIWAN & BENGKEL', 'Haiwan liar kini berkeliaran di hutan!') +
     '<div class="text-[13px] leading-relaxed mt-3">⚔️ <b>Duel kuiz</b>: dekati haiwan → jawab soalan betul untuk menjinak<br>🧠 Kepintaran, 💪 Kekuatan &amp; ❤️ Stamina menjadikan duel lebih mudah — belajar = kuat!<br>🐅 Haiwan lebih besar perlukan tahap lebih tinggi<br>🐾 <b>Kandang</b> di Pangkalan: haiwan boleh ikut kamu atau <b>jaga pangkalan</b><br>🔨 <b>Bengkel</b>: 🧶 bulu + 🪵 kayu → jaket, perisai &amp; senjata<br>📱 Pusing telefon ke <b>landskap</b> untuk skrin lebih luas</div>' + btn('close', '▶ Mari!', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (NET) say('👥 Dunia kelas ' + esc(NET.cls), 2200);
 }
