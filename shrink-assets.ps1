@@ -27,8 +27,9 @@ if (Test-Path $list) {
 # "edurank__stor__<name>.png": pull them in. Other files in Downloads are never touched.
 $dlDir = Join-Path $env:USERPROFILE 'Downloads'
 if ($known.Count -and (Test-Path $dlDir)) {
-    Get-ChildItem $dlDir -File | Where-Object { $_.Name -match '^edurank__stor__' -and $_.Extension -match '^\.(png|jpe?g)$' -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | ForEach-Object {
-        $b = ($_.BaseName -replace '^edurank__stor__', '' -replace ' \(\d+\)$', '').Trim().ToLower()
+    $dlTag = 'edurank__' + (Split-Path $Dir -Leaf) + '__'          # stor, klinik, dunia ...
+    Get-ChildItem $dlDir -File | Where-Object { $_.Name.StartsWith($dlTag) -and $_.Extension -match '^\.(png|jpe?g)$' -and $_.LastWriteTime -lt (Get-Date).AddSeconds(-5) } | ForEach-Object {
+        $b = ($_.BaseName.Substring($dlTag.Length) -replace ' \(\d+\)$', '').Trim().ToLower()
         if ($known.ContainsKey($b)) {
             Move-Item -LiteralPath $_.FullName -Destination (Join-Path $Dir ($b + $_.Extension.ToLower())) -Force
             Write-Host "  [aset] $($_.Name) dipindah dari Downloads"

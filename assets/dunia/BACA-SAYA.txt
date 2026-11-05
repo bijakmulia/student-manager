@@ -92,3 +92,8 @@ GELOMBANG 3 — kemasan (15)
   fx_bintang
 
 Amaran: ikon & potret JANGAN guna warna merah jambu / magenta / ungu pada objek (akan dibuang bersama latar).
+
+JANA AUTOMATIK (pilihan)
+  Skrip Tampermonkey tools/jana-gambar-edurank.user.js membaca PROMPT-ASET.txt dan menjana gambar sendiri
+  di Gemini atau ChatGPT (dikesan automatik), menyimpan sebagai edurank__dunia__<nama>.png dalam Downloads.
+  Auto-push memindahkan, membuang latar magenta dan mengecilkan. Progres disimpan; boleh sambung bila-bila masa.
