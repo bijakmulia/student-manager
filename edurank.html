@@ -15151,7 +15151,7 @@ function viewSim(){                                  /* semua simulasi dipapar t
     '<div class="text-[12px] text-muted mt-2 leading-relaxed">' + (MURID ? '<b style="color:#FDE68A">Tugasan:</b> tonton simulasi hingga habis, jawab ' + SIM_QN + ' soalan rawak dan dapatkan ✅' + (MURID.pack && MURID.pack.awam ? '' : ' + ' + SIM_RP + ' RP') + '. Boleh dibuat bila-bila masa.'
       : 'Animasi tutorial untuk PdP — tayang di projektor, jeda, ulang dan lompat antara babak. Dalam app murid (Kongsi Game), setiap simulasi menjadi <b style="color:#FDE68A">tugasan</b>: tonton → kuiz ' + SIM_QN + ' soalan → ✅ + ' + SIM_RP + ' RP.') + '</div>' +
       (MURID ? '' : '<button class="btn btn-c clip-s w-full mt-3 !py-2 text-[13px]" data-act="sim-progress"><i class="fa-solid fa-chart-column"></i> Progress Tugasan Murid</button>') + '</div>';
-  if (!MURID) h += '<button class="panel clip p-4 w-full text-left flex items-center gap-3 mt-3" data-act="world-open" style="border-color:#4ADE80;background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(20,28,38,.9))"><div style="font-size:40px;line-height:1">🌍</div><div class="flex-1 min-w-0"><div class="text-[11px] tracking-widest" style="color:#4ADE80">BETA · FASA 1</div><div class="font-bold text-[16px]">DUNIA ILMU</div><div class="text-[12px] text-muted leading-snug">Dunia terbuka 3D: tebang pokok, memancing, makan, bina pangkalan. Simulasi = misi harian yang menaikkan kemahiran.</div></div><i class="fa-solid fa-play text-[20px]" style="color:#4ADE80"></i></button>';
+  h += '<button class="panel clip p-4 w-full text-left flex items-center gap-3 mt-3" data-act="world-open" style="border-color:#4ADE80;background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(20,28,38,.9))"><div style="font-size:40px;line-height:1">🌍</div><div class="flex-1 min-w-0"><div class="text-[11px] tracking-widest" style="color:#4ADE80">BETA · FASA 2</div><div class="font-bold text-[16px]">DUNIA ILMU</div><div class="text-[12px] text-muted leading-snug">Dunia terbuka 3D satu kelas: tebang pokok, memancing, makan, bina pangkalan & sertai pasukan. Simulasi = misi harian yang menaikkan kemahiran.</div></div><i class="fa-solid fa-play text-[20px]" style="color:#4ADE80"></i></button>';
   const card = x => '<button class="panel clip p-3 w-full text-left flex items-center gap-3" data-act="sim-play" data-id="' + x.id + '">' +
       '<div style="font-size:42px;line-height:1">' + x.ico + '</div><div class="flex-1 min-w-0"><div class="text-[11px] text-muted tracking-widest">' + esc(x.subjLabel) + ' · ' + x.scenes.length + ' BABAK · ' + Math.round(x.dur) + ' SAAT</div>' +
       '<div class="font-bold text-[16px] mt-1">' + esc(x.title) + '</div><div class="text-[12px] text-muted mt-1 leading-snug">' + esc(x.desc) + '</div>' +
@@ -15290,15 +15290,17 @@ function simPlay(id, opt){
       '<div class="flex gap-2 mt-3">' + qzBtn('rev', '🔁 Tonton babak ' + (q.k + 1)) + '</div>';
   }
   function qzFinish(){
-    const first = WLD ? !opt.done : !simOk(sim.id); if (!WLD) simOkSet(sim.id); sfx('myth'); vibrate([30, 40, 30]);
+    const wFirst = WLD && !opt.done, first = (MURID || !WLD) ? !simOk(sim.id) : wFirst; if (MURID || !WLD) simOkSet(sim.id); sfx('myth'); vibrate([30, 40, 30]);
     let note = '';
-    if (WLD){ if (first && opt.onDone) opt.onDone(); note = first ? '🌍 Misi siap! Ganjaran dimasukkan ke Dunia Ilmu: <b style="color:#4ADE80">+1 kemahiran · +25 ⚡ · +3 🪵</b>.' : 'Latihan selesai — misi ini sudah siap hari ini.'; }
+    if (wFirst && opt.onDone) opt.onDone();
+    if (WLD && !MURID) note = wFirst ? '🌍 Misi siap! Ganjaran dimasukkan ke Dunia Ilmu: <b style="color:#4ADE80">+1 kemahiran · +25 ⚡ · +3 🪵</b>.' : 'Latihan selesai — misi ini sudah siap hari ini.';
     else if (!first) note = 'Latihan selesai — tugasan ini sudah ditanda sebelum ini.';
     else if (MURID && MURID.pack && MURID.pack.awam) note = '🌍 Mod Awam: tanda ✅ disimpan di peranti ini sahaja (tiada RP).';
     else if (MURID && MURID.me && !/^lawand$/.test(MURID.me.i)){ const q = (() => { try { return JSON.parse(localStorage.getItem('rk_murid_q') || '[]'); } catch(e){ return []; } })();
       q.push({ k: 'sim', s: MURID.me.i, sim: sim.id, t: Date.now() }); try { localStorage.setItem('rk_murid_q', JSON.stringify(q.slice(-50))); } catch(e){} muridFlush();
       note = '📲 Tugasan <b>' + esc(MURID.me.n || '') + '</b> dihantar kepada guru: <b style="color:#FB923C">+' + SIM_RP + ' RP</b>.'; }
     else note = 'Log masuk dengan nama kamu (kod sekolah) supaya tugasan direkod kepada guru.';
+    if (WLD && MURID && wFirst) note += '<br>🌍 Dunia Ilmu: <b style="color:#4ADE80">+1 kemahiran · +25 ⚡ · +3 🪵</b>.';
     qzCard('<div class="text-center"><div style="font-size:56px">✅</div><div class="font-bold text-[22px]" style="color:#4ADE80">SIMULASI SELESAI!</div>' +
       '<div class="text-[14px] mt-1">' + esc(sim.title) + ' · ' + QZ.list.length + '/' + QZ.list.length + ' betul' + (QZ.miss ? ' (' + QZ.miss + ' kali tonton semula)' : ' pada cubaan pertama 🌟') + '</div>' +
       '<div class="text-[13px] mt-3 leading-relaxed">' + note + '</div></div><div class="flex gap-2 mt-4">' + qzBtn('close', 'Tutup', 'btn') + qzBtn('list', '🎬 Simulasi lain') + '</div>', '#4ADE80');
@@ -18647,23 +18649,25 @@ async function muridLogout(){
   location.reload();
 }
 
-/* ============ DUNIA ILMU (Beta) — dunia terbuka 3D, Fasa 1 ============
-   Kampung kecil: Dewan Misi (simulasi = misi harian), Rumah Arkad (kuiz pantas), Akademi (statistik),
-   Dapur (makan = tenaga), Pangkalan (bina dengan kayu). Tebang pokok, memancing, petik buah, timba air.
-   Belajar = jadi kuat: setiap simulasi yang selesai menambah mata kemahiran (Kekuatan / Kepintaran / Stamina)
-   dan kemahiran menentukan kelajuan & hasil kerja di dunia. Kemajuan disimpan dalam peranti ini sahaja (Fasa 1). */
-const WLD_KEY = 'rk_world_v1';
+/* ============ DUNIA ILMU (Beta) — dunia terbuka 3D ============
+   Fasa 1: kampung, sumber (kayu / ikan / buah / air), tenaga & makan, bangunan misi, arkad, akademi, dapur, pangkalan.
+   Fasa 2: dunia besar, simpanan awan, pemain lain (satu dunia untuk satu kelas, maks 25), pangkalan setiap murid,
+           bendera = pasukan (perbendaharaan kayu pasukan beri bonus), papan kedudukan kelas.
+   Belajar = jadi kuat: simulasi yang selesai menambah mata kemahiran (Kekuatan / Kepintaran / Stamina).
+   Rangkaian: ipbd_share/__kombo_<bilik>/… melalui kmNet (anonymous auth). Bilik = hash(token|kod|kelas). */
 const WSK = { kuat: { n: 'Kekuatan', ico: '💪', d: 'PJK — menebang lebih pantas, kayu lebih banyak' },
   pint: { n: 'Kepintaran', ico: '🧠', d: 'Sains — memancing lebih mudah, ikan lebih banyak' },
   stam: { n: 'Stamina', ico: '❤️', d: 'Kesihatan — tenaga maksimum & makanan lebih berkhasiat' } };
 const wSkillOf = x => /kesihatan/i.test(x.subjLabel || '') ? 'stam' : /sains/i.test(x.subjLabel || '') ? 'pint' : 'kuat';
-function wldLoad(){
-  let w = null; try { w = JSON.parse(localStorage.getItem(WLD_KEY) || 'null'); } catch(e){}
-  const d = { v: 1, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0 };
+const wFlagCols = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899'];
+const wFlagName = { '#EF4444': 'Merah', '#3B82F6': 'Biru', '#22C55E': 'Hijau', '#F59E0B': 'Kuning', '#A855F7': 'Ungu', '#EC4899': 'Merah Jambu' };
+const wPtsSum = o => o && o.pts ? (o.pts.kuat | 0) + (o.pts.pint | 0) + (o.pts.stam | 0) : 0;
+function wNorm(w, key){
+  const d = { v: 2, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0 };
   w = w || {};
-  const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {} });
-  const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + (Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
-  W.t = Date.now(); return W;
+  const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {} }); delete W._t;
+  const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + Math.max(0, Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
+  W.t = Date.now(); W.key = key; return W;
 }
 const wLvl = (W, k) => Math.min(10, 1 + Math.floor((W.pts[k] || 0) / 2));
 const wMaxE = W => 100 + 10 * (wLvl(W, 'stam') - 1);
@@ -18676,23 +18680,54 @@ const wDailyQuests = () => {                                 /* 5 misi sehari, b
   SIM_LIB.forEach(x => { if (pick.length < 5 && !pick.includes(x)) pick.push(x); });
   return pick;
 };
+/* Sambungan kelas: murid (kod sekolah) atau guru (kongsi murid dihidupkan) → bilik dunia kelas. null = main solo. */
+async function wNetInit(){
+  try {
+    let t, kod, cid, me, mates;
+    if (MURID){
+      if (!MURID.me || !MURID.pack || MURID.pack.awam || !MURID.kod || /^lawan\d$/.test(MURID.me.i)) return null;
+      t = MURID.p.t; kod = MURID.kod; cid = MURID.me.c; me = { id: MURID.me.i, n: MURID.me.n || 'Murid' };
+      mates = (MURID.pack.st || []).filter(x => x.c === cid && !/^lawan\d$/.test(x.i)).map(x => ({ id: x.i, n: x.n }));
+    } else {
+      if (!(S.murid && S.murid.on && FB.on)) return null;
+      const cls = baseClasses().filter(c => S.students.some(x => x.classId === c.id)); if (!cls.length) return null;
+      cid = (cls.find(c => c.id === S.ui.activeClassId) || cls[0]).id; t = S.murid.token; kod = S.murid.kod; me = { id: 'guru', n: 'Cikgu' };
+      mates = S.students.filter(x => x.classId === cid).map(x => ({ id: x.id, n: x.name }));
+    }
+    mates.sort((a, b) => String(a.id).localeCompare(String(b.id))); mates = mates.slice(0, 25);
+    const room = 'w_' + (await sha(t + '|' + String(kod).toUpperCase().trim() + '|' + cid)).slice(0, 24);
+    const net = await kmNet(room); if (!net || net.kind !== 'fb') return null;
+    const cn = (baseClasses().find(c => c.id === cid) || (MURID && MURID.pack && (MURID.pack.cls || []).find(c => c.i === cid)) || {});
+    return { net, me, mates, room, cls: cn.name || cn.n || '' };
+  } catch(e){ console.warn('dunia: tiada rangkaian', e); return null; }
+}
+const wCloudLoad = NET => new Promise(res => { let done = false; let un = null;
+  try { un = NET.net.on('ws/' + NET.me.id, v => { if (done) return; done = true; try { un && un(); } catch(e){} res(v); }); } catch(e){ return res(null); }
+  setTimeout(() => { if (!done){ done = true; res(null); } }, 4500); });
 
 async function worldOpen(){
   if (document.getElementById('wldRoot')) return;
   toast('Memuatkan dunia…');
   let THREE; try { THREE = await import(ESC_THREE); } catch(e){ return toast('Gagal memuat enjin 3D. Semak sambungan internet.', null, true); }
-  try { worldGame(THREE); }
-  catch(e){ const r = document.getElementById('wldRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Dunia gagal dimulakan.', null, true); }
+  try {
+    const NET = await wNetInit();
+    const key = 'rk_world_v1' + (NET && NET.me.id !== 'guru' ? '_' + NET.me.id : '');
+    let local = null; try { local = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e){}
+    if (NET){ const rem = await wCloudLoad(NET);
+      if (rem && (wPtsSum(rem) > wPtsSum(local) || (wPtsSum(rem) === wPtsSum(local) && (rem._t || 0) > ((local && local.t) || 0)))) local = rem; }
+    worldGame(THREE, wNorm(local, key), NET);
+  } catch(e){ const r = document.getElementById('wldRoot'); if (r) r.remove(); unlockBody(); console.error(e); toast('Dunia gagal dimulakan.', null, true); }
 }
 
-function worldGame(THREE){
-  const W = wldLoad(), TODAY = todayKey();
+function worldGame(THREE, W, NET){
+  const TODAY = todayKey(), me = NET ? NET.me : { id: 'solo', n: 'Anda' }, RW = 150;     /* RW = jejari dunia boleh dijelajah */
   const root = document.createElement('div'); root.id = 'wldRoot';
   root.style.cssText = 'position:fixed;inset:0;z-index:940;background:#9BD3F0;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit;color:#fff';
   root.innerHTML =
     '<canvas id="wCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
-    '<div id="wHud" style="position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;display:flex;gap:8px;align-items:flex-start;pointer-events:none;text-shadow:0 1px 3px #000"></div>' +
+    '<div id="wHud" style="position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;display:flex;gap:8px;align-items:flex-start;pointer-events:none;text-shadow:0 1px 3px #000;padding-right:64px;flex-wrap:wrap"></div>' +
     '<button data-w="x" class="btn clip-s !px-3 !py-1" style="position:absolute;right:10px;top:calc(8px + var(--safe-t,0px))"><i class="fa-solid fa-xmark"></i></button>' +
+    '<canvas id="wMap" width="200" height="200" style="position:absolute;right:10px;top:calc(52px + var(--safe-t,0px));width:96px;height:96px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(10,16,24,.55);pointer-events:none"></canvas>' +
     '<div id="wMsg" style="position:absolute;left:16px;right:16px;top:30%;text-align:center;font-size:20px;font-weight:800;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .25s"></div>' +
     '<div id="wJoy" style="position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.4);display:none;pointer-events:none"><i id="wKnob" style="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.7)"></i></div>' +
     '<button data-w="act" id="wAct" class="btn btn-o clip-s" style="position:absolute;right:16px;bottom:calc(26px + var(--safe-b,0px));min-width:112px;height:76px;font-size:15px;font-weight:800;display:none;line-height:1.15;padding:6px 10px"></button>' +
@@ -18700,7 +18735,9 @@ function worldGame(THREE){
     '<div id="wPanel" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(2,6,14,.7);overflow:auto"></div>';
   document.body.appendChild(root); lockBody(); orientFree();
   const $w = s => root.querySelector(s);
-  const save = () => { W.t = Date.now(); try { localStorage.setItem(WLD_KEY, JSON.stringify(W)); } catch(e){} };
+  let dirty = false, cloudT = 0;
+  const cloudSave = () => { if (!NET || !dirty) return; dirty = false; try { NET.net.set('ws/' + me.id, Object.assign({}, W, { _t: Date.now() })); } catch(e){} };
+  const save = () => { W.t = Date.now(); dirty = true; try { localStorage.setItem(W.key, JSON.stringify(W)); } catch(e){} };
 
   /* ---------- pentas ---------- */
   const R = new THREE.WebGLRenderer({ canvas: $w('#wCv'), antialias: true, powerPreference: 'high-performance' });
@@ -18708,8 +18745,8 @@ function worldGame(THREE){
   const scene = new THREE.Scene();
   const sky = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 256);
     gr.addColorStop(0, '#5BA8E6'); gr.addColorStop(.6, '#A9DAF5'); gr.addColorStop(1, '#F3F0D8'); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
-  scene.background = sky; scene.fog = new THREE.Fog(0xDDEBDD, 40, 120);
-  const cam = new THREE.PerspectiveCamera(58, 1, .1, 200);
+  scene.background = sky; scene.fog = new THREE.Fog(0xDDEBDD, 55, 170);
+  const cam = new THREE.PerspectiveCamera(58, 1, .1, 260);
   const resize = () => { const w = root.clientWidth, h = root.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 70 : 58; cam.updateProjectionMatrix(); };
   resize(); window.addEventListener('resize', resize);
   scene.add(new THREE.HemisphereLight(0xFFFFFF, 0x6B8F5A, 1.25));
@@ -18719,47 +18756,58 @@ function worldGame(THREE){
   let seed = 20260; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
   /* tanah */
-  const grass = ctex(128, 128, (g, w, h) => { g.fillStyle = '#5FA84A'; g.fillRect(0, 0, w, h); for (let i = 0; i < 700; i++){ g.fillStyle = ['#6DB857', '#55993F', '#7CC262'][i % 3]; g.fillRect(Math.random() * w, Math.random() * h, 2, 3); } }, 40);
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(95, 48), new THREE.MeshStandardMaterial({ map: grass, roughness: 1 })); ground.rotation.x = -Math.PI / 2; scene.add(ground);
+  const grass = ctex(128, 128, (g, w, h) => { g.fillStyle = '#5FA84A'; g.fillRect(0, 0, w, h); for (let i = 0; i < 700; i++){ g.fillStyle = ['#6DB857', '#55993F', '#7CC262'][i % 3]; g.fillRect(Math.random() * w, Math.random() * h, 2, 3); } }, 90);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(190, 56), new THREE.MeshStandardMaterial({ map: grass, roughness: 1 })); ground.rotation.x = -Math.PI / 2; scene.add(ground);
   const plaza = new THREE.Mesh(new THREE.CircleGeometry(13, 40), new THREE.MeshStandardMaterial({ color: 0xD9CFA8, roughness: 1 })); plaza.rotation.x = -Math.PI / 2; plaza.position.y = .02; scene.add(plaza);
   [[0, -9, 3, 10], [-9, -4, 10, 3], [9, -2, 10, 3], [8, 8, 7, 3]].forEach(([x, z, w, d]) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0xC9BC8E, roughness: 1 })); p.rotation.x = -Math.PI / 2; p.position.set(x, .025, z); scene.add(p); });
-  for (let i = 0; i < 26; i++){                                /* gunung di tepi dunia */
-    const a = i / 26 * Math.PI * 2, r = 82 + rnd() * 8, s = 14 + rnd() * 16;
+  for (let i = 0; i < 40; i++){                                /* gunung di tepi dunia */
+    const a = i / 40 * Math.PI * 2, r = 168 + rnd() * 12, s = 16 + rnd() * 20;
     const m = new THREE.Mesh(new THREE.ConeGeometry(s, s * 1.5, 6), M(i % 3 ? 0x6B7F5E : 0x7A8C6E)); m.position.set(Math.cos(a) * r, s * .55, Math.sin(a) * r); scene.add(m); }
+  /* sungai-kolam */
+  const PONDS = [{ x: 30, z: -22, r: 9 }, { x: -78, z: -52, r: 14 }, { x: 70, z: 66, r: 12 }, { x: -20, z: 105, r: 11 }];
+  PONDS.forEach(p => {
+    const w = new THREE.Mesh(new THREE.CircleGeometry(p.r, 36), new THREE.MeshStandardMaterial({ color: 0x3C9BD6, roughness: .2, metalness: .1, transparent: true, opacity: .92 })); w.rotation.x = -Math.PI / 2; w.position.set(p.x, .05, p.z); scene.add(w);
+    const bk = new THREE.Mesh(new THREE.RingGeometry(p.r, p.r + 1.1, 36), new THREE.MeshStandardMaterial({ color: 0x8C7B54, roughness: 1 })); bk.rotation.x = -Math.PI / 2; bk.position.set(p.x, .04, p.z); scene.add(bk); });
 
-  /* kolam */
-  const POND = { x: 30, z: -22, r: 9 };
-  const pond = new THREE.Mesh(new THREE.CircleGeometry(POND.r, 36), new THREE.MeshStandardMaterial({ color: 0x3C9BD6, roughness: .2, metalness: .1, transparent: true, opacity: .92 })); pond.rotation.x = -Math.PI / 2; pond.position.set(POND.x, .05, POND.z); scene.add(pond);
-  const bank = new THREE.Mesh(new THREE.RingGeometry(POND.r, POND.r + 1.1, 36), new THREE.MeshStandardMaterial({ color: 0x8C7B54, roughness: 1 })); bank.rotation.x = -Math.PI / 2; bank.position.set(POND.x, .04, POND.z); scene.add(bank);
+  /* ---------- tapak pangkalan: cincin 26 petak di sekeliling kampung (satu setiap murid + guru) ---------- */
+  const SLOTS = []; for (let k = 0; k < 26; k++){ const a = k / 26 * Math.PI * 2 + .2; SLOTS.push({ x: Math.cos(a) * 78, z: Math.sin(a) * 78 }); }
+  const mates = NET ? NET.mates : [];
+  const slotOf = id => id === 'guru' ? 25 : Math.max(0, mates.findIndex(m => m.id === id));
+  const MYSLOT = SLOTS[NET ? slotOf(me.id) : 0];
 
-  /* ---------- pokok & semak ---------- */
+  /* ---------- pokok & semak (InstancedMesh: ratusan pokok tanpa menjejas telefon) ---------- */
   const COL = [];                                              /* penghalang bulat: { x, z, r } */
-  const trunkG = new THREE.CylinderGeometry(.22, .3, 1.6, 6), leafG = new THREE.ConeGeometry(1.25, 2.2, 7), leafG2 = new THREE.ConeGeometry(.95, 1.7, 7);
-  const trunkM = M(0x7A4B25), leafM = M(0x2F8F46), leafM2 = M(0x3DA356);
-  const TREES = [], BUSH = [];
-  const clear = (x, z) => Math.hypot(x, z) > 17 && Math.hypot(x - POND.x, z - POND.z) > POND.r + 3 && Math.hypot(x + 22, z - 18) > 9 && Math.hypot(x - 14, z - 12) > 8;
-  for (let i = 0; i < 70; i++){
-    let x, z, n = 0; do { const a = rnd() * Math.PI * 2, r = 18 + rnd() * 52; x = Math.cos(a) * r; z = Math.sin(a) * r; n++; } while (!clear(x, z) && n < 20);
-    if (!clear(x, z)) continue;
-    const g = new THREE.Group(), s = .85 + rnd() * .5;
-    const t = new THREE.Mesh(trunkG, trunkM); t.position.y = .8; g.add(t);
-    const l1 = new THREE.Mesh(leafG, leafM); l1.position.y = 2.5; g.add(l1); const l2 = new THREE.Mesh(leafG2, leafM2); l2.position.y = 3.6; g.add(l2);
-    g.scale.setScalar(s); g.position.set(x, 0, z); g.rotation.y = rnd() * 6; scene.add(g);
-    const T = { g, x, z, s, hp: 0, max: 3, alive: true, back: 0, hit: 0 }; TREES.push(T); COL.push({ x, z, r: .55 * s, T });
+  const clearP = (x, z) => Math.hypot(x, z) > 20 && PONDS.every(p => Math.hypot(x - p.x, z - p.z) > p.r + 3) && SLOTS.every(s => Math.hypot(x - s.x, z - s.z) > 11) && Math.hypot(x - 14, z - 12) > 9;
+  const TREES = [];
+  for (let i = 0; i < 420 && TREES.length < 300; i++){
+    const a = rnd() * Math.PI * 2, r = 24 + rnd() * (RW - 26), x = Math.cos(a) * r, z = Math.sin(a) * r; if (!clearP(x, z)) continue;
+    TREES.push({ x, z, s: .85 + rnd() * .55, ry: rnd() * 6, hp: 0, alive: true, back: 0, hit: 0, sc: 0, idx: TREES.length });
   }
-  const bushG = new THREE.SphereGeometry(.7, 8, 6), bushM = M(0x3F9A3A), berryG = new THREE.SphereGeometry(.12, 6, 4), berryM = M(0xE23B5A, { emissive: 0x550018 });
-  for (let i = 0; i < 14; i++){
-    let x, z, n = 0; do { const a = rnd() * Math.PI * 2, r = 16 + rnd() * 40; x = Math.cos(a) * r; z = Math.sin(a) * r; n++; } while (!clear(x, z) && n < 20);
-    if (!clear(x, z)) continue;
-    const g = new THREE.Group(); const b = new THREE.Mesh(bushG, bushM); b.position.y = .5; b.scale.y = .8; g.add(b);
-    const berries = []; for (let k = 0; k < 6; k++){ const o = new THREE.Mesh(berryG, berryM); const a = k * 1.05; o.position.set(Math.cos(a) * .55, .55 + (k % 2) * .25, Math.sin(a) * .55); g.add(o); berries.push(o); }
-    g.position.set(x, 0, z); scene.add(g); BUSH.push({ g, x, z, berries, has: true, back: 0 });
+  const NT = TREES.length, trunkI = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .3, 1.6, 6), M(0x7A4B25), NT),
+    leafI = new THREE.InstancedMesh(new THREE.ConeGeometry(1.25, 2.2, 7), M(0x2F8F46), NT), leaf2I = new THREE.InstancedMesh(new THREE.ConeGeometry(.95, 1.7, 7), M(0x3DA356), NT);
+  [trunkI, leafI, leaf2I].forEach(m => { m.frustumCulled = false; scene.add(m); });
+  const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _e = new THREE.Euler();
+  function setTree(T, sc, rz){
+    T.sc = sc; _e.set(0, T.ry, rz || 0, 'YXZ'); _q.setFromEuler(_e); _s.setScalar(Math.max(.001, sc));
+    [[trunkI, .8], [leafI, 2.5], [leaf2I, 3.6]].forEach(([im, y]) => { _p.set(T.x, y * sc, T.z); _m.compose(_p, _q, _s); im.setMatrixAt(T.idx, _m); });
+    trunkI.instanceMatrix.needsUpdate = leafI.instanceMatrix.needsUpdate = leaf2I.instanceMatrix.needsUpdate = true;
   }
+  TREES.forEach(T => { setTree(T, T.s); COL.push({ x: T.x, z: T.z, r: .55 * T.s, T }); });
+  const BUSH = [];
+  for (let i = 0; i < 160 && BUSH.length < 70; i++){
+    const a = rnd() * Math.PI * 2, r = 22 + rnd() * (RW - 30), x = Math.cos(a) * r, z = Math.sin(a) * r; if (!clearP(x, z)) continue;
+    BUSH.push({ x, z, has: true, back: 0, idx: BUSH.length });
+  }
+  const NB = BUSH.length, bushI = new THREE.InstancedMesh(new THREE.SphereGeometry(.7, 8, 6), M(0x3F9A3A), NB), berryI = new THREE.InstancedMesh(new THREE.SphereGeometry(.13, 6, 4), M(0xE23B5A, { emissive: 0x550018 }), NB * 5);
+  [bushI, berryI].forEach(m => { m.frustumCulled = false; scene.add(m); });
+  const setBush = (B, on) => { _q.identity(); _s.set(1, .8, 1); _p.set(B.x, .5, B.z); _m.compose(_p, _q, _s); bushI.setMatrixAt(B.idx, _m); bushI.instanceMatrix.needsUpdate = true;
+    for (let k = 0; k < 5; k++){ const ang = k * 1.26; _s.setScalar(on ? 1 : .0001); _p.set(B.x + Math.cos(ang) * .55, .55 + (k % 2) * .25, B.z + Math.sin(ang) * .55); _m.compose(_p, _q, _s); berryI.setMatrixAt(B.idx * 5 + k, _m); } berryI.instanceMatrix.needsUpdate = true; };
+  BUSH.forEach(B => setBush(B, true));
 
   /* ---------- bangunan ---------- */
-  const label = (txt, col) => { const t = ctex(512, 128, (g, w, h) => { g.fillStyle = 'rgba(15,23,42,.88)'; g.beginPath(); g.roundRect ? g.roundRect(6, 6, w - 12, h - 12, 24) : g.rect(6, 6, w - 12, h - 12); g.fill(); g.lineWidth = 5; g.strokeStyle = col; g.stroke();
-    g.fillStyle = '#fff'; g.font = '800 52px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, w / 2, h / 2 + 3); });
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); s.scale.set(5.2, 1.3, 1); s.renderOrder = 5; return s; };
+  const label = (txt, col, w, h, fs) => { const t = ctex(512, 128, (g, cw, ch) => { g.fillStyle = 'rgba(15,23,42,.88)'; g.beginPath(); g.roundRect ? g.roundRect(6, 6, cw - 12, ch - 12, 24) : g.rect(6, 6, cw - 12, ch - 12); g.fill(); g.lineWidth = 5; g.strokeStyle = col; g.stroke();
+    g.fillStyle = '#fff'; g.font = '800 ' + (fs || 52) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, cw / 2, ch / 2 + 3, cw - 40); });
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); s.scale.set(w || 5.2, h || 1.3, 1); s.renderOrder = 5; return s; };
   const BLD = [];
   function house(id, name, ico, x, z, w, d, h, wall, roof, face){
     const g = new THREE.Group();
@@ -18769,8 +18817,7 @@ function worldGame(THREE){
     [-1, 1].forEach(sx => { const wn = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.1, .15), M(0xBEE3F8, { emissive: 0x335577 })); wn.position.set(sx * (w / 2 - 1.5), h * .6, d / 2 + .05); g.add(wn); });
     const lb = label(ico + ' ' + name, '#FDE68A'); lb.position.set(0, h + h * .55 + 1.2, 0); g.add(lb);
     g.position.set(x, 0, z); g.rotation.y = face || 0; scene.add(g);
-    const R0 = Math.max(w, d) / 2 + 3.3;
-    BLD.push({ id, name, x, z, rr: R0 }); COL.push({ x, z, r: Math.max(w, d) * .55 });
+    BLD.push({ id, name, x, z, rr: Math.max(w, d) / 2 + 3.3, ico }); COL.push({ x, z, r: Math.max(w, d) * .55 });
   }
   house('misi', 'Dewan Misi', '🎬', 0, -22, 10, 7, 4.4, 0xF2D98D, 0xB5472E, 0);
   house('arkad', 'Rumah Arkad', '🕹️', 24, -4, 7, 6, 3.6, 0xC9A7F5, 0x5B3FA0, -Math.PI / 2);
@@ -18778,57 +18825,92 @@ function worldGame(THREE){
   house('dapur', 'Dapur', '🍲', 20, 14, 6.5, 5.5, 3.3, 0xF6C8A0, 0xA33A2A, -Math.PI / 2 - .3);
   const well = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.1, .9, 10), M(0x8A8A8A)); b.position.y = .45; well.add(b); const wt = new THREE.Mesh(new THREE.CylinderGeometry(.8, .8, .05, 10), new THREE.MeshStandardMaterial({ color: 0x3C9BD6 })); wt.position.y = .88; well.add(wt);
     [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.BoxGeometry(.12, 1.8, .12), M(0x6B4423)); p.position.set(s * .95, 1.4, 0); well.add(p); }); const rf = new THREE.Mesh(new THREE.BoxGeometry(2.4, .12, 1.3), M(0xB5472E)); rf.position.y = 2.3; well.add(rf);
-    const lb = label('💧 Perigi', '#7DD3FC'); lb.scale.set(3.2, .8, 1); lb.position.y = 3.4; well.add(lb); well.position.set(-8, 0, 6); scene.add(well); COL.push({ x: -8, z: 6, r: 1.2 }); }
+    const lb = label('💧 Perigi', '#7DD3FC', 3.2, .8); lb.position.y = 3.4; well.add(lb); well.position.set(-8, 0, 6); scene.add(well); COL.push({ x: -8, z: 6, r: 1.2 }); }
   const WELL = { x: -8, z: 6 };
 
-  /* ---------- pangkalan saya ---------- */
-  const BASE = { x: -28, z: 20 };
-  const baseG = new THREE.Group(); baseG.position.set(BASE.x, 0, BASE.z); scene.add(baseG);
-  const plot = new THREE.Mesh(new THREE.CircleGeometry(8, 32), new THREE.MeshStandardMaterial({ color: 0x9A7B4F, roughness: 1 })); plot.rotation.x = -Math.PI / 2; plot.position.y = .03; baseG.add(plot);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, 4, 6), M(0xCCCCCC)); pole.position.y = 2; baseG.add(pole);
-  const FLAGS = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899'];
-  const flagM = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.1), new THREE.MeshStandardMaterial({ color: 0x888888, side: THREE.DoubleSide })); flagM.position.set(.95, 3.4, 0); baseG.add(flagM);
-  const pondok = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(4, 2.6, 3.6), M(0xB88A52)); b.position.y = 1.3; pondok.add(b); const r = new THREE.Mesh(new THREE.ConeGeometry(3.3, 1.8, 4), M(0x8B3A2B)); r.position.y = 3.5; r.rotation.y = Math.PI / 4; pondok.add(r);
-    const d = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.8, .15), M(0x4A2F18)); d.position.set(0, .9, 1.85); pondok.add(d); pondok.position.set(-1.5, 0, -2.5); baseG.add(pondok); }
-  const pagar = new THREE.Group(); for (let i = 0; i < 22; i++){ const a = i / 22 * Math.PI * 2; if (Math.abs(a - Math.PI / 2) < .35) continue; const p = new THREE.Mesh(new THREE.BoxGeometry(.2, 1.3, .2), M(0x8A5A2B)); p.position.set(Math.cos(a) * 7.4, .65, Math.sin(a) * 7.4); pagar.add(p);
-    const b = new THREE.Mesh(new THREE.BoxGeometry(2.2, .14, .1), M(0xA0703A)); b.position.set(Math.cos(a + .14) * 7.4, .9, Math.sin(a + .14) * 7.4); b.rotation.y = -(a + .14) - Math.PI / 2; pagar.add(b); } baseG.add(pagar);
-  const baseLb = label('🏕️ Pangkalan Saya', '#86EFAC'); baseLb.position.set(0, 6.4, 0); baseG.add(baseLb);
-  const refreshBase = () => { pondok.visible = W.built.hut > 0; pagar.visible = W.built.fence > 0; const f = W.built.flag; flagM.visible = !!f; if (f) flagM.material.color.set(f); };
-  refreshBase(); BLD.push({ id: 'base', name: 'Pangkalan Saya', x: BASE.x, z: BASE.z, rr: 9 });
+  /* ---------- pangkalan (setiap murid ada satu) ---------- */
+  const BASES = new Map();
+  function makeBase(id, name, slot){
+    const g = new THREE.Group(); g.position.set(slot.x, 0, slot.z); g.rotation.y = Math.atan2(-slot.x, -slot.z); scene.add(g);
+    const plot = new THREE.Mesh(new THREE.CircleGeometry(8, 32), new THREE.MeshStandardMaterial({ color: 0x9A7B4F, roughness: 1 })); plot.rotation.x = -Math.PI / 2; plot.position.y = .03; g.add(plot);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, 4, 6), M(0xCCCCCC)); pole.position.set(-4.5, 2, 3.5); g.add(pole);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.1), new THREE.MeshStandardMaterial({ color: 0x888888, side: THREE.DoubleSide })); flag.position.set(-3.55, 3.4, 3.5); g.add(flag);
+    const hut = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(4, 2.6, 3.6), M(0xB88A52)); b.position.y = 1.3; hut.add(b); const r = new THREE.Mesh(new THREE.ConeGeometry(3.3, 1.8, 4), M(0x8B3A2B)); r.position.y = 3.5; r.rotation.y = Math.PI / 4; hut.add(r);
+      const d = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.8, .15), M(0x4A2F18)); d.position.set(0, .9, 1.85); hut.add(d); hut.position.set(0, 0, -1.5); g.add(hut); }
+    const fence = new THREE.Group(); for (let i = 0; i < 22; i++){ const a = i / 22 * Math.PI * 2; if (Math.abs(a - Math.PI / 2) < .35) continue; const p = new THREE.Mesh(new THREE.BoxGeometry(.2, 1.3, .2), M(0x8A5A2B)); p.position.set(Math.cos(a) * 7.4, .65, Math.sin(a) * 7.4); fence.add(p);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(2.2, .14, .1), M(0xA0703A)); b.position.set(Math.cos(a + .14) * 7.4, .9, Math.sin(a + .14) * 7.4); b.rotation.y = -(a + .14) - Math.PI / 2; fence.add(b); } g.add(fence);
+    const lb = label('🏕️ ' + name, '#86EFAC', 5.6, 1.1, 46); lb.position.set(0, 6.6, 0); g.add(lb);
+    const B = { id, g, slot, set(info){ hut.visible = !!(info && info.h); fence.visible = !!(info && info.f); const f = info && info.fl; flag.visible = !!f; if (f) flag.material.color.set(f); } };
+    B.set(null); BASES.set(id, B); return B;
+  }
+  const myBase = makeBase(me.id, me.n.split(' ')[0], MYSLOT);
+  const refreshBase = () => myBase.set({ h: W.built.hut, f: W.built.fence, fl: W.built.flag });
+  refreshBase(); BLD.push({ id: 'base', name: 'Pangkalan Saya', x: MYSLOT.x, z: MYSLOT.z, rr: 9 });
+  mates.forEach(m => { if (m.id !== me.id) makeBase(m.id, m.n.split(' ')[0], SLOTS[slotOf(m.id)]); });
+  if (NET && me.id !== 'guru' && !mates.some(m => m.id === 'guru')){ /* pangkalan guru (tapak ke-26) — hanya jika guru sedang bermain */ }
+  const SPAWN = { x: 0, z: 8 };
 
-  /* ---------- pemain ---------- */
-  const P = { x: 0, z: 8, face: Math.PI, vx: 0, vz: 0, yaw: 0, busy: 0 };
-  const pg = new THREE.Group(); scene.add(pg);
-  const ph = new THREE.Mesh(new THREE.CapsuleGeometry(.3, .8, 4, 10), M(0xF59E0B)); ph.position.y = .75; pg.add(ph);
-  const body = new THREE.Group(); pg.add(body);
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(.5, 16), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .28 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = .04; scene.add(shadow);
-  let mixer = null; const ACT = {}; let nowAct = null;
-  const play = (n, once) => { const a = ACT[n]; if (!a || nowAct === a) return; if (once){ a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } else a.setLoop(THREE.LoopRepeat); a.reset().fadeIn(.15).play(); if (nowAct) nowAct.fadeOut(.15); nowAct = a; };
+  /* ---------- pemain (sendiri & orang lain) ---------- */
+  const P = { x: SPAWN.x, z: SPAWN.z, face: Math.PI, vx: 0, vz: 0, yaw: 0 };
+  const charOf = id => (id === me.id && KN_CHARS.includes(W.char)) ? W.char : null;
   let alive = true;
-  const loadChar = () => { const nm = KN_CHARS.includes(W.char) ? W.char : 'male-a';
-    knModel(nm).then(gl => { if (!alive) return; body.clear(); ph.visible = false;
-      const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1, k = 1.7 / h; m.scale.setScalar(k); m.position.y = -box.min.y * k;
-      m.traverse(o => { if (o.isMesh) o.frustumCulled = false; }); body.add(m);
-      mixer = new THREE.AnimationMixer(m); for (const k2 in ACT) delete ACT[k2]; nowAct = null; gl.animations.forEach(c => { ACT[c.name] = mixer.clipAction(c); }); play('idle'); }).catch(e => console.warn('watak dunia', e)); };
-  loadChar();
+  function makeAvatar(char, name, col){
+    const A = { g: new THREE.Group(), body: new THREE.Group(), mixer: null, act: {}, now: null };
+    const ph = new THREE.Mesh(new THREE.CapsuleGeometry(.3, .8, 4, 10), M(col || 0xF59E0B)); ph.position.y = .75; A.g.add(ph); A.ph = ph; A.g.add(A.body);
+    A.shadow = new THREE.Mesh(new THREE.CircleGeometry(.5, 16), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: .28 })); A.shadow.rotation.x = -Math.PI / 2; A.shadow.position.y = .04; scene.add(A.shadow);
+    A.setChar = c => knModel(c).then(gl => { if (!alive) return; A.body.clear(); ph.visible = false; const m = gl.scene, box = new THREE.Box3().setFromObject(m), h = box.max.y - box.min.y || 1, k = 1.7 / h; m.scale.setScalar(k); m.position.y = -box.min.y * k;
+      m.traverse(o => { if (o.isMesh) o.frustumCulled = false; }); A.body.add(m); A.mixer = new THREE.AnimationMixer(m); A.act = {}; A.now = null; gl.animations.forEach(cl => { A.act[cl.name] = A.mixer.clipAction(cl); }); A.play('idle'); }).catch(() => {});
+    A.play = (n, once) => { const a = A.act[n]; if (!a || A.now === a) return; if (once){ a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; } else a.setLoop(THREE.LoopRepeat); a.reset().fadeIn(.15).play(); if (A.now) A.now.fadeOut(.15); A.now = a; };
+    if (name){ A.lb = label(name, col ? '#' + new THREE.Color(col).getHexString() : '#fff', 3.4, .7, 44); A.lb.position.y = 2.5; A.g.add(A.lb); }
+    scene.add(A.g); A.setChar(char); return A;
+  }
+  const knDefault = id => KN_CHARS[hashStr(String(id)) % KN_CHARS.length];
+  if (!W.char) W.char = knDefault(me.id);
+  const ME = makeAvatar(W.char, null); const pg = ME.g;
+  const play = (n, once) => ME.play(n, once);
+
+  /* ---------- rangkaian: pemain lain, maklumat awam, perbendaharaan pasukan ---------- */
+  const REM = new Map(), WB = {}, WT = {};
+  const flagKey = c => String(c || '').replace('#', '');
+  const teamTotal = c => c ? Object.values(WT[flagKey(c)] || {}).reduce((a, v) => a + (+v || 0), 0) : 0;
+  const teamTier = c => { const t = teamTotal(c); return t >= 150 ? 2 : t >= 50 ? 1 : 0; };
+  const unsubs = [];
+  let infoSent = '';
+  function pushInfo(force){
+    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), s: Object.keys(W.q).length };
+    const sig = JSON.stringify(info); if (!force && sig === infoSent) return; infoSent = sig; try { NET.net.set('wb/' + me.id, Object.assign({ u: Date.now() }, info)); } catch(e){}
+  }
+  if (NET){
+    unsubs.push(NET.net.on('wp', v => {
+      const now = Math.floor(Date.now() / 1000), seen = new Set();
+      Object.keys(v || {}).forEach(id => { if (id === me.id) return; const a = String(v[id]).split(','); if (a.length < 4) return; const t = +a[3]; if (now - t > 25) return; seen.add(id);
+        let r = REM.get(id); const info = WB[id] || {};
+        if (!r){ r = { A: makeAvatar(info.c || knDefault(id), info.n || (mates.find(m => m.id === id) || {}).n || '?', 0x38BDF8), x: +a[0], z: +a[1], f: +a[2], tx: +a[0], tz: +a[1], tf: +a[2], mv: 0 }; r.A.g.position.set(r.x, 0, r.z); REM.set(id, r); }
+        r.tx = +a[0]; r.tz = +a[1]; r.tf = +a[2]; r.t = t; });
+      REM.forEach((r, id) => { if (!seen.has(id)){ scene.remove(r.A.g); scene.remove(r.A.shadow); REM.delete(id); } });
+    }));
+    unsubs.push(NET.net.on('wb', v => { Object.assign(WB, v || {}); Object.keys(v || {}).forEach(id => { const b = BASES.get(id); if (b && id !== me.id) b.set({ h: v[id].h, f: v[id].f, fl: v[id].fl }); }); }));
+    unsubs.push(NET.net.on('wt', v => { Object.keys(WT).forEach(k => delete WT[k]); Object.assign(WT, v || {}); hud(); }));
+    pushInfo(true);
+  }
 
   /* ---------- UI ---------- */
-  const fmtE = () => Math.floor(W.energy);
   function hud(){
-    const mx = wMaxE(W), pc = Math.max(0, Math.min(100, W.energy / mx * 100));
+    const mx = wMaxE(W), pc = Math.max(0, Math.min(100, W.energy / mx * 100)), tt = teamTier(W.built.flag);
     $w('#wHud').innerHTML = '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;min-width:150px"><div style="font-size:12px;font-weight:800">⭐ Lvl ' + wTotalLvl(W) + ' <span style="opacity:.7;font-weight:600;font-size:11px">· ' + ['kuat', 'pint', 'stam'].map(k => WSK[k].ico + wLvl(W, k)).join(' ') + '</span></div>' +
       '<div style="margin-top:4px;height:10px;border-radius:6px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:' + (pc < 25 ? '#EF4444' : '#FACC15') + '"></i></div>' +
-      '<div style="font-size:11px;margin-top:2px">⚡ ' + fmtE() + ' / ' + mx + '</div></div>' +
-      '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + '</div>';
+      '<div style="font-size:11px;margin-top:2px">⚡ ' + Math.floor(W.energy) + ' / ' + mx + '</div></div>' +
+      '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water +
+      (NET ? '<div style="font-size:10px;font-weight:600;opacity:.8">👥 ' + (REM.size + 1) + ' dalam talian' + (W.built.flag ? ' · 🚩 ' + (wFlagName[W.built.flag] || '') + (tt ? ' ★' + tt : '') : '') + '</div>' : '') + '</div>';
   }
   let msgT = 0; const say = (t, ms) => { const m = $w('#wMsg'); m.innerHTML = t; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => { m.style.opacity = 0; }, ms || 1600); };
   const useE = n => { if (W.energy < n){ say('⚡ Tenaga habis! Makan di 🍲 Dapur dahulu.', 2200); vibrate(30); return false; } W.energy -= n; return true; };
-  const panel = (h, onclick) => { const p = $w('#wPanel'); p.innerHTML = '<div class="panel clip p-4 w-full" style="max-width:560px;max-height:92%;overflow:auto;background:linear-gradient(180deg,#1E293B,#0F172A);border-color:#F5E08A;color:#fff">' + h + '</div>'; p.style.display = 'flex'; p.onclick = e => { if (e.target === p && !PANEL_LOCK) closePanel(); const b = e.target.closest('[data-p]'); if (b && onclick) onclick(b.dataset.p, b); }; PANEL = true; stopMove(); };
   let PANEL = false, PANEL_LOCK = false;
+  const panel = (h, onclick) => { const p = $w('#wPanel'); p.innerHTML = '<div class="panel clip p-4 w-full" style="max-width:560px;max-height:92%;overflow:auto;background:linear-gradient(180deg,#1E293B,#0F172A);border-color:#F5E08A;color:#fff">' + h + '</div>'; p.style.display = 'flex'; p.onclick = e => { if (e.target === p && !PANEL_LOCK) closePanel(); const b = e.target.closest('[data-p]'); if (b && onclick) onclick(b.dataset.p, b); }; PANEL = true; stopMove(); };
   const closePanel = () => { $w('#wPanel').style.display = 'none'; $w('#wPanel').innerHTML = ''; PANEL = false; PANEL_LOCK = false; };
   const btn = (a, label, cls, dis) => '<button class="btn ' + (cls || '') + ' clip-s w-full !py-3 text-[14px] font-bold mt-2" data-p="' + a + '"' + (dis ? ' disabled style="opacity:.45"' : '') + '>' + label + '</button>';
   const head = (ico, t, sub) => '<div class="text-center"><div style="font-size:40px;line-height:1">' + ico + '</div><div class="font-bold text-[20px] mt-1" style="color:#F5E08A">' + t + '</div>' + (sub ? '<div class="text-[12px] text-muted mt-1 leading-snug">' + sub + '</div>' : '') + '</div>';
-  const pts = (k, n) => { const before = wLvl(W, k); W.pts[k] = (W.pts[k] || 0) + (n || 1); const after = wLvl(W, k); if (after > before){ sfx('myth'); say(WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + after + '!', 2600); vibrate([30, 40, 30]); } };
+  const pts = (k, n) => { const before = wLvl(W, k); W.pts[k] = (W.pts[k] || 0) + (n || 1); const after = wLvl(W, k); if (after > before){ sfx('myth'); say(WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + after + '!', 2600); vibrate([30, 40, 30]); } pushInfo(); };
 
   /* Dewan Misi: 5 simulasi sehari */
   function misi(){
@@ -18839,20 +18921,19 @@ function worldGame(THREE){
       btn('close', 'Tutup', ''), (a) => {
       if (a === 'close') return closePanel();
       if (a.indexOf('q:') === 0){ const id = a.slice(2), x = SIM_LIB.find(s => s.id === id); closePanel();
-        simPlay(id, { world: true, done: W.q[id] === TODAY, onDone: () => { if (W.q[id] === TODAY) return; W.q[id] = TODAY; const k = wSkillOf(x); pts(k, 1); W.energy = Math.min(wMaxE(W), W.energy + 25); W.wood += 3; save(); hud(); } }); } });
+        simPlay(id, { world: true, done: W.q[id] === TODAY, onDone: () => { if (W.q[id] === TODAY) return; W.q[id] = TODAY; const k = wSkillOf(x); pts(k, 1); W.energy = Math.min(wMaxE(W), W.energy + 25); W.wood += 3; save(); hud(); pushInfo(); } }); } });
   }
 
   /* Rumah Arkad: kuiz pantas 5 soalan */
   function arkad(){
     const dn = W.arc === TODAY;
     panel(head('🕹️', 'RUMAH ARKAD', 'Kuiz pantas 5 soalan (−5 ⚡). Setiap jawapan betul beri <b>🪵 +1 &amp; 🐟 +1</b>. Dapat 5/5 hari ini → <b>+1 🧠 Kepintaran</b> (sekali sehari).') +
-      btn('go', '▶ MAIN KUIZ PANTAS', 'btn-o') + btn('close', 'Tutup', ''), a => { if (a === 'close') return closePanel(); if (a === 'go'){ if (!useE(5)){ closePanel(); return; } hud(); arkadQ(0, 0); } });
-    if (dn) { const p = $w('#wPanel .panel'); p.insertAdjacentHTML('beforeend', '<div class="text-[11px] text-center mt-2" style="color:#4ADE80">✅ Ganjaran 5/5 hari ini sudah diambil</div>'); }
+      btn('go', '▶ MAIN KUIZ PANTAS', 'btn-o') + btn('close', 'Tutup', '') + (dn ? '<div class="text-[11px] text-center mt-2" style="color:#4ADE80">✅ Ganjaran 5/5 hari ini sudah diambil</div>' : ''), a => { if (a === 'close') return closePanel(); if (a === 'go'){ if (!useE(5)){ closePanel(); return; } hud(); arkadQ(0, 0); } });
   }
   function arkadQ(i, ok){
     if (i >= 5){ let extra = ''; if (ok === 5 && W.arc !== TODAY){ W.arc = TODAY; pts('pint', 1); extra = '<div class="mt-2" style="color:#FDE68A">🧠 +1 Kepintaran!</div>'; }
       save(); hud(); return panel(head(ok >= 4 ? '🏆' : '👍', ok + ' / 5 BETUL', 'Hasil: +' + ok + ' 🪵 +' + ok + ' 🐟') + extra + btn('again', '🔁 Main lagi (−5 ⚡)', 'btn-o') + btn('close', 'Tutup', ''), a => { if (a === 'close') return closePanel(); if (a === 'again'){ if (!useE(5)){ closePanel(); return; } hud(); arkadQ(0, 0); } }); }
-    let q; try { q = runQuestion(); } catch(e){ q = null; } if (!q || !q.c) { closePanel(); return say('Tiada soalan dalam bank. Tambah soalan di app guru.', 2400); }
+    let q; try { q = runQuestion(); } catch(e){ q = null; } if (!q || !q.c){ closePanel(); return say('Tiada soalan dalam bank. Tambah soalan di app guru.', 2400); }
     const opts = q.c.map((t, j) => ({ t, ok: j === q.a })).sort(() => Math.random() - .5);
     panel('<div class="text-[12px] font-bold tracking-widest" style="color:#93C5FD">🕹️ SOALAN ' + (i + 1) + ' / 5 &nbsp; ✔ ' + ok + '</div><div class="font-bold text-[18px] mt-2 leading-snug">' + esc(q.q) + '</div>' +
       opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join(''), (a, b) => {
@@ -18862,16 +18943,32 @@ function worldGame(THREE){
       setTimeout(() => { PANEL_LOCK = false; arkadQ(i + 1, ok + (good ? 1 : 0)); }, 1100); });
   }
 
-  /* Akademi: statistik + pilih watak */
-  function akademi(){
-    const row = k => '<div class="mt-3"><div class="flex justify-between text-[13px] font-bold"><span>' + WSK[k].ico + ' ' + WSK[k].n + '</span><span style="color:#FDE68A">Lvl ' + wLvl(W, k) + (wLvl(W, k) >= 10 ? ' (maks)' : '') + '</span></div>' +
-      '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + ((W.pts[k] || 0) % 2 * 50) + '%;background:#22C55E"></i></div><div class="text-[11px] text-muted mt-1">' + WSK[k].d + '</div></div>';
-    const effects = '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat')) + ' 🪵</b><br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>';
-    panel(head('🏆', 'AKADEMI', 'Kemajuan kamu. Setiap simulasi yang diselesaikan menambah kemahiran.') + ['kuat', 'pint', 'stam'].map(row).join('') + effects +
-      '<div class="text-[12px] text-muted mt-3">Misi selesai hari ini: <b style="color:#fff">' + wDailyQuests().filter(x => W.q[x.id] === TODAY).length + '/5</b> · Simulasi pernah diselesaikan: <b style="color:#fff">' + Object.keys(W.q).length + '</b></div>' +
-      btn('char', '🧍 Tukar watak', '') + btn('close', 'Tutup', 'btn-o'), a => {
+  /* Akademi: statistik, pasukan, kedudukan kelas, pilih watak */
+  function akademi(tab){
+    tab = tab || 'diri';
+    const tabs = '<div class="flex gap-2 mt-3">' + [['diri', '📊 Saya'], ['kelas', '🏅 Kelas'], ['pasukan', '🚩 Pasukan']].map(t => '<button class="btn clip-s flex-1 !py-2 text-[12px]' + (tab === t[0] ? ' btn-o' : '') + '" data-p="t:' + t[0] + '">' + t[1] + '</button>').join('') + '</div>';
+    let body = '';
+    if (tab === 'diri'){
+      const row = k => '<div class="mt-3"><div class="flex justify-between text-[13px] font-bold"><span>' + WSK[k].ico + ' ' + WSK[k].n + '</span><span style="color:#FDE68A">Lvl ' + wLvl(W, k) + (wLvl(W, k) >= 10 ? ' (maks)' : '') + '</span></div>' +
+        '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + ((W.pts[k] || 0) % 2 * 50) + '%;background:#22C55E"></i></div><div class="text-[11px] text-muted mt-1">' + WSK[k].d + '</div></div>';
+      const tt = teamTier(W.built.flag);
+      body = ['kuat', 'pint', 'stam'].map(row).join('') + '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat') + tt) + ' 🪵</b>' + (tt ? ' <span style="color:#FDE68A">(+' + tt + ' bonus pasukan)</span>' : '') + '<br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>' +
+        '<div class="text-[12px] text-muted mt-3">Misi selesai hari ini: <b style="color:#fff">' + wDailyQuests().filter(x => W.q[x.id] === TODAY).length + '/5</b> · Simulasi pernah diselesaikan: <b style="color:#fff">' + Object.keys(W.q).length + '</b></div>' + btn('char', '🧍 Tukar watak', '');
+    } else if (tab === 'kelas'){
+      const rows = Object.keys(WB).map(id => Object.assign({ id }, WB[id])); if (!rows.some(r => r.id === me.id)) rows.push({ id: me.id, n: me.n, l: wTotalLvl(W), s: Object.keys(W.q).length, fl: W.built.flag });
+      rows.sort((a, b) => (b.l | 0) - (a.l | 0) || (b.s | 0) - (a.s | 0));
+      body = NET ? '<div class="text-[12px] text-muted mt-3">Kelas <b style="color:#fff">' + esc(NET.cls) + '</b> — kedudukan ikut tahap.</div>' + rows.map((r, i) => '<div class="panel clip-s p-2 mt-2 flex items-center gap-2" style="border-color:' + (r.id === me.id ? '#F5E08A' : '#334155') + '"><span class="num font-bold w-6 text-center">' + (i + 1) + '</span><span style="width:12px;height:12px;border-radius:50%;background:' + (r.fl || '#475569') + '"></span><span class="flex-1 truncate text-[13px] font-bold">' + esc(r.n || '?') + '</span><span class="text-[12px]" style="color:#FDE68A">⭐ ' + (r.l | 0) + '</span><span class="text-[11px] text-muted">🎬' + (r.s | 0) + '</span></div>').join('')
+        : '<div class="text-[13px] text-muted mt-4 text-center leading-relaxed">Kedudukan kelas keluar bila dunia dimainkan dalam <b>mod kelas</b>:<br>murid log masuk dengan kod sekolah, atau guru hidupkan Kongsi Murid.</div>';
+    } else {
+      const fl = W.built.flag, mem = Object.keys(WB).filter(id => fl && WB[id].fl === fl).map(id => WB[id]), tot = teamTotal(fl), tt = teamTier(fl);
+      body = !fl ? '<div class="text-[13px] text-muted mt-4 text-center leading-relaxed">Kamu belum ada pasukan. Pasang <b>🚩 bendera</b> di Pangkalan Saya. Murid yang pilih <b>warna sama</b> = satu pasukan. Pilih warna lain untuk main solo.</div>'
+        : '<div class="panel clip-s p-3 mt-3" style="border-color:' + fl + '"><div class="font-bold text-[15px]">🚩 Pasukan ' + (wFlagName[fl] || '') + '</div><div class="text-[12px] mt-1">Perbendaharaan: <b style="color:#FDE68A">' + tot + ' 🪵</b> · Bonus: <b>' + (tt ? '+' + tt + ' 🪵 setiap pokok' : 'belum ada') + '</b><br><span class="text-muted">50 🪵 → +1 bonus · 150 🪵 → +2 bonus (untuk semua ahli)</span></div></div>' +
+          '<div class="lbl mt-3">AHLI (' + mem.length + ')</div>' + mem.map(m => '<div class="panel clip-s p-2 mt-1 text-[13px] flex"><span class="flex-1 truncate font-bold">' + esc(m.n || '?') + '</span><span style="color:#FDE68A">⭐ ' + (m.l | 0) + '</span></div>').join('');
+    }
+    panel(head('🏆', 'AKADEMI') + tabs + body + btn('close', 'Tutup', 'btn-o'), a => {
       if (a === 'close') return closePanel();
-      if (a === 'char'){ const i = KN_CHARS.indexOf(W.char); W.char = KN_CHARS[(i + 1) % KN_CHARS.length]; save(); loadChar(); closePanel(); say('🧍 ' + KN_NAME(W.char)); } });
+      if (a.indexOf('t:') === 0) return akademi(a.slice(2));
+      if (a === 'char'){ const i = KN_CHARS.indexOf(W.char); W.char = KN_CHARS[(i + 1) % KN_CHARS.length]; ME.setChar(W.char); save(); pushInfo(); say('🧍 ' + KN_NAME(W.char), 1200); akademi('diri'); } });
   }
 
   /* Dapur: makan → tenaga */
@@ -18887,39 +18984,41 @@ function worldGame(THREE){
       if (a.indexOf('c:') === 0){ const r = rec.find(z => z[0] === a.slice(2)); if (!r || !r[4]()) return; r[5](); W.energy = Math.min(wMaxE(W), W.energy + r[3]); W.nCook++; sfx('hi'); save(); hud(); dapur(); say('😋 +' + r[3] + ' ⚡', 1500); } });
   }
 
-  /* Pangkalan: bina */
+  /* Pangkalan: bina + bendera + perbendaharaan pasukan */
   function pangkalan(){
-    const it = [['hut', '🛖 Pondok', 20, W.built.hut > 0, 'Rumah kecil di pangkalan kamu.'], ['fence', '🪵 Pagar', 30, W.built.fence > 0, 'Melindungi pangkalan (Fasa 4: tahan serangan).']];
-    panel(head('🏕️', 'PANGKALAN SAYA', 'Kumpul 🪵 kayu untuk membina. Ini permulaan — nanti boleh bina bersama pasukan!') +
+    const it = [['hut', '🛖 Pondok', 20, W.built.hut > 0, 'Rumah kecil di pangkalan kamu.'], ['fence', '🪵 Pagar', 30, W.built.fence > 0, 'Melindungi pangkalan (Fasa 4: tahan serangan).']], fl = W.built.flag;
+    panel(head('🏕️', 'PANGKALAN SAYA', 'Kumpul 🪵 kayu untuk membina. Pasang bendera — warna sama = satu pasukan.') +
       it.map(r => btn('b:' + r[0], r[3] ? '✅ ' + r[1] + ' — siap' : r[1] + ' &nbsp;(🪵 ' + r[2] + ')<br><span style="font-weight:500;font-size:11px;opacity:.7">' + r[4] + '</span>', !r[3] && W.wood >= r[2] ? 'btn-o' : '', r[3] || W.wood < r[2])).join('') +
-      '<div class="text-[12px] font-bold mt-3">🚩 Bendera pasukan (🪵 10)</div><div class="flex gap-2 mt-1 flex-wrap">' + FLAGS.map(c => '<button data-p="f:' + c + '" style="width:38px;height:38px;border-radius:8px;background:' + c + ';border:3px solid ' + (W.built.flag === c ? '#fff' : 'transparent') + '"></button>').join('') + '</div>' + btn('close', 'Tutup', ''), a => {
+      '<div class="text-[12px] font-bold mt-3">🚩 Bendera pasukan (🪵 10 kali pertama)</div><div class="flex gap-2 mt-1 flex-wrap">' + wFlagCols.map(c => '<button data-p="f:' + c + '" style="width:38px;height:38px;border-radius:8px;background:' + c + ';border:3px solid ' + (fl === c ? '#fff' : 'transparent') + '"></button>').join('') + '</div>' +
+      (fl && NET ? '<div class="panel clip-s p-2 mt-3 text-[12px]">Perbendaharaan pasukan ' + (wFlagName[fl] || '') + ': <b style="color:#FDE68A">' + teamTotal(fl) + ' 🪵</b> (bonus ★' + teamTier(fl) + ')</div>' + btn('don', '🎁 Sumbang 10 🪵 kepada pasukan', W.wood >= 10 ? 'btn-o' : '', W.wood < 10) : '') + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
-      if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; sfx('myth'); save(); hud(); refreshBase(); pangkalan(); say(r[1] + ' siap dibina!', 1800); }
-      if (a.indexOf('f:') === 0){ const c = a.slice(2); if (W.built.flag !== c){ if (!W.built.flag && W.wood < 10) return say('Perlu 🪵 10 untuk bendera.', 1800); if (!W.built.flag) W.wood -= 10; W.built.flag = c; save(); hud(); refreshBase(); pangkalan(); } } });
+      if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; sfx('myth'); save(); hud(); refreshBase(); pushInfo(); pangkalan(); say(r[1] + ' siap dibina!', 1800); }
+      if (a.indexOf('f:') === 0){ const c = a.slice(2); if (W.built.flag !== c){ if (!W.built.flag && W.wood < 10) return say('Perlu 🪵 10 untuk bendera.', 1800); if (!W.built.flag) W.wood -= 10; W.built.flag = c; save(); hud(); refreshBase(); pushInfo(); pangkalan(); } }
+      if (a === 'don' && NET && fl && W.wood >= 10){ W.wood -= 10; const k = flagKey(fl); WT[k] = WT[k] || {}; WT[k][me.id] = (+WT[k][me.id] || 0) + 10; try { NET.net.set('wt/' + k + '/' + me.id, WT[k][me.id]); } catch(e){} sfx('hi'); save(); hud(); pangkalan(); say('🎁 Terima kasih! Pasukan ' + teamTotal(fl) + ' 🪵', 1800); } });
   }
-  const OPEN = { misi, arkad, akademi, dapur, base: pangkalan };
+  const OPEN = { misi, arkad, akademi: () => akademi(), dapur, base: pangkalan };
 
   /* ---------- tindakan ---------- */
   const near = { k: '', o: null };
-  let fishing = null;                                                 /* { t, bite, state } */
-  let chopCd = 0;
+  let fishing = null, chopCd = 0;
+  const pondDist = () => PONDS.reduce((b, p) => { const d = Math.hypot(P.x - p.x, P.z - p.z) - p.r; return d < b.d ? { d, p } : b; }, { d: 1e9, p: null });
   function act(){
     if (PANEL) return;
     if (fishing){ if (fishing.state === 'bite'){ const win = 0.9 + .12 * wLvl(W, 'pint'); if (fishing.since <= win){ const n = 1 + Math.floor(wLvl(W, 'pint') / 4); W.fish += n; sfx('hi'); say('🐟 Dapat ikan! +' + n, 1500); play('pick-up', true); } else say('Terlepas…', 1200); } else say('Terlalu awal — ikan lari!', 1300); fishing = null; save(); hud(); return; }
     if (near.k === 'tree'){ const T = near.o; if (chopCd > 0 || !T.alive) return; if (!useE(3)) return hud(); chopCd = .55; T.hp++; T.hit = .3; sfx('flip'); vibrate(10); play('attack-melee-right', true); setTimeout(() => play('idle'), 500);
-      const need = Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)); if (T.hp >= need){ T.alive = false; T.back = 50; const n = 3 + wLvl(W, 'kuat'); W.wood += n; say('🪵 +' + n + ' kayu', 1300); sfx('hi'); } hud(); save(); return; }
-    if (near.k === 'bush'){ const B = near.o; if (!B.has || !useE(1)) return hud(); B.has = false; B.back = 40; B.berries.forEach(o => { o.visible = false; }); W.fruit += 2; sfx('flip'); say('🍓 +2 buah', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); return; }
+      const need = Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)); if (T.hp >= need){ T.alive = false; T.back = 50; const n = 3 + wLvl(W, 'kuat') + teamTier(W.built.flag); W.wood += n; say('🪵 +' + n + ' kayu', 1300); sfx('hi'); } hud(); save(); return; }
+    if (near.k === 'bush'){ const B = near.o; if (!B.has || !useE(1)) return hud(); B.has = false; B.back = 40; setBush(B, false); W.fruit += 2; sfx('flip'); say('🍓 +2 buah', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); return; }
     if (near.k === 'well'){ if (!useE(1)) return hud(); W.water += 2; sfx('flip'); say('💧 +2 air', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); return; }
     if (near.k === 'pond'){ if (!useE(4)) return hud(); fishing = { state: 'wait', t: 1.6 + Math.random() * 2.6, since: 0 }; say('🎣 Menunggu ikan…  (tekan apabila nampak ❗)', 1800); return; }
     if (near.k === 'bld'){ const f = OPEN[near.o.id]; if (f) f(); }
   }
   /* ---------- kawalan ---------- */
   const keys = {}; const IN = { x: 0, y: 0 };
-  const kd = e => { if (e.repeat && !/^(e| )$/i.test(e.key)) { } const k = e.key.toLowerCase(); keys[k] = true; if (k === 'escape'){ if (PANEL) closePanel(); else exit(); }
+  const kd = e => { const k = e.key.toLowerCase(); keys[k] = true; if (k === 'escape'){ if (PANEL) closePanel(); else exit(); }
     if ((k === 'e' || k === ' ') && !e.repeat){ e.preventDefault(); act(); } };
   const ku = e => { keys[e.key.toLowerCase()] = false; };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
-  let joyId = null, camId = null, jo = { x: 0, y: 0 }, lastCam = { x: 0, y: 0 };
+  let joyId = null, camId = null, jo = { x: 0, y: 0 }, lastCam = { x: 0, y: 0 }, holdAct = false;
   const stopMove = () => { IN.x = IN.y = 0; joyId = null; $w('#wJoy').style.display = 'none'; };
   root.addEventListener('pointerdown', e => {
     if (e.target.closest('[data-w]') || PANEL) return;
@@ -18934,53 +19033,73 @@ function worldGame(THREE){
   });
   const up = e => { if (e.pointerId === joyId) stopMove(); if (e.pointerId === camId) camId = null; };
   root.addEventListener('pointerup', up); root.addEventListener('pointercancel', up);
-  const exit = () => { alive = false; save(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('resize', resize); R.dispose(); root.remove(); unlockBody(); orientBack(); if (S.ui.tab === 'sim') renderTab(); };
+  const exit = () => { alive = false; save(); dirty = true; cloudSave(); if (NET){ try { NET.net.set('wp/' + me.id, null); } catch(e){} unsubs.forEach(u => { try { u && u(); } catch(e){} }); }
+    window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('resize', resize); R.dispose(); root.remove(); unlockBody(); orientBack(); if (S.ui.tab === 'sim') renderTab(); };
   root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); });
-  $w('#wAct').addEventListener('pointerdown', () => { holdAct = true; }); const rel = () => { holdAct = false; }; $w('#wAct').addEventListener('pointerup', rel); $w('#wAct').addEventListener('pointerleave', rel); let holdAct = false;
+  $w('#wAct').addEventListener('pointerdown', () => { holdAct = true; }); const rel = () => { holdAct = false; }; $w('#wAct').addEventListener('pointerup', rel); $w('#wAct').addEventListener('pointerleave', rel);
+
+  /* ---------- peta mini ---------- */
+  const mapCv = $w('#wMap'), mg = mapCv.getContext('2d');
+  function drawMap(){
+    const S2 = 100, k = S2 / (RW + 10); mg.clearRect(0, 0, 200, 200); mg.save(); mg.translate(100, 100);
+    mg.fillStyle = '#4C8F3C'; mg.beginPath(); mg.arc(0, 0, 98, 0, 7); mg.fill();
+    mg.fillStyle = '#3C9BD6'; PONDS.forEach(p => { mg.beginPath(); mg.arc(p.x * k, p.z * k, p.r * k, 0, 7); mg.fill(); });
+    mg.fillStyle = '#D9CFA8'; mg.beginPath(); mg.arc(0, 0, 13 * k, 0, 7); mg.fill();
+    BLD.forEach(b => { if (b.id === 'base') return; mg.fillStyle = '#FDE68A'; mg.fillRect(b.x * k - 3, b.z * k - 3, 6, 6); });
+    BASES.forEach((b, id) => { const info = id === me.id ? { fl: W.built.flag } : WB[id]; mg.fillStyle = (info && info.fl) || '#B08850'; mg.fillRect(b.slot.x * k - 3, b.slot.z * k - 3, 7, 7); if (id === me.id){ mg.strokeStyle = '#fff'; mg.lineWidth = 2; mg.strokeRect(b.slot.x * k - 4, b.slot.z * k - 4, 9, 9); } });
+    REM.forEach(r => { mg.fillStyle = '#38BDF8'; mg.beginPath(); mg.arc(r.x * k, r.z * k, 3.5, 0, 7); mg.fill(); });
+    mg.fillStyle = '#fff'; mg.strokeStyle = '#000'; mg.lineWidth = 1.5; mg.beginPath(); mg.arc(P.x * k, P.z * k, 4.5, 0, 7); mg.fill(); mg.stroke();
+    mg.restore();
+  }
 
   /* ---------- gelung ---------- */
-  const clock = new THREE.Clock(); let hudT = 0, regenT = 0;
+  const clock = new THREE.Clock(); let hudT = 0, regenT = 0, presT = 0, mapT = 0, lastSent = { x: 1e9, z: 1e9 };
   const hint = $w('#wHint'); hint.textContent = 'Gerak: joystick kiri / W A S D · Pusing kamera: seret skrin · Aksi: butang / E';
   const camP = new THREE.Vector3();
   function frame(){
     if (!alive) return; requestAnimationFrame(frame);
     const dt = Math.min(.05, clock.getDelta());
     if (document.getElementById('simRoot')){ R.render(scene, cam); return; }          /* simulasi dibuka di atas dunia: jeda */
-    /* input papan kekunci */
     let ix = IN.x, iy = IN.y; if (!PANEL){ if (keys.a || keys.arrowleft) ix -= 1; if (keys.d || keys.arrowright) ix += 1; if (keys.w || keys.arrowup) iy += 1; if (keys.s || keys.arrowdown) iy -= 1; } else ix = iy = 0;
     const il = Math.hypot(ix, iy); if (il > 1){ ix /= il; iy /= il; }
-    const busy = !!fishing; const sp = busy ? 0 : 5.4;
+    const sp = fishing ? 0 : (keys.shift ? 9.5 : 6.6);
     const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
     const mx = (fx * iy + rx * ix) * sp, mz = (fz * iy + rz * ix) * sp;
     P.vx += (mx - P.vx) * Math.min(1, dt * 12); P.vz += (mz - P.vz) * Math.min(1, dt * 12);
     P.x += P.vx * dt; P.z += P.vz * dt;
-    const rr = Math.hypot(P.x, P.z); if (rr > 78){ P.x *= 78 / rr; P.z *= 78 / rr; }
-    COL.forEach(c => { if (c.T && !c.T.alive) return; const dx = P.x - c.x, dz = P.z - c.z, d = Math.hypot(dx, dz), m = c.r + .4; if (d < m && d > 0){ P.x = c.x + dx / d * m; P.z = c.z + dz / d * m; } });
-    { const dx = P.x - POND.x, dz = P.z - POND.z, d = Math.hypot(dx, dz), m = POND.r + .6; if (d < m){ P.x = POND.x + dx / d * m; P.z = POND.z + dz / d * m; } }
+    const rr = Math.hypot(P.x, P.z); if (rr > RW){ P.x *= RW / rr; P.z *= RW / rr; }
+    COL.forEach(c => { if (c.T && !c.T.alive) return; const dx = P.x - c.x, dz = P.z - c.z; if (Math.abs(dx) > 3 || Math.abs(dz) > 3) return; const d = Math.hypot(dx, dz), m = c.r + .4; if (d < m && d > 0){ P.x = c.x + dx / d * m; P.z = c.z + dz / d * m; } });
+    PONDS.forEach(p => { const dx = P.x - p.x, dz = P.z - p.z, d = Math.hypot(dx, dz), m = p.r + .6; if (d < m){ P.x = p.x + dx / d * m; P.z = p.z + dz / d * m; } });
     const spd = Math.hypot(P.vx, P.vz);
-    if (spd > .4){ P.face = Math.atan2(P.vx, P.vz); } else if (fishing){ P.face = Math.atan2(POND.x - P.x, POND.z - P.z); }
-    let da = P.face - body.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); body.rotation.y += da * Math.min(1, dt * 14);
-    pg.position.set(P.x, 0, P.z); shadow.position.set(P.x, .05, P.z);
-    if (mixer){ if (!nowAct || (nowAct.loop !== THREE.LoopOnce)) play(spd > 3.4 ? 'sprint' : spd > .4 ? 'walk' : 'idle'); else if (!nowAct.isRunning()) { nowAct = null; } mixer.update(dt); }
-    if (ph.visible) ph.position.y = .75 + Math.sin(performance.now() / 120) * (spd > .4 ? .06 : 0);
+    if (spd > .4) P.face = Math.atan2(P.vx, P.vz); else if (fishing){ const pd = pondDist().p; if (pd) P.face = Math.atan2(pd.x - P.x, pd.z - P.z); }
+    let da = P.face - ME.body.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); ME.body.rotation.y += da * Math.min(1, dt * 14);
+    pg.position.set(P.x, 0, P.z); ME.shadow.position.set(P.x, .05, P.z);
+    if (ME.mixer){ if (!ME.now || (ME.now.loop !== THREE.LoopOnce)) ME.play(spd > 7 ? 'sprint' : spd > .4 ? 'walk' : 'idle'); else if (!ME.now.isRunning()) ME.now = null; ME.mixer.update(dt); }
+    if (ME.ph.visible) ME.ph.position.y = .75 + Math.sin(performance.now() / 120) * (spd > .4 ? .06 : 0);
+    /* pemain lain: gerak lancar ke kedudukan terkini */
+    REM.forEach(r => { const ox = r.x, oz = r.z; r.x += (r.tx - r.x) * Math.min(1, dt * 5); r.z += (r.tz - r.z) * Math.min(1, dt * 5); const v = Math.hypot(r.x - ox, r.z - oz) / Math.max(dt, .001);
+      let d2 = r.tf - r.A.body.rotation.y; d2 = Math.atan2(Math.sin(d2), Math.cos(d2)); r.A.body.rotation.y += d2 * Math.min(1, dt * 10);
+      r.A.g.position.set(r.x, 0, r.z); r.A.shadow.position.set(r.x, .05, r.z); if (r.A.mixer){ r.A.play(v > 5.5 ? 'sprint' : v > .6 ? 'walk' : 'idle'); r.A.mixer.update(dt); } });
     /* kamera */
     const D = root.clientWidth < root.clientHeight ? 9.5 : 8, H = 5.2;
     camP.set(P.x + Math.sin(P.yaw) * D, H, P.z + Math.cos(P.yaw) * D); cam.position.lerp(camP, Math.min(1, dt * 8)); cam.lookAt(P.x, 1.4, P.z);
     /* pokok & semak: kesan pukul, tumbuh semula */
     chopCd = Math.max(0, chopCd - dt);
-    TREES.forEach(T => { if (T.hit > 0){ T.hit -= dt; T.g.rotation.z = Math.sin(T.hit * 60) * .06 * (T.hit / .3); } else T.g.rotation.z = 0;
-      if (!T.alive){ const s = Math.max(0, T.back > 47 ? (T.back - 47) / 3 : 0); T.g.scale.setScalar(Math.max(.001, T.s * s)); T.back -= dt; if (T.back <= 0){ T.alive = true; T.hp = 0; T.g.scale.setScalar(T.s * .2); } }
-      else if (T.g.scale.x < T.s - .01){ T.g.scale.setScalar(Math.min(T.s, T.g.scale.x + dt * T.s * .6)); } });
-    BUSH.forEach(B => { if (!B.has){ B.back -= dt; if (B.back <= 0){ B.has = true; B.berries.forEach(o => { o.visible = true; }); } } });
+    TREES.forEach(T => { let ch = false;
+      if (T.hit > 0){ T.hit -= dt; ch = true; }
+      if (!T.alive){ T.back -= dt; const s = T.back > 47 ? (T.back - 47) / 3 : 0; if (T.sc !== s * T.s){ setTree(T, s * T.s, 0); } if (T.back <= 0){ T.alive = true; T.hp = 0; setTree(T, T.s * .2, 0); } }
+      else if (T.sc < T.s - .01){ setTree(T, Math.min(T.s, T.sc + dt * T.s * .6), 0); }
+      else if (ch){ setTree(T, T.s, Math.sin(T.hit * 60) * .06 * Math.max(0, T.hit / .3)); } });
+    BUSH.forEach(B => { if (!B.has){ B.back -= dt; if (B.back <= 0){ B.has = true; setBush(B, true); } } });
     /* memancing */
     if (fishing){ if (fishing.state === 'wait'){ fishing.t -= dt; if (fishing.t <= 0){ fishing.state = 'bite'; fishing.since = 0; say('❗ TEKAN SEKARANG!', 1100); sfx('hi'); vibrate(40); } } else { fishing.since += dt; if (fishing.since > 2.2){ fishing = null; say('Ikan lari…', 1200); } } }
     /* interaksi terdekat */
     if (!PANEL && !fishing){
       let best = null, bd = 1e9; const cand = (k, o, d, rng, label) => { if (d < rng && d < bd){ bd = d; best = { k, o, label }; } };
-      TREES.forEach(T => { if (T.alive) cand('tree', T, Math.hypot(P.x - T.x, P.z - T.z), 2.4, '🪓 Tebang<br><span style="font-size:11px;font-weight:500">−3 ⚡ ' + (T.hp ? '· ' + T.hp + '/' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) : '') + '</span>'); });
-      BUSH.forEach(B => { if (B.has) cand('bush', B, Math.hypot(P.x - B.x, P.z - B.z), 2.3, '🍓 Petik buah'); });
+      TREES.forEach(T => { if (T.alive && Math.abs(P.x - T.x) < 3 && Math.abs(P.z - T.z) < 3) cand('tree', T, Math.hypot(P.x - T.x, P.z - T.z), 2.4, '🪓 Tebang<br><span style="font-size:11px;font-weight:500">−3 ⚡ ' + (T.hp ? '· ' + T.hp + '/' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) : '') + '</span>'); });
+      BUSH.forEach(B => { if (B.has && Math.abs(P.x - B.x) < 3 && Math.abs(P.z - B.z) < 3) cand('bush', B, Math.hypot(P.x - B.x, P.z - B.z), 2.3, '🍓 Petik buah'); });
       cand('well', WELL, Math.hypot(P.x - WELL.x, P.z - WELL.z), 3.2, '💧 Timba air');
-      cand('pond', POND, Math.hypot(P.x - POND.x, P.z - POND.z) - POND.r, 2.6, '🎣 Pancing<br><span style="font-size:11px;font-weight:500">−4 ⚡</span>');
+      const pdn = pondDist(); cand('pond', pdn.p, pdn.d, 2.6, '🎣 Pancing<br><span style="font-size:11px;font-weight:500">−4 ⚡</span>');
       BLD.forEach(b => cand('bld', b, Math.hypot(P.x - b.x, P.z - b.z), b.rr, b.id === 'base' ? '🏕️ Pangkalan' : '🚪 Masuk<br><span style="font-size:11px;font-weight:500">' + esc(b.name) + '</span>'));
       near.k = best ? best.k : ''; near.o = best ? best.o : null;
       const a = $w('#wAct'); if (best){ a.style.display = 'block'; if (a.dataset.l !== best.label){ a.innerHTML = best.label; a.dataset.l = best.label; } } else { a.style.display = 'none'; a.dataset.l = ''; }
@@ -18990,12 +19109,18 @@ function worldGame(THREE){
     /* tenaga pulih perlahan */
     regenT += dt; if (regenT >= 1){ regenT = 0; const mx = wMaxE(W); if (W.energy < mx) W.energy = Math.min(mx, W.energy + 1 / 30); }
     hudT += dt; if (hudT > .5){ hudT = 0; hud(); save(); }
+    mapT += dt; if (mapT > .3){ mapT = 0; drawMap(); }
+    /* hantar kedudukan (jarang & padat: maks ~1 kali sesaat, hanya jika bergerak, degupan jantung 6 saat) */
+    if (NET){ presT += dt; const moved = Math.hypot(P.x - lastSent.x, P.z - lastSent.z) > .6;
+      if ((moved && presT > 1.2) || presT > 6){ presT = 0; lastSent = { x: P.x, z: P.z }; try { NET.net.set('wp/' + me.id, (Math.round(P.x * 2) / 2) + ',' + (Math.round(P.z * 2) / 2) + ',' + P.face.toFixed(1) + ',' + Math.floor(Date.now() / 1000)); } catch(e){} }
+      cloudT += dt; if (cloudT > 15){ cloudT = 0; cloudSave(); pushInfo(); } }
     R.render(scene, cam);
   }
-  hud(); frame();
-  window.WLD = { W, P, act, exit, misi, arkad, akademi, dapur, pangkalan, TREES, BUSH, BLD, near, get fishing(){ return fishing; } };   /* untuk ujian */
-  if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.') +
-    '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D<br>👆 <b>Aksi</b>: butang oranye bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
+  hud(); frame(); drawMap();
+  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
+    '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
+  if (NET) say('👥 Dunia kelas ' + esc(NET.cls), 2200);
 }
 
 /* ============ INIT ============ */
