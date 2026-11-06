@@ -15152,6 +15152,7 @@ function viewSim(){                                  /* semua simulasi dipapar t
       : 'Animasi tutorial untuk PdP — tayang di projektor, jeda, ulang dan lompat antara babak. Dalam app murid (Kongsi Game), setiap simulasi menjadi <b style="color:#FDE68A">tugasan</b>: tonton → kuiz ' + SIM_QN + ' soalan → ✅ + ' + SIM_RP + ' RP.') + '</div>' +
       (MURID ? '' : '<button class="btn btn-c clip-s w-full mt-3 !py-2 text-[13px]" data-act="sim-progress"><i class="fa-solid fa-chart-column"></i> Progress Tugasan Murid</button>') + '</div>';
   h += '<button class="panel clip p-4 w-full text-left flex items-center gap-3 mt-3" data-act="world-open" style="border-color:#4ADE80;background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(20,28,38,.9))"><div style="font-size:40px;line-height:1">🌍</div><div class="flex-1 min-w-0"><div class="text-[11px] tracking-widest" style="color:#4ADE80">BETA · FASA 2</div><div class="font-bold text-[16px]">DUNIA ILMU</div><div class="text-[12px] text-muted leading-snug">Dunia terbuka 3D satu kelas: tebang pokok, memancing, makan, bina pangkalan & sertai pasukan. Simulasi = misi harian yang menaikkan kemahiran.</div></div><i class="fa-solid fa-play text-[20px]" style="color:#4ADE80"></i></button>';
+  if (!MURID) h += '<button class="btn clip-s w-full mt-2 !py-2 text-[12px]" data-act="world-reset" style="border-color:#EF4444;color:#FCA5A5"><i class="fa-solid fa-trash"></i> Reset Dunia Ilmu (guru) — padam semua kemajuan</button>';
   const card = x => '<button class="panel clip p-3 w-full text-left flex items-center gap-3" data-act="sim-play" data-id="' + x.id + '">' +
       '<div style="font-size:42px;line-height:1">' + x.ico + '</div><div class="flex-1 min-w-0"><div class="text-[11px] text-muted tracking-widest">' + esc(x.subjLabel) + ' · ' + x.scenes.length + ' BABAK · ' + Math.round(x.dur) + ' SAAT</div>' +
       '<div class="font-bold text-[16px] mt-1">' + esc(x.title) + '</div><div class="text-[12px] text-muted mt-1 leading-snug">' + esc(x.desc) + '</div>' +
@@ -18048,6 +18049,7 @@ const ACTS = {
   'sim-subj': d => { S.ui.simSubj = d.id; save(); renderTab(); },
   'sim-play': d => simPlay(d.id),
   'world-open': () => worldOpen(),
+  'world-reset': () => worldResetAll(),
   'tq-build': d => { if (d.scope) S.ui.tqScope = d.scope; tqBuild(); },
   'tq-today': () => {
     const sj = S.ui.activeSubjectId; if (!sj) return toast('Pilih subjek dahulu.', null, true);
@@ -18666,10 +18668,11 @@ const wFlagName = { '#EF4444': 'Merah', '#3B82F6': 'Biru', '#22C55E': 'Hijau', '
 const wPtsSum = o => o && o.pts ? ((+o.pts.kuat || 0) + (+o.pts.pint || 0) + (+o.pts.stam || 0)) * (o.xv ? 1 : 100) : 0;   /* data lama: 1 mata = 100 EXP */
 function wNorm(w, key){
   const d = { v: 3, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0,
-    bulu: 0, gear: { a: 0, w: 0, wu: 0 }, bag: { lv: 0, items: {} }, intro7: 0, intro8: 0, pets: [], brush: '', nTame: 0, intro2: 0,
+    bulu: 0, gear: { a: 0, w: 0, wu: 0 }, bag: { lv: 0, items: {} }, intro7: 0, intro8: 0, hb: null, pets: [], brush: '', nTame: 0, intro2: 0,
     war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0, intro4: 0, mute: {}, kd: null, tut: 0, intro5: 0, fed: 100, deco: {}, gift: { d: '', n: 0 }, gT: 0, intro6: 0 };
   const isNew = !w || !Object.keys(w).length; w = w || {};
   const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), bag: Object.assign({ lv: 0 }, w.bag || {}, { items: Object.assign({}, (w.bag && w.bag.items) || {}) }), rc: w.rc || {}, mute: w.mute || {}, rd: Object.assign(d.rd, w.rd || {}), log: Array.isArray(w.log) ? w.log.slice(0, 12) : [], pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 130).map(p => ({ t: p.t, g: w.kd && p.g ? 1 : 0 })) : [],
+    hb: w.hb && typeof w.hb.bl === 'string' ? { bl: w.hb.bl, bs: w.hb.bs | 0, bn: w.hb.bn | 0, bmx: w.hb.bmx | 0 } : null,
     kd: w.kd && typeof w.kd.x === 'number' ? { x: w.kd.x, z: w.kd.z, lv: Math.max(1, Math.min(WKD_MAXLV, w.kd.lv | 0 || 1)), fh: +w.kd.fh || 0, kh: +w.kd.kh || 0, tw: w.kd.tw | 0, tp: w.kd.tp | 0, bl: String(w.kd.bl || ''), bs: w.kd.bs | 0, bn: w.kd.bn | 0, bmx: w.kd.bmx | 0 } : null }); delete W._t;
   if (W.kd){ const lv = W.kd.lv; if (!W.kd.fh) W.kd.fh = wFenceMax(lv); if (!W.kd.kh) W.kd.kh = wKdHpMax(lv); W.kd.tw = Math.max(0, Math.min(4, W.kd.tw | 0)); W.kd.tp = Math.max(0, Math.min(3, W.kd.tp | 0)); }
   if (!w.xv && !isNew){ ['kuat', 'pint', 'stam'].forEach(k => { W.pts[k] = Math.round((+W.pts[k] || 0) * 100); }); } W.xv = 1;   /* mata kemahiran lama → EXP (1 mata = 100 EXP) */
@@ -18817,6 +18820,18 @@ function wVoice(o){
   };
 }
 
+/* Reset Dunia Ilmu tanpa masuk dunia (guru): padam data peranti ini + data bilik kelas di awan; murid direset bila membuka dunia */
+async function worldResetAll(){
+  if (MURID) return;
+  if (!confirm('RESET DUNIA ILMU?\n\nSemua kemajuan SEMUA murid kelas ini dan kemajuan guru (tahap, EXP, sumber, haiwan, kandang, pondok, blok) akan DIPADAM dan mula dari kosong. Tidak boleh dibatalkan.')) return;
+  if (!confirm('Pasti? Data Dunia Ilmu tidak boleh dikembalikan.')) return;
+  const ts = Date.now();
+  try { Object.keys(localStorage).filter(k => /^rk_world_v1/.test(k) || k === 'rk_wq_min').forEach(k => localStorage.removeItem(k)); } catch(e){}
+  const N = await wNetInit();
+  if (N){ try { ['wb', 'wp', 'wt', 'wc', 'wd', 'wk', 'wh', 'wg', 'wv', 'wx', 'wy', 'ws'].forEach(k => N.net.set(k, null)); N.net.set('wcfg/wipe', ts); } catch(e){} toast('✅ Dunia Ilmu kelas ini disetkan semula (guru & murid). Murid direset bila membuka dunia.'); }
+  else toast('✅ Data Dunia Ilmu pada peranti ini dipadam. Untuk padam data murid: hidupkan Kongsi Murid dengan kelas aktif, kemudian tekan butang ini semula.', null, true);
+  if (S.ui.tab === 'sim') renderTab();
+}
 async function worldOpen(){
   if (document.getElementById('wldRoot')) return;
   orientFree();                                    // landskap mesti dibuka semasa sentuhan, sebelum sebarang await
@@ -19018,7 +19033,7 @@ function worldGame(THREE, W, NET){
       const lp = mkd(); [-3.4, 3.4].forEach(x => { const po = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 2.2, 6), M(0x5B4636)); po.position.set(x, 1.1, 5.2); lp.add(po); const lt = new THREE.Mesh(new THREE.SphereGeometry(.28, 8, 6), new THREE.MeshStandardMaterial({ color: 0xFFE08A, emissive: 0xFFB020, emissiveIntensity: 1.4 })); lt.position.set(x, 2.35, 5.2); lp.add(lt); }); DEC.l = lp;
       const pt = mkd(); { const ped = new THREE.Mesh(new THREE.BoxGeometry(1.6, .6, 1.6), M(0x9CA3AF)); ped.position.set(4.8, .3, -3.8); pt.add(ped); const an = makeAnimal('harimau'); an.g.traverse(o => { if (o.isMesh) o.material = M(0xB8BEC8); }); an.g.scale.setScalar(.7); an.g.position.set(4.8, .6, -3.8); an.g.rotation.y = -Math.PI / 2 + .6; pt.add(an.g); } DEC.p = pt;
       const pc = mkd(); { const bs = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, .5, 16), M(0x9CA3AF)); bs.position.set(-5, .25, -3.2); pc.add(bs); const wt = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, .1, 16), new THREE.MeshStandardMaterial({ color: 0x4FB3E8, roughness: .2 })); wt.position.set(-5, .52, -3.2); pc.add(wt); const jet = new THREE.Mesh(new THREE.ConeGeometry(.2, 1.2, 6), new THREE.MeshStandardMaterial({ color: 0x9BD8FF, transparent: true, opacity: .8 })); jet.position.set(-5, 1.1, -3.2); pc.add(jet); } DEC.c = pc; }
-    const B = { id, g, slot, gs: [], gsig: '', set(info){ hut.visible = !!(info && info.h); fence.visible = !!(info && info.f); const f = info && info.fl; flag.visible = !!f; if (f) flag.material.color.set(f);
+    const B = { id, g, slot, gs: [], gsig: '', set(info){ hut.visible = false; fence.visible = false; const f = info && info.fl; flag.visible = !!f; if (f) flag.material.color.set(f);
       const dc = String((info && info.dc) || ''); Object.keys(DEC).forEach(k => { DEC[k].visible = dc.indexOf(k) >= 0; });
       const gl = (info && info.g) || [], sig = gl.join(','); if (sig !== B.gsig){ B.gsig = sig; B.gs.forEach(m => gg.remove(m.g)); B.gs = gl.slice(0, 3).filter(t => WAN[t]).map((t, i) => { const m = makeAnimal(t); m.g.position.set(GPOS[i][0], 0, GPOS[i][1]); m.g.rotation.y = -Math.PI / 2; gg.add(m.g); return m; }); } },
       tick(tm){ B.gs.forEach((m, i) => { m.g.position.y = Math.abs(Math.sin(tm * 1.6 + i)) * .04; }); } };
@@ -19205,17 +19220,18 @@ function worldGame(THREE, W, NET){
 
   /* Pangkalan: bina + bendera + perbendaharaan pasukan */
   function pangkalan(){
-    const it = [['hut', '🛖 Pondok', 20, W.built.hut > 0, 'Rumah kecil di pangkalan kamu.'], ['fence', '🪵 Pagar', 30, W.built.fence > 0, 'Pagar kayu di pangkalan (hiasan). Pertahanan sebenar ada pada pagar kandang.']], fl = W.built.flag;
+    const it = [['hut', '🛖 Pondok', 20, W.built.hut > 0, 'Buka tapak pondok 11×11 — susun sendiri rumah kamu dengan blok!'], ['fence', '🪵 Pagar', 30, W.built.fence > 0, 'Pagar kayu di pangkalan (hiasan). Pertahanan sebenar ada pada pagar kandang.']], fl = W.built.flag;
     panel(head('🏕️', 'PANGKALAN SAYA', 'Kumpul 🪵 kayu untuk membina. Pasang bendera — warna sama = satu pasukan.') +
       it.map(r => btn('b:' + r[0], r[3] ? '✅ ' + r[1] + ' — siap' : r[1] + ' &nbsp;(🪵 ' + r[2] + ')<br><span style="font-weight:500;font-size:11px;opacity:.7">' + r[4] + '</span>', !r[3] && W.wood >= r[2] ? 'btn-o' : '', r[3] || W.wood < r[2])).join('') +
-      btn('pets', '🐾 Rombongan & Kandang (' + wParty(W).length + '/' + WPARTY + (W.kd ? ' · 🏠Lv' + wKdLv(W) : '') + ')', W.pets.length || W.kd ? 'btn-c' : '') +
+      (W.built.hut ? btn('hbina', '🧱 MOD BINA PONDOK — susun blok rumah kamu (' + (ownHouse() ? ownHouse().n : 0) + '/400)', 'btn-o') : '') + btn('pets', '🐾 Rombongan & Kandang (' + wParty(W).length + '/' + WPARTY + (W.kd ? ' · 🏠Lv' + wKdLv(W) : '') + ')', W.pets.length || W.kd ? 'btn-c' : '') +
       '<div class="lbl mt-3">🎀 HIASAN PANGKALAN (rakan nampak)</div>' + WDECO.map(d => btn('dc:' + d[0], W.deco[d[0]] ? '✅ ' + d[1] + ' — siap' : d[1] + ' &nbsp;(' + wCostTxt(d[2]) + ')', !W.deco[d[0]] && wCostOk(W, d[2]) ? 'btn-o' : '', W.deco[d[0]] || !wCostOk(W, d[2]))).join('') +
       '<div class="text-[12px] font-bold mt-3">🚩 Bendera pasukan (🪵 10 kali pertama)</div><div class="flex gap-2 mt-1 flex-wrap">' + wFlagCols.map(c => '<button data-p="f:' + c + '" style="width:38px;height:38px;border-radius:8px;background:' + c + ';border:3px solid ' + (fl === c ? '#fff' : 'transparent') + '"></button>').join('') + '</div>' +
       (fl && NET ? '<div class="panel clip-s p-2 mt-3 text-[12px]">Perbendaharaan pasukan ' + (wFlagName[fl] || '') + ': <b style="color:#FDE68A">' + teamTotal(fl) + ' 🪵</b> (bonus ★' + teamTier(fl) + ')</div>' + btn('don', '🎁 Sumbang 10 🪵 kepada pasukan', W.wood >= 10 ? 'btn-o' : '', W.wood < 10) : '') + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
       if (a === 'pets') return kandang();
+      if (a === 'hbina'){ closePanel(); return buildEnter('h'); }
       if (a.indexOf('dc:') === 0){ const d = WDECO.find(z => z[0] === a.slice(3)); if (!d || W.deco[d[0]] || !wCostOk(W, d[2])) return; wPay(W, d[2]); W.deco[d[0]] = 1; xp('pint', 15); sfx('myth'); save(); hud(); refreshBase(); pushInfo(true); pangkalan(); say(d[1] + ' siap!', 1600); return; }
-      if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; xp('stam', r[0] === 'hut' ? 20 : 15); sfx('myth'); save(); hud(); refreshBase(); pushInfo(); pangkalan(); say(r[1] + ' siap dibina!', 1800); if (r[0] === 'hut') tutEv('hut'); }
+      if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; xp('stam', r[0] === 'hut' ? 20 : 15); sfx('myth'); save(); hud(); refreshBase(); pushInfo(); pangkalan(); say(r[1] + ' siap dibina!', 1800); if (r[0] === 'hut'){ houseRefresh(); tutEv('hut'); } }
       if (a.indexOf('f:') === 0){ const c = a.slice(2); if (W.built.flag !== c){ if (!W.built.flag && W.wood < 10) return say('Perlu 🪵 10 untuk bendera.', 1800); if (!W.built.flag){ W.wood -= 10; xp('stam', 10); } W.built.flag = c; save(); hud(); refreshBase(); pushInfo(); pangkalan(); } }
       if (a === 'don' && NET && fl && W.wood >= 10){ W.wood -= 10; const k = flagKey(fl); WT[k] = WT[k] || {}; WT[k][me.id] = (+WT[k][me.id] || 0) + 10; try { NET.net.set('wt/' + k + '/' + me.id, WT[k][me.id]); } catch(e){} sfx('hi'); save(); hud(); pangkalan(); say('🎁 Terima kasih! Pasukan ' + teamTotal(fl) + ' 🪵', 1800); } });
   }
@@ -19468,7 +19484,7 @@ function worldGame(THREE, W, NET){
   }
   function wipeAll(){
     if (!NET || me.id !== 'guru') return; const ts = Date.now(); WCFG.wipe = ts;
-    try { ['wb', 'wp', 'wt', 'wc', 'wd', 'wk', 'wh', 'wg', 'wv', 'ws'].forEach(k => NET.net.set(k, null)); NET.net.set('wcfg/wipe', ts); } catch(e){}
+    try { ['wb', 'wp', 'wt', 'wc', 'wd', 'wk', 'wh', 'wg', 'wv', 'wx', 'wy', 'ws'].forEach(k => NET.net.set(k, null)); NET.net.set('wcfg/wipe', ts); } catch(e){}
     wipeSelf(ts);
   }
   function warTick(dt){
@@ -19746,6 +19762,31 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
         const cx = K.g.position.x + i - hx, cz = K.g.position.z + j - hx, nx = Math.max(cx - .5, Math.min(P.x, cx + .5)), nz = Math.max(cz - .5, Math.min(P.z, cz + .5)), dx = P.x - nx, dz = P.z - nz, d = Math.hypot(dx, dz);
         if (d < .42){ if (d > 1e-4){ P.x = nx + dx / d * .42; P.z = nz + dz / d * .42; } else { const ex = P.x - cx, ez = P.z - cz; if (Math.abs(ex) > Math.abs(ez)) P.x = cx + Math.sign(ex || 1) * .92; else P.z = cz + Math.sign(ez || 1) * .92; } } } });
   }
+  /* ---------- pondok: tapak blok 11×11 di pangkalan (dibuka dengan membina Pondok) ---------- */
+  let OWNH = null, pubH = 0, BPT = 'k'; const HS = 11, HOUSED = {};
+  function ownHouse(){
+    if (!W.built.hut) return null;
+    if (!W.hb) W.hb = { bl: '', bs: HS, bn: 0, bmx: 0 };
+    if (!OWNH){ OWNH = { S: HS, g: wGridDec(W.hb && W.hb.bl, HS * HS * WKD_H), n: 0 }; OWNH.n = OWNH.g.reduce((a, v) => a + (v ? 1 : 0), 0); }
+    return OWNH;
+  }
+  function housePublish(){ if (!NET) return; try { NET.net.set('wy/' + me.id, W.hb && W.hb.bl ? { s: HS, d: W.hb.bl, t: Date.now() } : null); } catch(e){} }
+  function houseSave(){ if (!OWNH) return; W.hb = Object.assign(W.hb || {}, { bl: wGridEnc(OWNH.g), bs: HS, bn: OWNH.n }); save(); clearTimeout(pubH); pubH = setTimeout(housePublish, 1500); }
+  function houseK(id, slot){
+    const key = id + ':b'; let K = KDS.get(key);
+    if (!K){ K = { g: new THREE.Group(), id: key, lv: 0, ks: '', an: [], bm: [], dmg: 0, S: HS, grid: null, pick: null, tw: 0, tp: 0, nm: '', fenceG: null }; K.g.position.set(slot.x, 0, slot.z); scene.add(K.g);
+      K.pick = new THREE.Mesh(new THREE.PlaneGeometry(HS, HS), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); K.pick.rotation.x = -Math.PI / 2; K.pick.position.y = .02; K.g.add(K.pick);
+      const gd = new THREE.Mesh(new THREE.PlaneGeometry(HS, HS), texUse(new THREE.MeshStandardMaterial({ color: 0xA98F5E, roughness: 1 }), 'tanah', 4, 4)); gd.rotation.x = -Math.PI / 2; gd.position.y = .04; K.g.add(gd);
+      KDS.set(key, K); }
+    return K;
+  }
+  function houseRefresh(){
+    const K0 = KDS.get(me.id + ':b'); if (!W.built.hut){ if (K0) K0.g.visible = false; return; }
+    const og = ownHouse(), K = houseK(me.id, MYSLOT); K.g.visible = true; K.grid = og.g; blkMesh(K);
+  }
+  const curG = () => BPT === 'h' ? ownHouse() : ownGrid(), curK = () => KDS.get(BPT === 'h' ? me.id + ':b' : me.id), curSave = () => BPT === 'h' ? houseSave() : blkSave(), curCap = () => BPT === 'h' ? 400 : wBlkCap(wKdLv(W));
+  if (NET) unsubs.push(NET.net.on('wy', v => { Object.keys(v || {}).forEach(id => { if (id === me.id) return; const e = v[id]; if (!e || !e.s) return; if (HOUSED[id] && HOUSED[id].d === e.d) return; HOUSED[id] = { d: String(e.d || '') };
+    const K = houseK(id, SLOTS[slotOf(id)]); K.g.visible = true; K.grid = wGridDec(e.d, HS * HS * WKD_H); blkMesh(K); }); }));
   /* ---------- MOD BINA ---------- */
   let BUILD = null;
   const bIcon = id => { const t = BLKS[id][4], x = (t % 8) * 100 / 7, y = ((t / 8) | 0) * 50; return '<span style="display:block;width:34px;height:34px;margin:0 auto;border:2px solid #0F172A;background-image:url(' + ATLAS.url + ');background-size:800% 300%;background-position:' + x + '% ' + y + '%;image-rendering:pixelated"></span>'; };
@@ -19762,44 +19803,44 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     root.appendChild(el); return el;
   }
   function buildPaint(){
-    if (!BUILD) return; const og = ownGrid(), lv = wKdLv(W), D = BLKS[BUILD.sel];
-    $w('#wBInfo').innerHTML = '<span>🧱 ' + (og ? og.n : 0) + ' / ' + wBlkCap(lv) + ' blok · tapak ' + wKdS(lv) + '×' + wKdS(lv) + ' · tinggi ' + WKD_H + '</span><span>' + D[0] + ': ' + bCost(D[1]) + ' &nbsp;(ada ' + wCostTxt({ wood: W.wood, bulu: W.bulu, fish: W.fish, fruit: W.fruit, water: W.water }) + ')</span>';
+    if (!BUILD) return; const og = curG(), lv = wKdLv(W), D = BLKS[BUILD.sel];
+    $w('#wBInfo').innerHTML = '<span>🧱 ' + (og ? og.n : 0) + ' / ' + curCap() + ' blok · tapak ' + (og ? og.S : 0) + '×' + (og ? og.S : 0) + ' · tinggi ' + WKD_H + '</span><span>' + D[0] + ': ' + bCost(D[1]) + ' &nbsp;(ada ' + wCostTxt({ wood: W.wood, bulu: W.bulu, fish: W.fish, fruit: W.fruit, water: W.water }) + ')</span>';
     $w('#wBuild').querySelectorAll('[data-b]').forEach(b => { const k = b.dataset.b; let on = false; if (k === 'place') on = BUILD.mode === 'place'; else if (k === 'remove') on = BUILD.mode === 'remove'; else if (k.indexOf('sel:') === 0) on = +k.slice(4) === BUILD.sel; b.style.outline = on ? '3px solid #FDE68A' : 'none';
       if (k === 'place') b.style.background = BUILD.mode === 'place' ? '#16A34A' : ''; if (k === 'remove') b.style.background = BUILD.mode === 'remove' ? '#B91C1C' : ''; });
   }
   const HIDE = ['#wAct', '#wTools', '#wTalk', '#wHear', '#wQuest', '#wTgt', '#wMap'];
-  function buildEnter(){
-    const og = ownGrid(); if (!og || !W.kd) return say('Bina kandang dahulu.', 1800); if (PANEL) closePanel(); if (hpQuiet < 5) return say('🧱 Tak boleh bina semasa diserang!', 2200);
-    if (RIDE) dismount(true); stopMove(); const K = KDS.get(me.id); if (!K) return; if (!K.pick) return say('Kandang belum siap dimuat.', 1500);
+  function buildEnter(pt){
+    BPT = pt === 'h' ? 'h' : 'k'; const og = curG(); if (!og || !(BPT === 'h' ? W.built.hut : W.kd)) return say(BPT === 'h' ? 'Bina pondok dahulu di Pangkalan.' : 'Bina kandang dahulu.', 1800); if (PANEL) closePanel(); if (hpQuiet < 5) return say('🧱 Tak boleh bina semasa diserang!', 2200);
+    if (RIDE) dismount(true); stopMove(); const K = curK(); if (!K) return; if (!K.pick) return say('Kandang belum siap dimuat.', 1500);
     BUILD = { yaw: Math.atan2(P.x - K.g.position.x, P.z - K.g.position.z), pitch: .95, dist: og.S * 1.15 + 5, sel: BUILD && BUILD.sel || 1, mode: 'place', undo: [], gid: 0, hl: null, pd: 0 };
     buildUi().style.display = 'block'; HIDE.forEach(s => { const e = $w(s); if (e){ e.dataset.pd = e.style.display; e.style.display = 'none'; } });
     const hl = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.02, 1.02, 1.02)), new THREE.LineBasicMaterial({ color: 0xFDE68A })); hl.visible = false; K.g.add(hl); BUILD.hl = hl;
     buildPaint(); say('🧱 <b>Mod Bina</b><br><span style="font-size:15px">Ketik untuk pasang blok · seret untuk pusing · cubit / ➕➖ untuk zum</span>', 3600);
   }
   function buildExit(){
-    if (!BUILD) return; const K = KDS.get(me.id); if (K && BUILD.hl){ K.g.remove(BUILD.hl); BUILD.hl.geometry.dispose(); } BUILD = null; $w('#wBuild').style.display = 'none';
-    HIDE.forEach(s => { const e = $w(s); if (e) e.style.display = e.dataset.pd || ''; }); $w('#wTalk') && ($w('#wTalk').style.display = 'flex'); $w('#wTools') && ($w('#wTools').style.display = 'flex'); rideSync(); tutPaint(); blkSave(); hud();
+    if (!BUILD) return; const K = curK(); if (K && BUILD.hl){ K.g.remove(BUILD.hl); BUILD.hl.geometry.dispose(); } BUILD = null; $w('#wBuild').style.display = 'none';
+    HIDE.forEach(s => { const e = $w(s); if (e) e.style.display = e.dataset.pd || ''; }); $w('#wTalk') && ($w('#wTalk').style.display = 'flex'); $w('#wTools') && ($w('#wTools').style.display = 'flex'); rideSync(); tutPaint(); curSave(); hud();
     tutEv('bina'); say('🏠 Binaan disimpan — rakan sekelas boleh nampak!', 2200);
   }
   function buildCam(dt){
-    const K = KDS.get(me.id); if (!K){ return buildExit(); }
+    const K = curK(); if (!K){ return buildExit(); }
     const cx = K.g.position.x, cz = K.g.position.z, d = BUILD.dist, cp = Math.cos(BUILD.pitch);
     camP.set(cx + Math.sin(BUILD.yaw) * cp * d, 1.5 + Math.sin(BUILD.pitch) * d, cz + Math.cos(BUILD.yaw) * cp * d); cam.position.lerp(camP, Math.min(1, dt * 10)); cam.lookAt(cx, 1.5, cz);
   }
   /* pasang / buang satu petak (disahkan: had blok, bahan, ruang, pemain tidak di dalam petak) */
   function blkSet(i, j, y, v, gid){
-    const og = ownGrid(), K = KDS.get(me.id); if (!og || !K) return false; const S = og.S, lv = wKdLv(W);
+    const og = curG(), K = curK(); if (!og || !K) return false; const S = og.S, lv = wKdLv(W);
     if (i < 0 || j < 0 || y < 0 || i >= S || j >= S || y >= WKD_H) return false; const idx = (y * S + j) * S + i, old = og.g[idx]; if (old === v) return false;
-    if (v){ const D = BLKS[v]; if (old) return false; if (og.n >= wBlkCap(lv)){ say('Had blok dicapai (' + wBlkCap(lv) + '). Naik taraf kandang untuk lebih banyak.', 2400); return false; }
+    if (v){ const D = BLKS[v]; if (old) return false; if (og.n >= curCap()){ say('Had blok dicapai (' + curCap() + '). Naik taraf kandang untuk lebih banyak.', 2400); return false; }
       if (!wCostOk(W, D[1])){ say('Tidak cukup bahan: ' + bCost(D[1]), 1800); return false; }
       if (D[2] && y <= 1 && Math.hypot(P.x - (K.g.position.x + i - (S - 1) / 2), P.z - (K.g.position.z + j - (S - 1) / 2)) < .8){ say('Ada orang di petak itu.', 1200); return false; }
-      wPay(W, D[1]); og.n++; if (og.n > (W.kd.bmx | 0)){ W.kd.bmx = og.n; BXP++; } }
+      wPay(W, D[1]); og.n++; { const rc = BPT === 'h' ? W.hb : W.kd; if (rc && og.n > (rc.bmx | 0)){ rc.bmx = og.n; BXP++; } } }
     else { const D = BLKS[old]; if (!D) return false; Object.keys(D[1]).forEach(k => { W[k] += D[1][k]; }); og.n--; }
     og.g[idx] = v; if (BUILD) BUILD.undo.push({ i, j, y, old, nw: v, g: gid || ++BUILD.gid }); if (BUILD && BUILD.undo.length > 400) BUILD.undo.shift(); return true;
   }
-  const blkAfter = () => { if (BXP){ xp('pint', BXP); BXP = 0; } const K = KDS.get(me.id); if (K){ K.grid = ownGrid().g; blkMesh(K); } blkSave(); hud(); buildPaint(); };
+  const blkAfter = () => { if (BXP){ xp('pint', BXP); BXP = 0; } const K = curK(); if (K){ K.grid = curG().g; blkMesh(K); } curSave(); hud(); buildPaint(); };
   function buildTap(x, y){
-    if (!BUILD) return; const K = KDS.get(me.id), og = ownGrid(); if (!K || !og) return; const r = $w('#wCv').getBoundingClientRect();
+    if (!BUILD) return; const K = curK(), og = curG(); if (!K || !og) return; const r = $w('#wCv').getBoundingClientRect();
     const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2((x - r.left) / r.width * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam);
     const hit = rc.intersectObjects(K.bm.concat([K.pick]), false)[0]; if (!hit) return;
     const n = hit.face.normal.clone().transformDirection(hit.object.matrixWorld), loc = hit.point.clone().sub(K.g.position), S = og.S, hx = (S - 1) / 2, sgn = BUILD.mode === 'place' ? 1 : -1;
@@ -19809,19 +19850,19 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     if (blkSet(i, j, yy, BUILD.mode === 'place' ? BUILD.sel : 0)){ sfx(BUILD.mode === 'place' ? 'flip' : 'low'); vibrate(8); blkAfter(); }
   }
   function buildUndo(){
-    if (!BUILD || !BUILD.undo.length) return say('Tiada untuk diundur.', 1000); const og = ownGrid(), last = BUILD.undo[BUILD.undo.length - 1].g; let n = 0;
+    if (!BUILD || !BUILD.undo.length) return say('Tiada untuk diundur.', 1000); const og = curG(), last = BUILD.undo[BUILD.undo.length - 1].g; let n = 0;
     while (BUILD.undo.length && BUILD.undo[BUILD.undo.length - 1].g === last){ const o = BUILD.undo.pop(), S = og.S, idx = (o.y * S + o.j) * S + o.i;
       if (o.nw){ const D = BLKS[o.nw]; Object.keys(D[1]).forEach(k => { W[k] += D[1][k]; }); og.n--; og.g[idx] = 0; }
       if (o.old){ const D = BLKS[o.old]; if (!wCostOk(W, D[1])) continue; wPay(W, D[1]); og.n++; og.g[idx] = o.old; } n++; }
     blkAfter(); sfx('flip');
   }
   function buildRing(){
-    const og = ownGrid(); if (!og) return; const S = og.S, gid = ++BUILD.gid; let n = 0;
+    const og = curG(); if (!og) return; const S = og.S, gid = ++BUILD.gid; let n = 0;
     for (let k = 0; k < S; k++) [[k, 0], [k, S - 1], [0, k], [S - 1, k]].forEach(([i, j]) => { if (j === S - 1 && Math.abs(i - (S - 1) / 2) < 1) return; if (blkSet(i, j, 0, BUILD.sel, gid)) n++; });
     if (n){ blkAfter(); say('🔲 Pagar ' + n + ' blok (ada pintu di depan)', 1800); } else say('Tiada blok ditambah (bahan tak cukup atau sudah ada).', 1800);
   }
   function buildClear(){
-    const og = ownGrid(); if (!og || !og.n) return; if (!confirm('Kosongkan semua blok? (bahan dikembalikan)')) return; const gid = ++BUILD.gid;
+    const og = curG(); if (!og || !og.n) return; if (!confirm('Kosongkan semua blok? (bahan dikembalikan)')) return; const gid = ++BUILD.gid;
     for (let idx = 0; idx < og.g.length; idx++){ if (!og.g[idx]) continue; const S = og.S, i = idx % S, j = ((idx / S) | 0) % S, y = (idx / (S * S)) | 0; blkSet(i, j, y, 0, gid); } blkAfter();
   }
   /* kawalan: ketik = pasang/buang; seret = pusing; cubit = zum */
@@ -20004,8 +20045,8 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
       cloudT += dt; if (cloudT > 15){ cloudT = 0; cloudSave(); pushInfo(); } }
     R.render(scene, cam);
   }
-  syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, qToggle, buildEnter, buildExit, buildTap, buildUndo, buildRing, blkSet, blkAfter, OWNGv: () => OWNG, BUILDv: () => BUILD, cam, blkMesh, BLKS, WLVX, wPlayerLvl, wExpTotal, xp, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  syncPets(); houseRefresh(); tutPaint(); hud(); frame(); drawMap();
+  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, qToggle, buildEnter, buildExit, houseRefresh, ownHouse, HOUSED, buildTap, buildUndo, buildRing, blkSet, blkAfter, OWNGv: () => OWNG, BUILDv: () => BUILD, cam, blkMesh, BLKS, WLVX, wPlayerLvl, wExpTotal, xp, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
