@@ -18663,15 +18663,16 @@ const WSK = { kuat: { n: 'Kekuatan', ico: '💪', d: 'PJK — menebang lebih pan
 const wSkillOf = x => /kesihatan/i.test(x.subjLabel || '') ? 'stam' : /sains/i.test(x.subjLabel || '') ? 'pint' : 'kuat';
 const wFlagCols = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899'];
 const wFlagName = { '#EF4444': 'Merah', '#3B82F6': 'Biru', '#22C55E': 'Hijau', '#F59E0B': 'Kuning', '#A855F7': 'Ungu', '#EC4899': 'Merah Jambu' };
-const wPtsSum = o => o && o.pts ? (o.pts.kuat | 0) + (o.pts.pint | 0) + (o.pts.stam | 0) : 0;
+const wPtsSum = o => o && o.pts ? ((+o.pts.kuat || 0) + (+o.pts.pint || 0) + (+o.pts.stam || 0)) * (o.xv ? 1 : 100) : 0;   /* data lama: 1 mata = 100 EXP */
 function wNorm(w, key){
   const d = { v: 3, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0,
-    bulu: 0, gear: { a: 0, w: 0, wu: 0 }, bag: { lv: 0, items: {} }, intro7: 0, pets: [], brush: '', nTame: 0, intro2: 0,
+    bulu: 0, gear: { a: 0, w: 0, wu: 0 }, bag: { lv: 0, items: {} }, intro7: 0, intro8: 0, pets: [], brush: '', nTame: 0, intro2: 0,
     war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0, intro4: 0, mute: {}, kd: null, tut: 0, intro5: 0, fed: 100, deco: {}, gift: { d: '', n: 0 }, gT: 0, intro6: 0 };
   const isNew = !w || !Object.keys(w).length; w = w || {};
   const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), bag: Object.assign({ lv: 0 }, w.bag || {}, { items: Object.assign({}, (w.bag && w.bag.items) || {}) }), rc: w.rc || {}, mute: w.mute || {}, rd: Object.assign(d.rd, w.rd || {}), log: Array.isArray(w.log) ? w.log.slice(0, 12) : [], pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 130).map(p => ({ t: p.t, g: w.kd && p.g ? 1 : 0 })) : [],
-    kd: w.kd && typeof w.kd.x === 'number' ? { x: w.kd.x, z: w.kd.z, lv: Math.max(1, Math.min(WKD_MAXLV, w.kd.lv | 0 || 1)), fh: +w.kd.fh || 0, kh: +w.kd.kh || 0, tw: w.kd.tw | 0, tp: w.kd.tp | 0, bl: String(w.kd.bl || ''), bs: w.kd.bs | 0, bn: w.kd.bn | 0 } : null }); delete W._t;
+    kd: w.kd && typeof w.kd.x === 'number' ? { x: w.kd.x, z: w.kd.z, lv: Math.max(1, Math.min(WKD_MAXLV, w.kd.lv | 0 || 1)), fh: +w.kd.fh || 0, kh: +w.kd.kh || 0, tw: w.kd.tw | 0, tp: w.kd.tp | 0, bl: String(w.kd.bl || ''), bs: w.kd.bs | 0, bn: w.kd.bn | 0, bmx: w.kd.bmx | 0 } : null }); delete W._t;
   if (W.kd){ const lv = W.kd.lv; if (!W.kd.fh) W.kd.fh = wFenceMax(lv); if (!W.kd.kh) W.kd.kh = wKdHpMax(lv); W.kd.tw = Math.max(0, Math.min(4, W.kd.tw | 0)); W.kd.tp = Math.max(0, Math.min(3, W.kd.tp | 0)); }
+  if (!w.xv && !isNew){ ['kuat', 'pint', 'stam'].forEach(k => { W.pts[k] = Math.round((+W.pts[k] || 0) * 100); }); } W.xv = 1;   /* mata kemahiran lama → EXP (1 mata = 100 EXP) */
   W.t0 = +w.t0 || (isNew ? Date.now() : 1); W.wipe = +w.wipe || 0;      /* t0 = masa mula bermain (data lama = 1) — untuk reset oleh guru */
   W.deco = W.deco || {}; W.gift = Object.assign({ d: '', n: 0 }, W.gift || {}); W.fed = Math.max(0, Math.min(100, +W.fed || 0));
   W.fed = Math.max(0, W.fed - wFedRate(W) * Math.max(0, Date.now() - (+W.t || Date.now())) / 3.6e6);   /* haiwan lapar walaupun app ditutup */
@@ -18679,17 +18680,21 @@ function wNorm(w, key){
   W.t = Date.now(); W.key = key; return W;
 }
 /* EXP berterusan: 1 simulasi = 1 mata kemahiran = 50 EXP; 2 mata = 1 level. Kerja kecil memberi pecahan mata kepada kemahiran berkaitan. */
-const wSkillProg = (W, k) => wLvl(W, k) >= 10 ? 1 : ((+W.pts[k] || 0) % 2) / 2;
-const wNextSkill = W => ['kuat', 'pint', 'stam'].filter(k => wLvl(W, k) < 10).sort((a, b) => wSkillProg(W, b) - wSkillProg(W, a))[0] || null;
-const wLvl = (W, k) => Math.min(10, 1 + Math.floor((W.pts[k] || 0) / 2));
-const wMaxE = W => 100 + 10 * (wLvl(W, 'stam') - 1);
-const wTotalLvl = W => 1 + ['kuat', 'pint', 'stam'].reduce((a, k) => a + wLvl(W, k) - 1, 0);
+/* SISTEM LEVEL: semua aktiviti memberi EXP (W.pts = EXP setiap kemahiran). Level pemain 1–50 daripada jumlah EXP;
+   EXP diperlukan untuk naik dari level L ke L+1 = 40 + 20L + 1.2L² (level 1→2 = 61, 10→11 = 360, 30→31 = 1,720, 49→50 = 3,900; jumlah ke level 50 ≈ 75,000).
+   Kemahiran (💪🧠❤️) naik setiap 200 EXP sehingga Lvl 10 dan memberi bonus kerja; level pemain memberi HP, tenaga & pukulan. */
+const WLV_MAX = 50, WLVX = (() => { const a = [0, 0]; for (let L = 1; L < WLV_MAX; L++) a.push(a[L] + Math.round(40 + 20 * L + 1.2 * L * L)); return a; })();   /* WLVX[L] = EXP kumulatif untuk mencapai level L */
+const wExpTotal = W => (+W.pts.kuat || 0) + (+W.pts.pint || 0) + (+W.pts.stam || 0);
+const wPlayerLvl = W => { const E = wExpTotal(W); let L = 1; while (L < WLV_MAX && E >= WLVX[L + 1]) L++; return L; };
+const wLvl = (W, k) => Math.min(10, 1 + Math.floor((W.pts[k] || 0) / 200));
+const wMaxE = W => 100 + 10 * (wLvl(W, 'stam') - 1) + 2 * (wPlayerLvl(W) - 1);
+const wTotalLvl = W => wPlayerLvl(W);
 /* Fasa 3 — haiwan: hp = soalan betul untuk menjinak (sebelum diskaun), pw = kuasa, gate = tahap jumlah minimum, bulu = ganjaran */
 const WAN = {
   arnab: { n: 'Arnab', ico: '🐇', hp: 2, pw: 1, gate: 1, bulu: 1, fact: 'Arnab makan sayur dan rumput — kaya serat, macam separuh pinggan sayur &amp; buah kita!' },
-  kancil: { n: 'Kancil', ico: '🦌', hp: 3, pw: 2, gate: 3, bulu: 1, fact: 'Kancil ialah rusa paling kecil di dunia dan terkenal bijak dalam cerita rakyat Malaysia.' },
-  tapir: { n: 'Tapir Malaya', ico: '🐾', hp: 4, pw: 4, gate: 5, bulu: 2, fact: 'Tapir Malaya (cipan) berwarna hitam-putih sebagai penyamaran di hutan. Ia terancam — hutan perlu dilindungi.' },
-  harimau: { n: 'Harimau Malaya', ico: '🐅', hp: 5, pw: 7, gate: 8, bulu: 3, fact: 'Harimau Malaya ialah haiwan kebangsaan Malaysia dan sangat terancam; tinggal sekitar 150 ekor atau kurang di hutan.' } };
+  kancil: { n: 'Kancil', ico: '🦌', hp: 3, pw: 2, gate: 6, bulu: 1, fact: 'Kancil ialah rusa paling kecil di dunia dan terkenal bijak dalam cerita rakyat Malaysia.' },
+  tapir: { n: 'Tapir Malaya', ico: '🐾', hp: 4, pw: 4, gate: 15, bulu: 2, fact: 'Tapir Malaya (cipan) berwarna hitam-putih sebagai penyamaran di hutan. Ia terancam — hutan perlu dilindungi.' },
+  harimau: { n: 'Harimau Malaya', ico: '🐅', hp: 5, pw: 7, gate: 25, bulu: 3, fact: 'Harimau Malaya ialah haiwan kebangsaan Malaysia dan sangat terancam; tinggal sekitar 150 ekor atau kurang di hutan.' } };
 const WGEAR = { a: [['🧥 Jaket Bulu', 5, 8], ['🛡️ Perisai Bulu', 12, 20], ['🐅 Perisai Harimau', 24, 40], ['🦬 Perisai Tapir', 36, 70, { fish: 10, fruit: 6, water: 6 }], ['👑 Perisai Raja Rimba', 60, 120, { fish: 25, fruit: 15, water: 15 }]],
   w: [['🏏 Tongkat Kayu', 2, 10], ['🔱 Lembing Kayu', 8, 25], ['⚔️ Parang Perkasa', 20, 60, { fish: 8, water: 4 }], ['🗡️ Taring Harimau', 40, 110, { fish: 20, fruit: 10, water: 10 }]] };   /* [nama, bulu, kayu, {ikan,buah,air}] */
 /* Fasa 8 — beg galas (simpan makanan & ubat yang dimasak), asah senjata, tunggang haiwan */
@@ -18727,8 +18732,8 @@ const wParty = W => W.pets.filter(p => !p.g), wStore = W => W.pets.filter(p => p
 const wFree = W => Math.max(0, WPARTY + wKdCap(W) - W.pets.length);
 const wPetPw = W => Math.floor(wParty(W).reduce((a, p) => a + ((WAN[p.t] || {}).pw | 0), 0) * wFedMul(W));
 const wPower = W => wTotalLvl(W) * 3 + (W.gear.a | 0) * 5 + (W.gear.w | 0) * 5 + (W.gear.wu | 0) * 2 + wPetPw(W);
-const wHpMax = W => 100 + 10 * (wLvl(W, 'stam') - 1) + 20 * (W.gear.a | 0);
-const wHitDmg = W => 5 + 2 * wLvl(W, 'kuat') + 6 * (W.gear.w | 0) + 4 * (W.gear.wu | 0) + Math.round(wPetPw(W) * .6);
+const wHpMax = W => 100 + 10 * (wLvl(W, 'stam') - 1) + 20 * (W.gear.a | 0) + 3 * (wPlayerLvl(W) - 1);
+const wHitDmg = W => 5 + 2 * wLvl(W, 'kuat') + Math.floor(wPlayerLvl(W) / 2) + 6 * (W.gear.w | 0) + 4 * (W.gear.wu | 0) + Math.round(wPetPw(W) * .6);
 const wAnCode = { arnab: 'a', kancil: 'k', tapir: 't', harimau: 'h' }, wAnFrom = { a: 'arnab', k: 'kancil', t: 'tapir', h: 'harimau' };
 const wDuelNeed = (W, t) => Math.max(Math.ceil(WAN[t].hp / 2), WAN[t].hp - Math.floor((wLvl(W, 'kuat') - 1) / 4) - (W.gear.w | 0));
 const wDuelHearts = W => 3 + Math.floor((wLvl(W, 'stam') - 1) / 4) + (W.gear.a | 0);
@@ -19077,8 +19082,10 @@ function worldGame(THREE, W, NET){
     $w('#wHud').innerHTML = '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;min-width:150px"><div style="font-size:12px;font-weight:800">⭐ Lvl ' + wTotalLvl(W) + ' <span style="opacity:.7;font-weight:600;font-size:11px">· ' + ['kuat', 'pint', 'stam'].map(k => WSK[k].ico + wLvl(W, k)).join(' ') + '</span></div>' +
       '<div style="margin-top:4px;height:10px;border-radius:6px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:' + (pc < 25 ? '#EF4444' : '#FACC15') + '"></i></div>' +
       '<div style="font-size:11px;margin-top:2px">⚡ ' + Math.floor(W.energy) + ' / ' + mx + '</div>' +
-      (() => { const nk = wNextSkill(W); if (!nk) return '<div style="font-size:11px;margin-top:3px;color:#FDE68A">⭐ Semua kemahiran maksimum!</div>'; const pr = Math.round(wSkillProg(W, nk) * 100);
-        return '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div><div style="font-size:11px">⭐ EXP ' + pr + '% → ' + WSK[nk].ico + ' Lvl ' + (wLvl(W, nk) + 1) + (xpTxt && Date.now() < xpUntil ? ' <b style="color:#7DD3FC">' + xpTxt + '</b>' : '') + '</div>'; })() +
+      (() => { const L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), tx = xpTxt && Date.now() < xpUntil ? ' <b style="color:#7DD3FC">' + xpTxt + '</b>' : '';
+        if (L >= WLV_MAX) return '<div style="font-size:11px;margin-top:3px;color:#FDE68A">⭐ LEVEL MAKS (' + WLV_MAX + ') · ' + E + ' EXP' + tx + '</div>';
+        const a = WLVX[L], b = WLVX[L + 1], pr = Math.max(0, Math.min(100, Math.round((E - a) / (b - a) * 100)));
+        return '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div><div style="font-size:11px">⭐ EXP ' + (E - a) + ' / ' + (b - a) + tx + '</div>'; })() +
       (NET ? '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, HP / wHpMax(W) * 100)) + '%;background:#EF4444"></i></div><div style="font-size:11px">❤️ ' + Math.round(HP) + ' / ' + wHpMax(W) + (W.war ? ' &nbsp;⚔️' : '') + '</div>' : '') + '</div>' +
       '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + ' &nbsp;🧶 ' + W.bulu +
       (NET ? '<div style="font-size:10px;font-weight:600;opacity:.8">👥 ' + (REM.size + 1) + ' dalam talian' + (W.built.flag ? ' · 🚩 ' + (wFlagName[W.built.flag] || '') + (tt ? ' ★' + tt : '') : '') + '</div>' : '') + '</div>';
@@ -19091,7 +19098,13 @@ function worldGame(THREE, W, NET){
   const btn = (a, label, cls, dis) => '<button class="btn ' + (cls || '') + ' clip-s w-full !py-3 text-[14px] font-bold mt-2" data-p="' + a + '"' + (dis ? ' disabled style="opacity:.45"' : '') + '>' + label + '</button>';
   const grid2 = h => '<div style="display:grid;gap:0 8px;grid-template-columns:' + (land ? '1fr 1fr' : '1fr') + '">' + h + '</div>';   /* pilihan jawapan: dua lajur dalam landskap */
   const head = (ico, t, sub) => '<div class="text-center"><div style="font-size:40px;line-height:1">' + ico + '</div><div class="font-bold text-[20px] mt-1" style="color:#F5E08A">' + t + '</div>' + (sub ? '<div class="text-[12px] text-muted mt-1 leading-snug">' + sub + '</div>' : '') + '</div>';
-  const pts = (k, n) => { const before = wLvl(W, k); W.pts[k] = Math.round(((W.pts[k] || 0) + (n || 1)) * 1000) / 1000; const after = wLvl(W, k); if (after > before){ sfx('myth'); say(WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + after + '!', 2600); vibrate([30, 40, 30]); } pushInfo(); };
+  const pts = (k, n) => {
+    const L0 = wPlayerLvl(W), s0 = wLvl(W, k); W.pts[k] = Math.round(((W.pts[k] || 0) + (n || 0)) * 100) / 100; const L1 = wPlayerLvl(W), s1 = wLvl(W, k);
+    if (L1 > L0){ const un = Object.keys(WAN).filter(t => WAN[t].gate > L0 && WAN[t].gate <= L1).map(t => WAN[t].ico + ' ' + WAN[t].n);
+      sfx('myth'); vibrate([30, 40, 30, 40, 60]); W.energy = Math.min(wMaxE(W), W.energy + 25); HP = Math.min(wHpMax(W), HP + 30);
+      say('⭐ <b>LEVEL ' + L1 + '!</b><br><span style="font-size:14px">❤️ HP maks ' + wHpMax(W) + ' · ⚡ Tenaga maks ' + wMaxE(W) + ' · 💥 Pukulan ' + wHitDmg(W) + (s1 > s0 ? '<br>' + WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + s1 : '') + (un.length ? '<br>🔓 Boleh menawan: ' + un.join(', ') : '') + '</span>', 4000); }
+    else if (s1 > s0){ sfx('myth'); say(WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + s1 + '!', 2600); vibrate([30, 40, 30]); }
+    pushInfo(); };
 
   /* Dewan Misi: 5 simulasi sehari */
   function misi(){
@@ -19099,11 +19112,11 @@ function worldGame(THREE, W, NET){
     const qs = wDailyQuests(), done = qs.filter(x => W.q[x.id] === TODAY).length;
     panel(head('🎬', 'DEWAN MISI', 'Misi harian: tonton simulasi, jawab kuiz → <b style="color:#FDE68A">mata kemahiran</b> + tenaga. Kemahiran tinggi = kerja di dunia lebih pantas! (' + done + '/' + qs.length + ' siap hari ini)') +
       qs.map(x => { const d = W.q[x.id] === TODAY, k = wSkillOf(x);
-        return '<button class="panel clip-s p-3 w-full text-left flex items-center gap-3 mt-2" data-p="q:' + x.id + '" style="border-color:' + (d ? '#22C55E' : '#334155') + '"><span style="font-size:30px">' + x.ico + '</span><span class="flex-1 min-w-0"><span class="block text-[11px] text-muted tracking-widest">' + esc(x.subjLabel) + ' · ' + WSK[k].ico + ' ' + WSK[k].n + '</span><span class="block font-bold text-[14px]">' + esc(x.title) + '</span><span class="block text-[11px]" style="color:' + (d ? '#4ADE80' : '#FDE68A') + '">' + (d ? '✅ Siap — ulang kaji sahaja' : '+1 ' + WSK[k].n + ' · +25 ⚡ · +3 🪵') + '</span></span></button>'; }).join('') +
+        return '<button class="panel clip-s p-3 w-full text-left flex items-center gap-3 mt-2" data-p="q:' + x.id + '" style="border-color:' + (d ? '#22C55E' : '#334155') + '"><span style="font-size:30px">' + x.ico + '</span><span class="flex-1 min-w-0"><span class="block text-[11px] text-muted tracking-widest">' + esc(x.subjLabel) + ' · ' + WSK[k].ico + ' ' + WSK[k].n + '</span><span class="block font-bold text-[14px]">' + esc(x.title) + '</span><span class="block text-[11px]" style="color:' + (d ? '#4ADE80' : '#FDE68A') + '">' + (d ? '✅ Siap — ulang kaji sahaja' : '+100 EXP ' + WSK[k].ico + ' · +25 ⚡ · +3 🪵') + '</span></span></button>'; }).join('') +
       btn('close', 'Tutup', ''), (a) => {
       if (a === 'close') return closePanel();
       if (a.indexOf('q:') === 0){ const id = a.slice(2), x = SIM_LIB.find(s => s.id === id); closePanel();
-        simPlay(id, { world: true, done: W.q[id] === TODAY, onDone: () => { if (W.q[id] === TODAY) return; W.q[id] = TODAY; const k = wSkillOf(x); pts(k, 1); W.energy = Math.min(wMaxE(W), W.energy + 25); W.wood += 3; save(); hud(); pushInfo(); } }); } });
+        simPlay(id, { world: true, done: W.q[id] === TODAY, onDone: () => { if (W.q[id] === TODAY) return; W.q[id] = TODAY; const k = wSkillOf(x); xp(k, 100); W.energy = Math.min(wMaxE(W), W.energy + 25); W.wood += 3; save(); hud(); pushInfo(); } }); } });
   }
 
   /* Rumah Arkad: kuiz pantas 5 soalan */
@@ -19113,7 +19126,7 @@ function worldGame(THREE, W, NET){
       btn('go', '▶ MAIN KUIZ PANTAS', 'btn-o') + btn('close', 'Tutup', '') + (dn ? '<div class="text-[11px] text-center mt-2" style="color:#4ADE80">✅ Ganjaran 5/5 hari ini sudah diambil</div>' : ''), a => { if (a === 'close') return closePanel(); if (a === 'go'){ if (!useE(5)){ closePanel(); return; } hud(); arkadQ(0, 0); } });
   }
   function arkadQ(i, ok){
-    if (i >= 5){ let extra = ''; if (ok === 5 && W.arc !== TODAY){ W.arc = TODAY; pts('pint', 1); extra = '<div class="mt-2" style="color:#FDE68A">🧠 +1 Kepintaran!</div>'; }
+    if (i >= 5){ let extra = ''; if (ok === 5 && W.arc !== TODAY){ W.arc = TODAY; xp('pint', 30); extra = '<div class="mt-2" style="color:#FDE68A">🧠 +30 EXP!</div>'; }
       save(); hud(); return panel(head(ok >= 4 ? '🏆' : '👍', ok + ' / 5 BETUL', 'Hasil: +' + ok + ' 🪵 +' + ok + ' 🐟') + extra + btn('again', '🔁 Main lagi (−5 ⚡)', 'btn-o') + btn('close', 'Tutup', ''), a => { if (a === 'close') return closePanel(); if (a === 'again'){ if (!useE(5)){ closePanel(); return; } hud(); arkadQ(0, 0); } }); }
     let q; try { q = runQuestion(); } catch(e){ q = null; } if (!q || !q.c){ closePanel(); return say('Tiada soalan dalam bank. Tambah soalan di app guru.', 2400); }
     const opts = q.c.map((t, j) => ({ t, ok: j === q.a })).sort(() => Math.random() - .5);
@@ -19121,7 +19134,7 @@ function worldGame(THREE, W, NET){
       grid2(opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join('')), (a, b) => {
       if (a.indexOf('o:') !== 0 || PANEL_LOCK) return; PANEL_LOCK = true; const o = opts[+a.slice(2)]; const good = o.ok;
       b.style.background = good ? '#15803D' : '#991B1B'; if (!good){ const k = opts.findIndex(z => z.ok); const bb = $w('#wPanel [data-p="o:' + k + '"]'); if (bb) bb.style.background = '#15803D'; }
-      sfx(good ? 'hi' : 'low'); if (good){ W.wood++; W.fish++; xp('pint', .03); }
+      sfx(good ? 'hi' : 'low'); if (good){ W.wood++; W.fish++; xp('pint', 3); }
       setTimeout(() => { PANEL_LOCK = false; arkadQ(i + 1, ok + (good ? 1 : 0)); }, 1100); });
   }
 
@@ -19132,9 +19145,11 @@ function worldGame(THREE, W, NET){
     let body = '';
     if (tab === 'diri'){
       const row = k => '<div class="mt-3"><div class="flex justify-between text-[13px] font-bold"><span>' + WSK[k].ico + ' ' + WSK[k].n + '</span><span style="color:#FDE68A">Lvl ' + wLvl(W, k) + (wLvl(W, k) >= 10 ? ' (maks)' : '') + '</span></div>' +
-        '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + ((W.pts[k] || 0) % 2 * 50) + '%;background:#22C55E"></i></div><div class="text-[11px] text-muted mt-1">' + WSK[k].d + '</div></div>';
+        '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + (wLvl(W, k) >= 10 ? 100 : ((W.pts[k] || 0) % 200) / 2) + '%;background:#22C55E"></i></div><div class="text-[11px] text-muted mt-1">' + WSK[k].d + '</div></div>';
       const tt = teamTier(W.built.flag);
-      body = ['kuat', 'pint', 'stam'].map(row).join('') + '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat') + tt) + ' 🪵</b>' + (tt ? ' <span style="color:#FDE68A">(+' + tt + ' bonus pasukan)</span>' : '') + '<br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>' +
+      body = (() => { const L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), a = WLVX[L], b = L >= WLV_MAX ? a : WLVX[L + 1], pr = L >= WLV_MAX ? 100 : Math.round((E - a) / (b - a) * 100);
+        return '<div class="panel clip-s p-3 mt-3"><div class="flex justify-between font-bold text-[15px]"><span>⭐ Level ' + L + ' / ' + WLV_MAX + '</span><span style="color:#FDE68A">' + E + ' EXP</span></div><div style="height:10px;border-radius:6px;background:#1E293B;overflow:hidden;margin-top:4px"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div>' +
+          '<div class="text-[11px] text-muted mt-1 leading-snug">' + (L >= WLV_MAX ? 'Level maksimum!' : (b - E) + ' EXP lagi ke Level ' + (L + 1) + ' (level ini perlu ' + (b - a) + ' EXP)') + '<br>Setiap level: ❤️ +3 HP maks · ⚡ +2 tenaga maks · 💥 +1 pukulan setiap 2 level</div></div>'; })() + ['kuat', 'pint', 'stam'].map(row).join('') + '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat') + tt) + ' 🪵</b>' + (tt ? ' <span style="color:#FDE68A">(+' + tt + ' bonus pasukan)</span>' : '') + '<br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>' +
         '<div class="panel clip-s p-2 mt-2 text-[12px] leading-relaxed">⚔️ Kuasa: <b style="color:#FDE68A">' + wPower(W) + '</b> <span class="text-muted">(tahap ×3 + gear + haiwan)</span><br>🐾 Haiwan: <b>' + W.pets.length + '/' + (WPARTY + wKdCap(W)) + '</b> (rombongan ' + wParty(W).length + '/' + WPARTY + ' · kandang ' + (W.kd ? 'Lv ' + wKdLv(W) : '—') + ') · ❤️ HP maks ' + wHpMax(W) + ' · 💥 Pukulan ' + wHitDmg(W) + ' · Ditawan: <b>' + (W.nTame | 0) + '</b><br>🛡️ Gear: ' + (W.gear.a ? WGEAR.a[W.gear.a - 1][0] : '—') + ' · ' + (W.gear.w ? WGEAR.w[W.gear.w - 1][0] + (W.gear.wu ? ' +' + W.gear.wu : '') : '—') + (W.bag.lv ? ' · ' + WBAG[W.bag.lv][0] : '') + '</div>' +
         '<div class="text-[12px] text-muted mt-3">Misi selesai hari ini: <b style="color:#fff">' + wDailyQuests().filter(x => W.q[x.id] === TODAY).length + '/5</b> · Simulasi pernah diselesaikan: <b style="color:#fff">' + Object.keys(W.q).length + '</b></div>' + btn('char', '🧍 Tukar watak', '');
     } else if (tab === 'kelas'){
@@ -19182,10 +19197,10 @@ function worldGame(THREE, W, NET){
     panel(head('🍲', 'DAPUR', 'Makan untuk dapat tenaga ⚡. Makanan <b>seimbang</b> beri paling banyak tenaga! Ubat 🌿 memulihkan ❤️ HP.') +
       rec.map(r => btn2('c:' + r[0], 'p:' + r[0], r[1] + ' &nbsp;<span style="opacity:.8;font-weight:600">(' + r[2] + ') → ' + (r[7] ? '+' + (r[7] > 999 ? 'penuh' : r[7]) + ' ❤️' : '+' + r[3] + ' ⚡') + '</span><br><span style="font-weight:500;font-size:11px;opacity:.7">' + r[6] + '</span>', r[4]() ? 'btn-o' : '', !r[4](), !r[4]() || !bagFree)).join('') + '<div class="text-[11px] text-muted mt-2 text-center">' + (wBagSlots(W) ? '🎒 Beg: ' + wBagUsed(W) + '/' + wBagSlots(W) + ' — tekan 🎒 untuk simpan hidangan & ubat dibawa bersama' : '🎒 Tiada beg galas — buat di 🔨 Bengkel untuk simpan makanan') + '</div>' + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
-      if (a.indexOf('p:') === 0){ const r = rec.find(z => z[0] === a.slice(2)); if (!r || !r[4]() || !bagFree) return; r[5](); W.bag.items[r[0]] = (W.bag.items[r[0]] | 0) + 1; W.nCook++; sfx('hi'); save(); hud(); dapur(); say('🎒 ' + r[1] + ' disimpan dalam beg', 1500); xp('stam', .02); tutEv('cook'); return; }
+      if (a.indexOf('p:') === 0){ const r = rec.find(z => z[0] === a.slice(2)); if (!r || !r[4]() || !bagFree) return; r[5](); W.bag.items[r[0]] = (W.bag.items[r[0]] | 0) + 1; W.nCook++; sfx('hi'); save(); hud(); dapur(); say('🎒 ' + r[1] + ' disimpan dalam beg', 1500); xp('stam', 3); tutEv('cook'); return; }
       if (a.indexOf('c:') === 0){ const r = rec.find(z => z[0] === a.slice(2)); if (!r || !r[4]()) return; r[5]();
         if (r[7]){ HP = Math.min(wHpMax(W), HP + r[7]); healthPush(true); say('🌿 ❤️ HP ' + Math.round(HP) + ' / ' + wHpMax(W), 1500); } else { W.energy = Math.min(wMaxE(W), W.energy + r[3]); say('😋 +' + r[3] + ' ⚡', 1500); }
-        W.nCook++; sfx('hi'); save(); hud(); dapur(); xp('stam', .04); tutEv('cook'); } });
+        W.nCook++; sfx('hi'); save(); hud(); dapur(); xp('stam', 6); tutEv('cook'); } });
   }
 
   /* Pangkalan: bina + bendera + perbendaharaan pasukan */
@@ -19199,9 +19214,9 @@ function worldGame(THREE, W, NET){
       (fl && NET ? '<div class="panel clip-s p-2 mt-3 text-[12px]">Perbendaharaan pasukan ' + (wFlagName[fl] || '') + ': <b style="color:#FDE68A">' + teamTotal(fl) + ' 🪵</b> (bonus ★' + teamTier(fl) + ')</div>' + btn('don', '🎁 Sumbang 10 🪵 kepada pasukan', W.wood >= 10 ? 'btn-o' : '', W.wood < 10) : '') + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
       if (a === 'pets') return kandang();
-      if (a.indexOf('dc:') === 0){ const d = WDECO.find(z => z[0] === a.slice(3)); if (!d || W.deco[d[0]] || !wCostOk(W, d[2])) return; wPay(W, d[2]); W.deco[d[0]] = 1; sfx('myth'); save(); hud(); refreshBase(); pushInfo(true); pangkalan(); say(d[1] + ' siap!', 1600); return; }
-      if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; sfx('myth'); save(); hud(); refreshBase(); pushInfo(); pangkalan(); say(r[1] + ' siap dibina!', 1800); if (r[0] === 'hut') tutEv('hut'); }
-      if (a.indexOf('f:') === 0){ const c = a.slice(2); if (W.built.flag !== c){ if (!W.built.flag && W.wood < 10) return say('Perlu 🪵 10 untuk bendera.', 1800); if (!W.built.flag) W.wood -= 10; W.built.flag = c; save(); hud(); refreshBase(); pushInfo(); pangkalan(); } }
+      if (a.indexOf('dc:') === 0){ const d = WDECO.find(z => z[0] === a.slice(3)); if (!d || W.deco[d[0]] || !wCostOk(W, d[2])) return; wPay(W, d[2]); W.deco[d[0]] = 1; xp('pint', 15); sfx('myth'); save(); hud(); refreshBase(); pushInfo(true); pangkalan(); say(d[1] + ' siap!', 1600); return; }
+      if (a.indexOf('b:') === 0){ const r = it.find(z => z[0] === a.slice(2)); if (!r || r[3] || W.wood < r[2]) return; W.wood -= r[2]; W.built[r[0]] = 1; xp('stam', r[0] === 'hut' ? 20 : 15); sfx('myth'); save(); hud(); refreshBase(); pushInfo(); pangkalan(); say(r[1] + ' siap dibina!', 1800); if (r[0] === 'hut') tutEv('hut'); }
+      if (a.indexOf('f:') === 0){ const c = a.slice(2); if (W.built.flag !== c){ if (!W.built.flag && W.wood < 10) return say('Perlu 🪵 10 untuk bendera.', 1800); if (!W.built.flag){ W.wood -= 10; xp('stam', 10); } W.built.flag = c; save(); hud(); refreshBase(); pushInfo(); pangkalan(); } }
       if (a === 'don' && NET && fl && W.wood >= 10){ W.wood -= 10; const k = flagKey(fl); WT[k] = WT[k] || {}; WT[k][me.id] = (+WT[k][me.id] || 0) + 10; try { NET.net.set('wt/' + k + '/' + me.id, WT[k][me.id]); } catch(e){} sfx('hi'); save(); hud(); pangkalan(); say('🎁 Terima kasih! Pasukan ' + teamTotal(fl) + ' 🪵', 1800); } });
   }
   /* ---------- Fasa 6: rombongan (maks 10, ikut & menyerang) + kandang bebas (naik taraf bersama pagar) ---------- */
@@ -19273,7 +19288,7 @@ function worldGame(THREE, W, NET){
     if (!PL || !PL.ok) return; const cost = PL.move ? { wood: 20, bulu: 0 } : wKdCost(0);
     if (W.wood < cost.wood || W.bulu < cost.bulu){ say('Tidak cukup bahan: 🪵' + cost.wood + (cost.bulu ? ' 🧶' + cost.bulu : ''), 2400); return; }
     W.wood -= cost.wood; W.bulu -= cost.bulu; const lv = PL.move && W.kd ? wKdLv(W) : 1; W.kd = Object.assign(PL.move && W.kd ? { bl: W.kd.bl, bs: W.kd.bs, bn: W.kd.bn, tw: W.kd.tw, tp: W.kd.tp } : {}, { x: Math.round(P.x * 2) / 2, z: Math.round(P.z * 2) / 2, lv, fh: wFenceMax(lv), kh: wKdHpMax(lv) });
-    sfx('myth'); vibrate([20, 30, 20]); placeEnd(); kdRefresh(); save(); hud(); pushInfo(true); healthPush(true); tutEv('kandang'); say('🐾 Kandang ' + (PL ? '' : 'siap dibina!'), 1800); kandang();
+    if (!PL.move) xp('kuat', 40); sfx('myth'); vibrate([20, 30, 20]); placeEnd(); kdRefresh(); save(); hud(); pushInfo(true); healthPush(true); tutEv('kandang'); say('🐾 Kandang ' + (PL ? '' : 'siap dibina!'), 1800); kandang();
   }
   function kandang(ask){
     const lv = wKdLv(W), cap = wKdCap(W), party = wParty(W), store = wStore(W), nx = lv && lv < WKD_MAXLV ? wKdCost(lv) : null, upOk = nx && W.wood >= nx.wood && W.bulu >= nx.bulu, nw = wKdCost(0), bOk = W.wood >= nw.wood && W.bulu >= nw.bulu;
@@ -19297,7 +19312,7 @@ function worldGame(THREE, W, NET){
       (lv ? '<div class="lbl mt-3">DI KANDANG (' + store.length + '/' + cap + ')</div>' + (store.length ? W.pets.map((p, i) => p.g ? row(p, i) : '').join('') : '<div class="text-[12px] text-muted mt-1">Kosong.</div>') : '') +
       btn('brush', br ? '🪮 Sikat bulu hari ini (+' + gain + ' 🧶)' : '🪮 Bulu sudah disikat hari ini', br ? 'btn-o' : '', !br) + btn('back', '‹ Pangkalan', '') + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel(); if (a === 'back') return pangkalan();
-      if (a === 'brush' && br){ W.bulu += gain; W.brush = TODAY; sfx('hi'); xp('stam', .02); save(); hud(); say('🪮 +' + gain + ' 🧶 bulu', 1500); return kandang(); }
+      if (a === 'brush' && br){ W.bulu += gain; W.brush = TODAY; sfx('hi'); xp('stam', 4); save(); hud(); say('🪮 +' + gain + ' 🧶 bulu', 1500); return kandang(); }
       if (a === 'fd:all' || a.indexOf('fd:') === 0){ const ks = a === 'fd:all' ? ['water', 'fruit', 'fish'] : [a.slice(3)]; let n = 0;
         for (let g = 0; g < 400 && W.fed < 99.5; g++){ const k = ks.find(z => W[z] >= 1); if (!k) break; W[k]--; W.fed = Math.min(100, W.fed + wFeedGain(W, k)); n++; }
         if (n){ sfx('hi'); say('🍖 Haiwan kenyang ' + Math.round(W.fed) + '%', 1500); save(); hud(); pushInfo(); } return kandang(); }
@@ -19310,7 +19325,7 @@ function worldGame(THREE, W, NET){
       if (a === 'bina'){ closePanel(); return buildEnter(); }
       if (a === 'kbuild'){ if (!bOk) return say('Tidak cukup bahan.', 1800); return placeStart(false); }
       if (a === 'kmv' && W.kd){ if (W.wood < 20) return; return placeStart(true); }
-      if (a === 'kup' && nx && upOk){ W.wood -= nx.wood; W.bulu -= nx.bulu; W.kd.lv = lv + 1; W.kd.fh = wFenceMax(lv + 1); W.kd.kh = wKdHpMax(lv + 1); sfx('myth'); vibrate([20, 30, 20]); kdRefresh(); save(); hud(); pushInfo(true); healthPush(true); say('⬆️ Kandang Lv ' + (lv + 1) + '!', 2000); return kandang(); }
+      if (a === 'kup' && nx && upOk){ W.wood -= nx.wood; W.bulu -= nx.bulu; xp('kuat', 30 * (lv + 1)); W.kd.lv = lv + 1; W.kd.fh = wFenceMax(lv + 1); W.kd.kh = wKdHpMax(lv + 1); sfx('myth'); vibrate([20, 30, 20]); kdRefresh(); save(); hud(); pushInfo(true); healthPush(true); say('⬆️ Kandang Lv ' + (lv + 1) + '!', 2000); return kandang(); }
       const i = +a.slice(2), p = W.pets[i]; if (!p) return;
       if (a[0] === 'm'){ if (p.g){ if (party.length >= WPARTY) return say('Rombongan penuh (10).', 1800); p.g = 0; } else { if (!lv) return say('Bina kandang dahulu untuk menyimpan haiwan.', 2200); if (store.length >= cap) return say('Kandang penuh. Naik taraf kandang.', 2200); p.g = 1; } sfx('flip'); save(); syncPets(); kandang(); }
       else if (a[0] === 'r') kandang(i);
@@ -19331,9 +19346,9 @@ function worldGame(THREE, W, NET){
       '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">Ada: 🧶 <b>' + W.bulu + '</b> · 🪵 <b>' + W.wood + '</b><br>🛡️ ' + (W.gear.a ? WGEAR.a[W.gear.a - 1][0] : 'Belum ada perlindungan') + '<br>🗡️ ' + (W.gear.w ? WGEAR.w[W.gear.w - 1][0] : 'Belum ada senjata') + '</div>' +
       '<div class="lbl mt-3">PERLINDUNGAN</div>' + row('a') + '<div class="lbl mt-3">SENJATA</div>' + row('w') + '<div class="lbl mt-3">⚒️ ASAH SENJATA</div>' + wuBox + '<div class="lbl mt-3">🎒 BEG GALAS (simpan makanan &amp; ubat)</div>' + bgBox + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
-      if (a === 'wu' && W.gear.w && wuN < wuMax && wCostOk(W, wuC)){ wPay(W, wuC); W.gear.wu = wuN + 1; sfx('myth'); vibrate([20, 30, 20]); save(); hud(); pushInfo(); bengkel(); say('⚒️ Senjata diasah +' + W.gear.wu + '!', 1800); return; }
-      if (a === 'bg' && bgNx && wCostOk(W, bgNx[2])){ wPay(W, bgNx[2]); W.bag.lv = bgN + 1; sfx('myth'); vibrate([20, 30, 20]); save(); hud(); bengkel(); say(bgNx[0] + ' siap!', 1800); return; }
-      if (a.indexOf('g:') === 0){ const k = a[2], nx = WGEAR[k][W.gear[k] | 0]; if (!nx || !wGearOk(W, nx)) return; W.bulu -= nx[1]; W.wood -= nx[2]; Object.keys(nx[3] || {}).forEach(z => { W[z] -= nx[3][z]; }); W.gear[k] = (W.gear[k] | 0) + 1; if (k === 'a') HP = Math.min(wHpMax(W), HP + 20); sfx('myth'); vibrate([20, 30, 20]); save(); hud(); pushInfo(); healthPush(true); bengkel(); say(nx[0] + ' siap!', 1800); } });
+      if (a === 'wu' && W.gear.w && wuN < wuMax && wCostOk(W, wuC)){ wPay(W, wuC); W.gear.wu = wuN + 1; xp('kuat', 15 + 5 * wuN); sfx('myth'); vibrate([20, 30, 20]); save(); hud(); pushInfo(); bengkel(); say('⚒️ Senjata diasah +' + W.gear.wu + '!', 1800); return; }
+      if (a === 'bg' && bgNx && wCostOk(W, bgNx[2])){ wPay(W, bgNx[2]); W.bag.lv = bgN + 1; xp('stam', 20 * (bgN + 1)); sfx('myth'); vibrate([20, 30, 20]); save(); hud(); bengkel(); say(bgNx[0] + ' siap!', 1800); return; }
+      if (a.indexOf('g:') === 0){ const k = a[2], nx = WGEAR[k][W.gear[k] | 0]; if (!nx || !wGearOk(W, nx)) return; W.bulu -= nx[1]; W.wood -= nx[2]; Object.keys(nx[3] || {}).forEach(z => { W[z] -= nx[3][z]; }); W.gear[k] = (W.gear[k] | 0) + 1; xp('kuat', 25 + 10 * W.gear[k]); if (k === 'a') HP = Math.min(wHpMax(W), HP + 20); sfx('myth'); vibrate([20, 30, 20]); save(); hud(); pushInfo(); healthPush(true); bengkel(); say(nx[0] + ' siap!', 1800); } });
   }
   /* ---------- duel kuiz: jawab betul untuk menjinak, salah = hilang ❤️ ---------- */
   function duelIntro(A){
@@ -19360,7 +19375,7 @@ function worldGame(THREE, W, NET){
       grid2(opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join('')), (a, b) => {
       if (a.indexOf('o:') !== 0 || PANEL_LOCK) return; PANEL_LOCK = true; const good = opts[+a.slice(2)].ok;
       b.style.background = good ? '#15803D' : '#991B1B'; if (!good){ const k = opts.findIndex(z => z.ok), bb = $w('#wPanel [data-p="o:' + k + '"]'); if (bb) bb.style.background = '#15803D'; vibrate(40); }
-      sfx(good ? 'hi' : 'low'); if (good){ st.got++; xp('pint', .02); } else st.hearts--;
+      sfx(good ? 'hi' : 'low'); if (good){ st.got++; xp('pint', 6); } else st.hearts--;
       setTimeout(() => { PANEL_LOCK = false; duelQ(A, st); }, 1000); });
   }
   function hideAnimal(A, back){ A.alive = false; A.back = back; A.m.g.visible = false; A.go = false; }
@@ -19369,7 +19384,7 @@ function worldGame(THREE, W, NET){
     if (wParty(W).length < WPARTY){ W.pets.push({ t: A.t, g: 0 }); note = 'Kini ia kawan kamu dalam <b>rombongan</b> (' + wParty(W).length + '/' + WPARTY + ')! Urus di 🏕️ Pangkalan → Rombongan &amp; Kandang.'; }
     else if (wStore(W).length < wKdCap(W)){ W.pets.push({ t: A.t, g: 1 }); note = 'Rombongan penuh (10/10), jadi ia dihantar ke <b>kandang</b> (' + wStore(W).length + '/' + wKdCap(W) + ').'; }
     else { W.bulu += 2; note = 'Rombongan &amp; kandang penuh, jadi ia dilepaskan semula ke hutan (+2 🧶 bonus). Naik taraf kandang untuk ruang lebih.'; }
-    W.bulu += D.bulu; W.nTame = (W.nTame | 0) + 1; sfx('myth'); vibrate([30, 40, 30, 40]); save(); hud(); pushInfo(); syncPets(); setTimeout(() => tutEv('tame'), 60); xp('pint', .15);
+    W.bulu += D.bulu; W.nTame = (W.nTame | 0) + 1; sfx('myth'); vibrate([30, 40, 30, 40]); save(); hud(); pushInfo(); syncPets(); setTimeout(() => tutEv('tame'), 60); xp('pint', 20 * D.hp);
     panel(head('🤝', D.n.toUpperCase() + ' DIJINAKKAN!', note) + '<div class="text-center mt-2 font-bold" style="color:#FDE68A">+' + D.bulu + ' 🧶 bulu · ⚔️ +' + D.pw + ' kuasa</div><div class="text-[11px] text-muted mt-2 leading-snug">📖 ' + D.fact + '</div>' + btn('close', 'Teruskan', 'btn-o'), a => { if (a === 'close') closePanel(); });
   }
   function duelLose(A){
@@ -19440,7 +19455,7 @@ function worldGame(THREE, W, NET){
       (Array.isArray(e.a) ? e.a : []).forEach(t => { if (!WAN[t] || wFree(W) <= 0) return; W.pets.push({ t, g: wParty(W).length < WPARTY ? 0 : 1 }); got.push(t); });
       const l = Array.isArray(e.l) ? e.l.map(x => x | 0) : [0, 0, 0, 0, 0]; WLOOT.forEach((r, i) => { W[r[0]] += l[i] || 0; });
       const o = { t: e.t, k: 'atk', n: String(e.n || '?').slice(0, 20), ok: 1, ev: e.k === 'k' ? 'k' : 'p', an: got, l }; logAdd(o); last = o; });
-    if (!last) return; xp('kuat', last.ev === 'k' ? .3 : .2); save(); syncPets(); hud(); pushInfo(true); sfx('myth'); vibrate([30, 40, 30, 40]);
+    if (!last) return; xp('kuat', last.ev === 'k' ? 90 : 60); save(); syncPets(); hud(); pushInfo(true); sfx('myth'); vibrate([30, 40, 30, 40]);
     panel(head('🏆', last.ev === 'k' ? 'KANDANG DIHANCURKAN!' : 'KEMENANGAN!', 'Kamu menewaskan <b>' + esc(last.n) + '</b>' + (last.ev === 'k' ? ' dan memecahkan kandangnya!' : '!')) + '<div class="text-center mt-2 text-[15px]">' + (last.an.length ? 'Haiwan diperoleh: ' + last.an.map(t => WAN[t].ico).join(' ') : 'Tiada haiwan baharu (ruang penuh atau tiada).') + (last.l.some(x => x) ? '<br>Sumber: ' + wLootTxt(last.l) : '') + '</div>' + btn('close', 'Teruskan', 'btn-o'), a => { if (a === 'close') closePanel(); });
   }
   const tgtBar = (pc, col) => '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, pc)) + '%;background:' + col + '"></i></div>';
@@ -19561,7 +19576,7 @@ function worldGame(THREE, W, NET){
   const tutAdvance = () => {
     const s = tutCur(); if (!s) return; const r = s.rew || {};
     ['wood', 'fish', 'fruit', 'water', 'bulu'].forEach(k => { if (r[k]) W[k] += r[k]; }); if (r.energy) W.energy = Math.min(wMaxE(W), W.energy + r.energy);
-    W.tut++; save(); hud(); tutPaint(); sfx('myth'); vibrate([20, 30, 20]);
+    W.tut++; xp(({ chop: 'kuat', fish: 'pint', tame: 'pint' })[s.ev] || 'stam', s.t === 'Tamat latihan!' ? 150 : 30); save(); hud(); tutPaint(); sfx('myth'); vibrate([20, 30, 20]);
     const nx = tutCur(); say('✅ ' + s.t + (r.txt ? ' &nbsp;<span style="color:#FDE68A">' + r.txt + '</span>' : '') + (nx && nx.ev !== 'npc' ? '<br><span style="font-size:15px">📜 Seterusnya: ' + nx.t + '</span>' : ''), 3200);
   };
   function tutEv(name){ const s = tutCur(); if (s && s.ev === name && name !== 'npc') tutAdvance(); }
@@ -19643,7 +19658,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     panel(head('🏇', 'PILIH TUNGGANGAN', 'Haiwan lebih besar = lebih laju.') + ts.map(t => btn('r:' + t, WAN[t].ico + ' ' + WAN[t].n + ' &nbsp;(laju ×' + WRIDE[t] + ')', 'btn-o')).join('') + btn('close', 'Batal', ''), a => { if (a === 'close') return closePanel(); if (a.indexOf('r:') === 0){ closePanel(); mount(a.slice(2)); } });
   }
   let xpTxt = '', xpUntil = 0;
-  function xp(k, n){ pts(k, n); xpTxt = '+' + Math.max(1, Math.round(n * 50)) + ' ' + WSK[k].ico; xpUntil = Date.now() + 3000; hud(); }
+  function xp(k, n){ if (!(n > 0)) return; pts(k, n); xpTxt = '+' + Math.round(n) + ' EXP ' + WSK[k].ico; xpUntil = Date.now() + 3000; hud(); }
   /* ---------- Fasa 9: bina blok bebas ala Minecraft (kandang = tapak kosong; murid susun sendiri) ---------- */
   const BLKS = [null,       /* [nama, kos, pepejal, jenis (0 biasa / 1 kaca / 2 cahaya), jubin sisi, jubin atas] */
     ['Papan Kayu', { wood: 1 }, 1, 0, 0, 0], ['Kayu Balak', { wood: 1 }, 1, 0, 1, 2], ['Batu', { wood: 2 }, 1, 0, 3, 3], ['Bata', { wood: 3 }, 1, 0, 4, 4],
@@ -19704,7 +19719,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     K.an.forEach((o, n) => { const c = free.length ? free[(n * 7 + 3) % free.length] : [0, 0]; o.m.g.position.set(c[0] + (bh01(n, 5, 9) - .5) * .5, 0, c[1] + (bh01(n, 7, 3) - .5) * .5); o.m.g.rotation.y = bh01(n, 2, 2) * 6.28; });
   }
   /* ---------- grid sendiri ---------- */
-  let OWNG = null, pubT = 0;
+  let OWNG = null, pubT = 0, BXP = 0;
   function ownGrid(){
     if (!W.kd){ OWNG = null; return null; }
     const S = wKdS(wKdLv(W));
@@ -19778,11 +19793,11 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     if (v){ const D = BLKS[v]; if (old) return false; if (og.n >= wBlkCap(lv)){ say('Had blok dicapai (' + wBlkCap(lv) + '). Naik taraf kandang untuk lebih banyak.', 2400); return false; }
       if (!wCostOk(W, D[1])){ say('Tidak cukup bahan: ' + bCost(D[1]), 1800); return false; }
       if (D[2] && y <= 1 && Math.hypot(P.x - (K.g.position.x + i - (S - 1) / 2), P.z - (K.g.position.z + j - (S - 1) / 2)) < .8){ say('Ada orang di petak itu.', 1200); return false; }
-      wPay(W, D[1]); og.n++; }
+      wPay(W, D[1]); og.n++; if (og.n > (W.kd.bmx | 0)){ W.kd.bmx = og.n; BXP++; } }
     else { const D = BLKS[old]; if (!D) return false; Object.keys(D[1]).forEach(k => { W[k] += D[1][k]; }); og.n--; }
     og.g[idx] = v; if (BUILD) BUILD.undo.push({ i, j, y, old, nw: v, g: gid || ++BUILD.gid }); if (BUILD && BUILD.undo.length > 400) BUILD.undo.shift(); return true;
   }
-  const blkAfter = () => { const K = KDS.get(me.id); if (K){ K.grid = ownGrid().g; blkMesh(K); } blkSave(); hud(); buildPaint(); };
+  const blkAfter = () => { if (BXP){ xp('pint', BXP); BXP = 0; } const K = KDS.get(me.id); if (K){ K.grid = ownGrid().g; blkMesh(K); } blkSave(); hud(); buildPaint(); };
   function buildTap(x, y){
     if (!BUILD) return; const K = KDS.get(me.id), og = ownGrid(); if (!K || !og) return; const r = $w('#wCv').getBoundingClientRect();
     const rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2((x - r.left) / r.width * 2 - 1, -((y - r.top) / r.height) * 2 + 1), cam);
@@ -19832,11 +19847,11 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
   function act(){
     if (PANEL || BUILD) return;
     if (RIDE && ['tree', 'bush', 'well', 'pond'].includes(near.k)){ say('🏇 Turun dahulu (butang ⬇️) untuk bekerja.', 1800); return; }
-    if (fishing){ if (fishing.state === 'bite'){ const win = 0.9 + .12 * wLvl(W, 'pint'); if (fishing.since <= win){ const n = 1 + Math.floor(wLvl(W, 'pint') / 4); W.fish += n; sfx('hi'); say('🐟 Dapat ikan! +' + n, 1500); play('pick-up', true); setTimeout(() => tutEv('fish'), 50); xp('pint', .05); } else say('Terlepas…', 1200); } else say('Terlalu awal — ikan lari!', 1300); fishing = null; save(); hud(); return; }
+    if (fishing){ if (fishing.state === 'bite'){ const win = 0.9 + .12 * wLvl(W, 'pint'); if (fishing.since <= win){ const n = 1 + Math.floor(wLvl(W, 'pint') / 4); W.fish += n; sfx('hi'); say('🐟 Dapat ikan! +' + n, 1500); play('pick-up', true); setTimeout(() => tutEv('fish'), 50); xp('pint', 8); } else say('Terlepas…', 1200); } else say('Terlalu awal — ikan lari!', 1300); fishing = null; save(); hud(); return; }
     if (near.k === 'tree'){ const T = near.o; if (chopCd > 0 || !T.alive) return; if (!useE(3)) return hud(); chopCd = .55; T.hp++; T.hit = .3; sfx('flip'); vibrate(10); play('attack-melee-right', true); setTimeout(() => play('idle'), 500);
-      const need = Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)); if (T.hp >= need){ T.alive = false; T.back = 50; const n = 3 + wLvl(W, 'kuat') + teamTier(W.built.flag); W.wood += n; say('🪵 +' + n + ' kayu', 1300); sfx('hi'); tutEv('chop'); xp('kuat', .04); } hud(); save(); return; }
-    if (near.k === 'bush'){ const B = near.o; if (!B.has || !useE(1)) return hud(); B.has = false; B.back = 40; setBush(B, false); W.fruit += 2; sfx('flip'); say('🍓 +2 buah', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); xp('stam', .03); tutEv('bush'); return; }
-    if (near.k === 'well'){ if (!useE(1)) return hud(); W.water += 2; sfx('flip'); say('💧 +2 air', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); xp('stam', .02); tutEv('well'); return; }
+      const need = Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)); if (T.hp >= need){ T.alive = false; T.back = 50; const n = 3 + wLvl(W, 'kuat') + teamTier(W.built.flag); W.wood += n; say('🪵 +' + n + ' kayu', 1300); sfx('hi'); tutEv('chop'); xp('kuat', 6); } hud(); save(); return; }
+    if (near.k === 'bush'){ const B = near.o; if (!B.has || !useE(1)) return hud(); B.has = false; B.back = 40; setBush(B, false); W.fruit += 2; sfx('flip'); say('🍓 +2 buah', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); xp('stam', 4); tutEv('bush'); return; }
+    if (near.k === 'well'){ if (!useE(1)) return hud(); W.water += 2; sfx('flip'); say('💧 +2 air', 1200); play('pick-up', true); setTimeout(() => play('idle'), 800); hud(); save(); xp('stam', 3); tutEv('well'); return; }
     if (near.k === 'pond'){ if (!useE(4)) return hud(); fishing = { state: 'wait', t: 1.6 + Math.random() * 2.6, since: 0 }; say('🎣 Menunggu ikan…  (tekan apabila nampak ❗)', 1800); return; }
     if (near.k === 'animal'){ if (near.o.alive) duelIntro(near.o); return; }
     if (near.k === 'hit') return hitAct();
@@ -19990,7 +20005,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     R.render(scene, cam);
   }
   syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, qToggle, buildEnter, buildExit, buildTap, buildUndo, buildRing, blkSet, blkAfter, OWNGv: () => OWNG, BUILDv: () => BUILD, cam, blkMesh, BLKS, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, qToggle, buildEnter, buildExit, buildTap, buildUndo, buildRing, blkSet, blkAfter, OWNGv: () => OWNG, BUILDv: () => BUILD, cam, blkMesh, BLKS, WLVX, wPlayerLvl, wExpTotal, xp, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
@@ -19999,6 +20014,8 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     '<div class="text-[13px] leading-relaxed mt-3">🧑‍🏫 <b>Cikgu Ilmu</b> (❓ di kampung) beri misi latihan langkah demi langkah — ikut anak panah ▲<br>🐾 <b>Rombongan</b> maks <b>10</b> haiwan mengikut &amp; membantu menyerang<br>🏠 <b>Kandang</b> boleh dibina <b>di mana-mana</b> tempat lapang (bulatan hijau/merah); simpan 10 → 100 haiwan, naik taraf sehingga Lv 10<br>🛡️ <b>Pagar</b> kandang naik taraf bersama — musuh mesti pecahkan pagar dulu<br>⚔️ Serangan kini <b>terus</b>: ❤️ HP, pukul lawan; tewas = balik pangkalan &amp; haiwan rombongan dirampas<br>💡 Simpan haiwan terbaik di kandang supaya selamat!</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro5 && !W.intro6 && !PANEL){ W.intro6 = 1; save(); panel(head('🍖', 'BARU: MAKANAN, UBAT & PERTAHANAN', 'Sumber kamu kini lebih berguna!') +
     '<div class="text-[13px] leading-relaxed mt-3">🍖 <b>Beri makan haiwan</b> (Kandang): 🐟🍓💧 — haiwan lapar kuasanya menurun (tak pernah hilang)<br>🔧 <b>Baiki</b> pagar &amp; kandang dengan 🪵<br>🌿 <b>Ubat</b> di Dapur memulihkan ❤️ HP semasa perang<br>🏹 <b>Menara</b> &amp; 🪤 <b>perangkap</b> menyerang penyerang kandang<br>🎁 <b>Hantar hadiah</b> kepada kawan (Akademi → Kelas)<br>🔨 Gear baharu tahap tinggi (perlu 🐟🍓💧)<br>🎀 <b>Hiasan</b> pangkalan: bunga, lampu, patung, air pancut</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
+  if (W.intro && W.intro7 && !W.intro8 && !PANEL){ W.intro8 = 1; save(); panel(head('⭐', 'BARU: SISTEM LEVEL & EXP (1–50)', 'Semua aktiviti kini memberi EXP!') +
+    '<div class="text-[13px] leading-relaxed mt-3">⭐ Level <b>1 hingga 50</b>. Makin tinggi level, makin banyak EXP diperlukan.<br>🎬 <b>Simulasi</b> = 100 EXP (paling tinggi) · 🕹️ Arkad 3 setiap betul<br>🪓 Tebang 6 · 🎣 Pancing 8 · 🍓 Petik 4 · 🍲 Masak 6<br>🐾 Tawan haiwan 40–100 · ⚔️ Menang perang 60–90 · 🔨 Buat gear &amp; bina juga memberi EXP<br>Setiap level: ❤️ +3 HP · ⚡ +2 tenaga · 💥 +1 pukulan setiap 2 level<br>🔓 Haiwan besar perlu level lebih tinggi: Kancil Lvl 6 · Tapir Lvl 15 · Harimau Lvl 25<br><span class="text-muted">Mata kemahiran lama ditukar kepada EXP (1 mata = 100 EXP).</span></div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro6 && !W.intro7 && !PANEL){ W.intro7 = 1; save(); panel(head('🎒', 'BARU: BEG, TUNGGANG & LIHAT ATAS-BAWAH', 'Lebih banyak cara bermain!') +
     '<div class="text-[13px] leading-relaxed mt-3">👀 <b>Lihat atas &amp; bawah</b>: seret jari ke atas = lihat atas, ke bawah = lihat bawah (komputer: roda tetikus atau PageUp/PageDown)<br>🎒 <b>Beg galas</b>: buat di 🔨 Bengkel; masak di 🍲 Dapur dan tekan 🎒 untuk simpan makanan &amp; ubat; guna di mana-mana (butang 🎒 kiri bawah)<br>⚒️ <b>Asah senjata</b> di Bengkel: setiap + beri +4 pukulan<br>🏇 <b>Tunggang</b> kancil, tapir atau harimau dalam rombongan (butang 🏇) — lebih laju; turun untuk bekerja</div>' + btn('close', '▶ Faham', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (NET && W.intro3 && !W.intro4 && !PANEL){ W.intro4 = 1; save(); panel(head('💬', 'BARU: CHAT & SUARA', 'Bercakap dengan rakan dalam dunia!') +
