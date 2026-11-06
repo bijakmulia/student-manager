@@ -18669,14 +18669,14 @@ const wPtsSum = o => o && o.pts ? ((+o.pts.kuat || 0) + (+o.pts.pint || 0) + (+o
 function wNorm(w, key){
   const d = { v: 3, pts: { kuat: 0, pint: 0, stam: 0 }, wood: 0, fish: 0, fruit: 0, water: 0, energy: 100, t: Date.now(), char: '', built: { hut: 0, fence: 0, flag: '' }, q: {}, arc: '', intro: 0, nCook: 0,
     bulu: 0, gear: { a: 0, w: 0, wu: 0 }, bag: { lv: 0, items: {} }, intro7: 0, intro8: 0, pets: [], brush: '', nTame: 0, intro2: 0,
-    war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0, intro4: 0, mute: {}, kd: null, tut: 0, intro5: 0, fed: 100, deco: {}, gift: { d: '', n: 0 }, gT: 0, intro6: 0 };
+    war: 0, born: Date.now(), shield: 0, rc: {}, rd: { d: '', n: 0 }, log: [], rsT: 0, rs: 0, intro3: 0, intro4: 0, mute: {}, kd: null, tut: 0, intro5: 0, fed: 100, ac: 0, deco: {}, gift: { d: '', n: 0 }, gT: 0, intro6: 0 };
   const isNew = !w || !Object.keys(w).length; w = w || {};
   const W = Object.assign(d, w, { pts: Object.assign(d.pts, w.pts || {}), built: Object.assign(d.built, w.built || {}), q: w.q || {}, gear: Object.assign(d.gear, w.gear || {}), bag: Object.assign({ lv: 0 }, w.bag || {}, { items: Object.assign({}, (w.bag && w.bag.items) || {}) }), rc: w.rc || {}, mute: w.mute || {}, rd: Object.assign(d.rd, w.rd || {}), log: Array.isArray(w.log) ? w.log.slice(0, 12) : [], pets: Array.isArray(w.pets) ? w.pets.filter(p => p && WAN[p.t]).slice(0, 130).map(p => ({ t: p.t, g: w.kd && p.g ? 1 : 0 })) : [],
     kd: w.kd && typeof w.kd.x === 'number' ? { x: w.kd.x, z: w.kd.z, lv: Math.max(1, Math.min(WKD_MAXLV, w.kd.lv | 0 || 1)), fh: +w.kd.fh || 0, kh: +w.kd.kh || 0, tw: w.kd.tw | 0, tp: w.kd.tp | 0 } : null }); delete W._t;
   if (W.kd){ const lv = W.kd.lv; if (!W.kd.fh) W.kd.fh = wFenceMax(lv); if (!W.kd.kh) W.kd.kh = wKdHpMax(lv); W.kd.tw = Math.max(0, Math.min(4, W.kd.tw | 0)); W.kd.tp = Math.max(0, Math.min(3, W.kd.tp | 0)); }
   if (!w.xv && !isNew){ ['kuat', 'pint', 'stam'].forEach(k => { W.pts[k] = Math.round((+W.pts[k] || 0) * 100); }); } W.xv = 1;   /* mata kemahiran lama → EXP (1 mata = 100 EXP) */
   W.t0 = +w.t0 || (isNew ? Date.now() : 1); W.wipe = +w.wipe || 0;      /* t0 = masa mula bermain (data lama = 1) — untuk reset oleh guru */
-  W.deco = W.deco || {}; W.gift = Object.assign({ d: '', n: 0 }, W.gift || {}); W.fed = Math.max(0, Math.min(100, +W.fed || 0));
+  W.ac = Math.max(0, Math.min(WAURA.length - 1, W.ac | 0)); W.deco = W.deco || {}; W.gift = Object.assign({ d: '', n: 0 }, W.gift || {}); W.fed = Math.max(0, Math.min(100, +W.fed || 0));
   W.fed = Math.max(0, W.fed - wFedRate(W) * Math.max(0, Date.now() - (+W.t || Date.now())) / 3.6e6);   /* haiwan lapar walaupun app ditutup */
   const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + Math.max(0, Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
   W.t = Date.now(); W.key = key; return W;
@@ -18687,6 +18687,17 @@ function wNorm(w, key){
    Kemahiran (💪🧠❤️) naik setiap 200 EXP sehingga Lvl 10 dan memberi bonus kerja; level pemain memberi HP, tenaga & pukulan. */
 const WLV_MAX = 50, WLVX = (() => { const a = [0, 0]; for (let L = 1; L < WLV_MAX; L++) a.push(a[L] + Math.round(40 + 20 * L + 1.2 * L * L)); return a; })();   /* WLVX[L] = EXP kumulatif untuk mencapai level L */
 const wExpTotal = W => (+W.pts.kuat || 0) + (+W.pts.pint || 0) + (+W.pts.stam || 0);
+/* PANGKAT: rupa watak berubah ikut level supaya pemain lain nampak dan termotivasi */
+const WRANK = [
+  { l: 1, n: 'Anak Murid', c: '#FFFFFF', rw: 'titik mula' },
+  { l: 10, n: 'Perantis', c: '#4ADE80', rw: '✨ kilauan di kaki + pilih warna aura' },
+  { l: 20, n: 'Pahlawan', c: '#60A5FA', rw: '🧣 jubah berkibar' },
+  { l: 30, n: 'Hulubalang', c: '#FBBF24', rw: '🌀 aura berpusing' },
+  { l: 40, n: 'Panglima', c: '#C084FC', rw: '😇 lingkaran cahaya' },
+  { l: 50, n: 'Legenda Ilmu', c: '#FDE68A', rw: '👑 mahkota + jejak bintang + tiang cahaya' }];
+const WAURA = ['', '#38BDF8', '#F472B6', '#4ADE80', '#FB923C', '#A78BFA', '#F87171', '#FDE047'];
+const wRankOf = L => { let i = 0; WRANK.forEach((r, k) => { if (L >= r.l) i = k; }); return i; };
+const wTitleOf = W => { if ((W.nTame | 0) >= 10) return 'Penjinak'; const k = ['kuat', 'pint', 'stam'].sort((a, b) => (W.pts[b] || 0) - (W.pts[a] || 0))[0]; return (W.pts[k] || 0) >= 200 ? { kuat: 'Penebang', pint: 'Pemikir', stam: 'Penjelajah' }[k] : ''; };
 const wPlayerLvl = W => { const E = wExpTotal(W); let L = 1; while (L < WLV_MAX && E >= WLVX[L + 1]) L++; return L; };
 const wLvl = (W, k) => Math.min(10, 1 + Math.floor((W.pts[k] || 0) / 200));
 const wMaxE = W => 100 + 10 * (wLvl(W, 'stam') - 1) + 2 * (wPlayerLvl(W) - 1);
@@ -19055,9 +19066,68 @@ function worldGame(THREE, W, NET){
     if (name){ A.lb = label(name, col ? '#' + new THREE.Color(col).getHexString() : '#fff', 3.4, .7, 44); A.lb.position.y = 2.5; A.g.add(A.lb); }
     scene.add(A.g); A.setChar(char); return A;
   }
+  /* ---------- pangkat: jubah, aura, lingkaran cahaya, mahkota, jejak, tag nama ---------- */
+  const sphG = new THREE.SphereGeometry(.06, 6, 5), ringG = new THREE.TorusGeometry(.75, .035, 6, 32), ringG2 = new THREE.TorusGeometry(.62, .03, 6, 28), haloG = new THREE.TorusGeometry(.3, .035, 6, 22), coneG = new THREE.ConeGeometry(.07, .26, 4), trG = new THREE.OctahedronGeometry(.09), pilG = new THREE.CylinderGeometry(.55, .55, 9, 18, 1, true);
+  const capeG = (() => { const g = new THREE.PlaneGeometry(.7, 1); g.translate(0, -.5, 0); return g; })();
+  const FXL = [];
+  function rankFx(A, L, ac){
+    if (A.fx){ A.g.remove(A.fx.g); A.fx.mats.forEach(m => m.dispose()); }
+    const tier = wRankOf(L), col = new THREE.Color(WAURA[ac | 0] || WRANK[tier].c), F = { g: new THREE.Group(), tier, L, ac: ac | 0, mats: [], t: Math.random() * 6, tr: 0 };
+    const mk = o => { const m = new THREE.MeshBasicMaterial(Object.assign({ color: col, transparent: true, opacity: .75, depthWrite: false, side: THREE.DoubleSide }, o || {})); F.mats.push(m); return m; };
+    if (tier >= 1){ F.sp = []; for (let i = 0; i < 5; i++){ const m = new THREE.Mesh(sphG, mk({ opacity: .95 })); F.g.add(m); F.sp.push(m); } }
+    if (tier >= 2){ F.cg = new THREE.Group(); F.cg.position.y = 1.5; F.cape = new THREE.Mesh(capeG, mk({ opacity: .93 })); F.cape.scale.set(1, 1.05, 1); F.cape.position.z = -.27; F.cg.add(F.cape); F.g.add(F.cg); }
+    if (tier >= 3){ F.r1 = new THREE.Mesh(ringG, mk()); F.r1.rotation.x = Math.PI / 2; F.r2 = new THREE.Mesh(ringG2, mk({ opacity: .55 })); F.r2.rotation.x = Math.PI / 2; F.g.add(F.r1, F.r2); }
+    if (tier >= 4){ F.ha = new THREE.Mesh(haloG, mk({ opacity: .95 })); F.ha.rotation.x = Math.PI / 2; F.g.add(F.ha); }
+    if (tier >= 5){ F.cr = new THREE.Group(); const gold = 0xFDE047; for (let i = 0; i < 5; i++){ const a = i / 5 * 6.283, c = new THREE.Mesh(coneG, mk({ opacity: 1, color: gold })); c.position.set(Math.cos(a) * .2, .1, Math.sin(a) * .2); F.cr.add(c); }
+      const b = new THREE.Mesh(new THREE.TorusGeometry(.2, .03, 5, 16), mk({ opacity: 1, color: gold })); b.rotation.x = Math.PI / 2; F.cr.add(b); F.g.add(F.cr);
+      const p = new THREE.Mesh(pilG, mk({ opacity: .1 })); p.position.y = 4.5; F.g.add(p); }
+    A.g.add(F.g); A.fx = F; rankFxUpd(A, 0, 0);
+  }
+  function rankFxUpd(A, dt, v){
+    const F = A.fx; if (!F) return; F.t += dt; const t = F.t, run = Math.min(1, v / 6);
+    if (F.sp) F.sp.forEach((m, i) => { const a = t * 2.2 + i * 1.257, k = (t * .45 + i * .2) % 1; m.position.set(Math.cos(a) * .5, k * 1.6, Math.sin(a) * .5); });
+    if (F.cg){ F.cg.rotation.y = A.body.rotation.y; F.cape.rotation.x = .12 + run * .55 + Math.sin(t * 5) * (.04 + run * .08); }
+    if (F.r1){ F.r1.rotation.z = t * 1.6; F.r1.position.y = .6 + Math.sin(t * 1.8) * .35; F.r2.rotation.z = -t * 2.2; F.r2.position.y = 1.3 + Math.sin(t * 1.8 + 2) * .3; }
+    if (F.ha){ F.ha.rotation.z = t * 1.2; F.ha.position.y = 2.2 + Math.sin(t * 2) * .04; }
+    if (F.cr){ F.cr.rotation.y = t * .9; F.cr.position.y = 2.5 + Math.sin(t * 2.3) * .06; }
+    if (F.tier >= 5 && v > .6 && dt){ F.tr -= dt; if (F.tr <= 0){ F.tr = .09; const m = new THREE.Mesh(trG, new THREE.MeshBasicMaterial({ color: Math.random() < .5 ? 0xFDE047 : 0xFFFFFF, transparent: true, opacity: .95 })); m.position.set(A.g.position.x + (Math.random() - .5) * .4, .15 + Math.random() * .4, A.g.position.z + (Math.random() - .5) * .4); scene.add(m); FXL.push({ m, t: 0, k: 't' }); } }
+  }
+  function burst(x, z, hex){
+    const c = new THREE.Color(hex), mk = o => new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, side: THREE.DoubleSide, depthWrite: false }, o));
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.3, .5, 32), mk({ opacity: .9 })); ring.rotation.x = -Math.PI / 2; ring.position.set(x, .1, z); scene.add(ring); FXL.push({ m: ring, t: 0, k: 'r', g: ring.geometry });
+    const pil = new THREE.Mesh(pilG, mk({ opacity: .45 })); pil.position.set(x, 4.5, z); scene.add(pil); FXL.push({ m: pil, t: 0, k: 'c' });
+    for (let i = 0; i < 14; i++){ const a = i / 14 * 6.283, p = new THREE.Mesh(sphG, mk({ opacity: 1 })); p.scale.setScalar(1.6); p.position.set(x, .8, z); scene.add(p); FXL.push({ m: p, t: 0, k: 'p', vx: Math.cos(a) * 2.4, vz: Math.sin(a) * 2.4, vy: 3 + Math.random() * 2 }); }
+  }
+  function fxStep(dt){
+    for (let i = FXL.length - 1; i >= 0; i--){ const f = FXL[i], m = f.m; f.t += dt; let done = false;
+      if (f.k === 'r'){ const sc = 1 + f.t * 9; m.scale.set(sc, sc, 1); m.material.opacity = Math.max(0, .9 - f.t * .9); done = f.t > 1; }
+      else if (f.k === 'p'){ f.vy -= 7 * dt; m.position.x += f.vx * dt; m.position.z += f.vz * dt; m.position.y += f.vy * dt; m.material.opacity = Math.max(0, 1 - f.t / 1.1); done = f.t > 1.1 || m.position.y < 0; }
+      else if (f.k === 't'){ m.position.y += dt * .5; m.rotation.y += dt * 4; m.scale.setScalar(Math.max(.01, 1 - f.t / .9)); m.material.opacity = Math.max(0, .95 - f.t / .9); done = f.t > .9; }
+      else if (f.k === 'c'){ m.material.opacity = Math.max(0, .45 * (1 - f.t / 1.4)); done = f.t > 1.4; }
+      if (done){ scene.remove(m); if (f.g) f.g.dispose(); m.material.dispose(); FXL.splice(i, 1); } }
+  }
+  function setTag(A, name, L, tt){
+    const key = name + '|' + L + '|' + (tt || ''); if (A.tagK === key) return; A.tagK = key; const tier = wRankOf(L), rk = WRANK[tier];
+    if (A.lb){ A.g.remove(A.lb); if (A.lb.material.map) A.lb.material.map.dispose(); A.lb.material.dispose(); }
+    const t = ctex(512, 160, (g, cw, ch) => { g.fillStyle = 'rgba(15,23,42,.88)'; g.beginPath(); g.roundRect ? g.roundRect(6, 6, cw - 12, ch - 12, 28) : g.rect(6, 6, cw - 12, ch - 12); g.fill(); g.lineWidth = 5; g.strokeStyle = rk.c; g.stroke();
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.font = '800 58px sans-serif'; g.fillText(name, cw / 2, 62, cw - 40);
+      g.fillStyle = rk.c; g.font = '700 34px sans-serif'; g.fillText('Lvl ' + L + ' · ' + rk.n + (tt ? ' · ' + tt : ''), cw / 2, 119, cw - 40); });
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); sp.scale.set(3.6, 1.13, 1); sp.renderOrder = 5; sp.position.y = tier >= 4 ? 3.15 : 2.65; A.g.add(sp); A.lb = sp;
+  }
+  function remoteRank(r, id, v, dt){
+    const inf = WB[id] || {}, L = Math.max(1, inf.l | 0), ac = inf.ac | 0, nm = String(inf.n || (mates.find(m => m.id === id) || {}).n || '?').split(' ')[0];
+    if (!r.A.fx || r.A.fx.L !== L || r.A.fx.ac !== ac) rankFx(r.A, L, ac);
+    setTag(r.A, nm, L, inf.tt);
+    const far = Math.hypot(r.x - P.x, r.z - P.z) > 60; r.A.fx.g.visible = !far; if (!far) rankFxUpd(r.A, dt, v);
+  }
+  function rLevelUp(id, L, pL){
+    const tc = wRankOf(L) !== wRankOf(pL), nm = esc(String((WB[id] || {}).n || '?').split(' ')[0]), r = REM.get(id);
+    if (L % 5 === 0 || tc) say('🎉 <b>' + nm + '</b> naik Lvl ' + L + (tc ? ' — <b style="color:' + WRANK[wRankOf(L)].c + '">' + WRANK[wRankOf(L)].n + '</b>' : '') + '!', 2800);
+    if (r) burst(r.x, r.z, WAURA[(WB[id].ac | 0)] || WRANK[wRankOf(L)].c);
+  }
   const knDefault = id => KN_CHARS[hashStr(String(id)) % KN_CHARS.length];
   if (!W.char) W.char = knDefault(me.id);
-  const ME = makeAvatar(W.char, null); const pg = ME.g;
+  const ME = makeAvatar(W.char, null); const pg = ME.g; rankFx(ME, wPlayerLvl(W), W.ac);
   const play = (n, once) => ME.play(n, once);
 
   /* ---------- rangkaian: pemain lain, maklumat awam, perbendaharaan pasukan ---------- */
@@ -19068,7 +19138,7 @@ function worldGame(THREE, W, NET){
   const unsubs = [];
   let infoSent = '';
   function pushInfo(force){
-    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), s: Object.keys(W.q).length, pt: wParty(W).map(p => p.t).join(','), rd: RIDE ? RIDE.t : '', kd: W.kd ? [W.kd.x, W.kd.z, wKdLv(W), W.kd.tw | 0, W.kd.tp | 0] : 0, dc: Object.keys(W.deco).filter(k => W.deco[k]).join(''), ks: wStore(W).slice(0, 14).map(p => wAnCode[p.t]).join(''), pw: wPower(W), vo: MIC ? 1 : 0, wr: W.war && me.id !== 'guru' ? 1 : 0, sh: wShieldOf(W), st: [W.wood, W.fish, W.fruit, W.water, W.bulu].map(x => x | 0) };
+    if (!NET) return; const info = { n: me.n, c: W.char, fl: W.built.flag || '', h: W.built.hut | 0, f: W.built.fence | 0, l: wTotalLvl(W), ac: W.ac | 0, tt: wTitleOf(W), s: Object.keys(W.q).length, pt: wParty(W).map(p => p.t).join(','), rd: RIDE ? RIDE.t : '', kd: W.kd ? [W.kd.x, W.kd.z, wKdLv(W), W.kd.tw | 0, W.kd.tp | 0] : 0, dc: Object.keys(W.deco).filter(k => W.deco[k]).join(''), ks: wStore(W).slice(0, 14).map(p => wAnCode[p.t]).join(''), pw: wPower(W), vo: MIC ? 1 : 0, wr: W.war && me.id !== 'guru' ? 1 : 0, sh: wShieldOf(W), st: [W.wood, W.fish, W.fruit, W.water, W.bulu].map(x => x | 0) };
     const sig = JSON.stringify(info); if (!force && sig === infoSent) return; infoSent = sig; try { NET.net.set('wb/' + me.id, Object.assign({ u: Date.now() }, info)); } catch(e){}
   }
   if (NET){
@@ -19080,7 +19150,7 @@ function worldGame(THREE, W, NET){
         r.tx = +a[0]; r.tz = +a[1]; r.tf = +a[2]; r.t = t; });
       REM.forEach((r, id) => { if (!seen.has(id)){ scene.remove(r.A.g); scene.remove(r.A.shadow); if (r.mt) scene.remove(r.mt.m.g); REM.delete(id); } });
     }));
-    unsubs.push(NET.net.on('wb', v => { Object.assign(WB, v || {}); Object.keys(v || {}).forEach(id => { const b = BASES.get(id); if (b && id !== me.id) b.set({ h: v[id].h, f: v[id].f, fl: v[id].fl, dc: v[id].dc });
+    unsubs.push(NET.net.on('wb', v => { const pL = {}; Object.keys(v || {}).forEach(id => { pL[id] = WB[id] ? WB[id].l | 0 : 0; }); Object.assign(WB, v || {}); Object.keys(v || {}).forEach(id => { if (id !== me.id && pL[id] && (v[id].l | 0) > pL[id]) rLevelUp(id, v[id].l | 0, pL[id]); }); Object.keys(v || {}).forEach(id => { const b = BASES.get(id); if (b && id !== me.id) b.set({ h: v[id].h, f: v[id].f, fl: v[id].fl, dc: v[id].dc });
       if (id !== me.id){ const k = v[id].kd; kdSet(id, k && k.length ? { x: +k[0], z: +k[1], lv: +k[2] || 1, tw: +k[3] || 0, tp: +k[4] || 0, ks: String(v[id].ks || ''), n: String(v[id].n || '').split(' ')[0] } : null); } }); }));
     unsubs.push(NET.net.on('wt', v => { Object.keys(WT).forEach(k => delete WT[k]); Object.assign(WT, v || {}); hud(); }));
     pushInfo(true);
@@ -19095,7 +19165,7 @@ function worldGame(THREE, W, NET){
       (() => { const L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), tx = xpTxt && Date.now() < xpUntil ? ' <b style="color:#7DD3FC">' + xpTxt + '</b>' : '';
         if (L >= WLV_MAX) return '<div style="font-size:11px;margin-top:3px;color:#FDE68A">⭐ LEVEL MAKS (' + WLV_MAX + ') · ' + E + ' EXP' + tx + '</div>';
         const a = WLVX[L], b = WLVX[L + 1], pr = Math.max(0, Math.min(100, Math.round((E - a) / (b - a) * 100)));
-        return '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div><div style="font-size:11px">⭐ EXP ' + (E - a) + ' / ' + (b - a) + tx + '</div>'; })() +
+        return '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div><div style="font-size:11px">⭐ EXP ' + (E - a) + ' / ' + (b - a) + tx + '</div>' + (() => { const nx = WRANK.find(r => r.l > L); return nx ? '<div style="font-size:10px;opacity:.85;margin-top:1px">🎯 Lvl ' + nx.l + ': ' + nx.rw + '</div>' : ''; })(); })() +
       (NET ? '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, HP / wHpMax(W) * 100)) + '%;background:#EF4444"></i></div><div style="font-size:11px">❤️ ' + Math.round(HP) + ' / ' + wHpMax(W) + (W.war ? ' &nbsp;⚔️' : '') + '</div>' : '') + '</div>' +
       '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + ' &nbsp;🧶 ' + W.bulu +
       (NET ? '<div style="font-size:10px;font-weight:600;opacity:.8">👥 ' + (REM.size + 1) + ' dalam talian' + (W.built.flag ? ' · 🚩 ' + (wFlagName[W.built.flag] || '') + (tt ? ' ★' + tt : '') : '') + '</div>' : '') + '</div>';
@@ -19111,8 +19181,8 @@ function worldGame(THREE, W, NET){
   const pts = (k, n) => {
     const L0 = wPlayerLvl(W), s0 = wLvl(W, k); W.pts[k] = Math.round(((W.pts[k] || 0) + (n || 0)) * 100) / 100; const L1 = wPlayerLvl(W), s1 = wLvl(W, k);
     if (L1 > L0){ const un = Object.keys(WAN).filter(t => WAN[t].gate > L0 && WAN[t].gate <= L1).map(t => WAN[t].ico + ' ' + WAN[t].n);
-      sfx('myth'); vibrate([30, 40, 30, 40, 60]); W.energy = Math.min(wMaxE(W), W.energy + 25); HP = Math.min(wHpMax(W), HP + 30);
-      say('⭐ <b>LEVEL ' + L1 + '!</b><br><span style="font-size:14px">❤️ HP maks ' + wHpMax(W) + ' · ⚡ Tenaga maks ' + wMaxE(W) + ' · 💥 Pukulan ' + wHitDmg(W) + (s1 > s0 ? '<br>' + WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + s1 : '') + (un.length ? '<br>🔓 Boleh menawan: ' + un.join(', ') : '') + '</span>', 4000); }
+      sfx('myth'); vibrate([30, 40, 30, 40, 60]); const rt = wRankOf(L1) !== wRankOf(L0); rankFx(ME, L1, W.ac); burst(P.x, P.z, WAURA[W.ac | 0] || WRANK[wRankOf(L1)].c); W.energy = Math.min(wMaxE(W), W.energy + 25); HP = Math.min(wHpMax(W), HP + 30);
+      say('⭐ <b>LEVEL ' + L1 + '!</b><br><span style="font-size:14px">❤️ HP maks ' + wHpMax(W) + ' · ⚡ Tenaga maks ' + wMaxE(W) + ' · 💥 Pukulan ' + wHitDmg(W) + (s1 > s0 ? '<br>' + WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + s1 : '') + (un.length ? '<br>🔓 Boleh menawan: ' + un.join(', ') : '') + (rt ? '<br>🎖️ Pangkat baharu: <b style="color:' + WRANK[wRankOf(L1)].c + '">' + WRANK[wRankOf(L1)].n + '</b> — ' + WRANK[wRankOf(L1)].rw : '') + '</span>', rt ? 5200 : 4000); }
     else if (s1 > s0){ sfx('myth'); say(WSK[k].ico + ' ' + WSK[k].n + ' naik ke Lvl ' + s1 + '!', 2600); vibrate([30, 40, 30]); }
     pushInfo(); };
 
@@ -19157,15 +19227,18 @@ function worldGame(THREE, W, NET){
       const row = k => '<div class="mt-3"><div class="flex justify-between text-[13px] font-bold"><span>' + WSK[k].ico + ' ' + WSK[k].n + '</span><span style="color:#FDE68A">Lvl ' + wLvl(W, k) + (wLvl(W, k) >= 10 ? ' (maks)' : '') + '</span></div>' +
         '<div style="height:8px;border-radius:5px;background:#1E293B;overflow:hidden;margin-top:3px"><i style="display:block;height:100%;width:' + (wLvl(W, k) >= 10 ? 100 : ((W.pts[k] || 0) % 200) / 2) + '%;background:#22C55E"></i></div><div class="text-[11px] text-muted mt-1">' + WSK[k].d + '</div></div>';
       const tt = teamTier(W.built.flag);
+      const rankCard = () => { const L = wPlayerLvl(W), rk = WRANK[wRankOf(L)], ti = wTitleOf(W);
+        return '<div class="panel clip-s p-3 mt-3" style="border-color:' + rk.c + '"><div class="font-bold text-[14px]" style="color:' + rk.c + '">🎖️ Pangkat: ' + rk.n + (ti ? ' · ' + ti : '') + '</div><div class="text-[11px] mt-2 leading-relaxed">' + WRANK.map(r => '<div style="opacity:' + (L >= r.l ? 1 : .55) + '">' + (L >= r.l ? '✅' : '🔒') + ' Lvl ' + r.l + ' <b style="color:' + r.c + '">' + r.n + '</b> — ' + r.rw + '</div>').join('') + '</div>' +
+          (L >= 10 ? '<div class="text-[11px] mt-2">🎨 Warna aura &amp; jubah (pemain lain nampak):</div><div class="flex gap-2 mt-1 flex-wrap">' + WAURA.map((c, i) => '<button class="btn clip-s" data-p="ac:' + i + '" style="width:34px;height:34px;padding:0;background:' + (c || rk.c) + ';' + ((W.ac | 0) === i ? 'outline:3px solid #fff;' : '') + '"></button>').join('') + '</div>' : '<div class="text-[11px] mt-2 text-muted">🎨 Pilih warna aura bila capai Lvl 10.</div>') + '</div>'; };
       body = (() => { const L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), a = WLVX[L], b = L >= WLV_MAX ? a : WLVX[L + 1], pr = L >= WLV_MAX ? 100 : Math.round((E - a) / (b - a) * 100);
         return '<div class="panel clip-s p-3 mt-3"><div class="flex justify-between font-bold text-[15px]"><span>⭐ Level ' + L + ' / ' + WLV_MAX + '</span><span style="color:#FDE68A">' + E + ' EXP</span></div><div style="height:10px;border-radius:6px;background:#1E293B;overflow:hidden;margin-top:4px"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div>' +
-          '<div class="text-[11px] text-muted mt-1 leading-snug">' + (L >= WLV_MAX ? 'Level maksimum!' : (b - E) + ' EXP lagi ke Level ' + (L + 1) + ' (level ini perlu ' + (b - a) + ' EXP)') + '<br>Setiap level: ❤️ +3 HP maks · ⚡ +2 tenaga maks · 💥 +1 pukulan setiap 2 level</div></div>'; })() + ['kuat', 'pint', 'stam'].map(row).join('') + '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat') + tt) + ' 🪵</b>' + (tt ? ' <span style="color:#FDE68A">(+' + tt + ' bonus pasukan)</span>' : '') + '<br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>' +
+          '<div class="text-[11px] text-muted mt-1 leading-snug">' + (L >= WLV_MAX ? 'Level maksimum!' : (b - E) + ' EXP lagi ke Level ' + (L + 1) + ' (level ini perlu ' + (b - a) + ' EXP)') + '<br>Setiap level: ❤️ +3 HP maks · ⚡ +2 tenaga maks · 💥 +1 pukulan setiap 2 level</div></div>'; })() + rankCard() + ['kuat', 'pint', 'stam'].map(row).join('') + '<div class="panel clip-s p-2 mt-3 text-[12px] leading-relaxed">🪓 Tebang: <b>' + Math.max(1, 4 - Math.floor(wLvl(W, 'kuat') / 3)) + ' kali</b> · hasil <b>' + (3 + wLvl(W, 'kuat') + tt) + ' 🪵</b>' + (tt ? ' <span style="color:#FDE68A">(+' + tt + ' bonus pasukan)</span>' : '') + '<br>🎣 Memancing: ikan <b>' + (1 + Math.floor(wLvl(W, 'pint') / 4)) + '</b> · masa tekan <b>' + (0.9 + .12 * wLvl(W, 'pint')).toFixed(1) + 's</b><br>⚡ Tenaga maks <b>' + wMaxE(W) + '</b> · makanan <b>+' + (wLvl(W, 'stam') - 1) * 10 + '%</b></div>' +
         '<div class="panel clip-s p-2 mt-2 text-[12px] leading-relaxed">⚔️ Kuasa: <b style="color:#FDE68A">' + wPower(W) + '</b> <span class="text-muted">(tahap ×3 + gear + haiwan)</span><br>🐾 Haiwan: <b>' + W.pets.length + '/' + (WPARTY + wKdCap(W)) + '</b> (rombongan ' + wParty(W).length + '/' + WPARTY + ' · kandang ' + (W.kd ? 'Lv ' + wKdLv(W) : '—') + ') · ❤️ HP maks ' + wHpMax(W) + ' · 💥 Pukulan ' + wHitDmg(W) + ' · Ditawan: <b>' + (W.nTame | 0) + '</b><br>🛡️ Gear: ' + (W.gear.a ? WGEAR.a[W.gear.a - 1][0] : '—') + ' · ' + (W.gear.w ? WGEAR.w[W.gear.w - 1][0] + (W.gear.wu ? ' +' + W.gear.wu : '') : '—') + (W.bag.lv ? ' · ' + WBAG[W.bag.lv][0] : '') + '</div>' +
         '<div class="text-[12px] text-muted mt-3">Misi selesai hari ini: <b style="color:#fff">' + wDailyQuests().filter(x => W.q[x.id] === TODAY).length + '/5</b> · Simulasi pernah diselesaikan: <b style="color:#fff">' + Object.keys(W.q).length + '</b></div>' + btn('char', '🧍 Tukar watak', '');
     } else if (tab === 'kelas'){
       const rows = Object.keys(WB).map(id => Object.assign({ id }, WB[id])); if (!rows.some(r => r.id === me.id)) rows.push({ id: me.id, n: me.n, l: wTotalLvl(W), s: Object.keys(W.q).length, fl: W.built.flag, pw: wPower(W) });
       rows.sort((a, b) => (b.l | 0) - (a.l | 0) || (b.s | 0) - (a.s | 0));
-      body = NET ? '<div class="text-[12px] text-muted mt-3">Kelas <b style="color:#fff">' + esc(NET.cls) + '</b> — kedudukan ikut tahap.</div>' + rows.map((r, i) => '<div class="panel clip-s p-2 mt-2 flex items-center gap-2" style="border-color:' + (r.id === me.id ? '#F5E08A' : '#334155') + '"><span class="num font-bold w-6 text-center">' + (i + 1) + '</span><span style="width:12px;height:12px;border-radius:50%;background:' + (r.fl || '#475569') + '"></span><span class="flex-1 truncate text-[13px] font-bold">' + esc(r.n || '?') + '</span><span class="text-[12px]" style="color:#FDE68A">⭐ ' + (r.l | 0) + '</span><span class="text-[11px]" style="color:#FCA5A5">⚔️' + (r.pw | 0) + '</span><span class="text-[11px] text-muted">🎬' + (r.s | 0) + '</span>' + (r.id !== me.id ? '<button class="btn clip-s !px-2 !py-1 text-[12px]" data-p="gf:' + r.id + '" title="Hantar hadiah">🎁</button>' : '') + '</div>').join('')
+      body = NET ? '<div class="text-[12px] text-muted mt-3">Kelas <b style="color:#fff">' + esc(NET.cls) + '</b> — kedudukan ikut tahap.</div>' + rows.map((r, i) => '<div class="panel clip-s p-2 mt-2 flex items-center gap-2" style="border-color:' + (r.id === me.id ? '#F5E08A' : '#334155') + '"><span class="num font-bold w-6 text-center">' + (i + 1) + '</span><span style="width:12px;height:12px;border-radius:50%;background:' + (r.fl || '#475569') + '"></span><span class="flex-1 truncate text-[13px] font-bold">' + esc(r.n || '?') + '</span><span class="text-[12px]" style="color:' + WRANK[wRankOf(r.l | 0)].c + '">⭐ ' + (r.l | 0) + '</span><span class="text-[11px]" style="color:#FCA5A5">⚔️' + (r.pw | 0) + '</span><span class="text-[11px] text-muted">🎬' + (r.s | 0) + '</span>' + (r.id !== me.id ? '<button class="btn clip-s !px-2 !py-1 text-[12px]" data-p="gf:' + r.id + '" title="Hantar hadiah">🎁</button>' : '') + '</div>').join('')
         : '<div class="text-[13px] text-muted mt-4 text-center leading-relaxed">Kedudukan kelas keluar bila dunia dimainkan dalam <b>mod kelas</b>:<br>murid log masuk dengan kod sekolah, atau guru hidupkan Kongsi Murid.</div>';
     } else if (tab === 'perang'){
       setTimeout(() => tutEv('perang'), 30);
@@ -19191,6 +19264,7 @@ function worldGame(THREE, W, NET){
       if (a === 'wpause' && NET){ WCFG.p = WCFG.p ? 0 : 1; try { NET.net.set('wcfg/p', WCFG.p); } catch(e){} return akademi('perang'); }
       if (a === 'wwipe' && NET){ if (!confirm('RESET DUNIA ILMU?\n\nSemua kemajuan SEMUA murid (tahap, sumber, haiwan, kandang, tutorial) akan DIPADAM dan mula dari kosong. Tidak boleh dibatalkan.')) return; if (!confirm('Pasti? Ini memadam semua data Dunia Ilmu kelas ini.')) return; return wipeAll(); }
       if (a === 'wreset' && NET){ if (!confirm('Set semula perang untuk SEMUA murid? (sumber & haiwan tidak dipadam)')) return; WCFG.rs = Date.now(); try { NET.net.set('wcfg/rs', WCFG.rs); } catch(e){} W.rs = WCFG.rs; W.war = 0; W.log = []; W.rc = {}; W.shield = Date.now() + 30 * 60000; save(); pushInfo(true); say('🔄 Perang disetkan semula', 2000); return akademi('perang'); }
+      if (a.indexOf('ac:') === 0){ if (wPlayerLvl(W) < 10) return; W.ac = Math.max(0, Math.min(WAURA.length - 1, +a.slice(3) | 0)); rankFx(ME, wPlayerLvl(W), W.ac); save(); pushInfo(); sfx('flip'); return akademi('diri'); }
       if (a === 'char'){ const i = KN_CHARS.indexOf(W.char); W.char = KN_CHARS[(i + 1) % KN_CHARS.length]; ME.setChar(W.char); save(); pushInfo(); say('🧍 ' + KN_NAME(W.char), 1200); akademi('diri'); } });
   }
 
@@ -19767,11 +19841,13 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     if (RIDEM){ RIDEM.g.position.set(P.x, 0, P.z); aFace(RIDEM, Math.atan2(-Math.cos(P.face), Math.sin(P.face)), dt); ridePh += dt * Math.min(2.4, spd / 3); aLegs(RIDEM, spd > .4, ridePh); }
     if (ME.mixer){ if (!ME.now || (ME.now.loop !== THREE.LoopOnce)) ME.play(RIDE ? 'idle' : spd > 7 ? 'sprint' : spd > .4 ? 'walk' : 'idle'); else if (!ME.now.isRunning()) ME.now = null; ME.mixer.update(dt); }
     if (ME.ph.visible) ME.ph.position.y = .75 + Math.sin(performance.now() / 120) * (spd > .4 ? .06 : 0);
+    rankFxUpd(ME, dt, spd); fxStep(dt);
     /* pemain lain: gerak lancar ke kedudukan terkini */
     REM.forEach((r, id) => { const ox = r.x, oz = r.z; r.x += (r.tx - r.x) * Math.min(1, dt * 5); r.z += (r.tz - r.z) * Math.min(1, dt * 5); const v = Math.hypot(r.x - ox, r.z - oz) / Math.max(dt, .001);
       let d2 = r.tf - r.A.body.rotation.y; d2 = Math.atan2(Math.sin(d2), Math.cos(d2)); r.A.body.rotation.y += d2 * Math.min(1, dt * 10);
       const rdT = String((WB[id] || {}).rd || ''); if (rdT !== (r.mt ? r.mt.t : '')){ if (r.mt){ scene.remove(r.mt.m.g); r.mt = null; } if (WRIDE[rdT]){ r.mt = { t: rdT, m: makeAnimal(rdT) }; scene.add(r.mt.m.g); } }
-      r.A.g.position.set(r.x, r.mt ? WSEAT[rdT] : 0, r.z); r.A.shadow.position.set(r.x, .05, r.z); if (r.mt){ r.mt.m.g.position.set(r.x, 0, r.z); aFace(r.mt.m, Math.atan2(-Math.cos(r.tf), Math.sin(r.tf)), dt); aLegs(r.mt.m, v > .6, performance.now() / 1000); } if (r.A.mixer){ r.A.play(v > 5.5 ? 'sprint' : v > .6 ? 'walk' : 'idle'); r.A.mixer.update(dt); } });
+      r.A.g.position.set(r.x, r.mt ? WSEAT[rdT] : 0, r.z); r.A.shadow.position.set(r.x, .05, r.z); if (r.mt){ r.mt.m.g.position.set(r.x, 0, r.z); aFace(r.mt.m, Math.atan2(-Math.cos(r.tf), Math.sin(r.tf)), dt); aLegs(r.mt.m, v > .6, performance.now() / 1000); } if (r.A.mixer){ r.A.play(v > 5.5 ? 'sprint' : v > .6 ? 'walk' : 'idle'); r.A.mixer.update(dt); }
+      remoteRank(r, id, v, dt); });
     /* haiwan liar berkeliaran; haiwan peliharaan mengikut; penjaga di pangkalan bernafas */
     const tm = performance.now() / 1000;
     WILD.forEach(A => {
@@ -19844,7 +19920,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     R.render(scene, cam);
   }
   syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { ME, FXL, W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
