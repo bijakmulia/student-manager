@@ -18889,7 +18889,7 @@ function worldGame(THREE, W, NET){
     '<div id="wWx" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(154px + var(--safe-t,0px));font-size:11px;font-weight:800;color:#fff;background:rgba(10,16,24,.62);padding:2px 8px;border-radius:10px;pointer-events:none"></div><div id="wFRing" style="position:absolute;left:50%;top:38%;width:96px;height:96px;margin:-48px 0 0 -48px;display:none;pointer-events:none"><div id="wFRo" style="position:absolute;inset:0;border:4px solid #fff;border-radius:50%;box-shadow:0 0 12px rgba(255,255,255,.6)"></div><div style="position:absolute;inset:26px;border:4px solid #4ADE80;border-radius:50%;box-shadow:0 0 10px #4ADE80"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px">❗</div></div><button data-w="look" id="wLook" class="btn clip-s" style="position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(110px + var(--safe-b,0px));height:38px;padding:0 12px;font-size:12px;font-weight:700;display:none"></button><button data-w="act" id="wAct" class="btn btn-o clip-s" style="position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(26px + var(--safe-b,0px));min-width:112px;height:76px;font-size:15px;font-weight:800;display:none;line-height:1.15;padding:6px 10px"></button>' +
     '<div id="wHint" style="position:absolute;left:0;right:0;bottom:calc(8px + var(--safe-b,0px));text-align:center;font-size:11px;color:rgba(255,255,255,.85);pointer-events:none;text-shadow:0 1px 3px #000"></div>' +
     '<div id="wQuest" style="position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:calc(200px + var(--safe-t,0px));max-width:58%;display:none;gap:8px;align-items:center;background:rgba(10,16,24,.72);border:1px solid rgba(253,230,138,.5);border-radius:12px;padding:6px 10px;cursor:pointer;text-shadow:0 1px 3px #000" data-w="qmin" title="Ketik untuk kecilkan / besarkan"><div id="wQArr" style="text-align:center;min-width:34px"><div id="wQAi" style="font-size:24px;line-height:1;color:#FDE68A">▲</div><div id="wQAd" style="font-size:10px;font-weight:700"></div></div><div id="wQTx"></div><div id="wQCh" style="font-size:14px;opacity:.8;align-self:flex-start">▾</div></div>' +
-    '<div id="wTools" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(88px + var(--safe-b,0px));display:flex;flex-direction:column;gap:8px"><button data-w="card" id="wCardB" class="btn clip-s" title="Banner &amp; kedudukan saya" style="width:52px;height:52px;font-size:22px;padding:0">🪪</button><button data-w="bag" id="wBagB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎒</button><button data-w="ride" id="wRideB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0;display:none">🏇</button></div>' +
+    '<div id="wTools" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(88px + var(--safe-b,0px));display:flex;flex-direction:column;gap:8px"><button data-w="war" id="wWarB" class="btn clip-s" title="Mod Perang (hidup / mati)" style="width:52px;height:52px;font-size:22px;padding:0;display:none">⚔️</button><button data-w="char" id="wCharB" class="btn clip-s" title="Watak, statistik &amp; skin" style="width:52px;height:52px;font-size:22px;padding:0">🧍</button><button data-w="bag" id="wBagB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎒</button><button data-w="ride" id="wRideB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0;display:none">🏇</button></div>' +
     '<div id="wTgt" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(150px + var(--safe-b,0px));min-width:160px;display:none;background:rgba(10,16,24,.82);border:1px solid #EF4444;border-radius:10px;padding:6px 10px;font-size:12px;pointer-events:none;text-align:center"></div>' +
     '<div id="wPlace" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100px + var(--safe-b,0px));display:none;gap:8px;align-items:center;background:rgba(10,16,24,.88);border-radius:14px;padding:8px 12px;font-size:13px;font-weight:700;max-width:94%;flex-wrap:wrap;justify-content:center"><span id="wPlTx"></span><button data-w="plok" class="btn btn-o clip-s !px-3 !py-2">Bina</button><button data-w="plx" class="btn clip-s !px-3 !py-2">Batal</button></div>' +
     (NET ? '<div id="wTalk" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(26px + var(--safe-b,0px));display:flex;gap:8px"><button data-w="chat" id="wChatB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">💬</button><button data-w="mic" id="wMicB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎙️</button></div><div id="wHear" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(150px + var(--safe-b,0px));font-size:11px;font-weight:700;text-shadow:0 1px 3px #000;pointer-events:none"></div>' : '') +
@@ -19069,7 +19069,7 @@ function worldGame(THREE, W, NET){
   }
   house('misi', 'Dewan Misi', '🎬', 0, -22, 10, 7, 4.4, 0xF2D98D, 0xB5472E, 0);
   house('arkad', 'Rumah Arkad', '🕹️', 24, -4, 7, 6, 3.6, 0xC9A7F5, 0x5B3FA0, -Math.PI / 2);
-  house('akademi', 'Akademi', '🏆', -24, -4, 8, 6, 4, 0xE7EEF7, 0x2F5F9E, Math.PI / 2);
+  house('akademi', 'Showcase', '🏆', -24, -4, 8, 6, 4, 0xE7EEF7, 0x2F5F9E, Math.PI / 2);
   house('dapur', 'Dapur', '🍲', 20, 14, 6.5, 5.5, 3.3, 0xF6C8A0, 0xA33A2A, -Math.PI / 2 - .3);
   house('bengkel', 'Bengkel', '🔨', -22, 20, 7, 5.5, 3.5, 0xD8C3A5, 0x6B4A2F, 2.3);
   const well = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.1, .9, 10), M(0x8A8A8A)); b.position.y = .45; well.add(b); const wt = new THREE.Mesh(new THREE.CylinderGeometry(.8, .8, .05, 10), new THREE.MeshStandardMaterial({ color: 0x3C9BD6 })); wt.position.y = .88; well.add(wt);
@@ -19214,11 +19214,13 @@ function worldGame(THREE, W, NET){
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); sp.scale.set(3.6, 1.13, 1); sp.renderOrder = 5; sp.position.y = tier >= 4 ? 3.15 : 2.65; A.g.add(sp); A.lb = sp;
   }
   /* banner showcase penuh (sama seperti di showcase murid: kedudukan, lencana, anak panah ke murid lain) */
-  function cardOpen(){
-    if (PANEL) return; const sc = MURID && MURID.pack && !MURID.pack.awam && MURID.pack.sc ? MURID.pack.sc : '';
-    if (!sc) return profile(me.id);
+  function showcaseOpen(){
+    if (PANEL) return; let sc = '';
+    if (MURID && MURID.pack && !MURID.pack.awam && MURID.pack.sc) sc = MURID.pack.sc;
+    else if (!MURID && S.share && S.share.on && typeof FB !== 'undefined' && FB.cfg && FB.cfg.databaseURL){ try { sc = b64urlEnc(JSON.stringify({ d: FB.cfg.databaseURL.replace(/\/$/, ''), t: S.share.token })); } catch(e){} }
+    if (!sc){ say('🏆 Showcase belum diterbitkan oleh cikgu.<br><span style="font-size:14px">Tekan 🧍 untuk lihat statistik kamu.</span>', 3200); return; }
     const ov = document.createElement('div'); ov.style.cssText = 'position:absolute;inset:0;z-index:60;background:#0C1118';
-    ov.innerHTML = '<iframe src="' + location.pathname + '?s=' + sc + '&f=' + encodeURIComponent(me.id) + '" title="Banner" style="width:100%;height:100%;border:0"></iframe><button class="btn clip-s !px-3 !py-1" data-cx="1" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px));background:#B91C1C;border-color:#EF4444;color:#fff"><i class="fa-solid fa-xmark"></i> Tutup</button>';
+    ov.innerHTML = '<iframe src="' + location.pathname + '?s=' + sc + '&f=' + encodeURIComponent(me.id) + '" title="Showcase" style="width:100%;height:100%;border:0"></iframe><button class="btn clip-s !px-3 !py-1" data-cx="1" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px));background:#B91C1C;border-color:#EF4444;color:#fff"><i class="fa-solid fa-xmark"></i> Tutup</button>';
     root.appendChild(ov); stopMove(); ov.querySelector('[data-cx]').onclick = () => ov.remove();
   }
   /* kad pemain: banner showcase sedia ada (sama seperti di showcase murid) + info dunia */
@@ -19228,7 +19230,7 @@ function worldGame(THREE, W, NET){
     panel('<div class="panel clip-s p-2" style="border-color:' + rk.c + '"><div class="font-bold text-[15px]">' + nm + '</div><div class="text-[12px]" style="color:' + rk.c + '">⭐ Lvl ' + L + ' · ' + rk.n + (inf.tt ? ' · ' + esc(inf.tt) : '') + '</div>' +
       '<div class="text-[11px] text-muted mt-1">⚔️ Kuasa ' + (inf.pw | 0) + (inf.kd && inf.kd.length ? ' · 🏠 Kandang Lv ' + (+inf.kd[2] || 1) : '') + (inf.pt ? ' · 🐾 rombongan ' + String(inf.pt).split(',').filter(Boolean).length : '') + '</div></div>' +
       (sc ? '<iframe src="' + location.pathname + '?s=' + sc + '&v=' + encodeURIComponent(id) + '" title="Banner" style="width:100%;height:min(68vh,560px);border:0;border-radius:12px;background:#0C1118;margin-top:8px"></iframe>' : '<div class="text-[12px] text-muted text-center mt-3 leading-relaxed">Banner showcase belum tersedia.<br>(Guru perlu menerbitkan showcase dahulu, dan kamu perlu log masuk dengan kod sekolah.)</div>') +
-      btn('close', 'Tutup', 'btn-o'), () => closePanel());
+      (id !== me.id ? btn('gift', '🎁 Hantar hadiah', '') : '') + btn('close', 'Tutup', 'btn-o'), a => { if (a === 'gift') return gift(id); closePanel(); });
   }
   function remoteRank(r, id, v, dt){
     const inf = WB[id] || {}, L = Math.max(1, inf.l | 0), ac = inf.ac | 0, nm = String(inf.n || (mates.find(m => m.id === id) || {}).n || '?').split(' ')[0];
@@ -19299,6 +19301,15 @@ function worldGame(THREE, W, NET){
       const p = rq.call(root, { navigationUI: 'hide' }); if (p && p.then) p.then(lk).catch(() => say('Skrin penuh ditolak oleh pelayar.', 2200)); else lk();
     } catch(e){ say('Skrin penuh tidak tersedia.', 2200); }
   }
+  /* Mod Perang: hidup / mati terus dari butang ⚔️ (tidak perlu ke mana-mana) */
+  function warBtnSync(){ const b = $w('#wWarB'); if (!b) return; b.style.display = NET && me.id !== 'guru' ? 'block' : 'none'; b.style.background = W.war ? 'linear-gradient(135deg,#B91C1C,#7F1D1D)' : ''; b.style.borderColor = W.war ? '#F87171' : ''; }
+  function warToggle(){
+    if (!NET || me.id === 'guru') return say('⚔️ Perang hanya dalam mod kelas (murid log masuk dengan kod sekolah).', 2600);
+    if (!W.war && WCFG.p) return say('⏸️ Cikgu menjeda perang buat masa ini.', 2400);
+    if (W.war && (+W.warLock || 0) > Date.now()) return say('Tidak boleh matikan Mod Perang semasa pertempuran. Tunggu seminit.', 2600);
+    W.war = W.war ? 0 : 1; save(); pushInfo(true); sfx('flip'); vibrate(W.war ? [30, 20, 30] : 15); warBtnSync(); hud(); tutEv('perang');
+    say(W.war ? '⚔️ <b>Mod Perang HIDUP</b><br><span style="font-size:14px">Boleh menyerang &amp; diserang. Dekati lawan → tekan Serang. Tekan ⚔️ lagi untuk matikan.</span>' : '🕊️ Mod Perang mati — kamu selamat.', 3200);
+  }
   function hud(){
     const mx = wMaxE(W), pc = Math.max(0, Math.min(100, W.energy / mx * 100)), tt = teamTier(W.built.flag), L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), sm = land;
     const bar = (pct, col, txt) => '<div style="position:relative;height:' + (sm ? 11 : 14) + 'px;border-radius:7px;background:#1E293B;overflow:hidden;margin-top:' + (sm ? 3 : 4) + 'px"><i style="display:block;height:100%;width:' + pct + '%;background:' + col + '"></i><span style="position:absolute;inset:0;text-align:center;font-size:' + (sm ? 9 : 10.5) + 'px;font-weight:800;line-height:' + (sm ? 11 : 14) + 'px;text-shadow:0 1px 2px #000;white-space:nowrap">' + txt + '</span></div>';
@@ -19311,7 +19322,7 @@ function worldGame(THREE, W, NET){
       (nx ? '<div style="font-size:10px;opacity:.85;margin-top:3px;line-height:1.25">🎯 Lvl ' + nx.l + ': ' + nx.rw + '</div>' : '') + '</div>' +
       '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:' + pd + ';font-size:' + (sm ? 11 : 13) + 'px;font-weight:700;line-height:1.5;white-space:nowrap">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + ' &nbsp;🧶 ' + W.bulu +
       (NET ? '<div style="font-size:10px;font-weight:600;opacity:.8">👥 ' + (REM.size + 1) + ' dalam talian' + (W.built.flag ? ' · 🚩 ' + (wFlagName[W.built.flag] || '') + (tt ? ' ★' + tt : '') : '') + '</div>' : '') + '</div>';
-    layoutUI();
+    warBtnSync(); layoutUI();
   }
   let msgT = 0; const say = (t, ms) => { const m = $w('#wMsg'); m.innerHTML = t; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => { m.style.opacity = 0; }, ms || 1600); };
   const useE = n => { if (W.energy < n){ say('⚡ Tenaga habis! Makan di 🍲 Dapur dahulu.', 2200); vibrate(30); return false; } W.energy -= n; return true; };
@@ -19375,9 +19386,9 @@ function worldGame(THREE, W, NET){
       else if (a === 'auto'){ W.sk = 0; }
       W.char = wSkinNow(W); ME.setChar(W.char); save(); pushInfo(true); sfx('flip'); skinMenu(); });
   }
-  function akademi(tab){
+  function watak(tab){
     tab = tab || 'diri';
-    const tabs = '<div class="flex gap-2 mt-3">' + [['diri', '📊 Saya'], ['kelas', '🏅 Kelas'], ['pasukan', '🚩 Pasukan'], ['perang', '⚔️ Perang']].map(t => '<button class="btn clip-s flex-1 !py-2 text-[12px]' + (tab === t[0] ? ' btn-o' : '') + '" data-p="t:' + t[0] + '">' + t[1] + '</button>').join('') + '</div>';
+    const tabs = '<div class="flex gap-2 mt-3">' + [['diri', '📊 Saya'], ['pasukan', '🚩 Pasukan'], ['perang', '⚔️ Perang']].map(t => '<button class="btn clip-s flex-1 !py-2 text-[12px]' + (tab === t[0] ? ' btn-o' : '') + '" data-p="t:' + t[0] + '">' + t[1] + '</button>').join('') + '</div>';
     let body = '';
     if (tab === 'diri'){
       const row = k => '<div class="mt-3"><div class="flex justify-between text-[13px] font-bold"><span>' + WSK[k].ico + ' ' + WSK[k].n + '</span><span style="color:#FDE68A">Lvl ' + wLvl(W, k) + (wLvl(W, k) >= 10 ? ' (maks)' : '') + '</span></div>' +
@@ -19412,16 +19423,16 @@ function worldGame(THREE, W, NET){
         : '<div class="panel clip-s p-3 mt-3" style="border-color:' + fl + '"><div class="font-bold text-[15px]">🚩 Pasukan ' + (wFlagName[fl] || '') + '</div><div class="text-[12px] mt-1">Perbendaharaan: <b style="color:#FDE68A">' + tot + ' 🪵</b> · Bonus: <b>' + (tt ? '+' + tt + ' 🪵 setiap pokok' : 'belum ada') + '</b><br><span class="text-muted">50 🪵 → +1 bonus · 150 🪵 → +2 bonus (untuk semua ahli)</span></div></div>' +
           '<div class="lbl mt-3">AHLI (' + mem.length + ')</div>' + mem.map(m => '<div class="panel clip-s p-2 mt-1 text-[13px] flex"><span class="flex-1 truncate font-bold">' + esc(m.n || '?') + '</span><span style="color:#FDE68A">⭐ ' + (m.l | 0) + '</span></div>').join('');
     }
-    panel(head('🏆', 'AKADEMI') + tabs + body + btn('close', 'Tutup', 'btn-o'), a => {
+    panel(head('🧍', 'WATAK SAYA') + tabs + body + btn('close', 'Tutup', 'btn-o'), a => {
       if (a === 'close') return closePanel();
-      if (a.indexOf('t:') === 0) return akademi(a.slice(2));
+      if (a.indexOf('t:') === 0) return watak(a.slice(2));
       if (a.indexOf('gf:') === 0) return gift(a.slice(3));
       if (a.indexOf('pf:') === 0) return profile(a.slice(3));
-      if (a === 'wtog'){ if (W.war && (+W.warLock || 0) > Date.now()) return say('Tidak boleh matikan Mod Perang semasa pertempuran. Tunggu seminit.', 2600); W.war = W.war ? 0 : 1; save(); pushInfo(true); sfx('flip'); return akademi('perang'); }
-      if (a === 'wpause' && NET){ WCFG.p = WCFG.p ? 0 : 1; try { NET.net.set('wcfg/p', WCFG.p); } catch(e){} return akademi('perang'); }
+      if (a === 'wtog'){ warToggle(); return watak('perang'); }
+      if (a === 'wpause' && NET){ WCFG.p = WCFG.p ? 0 : 1; try { NET.net.set('wcfg/p', WCFG.p); } catch(e){} return watak('perang'); }
       if (a === 'wwipe' && NET){ if (!confirm('RESET DUNIA ILMU?\n\nSemua kemajuan SEMUA murid (tahap, sumber, haiwan, kandang, tutorial) akan DIPADAM dan mula dari kosong. Tidak boleh dibatalkan.')) return; if (!confirm('Pasti? Ini memadam semua data Dunia Ilmu kelas ini.')) return; return wipeAll(); }
-      if (a === 'wreset' && NET){ if (!confirm('Set semula perang untuk SEMUA murid? (sumber & haiwan tidak dipadam)')) return; WCFG.rs = Date.now(); try { NET.net.set('wcfg/rs', WCFG.rs); } catch(e){} W.rs = WCFG.rs; W.war = 0; W.log = []; W.rc = {}; W.shield = Date.now() + 30 * 60000; save(); pushInfo(true); say('🔄 Perang disetkan semula', 2000); return akademi('perang'); }
-      if (a.indexOf('ac:') === 0){ if (wPlayerLvl(W) < 10) return; W.ac = Math.max(0, Math.min(WAURA.length - 1, +a.slice(3) | 0)); rankFx(ME, wPlayerLvl(W), W.ac); save(); pushInfo(); sfx('flip'); return akademi('diri'); }
+      if (a === 'wreset' && NET){ if (!confirm('Set semula perang untuk SEMUA murid? (sumber & haiwan tidak dipadam)')) return; WCFG.rs = Date.now(); try { NET.net.set('wcfg/rs', WCFG.rs); } catch(e){} W.rs = WCFG.rs; W.war = 0; W.log = []; W.rc = {}; W.shield = Date.now() + 30 * 60000; save(); pushInfo(true); say('🔄 Perang disetkan semula', 2000); return watak('perang'); }
+      if (a.indexOf('ac:') === 0){ if (wPlayerLvl(W) < 10) return; W.ac = Math.max(0, Math.min(WAURA.length - 1, +a.slice(3) | 0)); rankFx(ME, wPlayerLvl(W), W.ac); save(); pushInfo(); sfx('flip'); return watak('diri'); }
       if (a === 'char') return skinMenu(); });
   }
 
@@ -19842,7 +19853,7 @@ function worldGame(THREE, W, NET){
     { ev: 'tame', t: 'Tawan seekor haiwan 🐇', tgt: () => nearestOf(WILD, A => A.alive && (A.t === 'arnab' || A.t === 'kancil')), hint: 'Dekati haiwan → <b>⚔️ Tawan</b> → jawab soalan kuiz. Betul = haiwan lemah; salah = hilang ❤️. Belajar membuat duel lebih mudah!', rew: { wood: 40, bulu: 6, txt: '+40 🪵 +6 🧶 (untuk kandang)' } },
     { ev: 'kandang', t: 'Bina 🏠 Kandang di tempat lapang', tgt: null, hint: '<b>Cara:</b> 🏕️ Pangkalan → <b>Rombongan &amp; Kandang</b> → 📍 Bina Kandang. Gerak mencari bulatan <span style="color:#4ADE80">hijau</span> (<span style="color:#F87171">merah</span> = sempit) lalu tekan Bina.<br><b>Tempat:</b> kawasan luar kampung, jauh dari kolam, bangunan &amp; pangkalan lain — boleh di mana-mana dalam peta. Ruang dikhaskan cukup untuk Lv 10.<br><b>Bulu:</b> tawan haiwan atau sikat bulu di Kandang.', req: () => reqLine({ wood: 40, bulu: 5 }), rew: { energy: 20, txt: '+20 ⚡' } },
     { ev: 'npc', t: 'Kembali kepada Cikgu Ilmu', tgt: () => NPC, say: 'Hebat! Kini kamu ada kandang. <b>Rombongan</b> (maks 10 ekor) mengikut kamu &amp; membantu menyerang; yang di kandang selamat.<br><br><b>Bab 3: Perang &amp; kawan</b> — hidupkan <b>Mod Perang</b> untuk bertarung dengan pemain lain. Pagar kandang mesti dipecahkan dahulu sebelum kandang boleh dihancurkan. Ada juga 💬 chat &amp; 🎙️ suara berdekatan.', rew: { bulu: 5, txt: '+5 🧶' } },
-    { ev: 'perang', t: 'Buka 🏆 Akademi → ⚔️ Perang', tgt: () => bldPos('akademi'), hint: 'Masuk Akademi dan tekan tab <b>⚔️ Perang</b> untuk lihat peraturan &amp; hidupkan Mod Perang (pilihan).', rew: { energy: 10, txt: '+10 ⚡' } },
+    { ev: 'perang', t: 'Cuba butang ⚔️ Mod Perang', tgt: null, hint: 'Butang <b>⚔️</b> di bawah kiri hidupkan / matikan Mod Perang <b>terus</b> — tak perlu ke mana-mana. Tekan sekali (boleh matikan semula). Murid solo: buka 🧍 → tab ⚔️ Perang.', rew: { energy: 10, txt: '+10 ⚡' } },
     { ev: 'npc', t: 'Tamat latihan!', tgt: () => NPC, say: '🎉 Tahniah! Kamu kini <b>Pelajar Dunia Ilmu</b>. Ingat: <b>belajar</b> di Dewan Misi menjadikan kamu kuat; kuat memudahkan menawan haiwan &amp; menang perang. Selamat meneroka!', rew: { wood: 50, bulu: 10, txt: '+50 🪵 +10 🧶' } }
   ];
   const NPC = { x: 4.5, z: 14, show: true, A: null, mk: null };
@@ -19856,7 +19867,7 @@ function worldGame(THREE, W, NET){
   const NMK = { q: emoT('❓'), e: emoT('❗') };
   const NPCDEF = [
     { id: 'dapur', b: 'dapur', n: 'Chef Mak Esah', sn: 'Chef', ico: '👩‍🍳', ch: 'female-d', col: 0xFB923C, greet: 'Selamat datang ke <b>Dapur</b>! Masuk dan <b>belajar resepi</b> dengan menjawab soalan. Selepas tahu resepi, kamu boleh <b>masak di mana-mana</b> — buka 🎒 Beg → 🍳 Masak, cukup bawa bahan!' },
-    { id: 'akademi', b: 'akademi', n: 'Prof. Hana', sn: 'Prof. Hana', ico: '👩‍🏫', ch: 'female-b', col: 0x60A5FA, greet: 'Selamat datang ke <b>Akademi</b>. Di sini kamu boleh lihat tahap, pangkat &amp; <b>skin watak</b>, kedudukan kelas dan <b>⚔️ Mod Perang</b>. Pangkat baharu = rupa watak lebih hebat!' },
+    { id: 'akademi', b: 'akademi', n: 'Prof. Hana', sn: 'Prof. Hana', ico: '👩‍🏫', ch: 'female-b', col: 0x60A5FA, greet: 'Selamat datang ke <b>Showcase</b> 🏆! Masuk untuk lihat <b>banner rank</b> kamu dan kedudukan semua murid. Mahu tengok statistik atau tukar skin? Tekan butang 🧍 di bawah kiri.' },
     { id: 'misi', b: 'misi', n: 'Dr. Faiz', sn: 'Dr. Faiz', ico: '👨‍🔬', ch: 'male-d', col: 0xF59E0B, greet: 'Ini <b>Dewan Misi</b>. Tonton simulasi &amp; jawab kuiz → <b>EXP</b>. Itulah cara paling pantas untuk naik level — lima misi baharu setiap hari!' },
     { id: 'bengkel', b: 'bengkel', n: 'Pak Ali Tukang', sn: 'Pak Ali', ico: '👷', ch: 'male-c', col: 0xA3A3A3, greet: 'Aku tukang di <b>Bengkel</b>. Tempa 🛡️ baju &amp; ⚔️ senjata, <b>asah</b> senjata dan buat 🎒 beg. Tebang pokok untuk dapatkan kayu!' },
     { id: 'arkad', b: 'arkad', n: 'Kak Arkad', sn: 'Kak Arkad', ico: '🎮', ch: 'female-f', col: 0xC084FC, greet: 'Mahu uji kepantasan? <b>Kuiz Pantas</b> 5 soalan — betul semua dapat bonus 🧠 sekali sehari!' },
@@ -19903,7 +19914,7 @@ function worldGame(THREE, W, NET){
     n = n || 1; let ch = false;
     Object.keys(NPCQ).forEach(id => { const q = qCur(id); if (!q || !W.nq.a[id] || q.ev !== ev || q.chk) return; const was = qIsDone(id, q); W.nq.p[id] = (W.nq.p[id] | 0) + n; ch = true; if (!was && qIsDone(id, q)) qReadyMsg(id, q); });
     const D = dqEnsure(); wDq().forEach(d => { if (d.ev !== ev || D.c[d.id]) return; D.p[d.id] = Math.min(d.n, (D.p[d.id] | 0) + n); ch = true; if (D.p[d.id] >= d.n) dqClaim(d); });
-    if (ch){ save(); tutPaint(); }
+    if (ch){ save(); tutPaint(); qFlash(); }
   }
   const dqPanel = () => { const D = dqEnsure(); return '<div class="panel clip-s p-3 mt-3"><div class="font-bold text-[13px]" style="color:#FDE68A">📅 MISI HARIAN (baharu setiap hari)</div>' + wDq().map(d => { const p = Math.min(d.n, D.p[d.id] | 0), ok = !!D.c[d.id]; return '<div class="text-[12px] mt-2" style="opacity:' + (ok ? .7 : 1) + '">' + (ok ? '✅' : '▫️') + ' ' + d.t.replace('{n}', d.n) + ' <b>(' + p + '/' + d.n + ')</b>' + (!ok && qPl(d) ? ' <button class="btn clip-s !px-2 !py-0 text-[11px]" data-p="dp:' + d.id + '">🧭 ' + qPl(d)[0] + '</button>' : '') + '<br><span style="color:#93C5FD;font-size:11px">' + qRewTxt(Object.assign({ exp: d.exp }, d.rw)) + '</span></div>'; }).join('') + '<div class="text-[11px] text-muted mt-2">Semua siap = bonus +150 EXP 🧶3 ⚡30' + (D.b ? ' ✅' : '') + '</div></div>'; };
   /* arah misi: nama tempat + sasaran anak panah */
@@ -19936,6 +19947,9 @@ function worldGame(THREE, W, NET){
   }
   /* cara menjalankan misi: panduan langkah, butang "buat sekarang" dan "tunjuk arah" (anak panah) */
   let QPIN = null;
+  /* maklum balas: kotak misi berkelip hijau bila ada kemajuan; label butang NPC ikut keadaan misi */
+  function qFlash(){ const el = $w('#wQuest'); if (!el) return; el.style.borderColor = '#4ADE80'; el.style.boxShadow = '0 0 14px #4ADE80'; vibrate(10); setTimeout(() => { el.style.borderColor = 'rgba(253,230,138,.5)'; el.style.boxShadow = ''; }, 900); }
+  const npcLbl = n => { if (W.tut < TUT.length) return '💬 Bercakap'; const q = qCur(n.id); if (!q) return '💬 Bercakap'; if (!W.nq.a[n.id]) return '❓ Misi baharu'; return qIsDone(n.id, q) ? '🎁 Serahkan misi' : '💬 Bercakap'; };
   const QHOW = {
     cook: 'Buka 🎒 <b>Beg → 🍳 Masak</b>, pilih resepi yang bahannya cukup (hijau). Belum ada resepi? Belajar di 🍲 Dapur dengan menjawab soalan.', learn: 'Masuk 🍲 Dapur, tekan resepi 📖 dan jawab soalan dengan betul.', dapur: 'Masuk 🍲 Dapur, tekan resepi 📖 dan jawab soalan dengan betul.',
     arkad: 'Masuk 🕹️ <b>Rumah Arkad</b> → ▶ Main Kuiz Pantas (−5 ⚡). Jawab 5 soalan.', arkad5: 'Main Kuiz Pantas di 🕹️ Rumah Arkad dan jawab <b>semua 5 soalan dengan betul</b>.',
@@ -19962,7 +19976,7 @@ function worldGame(THREE, W, NET){
       if (a === 'acc' && q){ W.nq.a[id] = 1; W.nq.p[id] = 0; save(); tutPaint(); QPIN = pl ? { pl, q: () => (qCur(id) === q && W.nq.a[id] && !qIsDone(id, q)) ? 1 : null } : null; closePanel(); say('📜 Misi diterima: <b>' + q.t + '</b>' + (pl ? '<br><span style="font-size:14px">🧭 Ikut anak panah ▲ ke ' + pl[0] + '</span>' : ''), 3200); return; }
       if (a === 'pin' && pl){ QPIN = { pl, q: () => (qCur(id) === q && W.nq.a[id] && !qIsDone(id, q)) ? 1 : null }; closePanel(); say('🧭 Ikut anak panah ▲ ke ' + pl[0], 2600); return; }
       if (a === 'go' && dof){ closePanel(); dof[1](); return; }
-      if (a === 'turn' && q && qIsDone(id, q)){ const r = q.rew; W.nq.d[id] = (W.nq.d[id] | 0) + 1; W.nq.a[id] = 0; W.nq.p[id] = 0; QPIN = null; qGive(r); sfx('myth'); vibrate([20, 30, 20]); tutPaint(); closePanel(); say('🎁 Misi selesai! <span style="color:#FDE68A">' + qRewTxt(r) + '</span>', 3000); } });
+      if (a === 'turn' && q && qIsDone(id, q)){ const r = q.rew; W.nq.d[id] = (W.nq.d[id] | 0) + 1; W.nq.a[id] = 0; W.nq.p[id] = 0; QPIN = null; qGive(r); sfx('myth'); vibrate([20, 30, 20]); tutPaint(); npcTalk(n); say('🎁 Misi selesai! <span style="color:#FDE68A">' + qRewTxt(r) + '</span>', 3200); } });
   }
   let QMIN = false; try { QMIN = localStorage.getItem('rk_wq_min') === '1'; } catch(e){}
   const qToggle = () => { QMIN = !QMIN; try { localStorage.setItem('rk_wq_min', QMIN ? '1' : '0'); } catch(e){} tutPaint(); };
@@ -20011,7 +20025,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     panel(head('🎁', 'HANTAR HADIAH', 'Kepada <b>' + esc(nm) + '</b>. ' + (isT ? 'Cikgu: tanpa had.' : 'Baki hari ini: <b>' + left + '</b> unit.')) +
       '<div class="text-[12px] text-muted text-center mt-2">Kamu ada: ' + wLootTxt([W.wood, W.fish, W.fruit, W.water, W.bulu]) + '</div>' +
       WLOOT.map((r, i) => { const ok = W[r[0]] >= GN[i] && left >= GN[i]; return btn('s:' + i, r[1] + ' Hantar ' + GN[i], ok ? 'btn-o' : '', !ok); }).join('') + btn('back', '‹ Kembali', ''), a => {
-      if (a === 'back') return akademi('kelas');
+      if (a === 'back') return profile(id);
       if (a.indexOf('s:') === 0){ const i = +a.slice(2), r = WLOOT[i], n = GN[i]; if (!r || W[r[0]] < n || left < n || !NET) return;
         W[r[0]] -= n; if (!isT){ if (W.gift.d !== TODAY) W.gift = { d: TODAY, n: 0 }; W.gift.n += n; } const l = [0, 0, 0, 0, 0]; l[i] = n;
         try { NET.net.set('wg/' + id + '/' + me.id + '_' + Date.now().toString(36), { n: me.n.split(' ')[0], t: Date.now(), r: l }); } catch(e){}
@@ -20060,7 +20074,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
   }
   let xpTxt = '', xpUntil = 0;
   function xp(k, n){ if (!(n > 0)) return; pts(k, n); xpTxt = '+' + Math.round(n) + ' EXP ' + WSK[k].ico; xpUntil = Date.now() + 3000; hud(); }
-  const OPEN = { misi, arkad, akademi: () => akademi(), dapur, base: pangkalan, bengkel };
+  const OPEN = { misi, arkad, akademi: () => showcaseOpen(), dapur, base: pangkalan, bengkel };
 
   /* ---------- tindakan ---------- */
   const near = { k: '', o: null };
@@ -20142,20 +20156,21 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
   root.addEventListener('wheel', e => { if (!PANEL){ P.pitch = Math.max(-.3, Math.min(1.25, P.pitch + e.deltaY * .001)); e.preventDefault(); } }, { passive: false });
   const exit = () => { fsLeave(); alive = false; save(); dirty = true; cloudSave(); if (VOICE) VOICE.close(); if (NET){ try { NET.net.set('wp/' + me.id, null); NET.net.set('wc/' + me.id, null); NET.net.set('wb/' + me.id + '/vo', 0); } catch(e){} unsubs.forEach(u => { try { u && u(); } catch(e){} }); }
     window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('resize', resize); R.dispose(); root.remove(); unlockBody(); orientBack(); if (S.ui.tab === 'sim') renderTab(); };
-  root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); else if (b.dataset.w === 'fs') fsToggle(); else if (b.dataset.w === 'card') cardOpen(); else if (b.dataset.w === 'look'){ if (!PANEL && b.dataset.id) profile(b.dataset.id); } else if (b.dataset.w === 'chat'){ if (!PANEL) chat(); } else if (b.dataset.w === 'mic') micToggle(); else if (b.dataset.w === 'qmin') qToggle(); else if (b.dataset.w === 'bag') bag(); else if (b.dataset.w === 'ride') rideToggle(); else if (b.dataset.w === 'plok') placeOk(); else if (b.dataset.w === 'plx') placeEnd(); });
+  root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); else if (b.dataset.w === 'fs') fsToggle(); else if (b.dataset.w === 'char'){ if (!PANEL) watak(); } else if (b.dataset.w === 'war') warToggle(); else if (b.dataset.w === 'look'){ if (!PANEL && b.dataset.id) profile(b.dataset.id); } else if (b.dataset.w === 'chat'){ if (!PANEL) chat(); } else if (b.dataset.w === 'mic') micToggle(); else if (b.dataset.w === 'qmin') qToggle(); else if (b.dataset.w === 'bag') bag(); else if (b.dataset.w === 'ride') rideToggle(); else if (b.dataset.w === 'plok') placeOk(); else if (b.dataset.w === 'plx') placeEnd(); });
   $w('#wAct').addEventListener('pointerdown', () => { holdAct = true; }); const rel = () => { holdAct = false; }; $w('#wAct').addEventListener('pointerup', rel); $w('#wAct').addEventListener('pointerleave', rel);
 
   /* ---------- peta mini ---------- */
   const mapCv = $w('#wMap'), mg = mapCv.getContext('2d');
   function drawMap(){
-    const S2 = 100, k = S2 / (RW + 10); mg.clearRect(0, 0, 200, 200); mg.save(); mg.translate(100, 100);
+    const S2 = 100, k = S2 / (RW + 10); mg.clearRect(0, 0, 200, 200); mg.save(); mg.translate(100, 100); mg.rotate(P.yaw);
     mg.fillStyle = '#4C8F3C'; mg.beginPath(); mg.arc(0, 0, 98, 0, 7); mg.fill();
     mg.fillStyle = '#3C9BD6'; PONDS.forEach(p => { mg.beginPath(); mg.arc(p.x * k, p.z * k, p.r * k, 0, 7); mg.fill(); });
     mg.fillStyle = '#D9CFA8'; mg.beginPath(); mg.arc(0, 0, 13 * k, 0, 7); mg.fill();
     BLD.forEach(b => { if (b.id === 'base') return; mg.fillStyle = '#FDE68A'; mg.fillRect(b.x * k - 3, b.z * k - 3, 6, 6); });
     BASES.forEach((b, id) => { const info = id === me.id ? { fl: W.built.flag } : WB[id]; mg.fillStyle = (info && info.fl) || '#B08850'; mg.fillRect(b.slot.x * k - 3, b.slot.z * k - 3, 7, 7); if (id !== me.id && info && info.wr){ mg.strokeStyle = '#EF4444'; mg.lineWidth = 1.5; mg.strokeRect(b.slot.x * k - 5, b.slot.z * k - 5, 11, 11); } if (id === me.id){ mg.strokeStyle = '#fff'; mg.lineWidth = 2; mg.strokeRect(b.slot.x * k - 4, b.slot.z * k - 4, 9, 9); } });
     REM.forEach(r => { mg.fillStyle = '#38BDF8'; mg.beginPath(); mg.arc(r.x * k, r.z * k, 3.5, 0, 7); mg.fill(); });
-    mg.fillStyle = '#fff'; mg.strokeStyle = '#000'; mg.lineWidth = 1.5; mg.beginPath(); mg.arc(P.x * k, P.z * k, 4.5, 0, 7); mg.fill(); mg.stroke();
+    { const px = P.x * k, pz = P.z * k, fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), qx = -fz, qz = fx; mg.fillStyle = '#fff'; mg.strokeStyle = '#000'; mg.lineWidth = 1.5; mg.beginPath(); mg.moveTo(px + fx * 9, pz + fz * 9); mg.lineTo(px + qx * 5 - fx * 5, pz + qz * 5 - fz * 5); mg.lineTo(px - fx * 2, pz - fz * 2); mg.lineTo(px - qx * 5 - fx * 5, pz - qz * 5 - fz * 5); mg.closePath(); mg.fill(); mg.stroke(); }
+    mg.save(); mg.translate(0, -86); mg.rotate(-P.yaw); mg.fillStyle = '#fff'; mg.strokeStyle = '#000'; mg.lineWidth = 3; mg.font = 'bold 20px sans-serif'; mg.textAlign = 'center'; mg.strokeText('U', 0, 7); mg.fillText('U', 0, 7); mg.restore();
     mg.restore();
   }
 
@@ -20246,7 +20261,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
         for (const id in WB){ if (id === me.id) continue; const k = kdOf(id); if (!k) continue; const d = Math.hypot(P.x - k.x, P.z - k.z) - wKdR(k.lv); if (d < 2.6){ const nm = esc(String(WB[id].n || '').split(' ')[0]), why = raidWhy(id, 'k');
           cand('hit', { id, k: 'k' }, Math.max(.1, d), 2.6, why ? '🛡️ Kandang ' + nm + '<br><span style="font-size:10px;font-weight:500">tidak boleh diserang</span>' : '💥 Serang kandang<br><span style="font-size:11px;font-weight:500">' + nm + '</span>'); } } }
       { const k = W.kd; if (k){ const d = Math.hypot(P.x - k.x, P.z - k.z) - wKdR(wKdLv(W)); if (d < 2.4) cand('kandang', k, Math.max(.1, d), 2.4, '🐾 Kandang<br><span style="font-size:11px;font-weight:500">Rombongan &amp; naik taraf</span>'); } }
-      NPCS.forEach(n => cand('npc2', n, Math.hypot(P.x - n.x, P.z - n.z), 3.4, '💬 Bercakap<br><span style="font-size:11px;font-weight:500">' + esc(n.sn) + '</span>')); if (NPC && NPC.show) cand('npc', NPC, Math.hypot(P.x - NPC.x, P.z - NPC.z), 3.4, '💬 Bercakap<br><span style="font-size:11px;font-weight:500">Cikgu Ilmu</span>');
+      NPCS.forEach(n => cand('npc2', n, Math.hypot(P.x - n.x, P.z - n.z), 3.4, npcLbl(n) + '<br><span style="font-size:11px;font-weight:500">' + esc(n.sn) + '</span>')); if (NPC && NPC.show) cand('npc', NPC, Math.hypot(P.x - NPC.x, P.z - NPC.z), 3.4, '💬 Bercakap<br><span style="font-size:11px;font-weight:500">Cikgu Ilmu</span>');
       { const lk = $w('#wLook'); let ld = 6.5, lid = ''; if (NET) REM.forEach((r, id) => { const d = Math.hypot(P.x - r.x, P.z - r.z); if (d < ld){ ld = d; lid = id; } }); if (lid){ lk.style.display = 'block'; if (lk.dataset.id !== lid){ lk.dataset.id = lid; lk.textContent = '👤 ' + String((WB[lid] || {}).n || 'Rakan').split(' ')[0]; } } else { lk.style.display = 'none'; lk.dataset.id = ''; } }
       near.k = best ? best.k : ''; near.o = best ? best.o : null;
       const a = $w('#wAct'); if (best){ a.style.display = 'block'; if (a.dataset.l !== best.label){ a.innerHTML = best.label; a.dataset.l = best.label; } } else { a.style.display = 'none'; a.dataset.l = ''; }
@@ -20264,7 +20279,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     R.render(scene, cam);
   }
   syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { qTgt, QPINv: () => QPIN, TEXL, cardOpen, ENV, NPCS, qEv, npcTalk, skinMenu, wSkinNow, LAMPS, profile, ME, FXL, W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { qTgt, QPINv: () => QPIN, TEXL, showcaseOpen, ENV, NPCS, qEv, npcTalk, skinMenu, wSkinNow, LAMPS, profile, ME, FXL, W, P, NET, act, exit, misi, arkad, akademi: showcaseOpen, watak, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
