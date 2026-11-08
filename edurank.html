@@ -19905,7 +19905,7 @@ function worldGame(THREE, W, NET){
     const D = dqEnsure(); wDq().forEach(d => { if (d.ev !== ev || D.c[d.id]) return; D.p[d.id] = Math.min(d.n, (D.p[d.id] | 0) + n); ch = true; if (D.p[d.id] >= d.n) dqClaim(d); });
     if (ch){ save(); tutPaint(); }
   }
-  const dqPanel = () => { const D = dqEnsure(); return '<div class="panel clip-s p-3 mt-3"><div class="font-bold text-[13px]" style="color:#FDE68A">📅 MISI HARIAN (baharu setiap hari)</div>' + wDq().map(d => { const p = Math.min(d.n, D.p[d.id] | 0), ok = !!D.c[d.id]; return '<div class="text-[12px] mt-2" style="opacity:' + (ok ? .7 : 1) + '">' + (ok ? '✅' : '▫️') + ' ' + d.t.replace('{n}', d.n) + ' <b>(' + p + '/' + d.n + ')</b><br><span style="color:#93C5FD;font-size:11px">' + qRewTxt(Object.assign({ exp: d.exp }, d.rw)) + '</span></div>'; }).join('') + '<div class="text-[11px] text-muted mt-2">Semua siap = bonus +150 EXP 🧶3 ⚡30' + (D.b ? ' ✅' : '') + '</div></div>'; };
+  const dqPanel = () => { const D = dqEnsure(); return '<div class="panel clip-s p-3 mt-3"><div class="font-bold text-[13px]" style="color:#FDE68A">📅 MISI HARIAN (baharu setiap hari)</div>' + wDq().map(d => { const p = Math.min(d.n, D.p[d.id] | 0), ok = !!D.c[d.id]; return '<div class="text-[12px] mt-2" style="opacity:' + (ok ? .7 : 1) + '">' + (ok ? '✅' : '▫️') + ' ' + d.t.replace('{n}', d.n) + ' <b>(' + p + '/' + d.n + ')</b>' + (!ok && qPl(d) ? ' <button class="btn clip-s !px-2 !py-0 text-[11px]" data-p="dp:' + d.id + '">🧭 ' + qPl(d)[0] + '</button>' : '') + '<br><span style="color:#93C5FD;font-size:11px">' + qRewTxt(Object.assign({ exp: d.exp }, d.rw)) + '</span></div>'; }).join('') + '<div class="text-[11px] text-muted mt-2">Semua siap = bonus +150 EXP 🧶3 ⚡30' + (D.b ? ' ✅' : '') + '</div></div>'; };
   /* arah misi: nama tempat + sasaran anak panah */
   const QPL = { cook: ['🍲 Dapur', () => bldPos('dapur')], learn: ['🍲 Dapur', () => bldPos('dapur')], dapur: ['🍲 Dapur', () => bldPos('dapur')], arkad: ['🕹️ Rumah Arkad', () => bldPos('arkad')], arkad5: ['🕹️ Rumah Arkad', () => bldPos('arkad')],
     sim: ['🎬 Dewan Misi', () => bldPos('misi')], misi: ['🎬 Dewan Misi', () => bldPos('misi')], fish: ['🎣 Kolam', () => { const p = pondDist().p; return p ? { x: p.x, z: p.z } : null; }], fishp: ['🎣 Kolam', () => { const p = pondDist().p; return p ? { x: p.x, z: p.z } : null; }],
@@ -19920,6 +19920,7 @@ function worldGame(THREE, W, NET){
     $w('#wQTx').innerHTML = '<div style="font-size:10px;opacity:.75;letter-spacing:.08em">📅 MISI HARIAN ' + dd + '/' + dl.length + '</div>' + h + (act ? '<div style="font-size:10px;opacity:.75;letter-spacing:.08em;margin-top:4px">📜 MISI NPC</div>' + hh : '');
   }
   const qTgt = () => {
+    if (QPIN){ if (QPIN.q()){ const t = QPIN.pl[1](); if (t) return t; } else QPIN = null; }
     let b = null, bd = 1e9; NPCS.forEach(n => { const q = qCur(n.id); if (!q || !W.nq.a[n.id] || !qIsDone(n.id, q)) return; const d = Math.hypot(n.x - P.x, n.z - P.z); if (d < bd){ bd = d; b = n; } }); if (b) return b;
     for (const n of NPCS){ const q = qCur(n.id); if (q && W.nq.a[n.id] && !qIsDone(n.id, q)){ const p = qPl(q), t = p && p[1](); if (t) return t; } }
     const D = dqEnsure(); for (const d of wDq()){ if (D.c[d.id]) continue; const p = qPl(d), t = p && p[1](); if (t) return t; } return null;
@@ -19933,17 +19934,35 @@ function worldGame(THREE, W, NET){
     NPCS.forEach(n => { const q = qCur(n.id); if (q && q.chk && W.nq.a[n.id] && qIsDone(n.id, q) && !qNote[n.id + (W.nq.d[n.id] | 0)]){ qNote[n.id + (W.nq.d[n.id] | 0)] = 1; qReadyMsg(n.id, q); ch = true; } });
     if (ch) tutPaint(); npcMarks();
   }
+  /* cara menjalankan misi: panduan langkah, butang "buat sekarang" dan "tunjuk arah" (anak panah) */
+  let QPIN = null;
+  const QHOW = {
+    cook: 'Buka 🎒 <b>Beg → 🍳 Masak</b>, pilih resepi yang bahannya cukup (hijau). Belum ada resepi? Belajar di 🍲 Dapur dengan menjawab soalan.', learn: 'Masuk 🍲 Dapur, tekan resepi 📖 dan jawab soalan dengan betul.', dapur: 'Masuk 🍲 Dapur, tekan resepi 📖 dan jawab soalan dengan betul.',
+    arkad: 'Masuk 🕹️ <b>Rumah Arkad</b> → ▶ Main Kuiz Pantas (−5 ⚡). Jawab 5 soalan.', arkad5: 'Main Kuiz Pantas di 🕹️ Rumah Arkad dan jawab <b>semua 5 soalan dengan betul</b>.',
+    sim: 'Masuk 🎬 <b>Dewan Misi</b>, pilih satu simulasi, tonton dan jawab kuiz sehingga tamat. Setiap simulasi beri EXP banyak.', misi: 'Masuk 🎬 Dewan Misi, pilih satu simulasi dan siapkan.',
+    fish: 'Pergi ke tepi 🎣 <b>kolam</b>, tekan Pancing. Bila ❗ muncul, tekan semasa bulatan putih sama dengan bulatan hijau.', fishp: 'Memancing: tekan <b>tepat</b> bila bulatan putih sama dengan bulatan hijau → ✨ SEMPURNA.',
+    chop: 'Dekati 🌲 pokok, tekan butang <b>Tebang</b> berkali-kali (guna ⚡).', bush: 'Dekati semak merah 🍓, tekan <b>Petik buah</b>.', well: 'Dekati 💧 Perigi, tekan <b>Timba air</b>.',
+    tame: 'Dekati haiwan liar → ⚔️ <b>Tawan</b> → jawab soalan kuiz.', hup: 'Pergi ke 🏕️ <b>Pangkalan Saya</b> (petak berbingkai putih pada peta kecil) → naik taraf rumah (guna 🪵 kayu &amp; 🧶 bulu).' };
+  const QDO = {
+    cook: ['🍲 Buka Dapur', () => dapur()], learn: ['🍲 Buka Dapur', () => dapur()], dapur: ['🍲 Buka Dapur', () => dapur()], arkad: ['🕹️ Main Kuiz Pantas sekarang', () => arkad()], arkad5: ['🕹️ Main Kuiz Pantas sekarang', () => arkad()],
+    sim: ['🎬 Pilih simulasi', () => misi()], misi: ['🎬 Pilih simulasi', () => misi()],
+    fish: ['🎣 Ke tepi kolam', () => { const p = pondDist().p; if (p){ P.x = p.x - p.r - .6; P.z = p.z; } say('🎣 Tekan butang <b>Pancing</b> di kanan bawah', 2600); }], fishp: ['🎣 Ke tepi kolam', () => { const p = pondDist().p; if (p){ P.x = p.x - p.r - .6; P.z = p.z; } say('🎣 Tekan butang <b>Pancing</b> di kanan bawah', 2600); }] };
+  function dqPin(id){ const d = wDq().find(x => x.id === id), pl = d && qPl(d); if (!pl) return; QPIN = { pl, q: () => dqEnsure().c[d.id] ? null : 1 }; closePanel(); say('🧭 Ikut anak panah ▲ ke ' + pl[0], 2600); }
   function npcTalk(n){
     const id = n.id, q = qCur(id), acc = !!W.nq.a[id], tut = W.tut < TUT.length; let b = '<div class="text-[13px] leading-relaxed mt-3">' + n.greet + '</div>';
+    const key = q && (q.ev || q.pl), how = q && (q.how || QHOW[key]), pl = q && qPl(q), dof = q && QDO[key];
+    const guide = () => (how ? '<div class="text-[12px] leading-relaxed mt-2" style="color:#BAE6FD">📖 <b>Cara buat:</b> ' + how + '</div>' : '') + (pl ? '<div class="text-[11px] mt-1" style="opacity:.75">📍 Tempat: ' + pl[0] + '</div>' : '');
     if (tut) b += '<div class="panel clip-s p-3 mt-3 text-center text-[12px]">📜 Selesaikan latihan <b>Cikgu Ilmu</b> dahulu — selepas itu aku ada misi untuk kamu.</div>';
     else if (!q) b += '<div class="panel clip-s p-3 mt-3 text-center text-[13px]">✅ Semua misi aku sudah kamu selesaikan. Terima kasih, hebat!</div>';
-    else if (!acc) b += '<div class="panel clip-s p-3 mt-3 text-[13px]">📜 <b>Misi baharu:</b> ' + q.t + '<br><span style="color:#FDE68A;font-size:12px">Hadiah: ' + qRewTxt(q.rew) + '</span></div>' + btn('acc', 'Terima misi ▶', 'btn-o');
+    else if (!acc) b += '<div class="panel clip-s p-3 mt-3 text-[13px]">📜 <b>Misi baharu:</b> ' + q.t + '<br><span style="color:#FDE68A;font-size:12px">Hadiah: ' + qRewTxt(q.rew) + '</span>' + guide() + '</div>' + btn('acc', 'Terima misi ▶', 'btn-o');
     else if (qIsDone(id, q)) b += '<div class="panel clip-s p-3 mt-3 text-[13px]" style="border-color:#22C55E">✅ <b>Misi siap:</b> ' + q.t + '<br><span style="color:#FDE68A;font-size:12px">Hadiah: ' + qRewTxt(q.rew) + '</span></div>' + btn('turn', '🎁 Serahkan misi', 'btn-o');
-    else b += '<div class="panel clip-s p-3 mt-3 text-[13px]">📜 <b>Misi aktif:</b> ' + q.t + ' &nbsp;<b style="color:#FDE68A">' + qProgOf(id, q) + '/' + q.n + '</b><br><span style="font-size:11px;opacity:.75">Hadiah: ' + qRewTxt(q.rew) + '</span></div>';
+    else b += '<div class="panel clip-s p-3 mt-3 text-[13px]">📜 <b>Misi aktif:</b> ' + q.t + ' &nbsp;<b style="color:#FDE68A">' + qProgOf(id, q) + '/' + q.n + '</b><br><span style="font-size:11px;opacity:.75">Hadiah: ' + qRewTxt(q.rew) + '</span>' + guide() + '</div>' + (dof ? btn('go', dof[0], 'btn-o') : '') + (pl ? btn('pin', '🧭 Tunjuk arah ke ' + pl[0], dof ? '' : 'btn-o') : '');
     panel(head(n.ico, n.n.toUpperCase(), '') + b + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
-      if (a === 'acc' && q){ W.nq.a[id] = 1; W.nq.p[id] = 0; save(); tutPaint(); closePanel(); say('📜 Misi diterima: <b>' + q.t + '</b>', 2400); return; }
-      if (a === 'turn' && q && qIsDone(id, q)){ const r = q.rew; W.nq.d[id] = (W.nq.d[id] | 0) + 1; W.nq.a[id] = 0; W.nq.p[id] = 0; qGive(r); sfx('myth'); vibrate([20, 30, 20]); tutPaint(); closePanel(); say('🎁 Misi selesai! <span style="color:#FDE68A">' + qRewTxt(r) + '</span>', 3000); } });
+      if (a === 'acc' && q){ W.nq.a[id] = 1; W.nq.p[id] = 0; save(); tutPaint(); QPIN = pl ? { pl, q: () => (qCur(id) === q && W.nq.a[id] && !qIsDone(id, q)) ? 1 : null } : null; closePanel(); say('📜 Misi diterima: <b>' + q.t + '</b>' + (pl ? '<br><span style="font-size:14px">🧭 Ikut anak panah ▲ ke ' + pl[0] + '</span>' : ''), 3200); return; }
+      if (a === 'pin' && pl){ QPIN = { pl, q: () => (qCur(id) === q && W.nq.a[id] && !qIsDone(id, q)) ? 1 : null }; closePanel(); say('🧭 Ikut anak panah ▲ ke ' + pl[0], 2600); return; }
+      if (a === 'go' && dof){ closePanel(); dof[1](); return; }
+      if (a === 'turn' && q && qIsDone(id, q)){ const r = q.rew; W.nq.d[id] = (W.nq.d[id] | 0) + 1; W.nq.a[id] = 0; W.nq.p[id] = 0; QPIN = null; qGive(r); sfx('myth'); vibrate([20, 30, 20]); tutPaint(); closePanel(); say('🎁 Misi selesai! <span style="color:#FDE68A">' + qRewTxt(r) + '</span>', 3000); } });
   }
   let QMIN = false; try { QMIN = localStorage.getItem('rk_wq_min') === '1'; } catch(e){}
   const qToggle = () => { QMIN = !QMIN; try { localStorage.setItem('rk_wq_min', QMIN ? '1' : '0'); } catch(e){} tutPaint(); };
@@ -19959,7 +19978,7 @@ function worldGame(THREE, W, NET){
   function tutEv(name){ qEv(name); const s = tutCur(); if (s && s.ev === name && name !== 'npc') tutAdvance(); }
   function tutTalk(){
     const s = tutCur();
-    if (!s){ panel(head('🧑‍🏫', 'CIKGU ILMU', 'Latihan sudah tamat. Ingat: <b>belajar</b> di Dewan Misi → kuat → menang!') + dqPanel() + btn('again', '🔁 Ulang latihan', '') + btn('close', 'Tutup', 'btn-o'), a => { if (a === 'close') return closePanel(); if (a === 'again'){ W.tut = 0; save(); tutPaint(); closePanel(); } }); return; }
+    if (!s){ panel(head('🧑‍🏫', 'CIKGU ILMU', 'Latihan sudah tamat. Ingat: <b>belajar</b> di Dewan Misi → kuat → menang!') + dqPanel() + btn('again', '🔁 Ulang latihan', '') + btn('close', 'Tutup', 'btn-o'), a => { if (a === 'close') return closePanel(); if (a.indexOf('dp:') === 0){ dqPin(a.slice(3)); return; } if (a === 'again'){ W.tut = 0; save(); tutPaint(); closePanel(); } }); return; }
     if (s.ev === 'npc'){
       panel(head('🧑‍🏫', 'CIKGU ILMU', s.say) + (s.rew && s.rew.txt ? '<div class="text-center mt-2 font-bold" style="color:#FDE68A">Hadiah: ' + s.rew.txt + '</div>' : '') + btn('ok', 'Faham! ▶', 'btn-o') + (W.tut === 0 ? btn('skip', 'Saya sudah tahu — langkau latihan', '') : ''), a => {
         if (a === 'skip'){ W.tut = TUT.length; save(); tutPaint(); return closePanel(); }
@@ -20245,7 +20264,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     R.render(scene, cam);
   }
   syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { TEXL, cardOpen, ENV, NPCS, qEv, npcTalk, skinMenu, wSkinNow, LAMPS, profile, ME, FXL, W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { qTgt, QPINv: () => QPIN, TEXL, cardOpen, ENV, NPCS, qEv, npcTalk, skinMenu, wSkinNow, LAMPS, profile, ME, FXL, W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
