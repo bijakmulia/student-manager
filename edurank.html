@@ -19915,19 +19915,53 @@ function worldGame(THREE, W, NET){
       [[0, -.38, 1, .25, 1.45, 0, .2], [.3, -.42, 1.3, -.4, 1.3, 0, .15], [.45, -.2, 1.35, .85, 1.4, 0, 0], [.62, -.2, 1.35, .85, 1.4, 0, 0], [1, -.38, 1, .25, 1.45, 0, .2]]] };
   const SWD = { blade: [.46, .46, .85], club: [.5, .5, .85], spear: [.5, .5, .78], fist: [.36, .36, .55] }, SWH = { blade: [.5, .5, .56], club: [.5, .5, .56], spear: [.45, .45, .5], fist: [.38, .38, .46] };
   const SWC = { fist: ['attack-melee-right', 'attack-melee-left', 'attack-kick-right'], arm: ['attack-melee-right', 'attack-melee-left', 'attack-melee-right'] };
+  /* bunyi pertarungan (sintesis Web Audio): 'w' = desing senjata, 'h' = bunyi kena; ikut jenis senjata & serangan */
+  let WNB = null;
+  function wSnd(A, mode, kind, fam, tier){
+    if (!SFX_ON) return; let vol = 1;
+    if (!A.me){ const d = Math.hypot(A.g.position.x - P.x, A.g.position.z - P.z); vol = Math.max(0, 1 - d / 32) * .7; if (vol < .03) return; }
+    try {
+      const a = audCtx(); if (!a) return; if (a.state === 'suspended') a.resume();
+      const t0 = a.currentTime, out = audSfx(a);
+      if (!WNB || WNB.sampleRate !== a.sampleRate){ WNB = a.createBuffer(1, a.sampleRate, a.sampleRate); const d = WNB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+      const env = (g, gain, dur, delay, att) => { g.gain.setValueAtTime(0.0001, t0 + delay); g.gain.linearRampToValueAtTime(gain * vol, t0 + delay + (att || .004)); g.gain.exponentialRampToValueAtTime(0.0005, t0 + delay + dur); };
+      const noise = (dur, ft, f1, f2, q, gain, delay, att) => { const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); s.buffer = WNB; f.type = ft; f.Q.value = q; f.frequency.setValueAtTime(f1, t0 + delay); f.frequency.exponentialRampToValueAtTime(f2, t0 + delay + dur); env(g, gain, dur, delay, att); s.connect(f); f.connect(g); g.connect(out); s.start(t0 + delay, Math.random() * .5, dur + .05); };
+      const tone = (f1, f2, dur, typ, gain, delay) => { const o = a.createOscillator(), g = a.createGain(); o.type = typ; o.frequency.setValueAtTime(f1, t0 + delay); o.frequency.exponentialRampToValueAtTime(Math.max(30, f2), t0 + delay + dur); env(g, gain, dur, delay, .003); o.connect(g); g.connect(out); o.start(t0 + delay); o.stop(t0 + delay + dur + .05); };
+      const slam = kind === 2;
+      if (mode === 'w'){                                           // desing
+        if (fam === 'fist') noise(kind === 2 ? .13 : .09, 'bandpass', kind === 2 ? 500 : 900, kind === 2 ? 1100 : 1800, 1, .3, .01, .02);
+        else if (fam === 'spear'){ if (slam) noise(.5, 'bandpass', 900, 2600, 1.4, .5, 0, .2); else noise(.14, 'bandpass', 1800, 4400, 2.2, .45, .02, .03); }
+        else if (slam){ noise(.36, 'bandpass', 250, 1500, .9, .75, 0, .13); tone(260, 80, .3, 'sine', .14, 0); }
+        else { const lo = fam === 'club' ? 350 : 520; if (kind === 0) noise(.22, 'bandpass', lo, 2800, 1.2, .55, .02, .05); else noise(.22, 'bandpass', 2800, lo * 1.3, 1.2, .55, .02, .05); }
+        return;
+      }
+      /* bunyi kena */
+      if (fam === 'fist'){ tone(slam ? 120 : 170, 50, .16, 'sine', .75, 0); noise(.08, 'lowpass', 2200, 500, .7, .55, 0, .002); return; }
+      if (slam){ tone(115, 32, .5, 'sine', .9, 0); noise(.32, 'lowpass', 1500, 180, .7, .8, 0, .003); if (fam === 'blade') [1500, 2300].forEach(f => tone(f, f * .97, .3, 'sine', .07, 0)); return; }
+      if (fam === 'club'){ tone(200, 70, .17, 'sine', .7, 0); noise(.1, 'bandpass', 1000, 450, 1, .5, 0, .003); return; }
+      if (fam === 'spear'){ tone(240, 90, .1, 'sine', .55, 0); noise(.07, 'highpass', 2600, 2600, .7, .45, 0, .002); [1900, 2900].forEach(f => tone(f, f * .98, .16, 'sine', .06, 0)); return; }
+      noise(.09, 'highpass', 3200, 3200, .7, .6, 0, .002);         // pedang: dentang besi
+      [1700, 2650, 3900].forEach((f, i) => tone(f, f * .985, .22 + i * .05, 'sine', .11, 0));
+      tone(190, 70, .1, 'sine', .35, 0);
+      if (tier >= 3) tone(2400, 2380, .55, 'sine', .05, .02);       // kilauan senjata hebat
+      if (tier >= 4) tone(3600, 3560, .7, 'sine', .035, .04);
+    } catch (e) { console.warn('wSnd', e && e.message); }
+  }
   function sparks(x, y, z, hex, n, sp){ const c = new THREE.Color(hex); for (let i = 0; i < n; i++){ const a = Math.random() * 6.283, p = new THREE.Mesh(sphG, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 1 })); p.scale.setScalar(1.8); p.position.set(x, y, z); scene.add(p); FXL.push({ m: p, t: 0, k: 'p', vx: Math.cos(a) * sp * (.4 + Math.random() * .8), vz: Math.sin(a) * sp * (.4 + Math.random() * .8), vy: 1.2 + Math.random() * 2.4 }); } }
   function ringFx(x, z, hex){ const m = new THREE.Mesh(new THREE.RingGeometry(.35, .6, 28), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .1, z); scene.add(m); FXL.push({ m, t: 0, k: 'r', g: m.geometry, sp: 6 }); }
   function impact(A, s){
     const yaw = A.body.rotation.y, x = A.g.position.x + Math.sin(yaw) * 1.5, z = A.g.position.z + Math.cos(yaw) * 1.5, hex = A.wp ? WCOL[A.wp.t] : 0xFFFFFF, slam = s.kind === 2;
     sparks(x, slam ? .2 : .95, z, hex, slam ? 18 : 9, slam ? 3.4 : 2.2); if (slam) ringFx(x, z, hex);
-    if (A.me){ SHAKE = Math.max(SHAKE, slam ? .3 : .11); sfx(slam ? 'myth' : 'hi'); vibrate(slam ? [20, 20, 30] : 12); }
+    wSnd(A, 'h', s.kind, s.fam, A.wp ? A.wp.t : 0);
+    if (A.me){ SHAKE = Math.max(SHAKE, slam ? .3 : .11); vibrate(slam ? [20, 20, 30] : 12); }
   }
   /* mula serangan: berantai 3 jenis dalam masa 1.3s (tebas → tebas balik → hentaman / tikam → tikam → pusing / tumbuk → tumbuk → tendang) */
   function swingStart(A, mine){
     if (A.sw || (mine && RIDE)) return false; const now = performance.now(), fam = A.wp ? WFAM(A.wp.t) : 'fist', cm = A.cmb || (A.cmb = { n: 0, t: 0 }); if (now - cm.t > 1300) cm.n = 0;
     const kind = cm.n % 3, dur = SWD[fam][kind]; cm.n = (cm.n + 1) % 3; cm.t = now + dur * 1000;
     A.sw = { kind, fam, t: 0, dur, hit: false }; if (A.mixer){ A.now = null; A.play((A.wp ? SWC.arm : SWC.fist)[kind], true); }
-    if (mine){ sfx('flip'); vibrate(8); SWN++; if (NET){ try { NET.net.set('wb/' + me.id + '/sw', SWN); } catch(e){} } }
+    wSnd(A, 'w', kind, fam, 0);
+    if (mine){ vibrate(8); SWN++; if (NET){ try { NET.net.set('wb/' + me.id + '/sw', SWN); } catch(e){} } }
     return true;
   }
   function swingUpdate(A, dt){
