@@ -3927,7 +3927,7 @@ function viewerBoot(param){
   vFetch(true).then(async () => {
     if (onlyV) return vOnly(onlyV, ld);
     V.last = new Date();
-    V.slides = vSlides(); V.i = 0;
+    V.slides = vSlides(); V.i = 0; const fcs = new URLSearchParams(location.search).get('f'); if (fcs){ const k = V.slides.findIndex(x => x.key === 's:' + fcs); if (k >= 0) V.i = k; }
     const urls = [].concat.apply([], V.slides.map(sl => htmlImageUrls(vRender(sl))));
     await prepImages(urls, '', { screen:ld });
     vPaint(1);
@@ -3937,7 +3937,7 @@ function viewerBoot(param){
       prepImages(rest, '', { always:false, max:60000 }).catch(() => {});
     }, 800);
     const o = V.snap.opt || {};
-    if (o.auto !== false) V.timer = setInterval(() => vGo(1), (o.dur||5)*1000);
+    if (o.auto !== false && !fcs) V.timer = setInterval(() => vGo(1), (o.dur||5)*1000);
     V.poll = setInterval(() => { if (o.auto === false) vGo(0); }, 20000);
   }).catch(() => { closeModal(ld); $('#vTitle').textContent = 'Papan Juara'; vDead(); if (onlyV) $('#viewer').innerHTML = '<div class="text-center text-muted mt-10 text-[13px] leading-relaxed">Banner tidak dapat dimuatkan.<br>Semak sambungan internet atau minta guru terbitkan showcase.</div>'; });
 }
@@ -18881,15 +18881,15 @@ function worldGame(THREE, W, NET){
   root.style.cssText = 'position:fixed;inset:0;z-index:940;background:#9BD3F0;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;font-family:inherit;color:#fff';
   root.innerHTML =
     '<canvas id="wCv" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>' +
-    '<div id="wHud" style="position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;padding-left:calc(10px + env(safe-area-inset-left,0px));display:flex;gap:8px;align-items:flex-start;pointer-events:none;text-shadow:0 1px 3px #000;padding-right:calc(64px + env(safe-area-inset-right,0px));flex-wrap:wrap"></div>' +
-    '<button data-w="x" class="btn clip-s !px-3 !py-1" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px))"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div id="wHud" style="position:absolute;left:0;right:0;top:0;padding:calc(8px + var(--safe-t,0px)) 10px 0;padding-left:calc(10px + env(safe-area-inset-left,0px));display:flex;gap:8px;align-items:flex-start;pointer-events:none;text-shadow:0 1px 3px #000;padding-right:calc(112px + env(safe-area-inset-right,0px));flex-wrap:wrap"></div>' +
+    '<button data-w="x" class="btn clip-s !px-3 !py-1" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px))"><i class="fa-solid fa-xmark"></i></button><button data-w="fs" id="wFsB" class="btn clip-s !px-3 !py-1" title="Skrin penuh" style="position:absolute;right:calc(58px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px))"><i class="fa-solid fa-expand"></i></button>' +
     '<canvas id="wMap" width="200" height="200" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(52px + var(--safe-t,0px));width:96px;height:96px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:rgba(10,16,24,.55);pointer-events:none"></canvas>' +
     '<div id="wMsg" style="position:absolute;left:16px;right:16px;top:30%;text-align:center;font-size:20px;font-weight:800;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .25s"></div>' +
     '<div id="wJoy" style="position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.4);display:none;pointer-events:none"><i id="wKnob" style="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.7)"></i></div>' +
     '<div id="wWx" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(154px + var(--safe-t,0px));font-size:11px;font-weight:800;color:#fff;background:rgba(10,16,24,.62);padding:2px 8px;border-radius:10px;pointer-events:none"></div><div id="wFRing" style="position:absolute;left:50%;top:38%;width:96px;height:96px;margin:-48px 0 0 -48px;display:none;pointer-events:none"><div id="wFRo" style="position:absolute;inset:0;border:4px solid #fff;border-radius:50%;box-shadow:0 0 12px rgba(255,255,255,.6)"></div><div style="position:absolute;inset:26px;border:4px solid #4ADE80;border-radius:50%;box-shadow:0 0 10px #4ADE80"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px">❗</div></div><button data-w="look" id="wLook" class="btn clip-s" style="position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(110px + var(--safe-b,0px));height:38px;padding:0 12px;font-size:12px;font-weight:700;display:none"></button><button data-w="act" id="wAct" class="btn btn-o clip-s" style="position:absolute;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(26px + var(--safe-b,0px));min-width:112px;height:76px;font-size:15px;font-weight:800;display:none;line-height:1.15;padding:6px 10px"></button>' +
     '<div id="wHint" style="position:absolute;left:0;right:0;bottom:calc(8px + var(--safe-b,0px));text-align:center;font-size:11px;color:rgba(255,255,255,.85);pointer-events:none;text-shadow:0 1px 3px #000"></div>' +
     '<div id="wQuest" style="position:absolute;left:calc(10px + env(safe-area-inset-left,0px));top:calc(200px + var(--safe-t,0px));max-width:58%;display:none;gap:8px;align-items:center;background:rgba(10,16,24,.72);border:1px solid rgba(253,230,138,.5);border-radius:12px;padding:6px 10px;cursor:pointer;text-shadow:0 1px 3px #000" data-w="qmin" title="Ketik untuk kecilkan / besarkan"><div id="wQArr" style="text-align:center;min-width:34px"><div id="wQAi" style="font-size:24px;line-height:1;color:#FDE68A">▲</div><div id="wQAd" style="font-size:10px;font-weight:700"></div></div><div id="wQTx"></div><div id="wQCh" style="font-size:14px;opacity:.8;align-self:flex-start">▾</div></div>' +
-    '<div id="wTools" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(88px + var(--safe-b,0px));display:flex;flex-direction:column;gap:8px"><button data-w="bag" id="wBagB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎒</button><button data-w="ride" id="wRideB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0;display:none">🏇</button></div>' +
+    '<div id="wTools" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(88px + var(--safe-b,0px));display:flex;flex-direction:column;gap:8px"><button data-w="card" id="wCardB" class="btn clip-s" title="Banner &amp; kedudukan saya" style="width:52px;height:52px;font-size:22px;padding:0">🪪</button><button data-w="bag" id="wBagB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎒</button><button data-w="ride" id="wRideB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0;display:none">🏇</button></div>' +
     '<div id="wTgt" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(150px + var(--safe-b,0px));min-width:160px;display:none;background:rgba(10,16,24,.82);border:1px solid #EF4444;border-radius:10px;padding:6px 10px;font-size:12px;pointer-events:none;text-align:center"></div>' +
     '<div id="wPlace" style="position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100px + var(--safe-b,0px));display:none;gap:8px;align-items:center;background:rgba(10,16,24,.88);border-radius:14px;padding:8px 12px;font-size:13px;font-weight:700;max-width:94%;flex-wrap:wrap;justify-content:center"><span id="wPlTx"></span><button data-w="plok" class="btn btn-o clip-s !px-3 !py-2">Bina</button><button data-w="plx" class="btn clip-s !px-3 !py-2">Batal</button></div>' +
     (NET ? '<div id="wTalk" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(26px + var(--safe-b,0px));display:flex;gap:8px"><button data-w="chat" id="wChatB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">💬</button><button data-w="mic" id="wMicB" class="btn clip-s" style="width:52px;height:52px;font-size:22px;padding:0">🎙️</button></div><div id="wHear" style="position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(150px + var(--safe-b,0px));font-size:11px;font-weight:700;text-shadow:0 1px 3px #000;pointer-events:none"></div>' : '') +
@@ -18913,10 +18913,10 @@ function worldGame(THREE, W, NET){
   const resize = () => { const w = root.clientWidth, h = root.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.fov = w < h ? 70 : 58; cam.updateProjectionMatrix();
     land = w > h && h < 520; root.dataset.land = land ? '1' : '';
     const hd = $w('#wHud'), mp = $w('#wMap'), ab = $w('#wAct'), pi = $w('#wPanel > div');
-    hd.style.zoom = land ? '.8' : ''; mp.style.width = mp.style.height = land ? '74px' : '96px'; mp.style.top = land ? 'calc(40px + var(--safe-t,0px))' : 'calc(52px + var(--safe-t,0px))';
-    $w('#wWx').style.top = land ? 'calc(120px + var(--safe-t,0px))' : 'calc(154px + var(--safe-t,0px))'; $w('#wLook').style.bottom = land ? 'calc(80px + var(--safe-b,0px))' : 'calc(110px + var(--safe-b,0px))'; ab.style.height = land ? '60px' : '76px'; ab.style.bottom = land ? 'calc(12px + var(--safe-b,0px))' : 'calc(26px + var(--safe-b,0px))'; ab.style.minWidth = land ? '104px' : '112px';
+    hd.style.zoom = ''; mp.style.width = mp.style.height = land ? '74px' : '96px'; mp.style.top = land ? 'calc(50px + var(--safe-t,0px))' : 'calc(52px + var(--safe-t,0px))';
+    $w('#wLook').style.bottom = land ? 'calc(80px + var(--safe-b,0px))' : 'calc(110px + var(--safe-b,0px))'; ab.style.height = land ? '60px' : '76px'; ab.style.bottom = land ? 'calc(12px + var(--safe-b,0px))' : 'calc(26px + var(--safe-b,0px))'; ab.style.minWidth = land ? '104px' : '112px';
     $w('#wHint').style.display = land ? 'none' : ''; if (pi) pi.style.zoom = land ? '.86' : '';
-    const qq = $w('#wQuest'); if (qq){ qq.style.top = land ? 'calc(92px + var(--safe-t,0px))' : 'calc(200px + var(--safe-t,0px))'; qq.style.maxWidth = land ? '40%' : '58%'; } };
+    layoutUI(); };
   resize(); window.addEventListener('resize', resize); window.addEventListener('orientationchange', () => setTimeout(resize, 250));
   const hemi = new THREE.HemisphereLight(0xFFFFFF, 0x6B8F5A, 1.25); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xFFF1D0, 1.6); sun.position.set(30, 50, 20); scene.add(sun);
@@ -19213,6 +19213,14 @@ function worldGame(THREE, W, NET){
       g.fillStyle = rk.c; g.font = '700 34px sans-serif'; g.fillText('Lvl ' + L + ' · ' + rk.n + (tt ? ' · ' + tt : ''), cw / 2, 119, cw - 40); });
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); sp.scale.set(3.6, 1.13, 1); sp.renderOrder = 5; sp.position.y = tier >= 4 ? 3.15 : 2.65; A.g.add(sp); A.lb = sp;
   }
+  /* banner showcase penuh (sama seperti di showcase murid: kedudukan, lencana, anak panah ke murid lain) */
+  function cardOpen(){
+    if (PANEL) return; const sc = MURID && MURID.pack && !MURID.pack.awam && MURID.pack.sc ? MURID.pack.sc : '';
+    if (!sc) return profile(me.id);
+    const ov = document.createElement('div'); ov.style.cssText = 'position:absolute;inset:0;z-index:60;background:#0C1118';
+    ov.innerHTML = '<iframe src="' + location.pathname + '?s=' + sc + '&f=' + encodeURIComponent(me.id) + '" title="Banner" style="width:100%;height:100%;border:0"></iframe><button class="btn clip-s !px-3 !py-1" data-cx="1" style="position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + var(--safe-t,0px));background:#B91C1C;border-color:#EF4444;color:#fff"><i class="fa-solid fa-xmark"></i> Tutup</button>';
+    root.appendChild(ov); stopMove(); ov.querySelector('[data-cx]').onclick = () => ov.remove();
+  }
   /* kad pemain: banner showcase sedia ada (sama seperti di showcase murid) + info dunia */
   function profile(id){
     const mine = id === me.id, inf = mine ? { n: me.n, l: wPlayerLvl(W), tt: wTitleOf(W), pw: wPower(W), kd: W.kd ? [0, 0, wKdLv(W)] : 0, ks: '' } : (WB[id] || {}), L = Math.max(1, inf.l | 0), rk = WRANK[wRankOf(L)];
@@ -19265,18 +19273,45 @@ function worldGame(THREE, W, NET){
   }
 
   /* ---------- UI ---------- */
+  /* susun atur: butang alat sebaris di bawah (landskap), penjejak misi sentiasa di bawah HUD, cuaca di bawah peta */
+  let lyT = 0;
+  function layoutUI(){
+    const hd = $w('#wHud'), qq = $w('#wQuest'), mp = $w('#wMap'), wx = $w('#wWx'), tl = $w('#wTools'), tk = $w('#wTalk'), he = $w('#wHear'); if (!hd || !qq || !mp || !tl) return;
+    const bs = land ? 44 : 52, rr = root.getBoundingClientRect();
+    root.querySelectorAll('#wTools button,#wTalk button').forEach(b => { b.style.width = b.style.height = bs + 'px'; b.style.fontSize = land ? '20px' : '22px'; });
+    if (land){ tl.style.flexDirection = 'row'; tl.style.bottom = 'calc(10px + var(--safe-b,0px))'; tl.style.left = 'calc(' + (tk ? 12 + 2 * bs + 16 : 12) + 'px + env(safe-area-inset-left,0px))'; if (tk) tk.style.bottom = 'calc(10px + var(--safe-b,0px))'; if (he) he.style.bottom = 'calc(62px + var(--safe-b,0px))'; }
+    else { tl.style.flexDirection = 'column'; tl.style.bottom = 'calc(88px + var(--safe-b,0px))'; tl.style.left = 'calc(12px + env(safe-area-inset-left,0px))'; if (tk) tk.style.bottom = 'calc(26px + var(--safe-b,0px))'; if (he) he.style.bottom = 'calc(150px + var(--safe-b,0px))'; }
+    let hb = 0; [].forEach.call(hd.children, c => { hb = Math.max(hb, c.getBoundingClientRect().bottom - rr.top); });
+    qq.style.top = (hb ? hb + 6 : (land ? 92 : 170)) + 'px'; qq.style.maxWidth = land ? '44%' : '58%';
+    const m = mp.getBoundingClientRect(); wx.style.top = (m.bottom - rr.top + 4) + 'px';
+  }
+  /* skrin penuh dalam pelayar (menyembunyikan bar alamat) */
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const onFsChange = () => { const b = $w('#wFsB'); if (b) b.innerHTML = '<i class="fa-solid ' + (fsEl() ? 'fa-compress' : 'fa-expand') + '"></i>'; if (!fsEl()){ try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch(e){} } setTimeout(resize, 150); };
+  document.addEventListener('fullscreenchange', onFsChange); document.addEventListener('webkitfullscreenchange', onFsChange);
+  function fsLeave(){ document.removeEventListener('fullscreenchange', onFsChange); document.removeEventListener('webkitfullscreenchange', onFsChange); try { if (fsEl()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); } screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch(e){} }
+  function fsToggle(){
+    try {
+      if (fsEl()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+      const rq = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (!rq) return say('Pelayar ini tidak menyokong skrin penuh. Pasang app ke skrin utama (Add to Home Screen) untuk skrin penuh.', 4000);
+      const lk = () => { try { if (screen.orientation && screen.orientation.lock && root.clientWidth > root.clientHeight) screen.orientation.lock('landscape').catch(() => {}); } catch(e){} };
+      const p = rq.call(root, { navigationUI: 'hide' }); if (p && p.then) p.then(lk).catch(() => say('Skrin penuh ditolak oleh pelayar.', 2200)); else lk();
+    } catch(e){ say('Skrin penuh tidak tersedia.', 2200); }
+  }
   function hud(){
-    const mx = wMaxE(W), pc = Math.max(0, Math.min(100, W.energy / mx * 100)), tt = teamTier(W.built.flag);
-    $w('#wHud').innerHTML = '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;min-width:150px"><div style="font-size:12px;font-weight:800">⭐ Lvl ' + wTotalLvl(W) + ' <span style="opacity:.7;font-weight:600;font-size:11px">· ' + ['kuat', 'pint', 'stam'].map(k => WSK[k].ico + wLvl(W, k)).join(' ') + '</span></div>' +
-      '<div style="margin-top:4px;height:10px;border-radius:6px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pc + '%;background:' + (pc < 25 ? '#EF4444' : '#FACC15') + '"></i></div>' +
-      '<div style="font-size:11px;margin-top:2px">⚡ ' + Math.floor(W.energy) + ' / ' + mx + '</div>' +
-      (() => { const L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), tx = xpTxt && Date.now() < xpUntil ? ' <b style="color:#7DD3FC">' + xpTxt + '</b>' : '';
-        if (L >= WLV_MAX) return '<div style="font-size:11px;margin-top:3px;color:#FDE68A">⭐ LEVEL MAKS (' + WLV_MAX + ') · ' + E + ' EXP' + tx + '</div>';
-        const a = WLVX[L], b = WLVX[L + 1], pr = Math.max(0, Math.min(100, Math.round((E - a) / (b - a) * 100)));
-        return '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + pr + '%;background:#38BDF8"></i></div><div style="font-size:11px">⭐ EXP ' + (E - a) + ' / ' + (b - a) + tx + '</div>' + (() => { const nx = WRANK.find(r => r.l > L); return nx ? '<div style="font-size:10px;opacity:.85;margin-top:1px">🎯 Lvl ' + nx.l + ': ' + nx.rw + '</div>' : ''; })(); })() +
-      (NET ? '<div style="margin-top:3px;height:8px;border-radius:5px;background:#1E293B;overflow:hidden"><i style="display:block;height:100%;width:' + Math.max(0, Math.min(100, HP / wHpMax(W) * 100)) + '%;background:#EF4444"></i></div><div style="font-size:11px">❤️ ' + Math.round(HP) + ' / ' + wHpMax(W) + (W.war ? ' &nbsp;⚔️' : '') + '</div>' : '') + '</div>' +
-      '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;line-height:1.5">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + ' &nbsp;🧶 ' + W.bulu +
+    const mx = wMaxE(W), pc = Math.max(0, Math.min(100, W.energy / mx * 100)), tt = teamTier(W.built.flag), L = wPlayerLvl(W), E = Math.floor(wExpTotal(W)), sm = land;
+    const bar = (pct, col, txt) => '<div style="position:relative;height:' + (sm ? 11 : 14) + 'px;border-radius:7px;background:#1E293B;overflow:hidden;margin-top:' + (sm ? 3 : 4) + 'px"><i style="display:block;height:100%;width:' + pct + '%;background:' + col + '"></i><span style="position:absolute;inset:0;text-align:center;font-size:' + (sm ? 9 : 10.5) + 'px;font-weight:800;line-height:' + (sm ? 11 : 14) + 'px;text-shadow:0 1px 2px #000;white-space:nowrap">' + txt + '</span></div>';
+    const tx = xpTxt && Date.now() < xpUntil ? ' <b style="color:#7DD3FC">' + xpTxt + '</b>' : '';
+    let eb; if (L >= WLV_MAX) eb = bar(100, '#38BDF8', '⭐ MAKS · ' + E + ' EXP' + tx); else { const a = WLVX[L], b = WLVX[L + 1]; eb = bar(Math.max(0, Math.min(100, Math.round((E - a) / (b - a) * 100))), '#38BDF8', '⭐ ' + (E - a) + ' / ' + (b - a) + ' EXP' + tx); }
+    const nx = !sm && L < WLV_MAX ? WRANK.find(r => r.l > L) : null, pd = sm ? '4px 8px' : '6px 10px';
+    $w('#wHud').innerHTML = '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:' + pd + ';width:' + (sm ? 150 : 178) + 'px"><div style="font-size:' + (sm ? 11 : 12) + 'px;font-weight:800;white-space:nowrap">⭐ Lvl ' + L + ' <span style="opacity:.75;font-weight:600;font-size:' + (sm ? 10 : 11) + 'px">· ' + ['kuat', 'pint', 'stam'].map(k => WSK[k].ico + wLvl(W, k)).join(' ') + '</span></div>' +
+      bar(pc, pc < 25 ? '#EF4444' : '#FACC15', '⚡ ' + Math.floor(W.energy) + ' / ' + mx) + eb +
+      (NET ? bar(Math.max(0, Math.min(100, HP / wHpMax(W) * 100)), '#EF4444', '❤️ ' + Math.round(HP) + ' / ' + wHpMax(W) + (W.war ? ' ⚔️' : '')) : '') +
+      (nx ? '<div style="font-size:10px;opacity:.85;margin-top:3px;line-height:1.25">🎯 Lvl ' + nx.l + ': ' + nx.rw + '</div>' : '') + '</div>' +
+      '<div style="background:rgba(10,16,24,.72);border-radius:12px;padding:' + pd + ';font-size:' + (sm ? 11 : 13) + 'px;font-weight:700;line-height:1.5;white-space:nowrap">🪵 ' + W.wood + ' &nbsp;🐟 ' + W.fish + ' &nbsp;🍓 ' + W.fruit + ' &nbsp;💧 ' + W.water + ' &nbsp;🧶 ' + W.bulu +
       (NET ? '<div style="font-size:10px;font-weight:600;opacity:.8">👥 ' + (REM.size + 1) + ' dalam talian' + (W.built.flag ? ' · 🚩 ' + (wFlagName[W.built.flag] || '') + (tt ? ' ★' + tt : '') : '') + '</div>' : '') + '</div>';
+    layoutUI();
   }
   let msgT = 0; const say = (t, ms) => { const m = $w('#wMsg'); m.innerHTML = t; m.style.opacity = 1; clearTimeout(msgT); msgT = setTimeout(() => { m.style.opacity = 0; }, ms || 1600); };
   const useE = n => { if (W.energy < n){ say('⚡ Tenaga habis! Makan di 🍲 Dapur dahulu.', 2200); vibrate(30); return false; } W.energy -= n; return true; };
@@ -19849,6 +19884,7 @@ function worldGame(THREE, W, NET){
   const qTgt = () => { let b = null, bd = 1e9; NPCS.forEach(n => { const q = qCur(n.id); if (!q || !W.nq.a[n.id] || !qIsDone(n.id, q)) return; const d = Math.hypot(n.x - P.x, n.z - P.z); if (d < bd){ bd = d; b = n; } }); return b; };
   let qSt = 0;
   function npcTick(dt){
+    lyT += dt; if (lyT > .7){ lyT = 0; layoutUI(); }
     NPCS.forEach(n => { const d = Math.hypot(n.x - P.x, n.z - P.z); if (d < 45){ n.A.mixer && n.A.mixer.update(dt); if (n.mk.visible) n.mk.position.y = 3.8 + Math.sin(performance.now() / 300 + n.x) * .18; } });
     qSt += dt; if (qSt < 1) return; qSt = 0;
     if (W.tut < TUT.length) return; let ch = false;
@@ -19890,6 +19926,7 @@ function worldGame(THREE, W, NET){
       if (a === 'close') return closePanel(); if (a === 'skip'){ W.tut = TUT.length; save(); tutPaint(); closePanel(); } });
   }
   function tutPaint(){
+    setTimeout(layoutUI, 0);
     const s = tutCur(), el = $w('#wQuest'); if (!el) return;
     NPC.mk.visible = !!s && s.ev === 'npc'; NPC.mk.material.map = W.tut > 0 ? NPC.te : NPC.tq; NPC.mk.material.needsUpdate = true;
     if (!s) return qPaint(el);
@@ -20038,9 +20075,9 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
   const up = e => { if (e.pointerId === joyId) stopMove(); if (e.pointerId === camId) camId = null; };
   root.addEventListener('pointerup', up); root.addEventListener('pointercancel', up);
   root.addEventListener('wheel', e => { if (!PANEL){ P.pitch = Math.max(-.3, Math.min(1.25, P.pitch + e.deltaY * .001)); e.preventDefault(); } }, { passive: false });
-  const exit = () => { alive = false; save(); dirty = true; cloudSave(); if (VOICE) VOICE.close(); if (NET){ try { NET.net.set('wp/' + me.id, null); NET.net.set('wc/' + me.id, null); NET.net.set('wb/' + me.id + '/vo', 0); } catch(e){} unsubs.forEach(u => { try { u && u(); } catch(e){} }); }
+  const exit = () => { fsLeave(); alive = false; save(); dirty = true; cloudSave(); if (VOICE) VOICE.close(); if (NET){ try { NET.net.set('wp/' + me.id, null); NET.net.set('wc/' + me.id, null); NET.net.set('wb/' + me.id + '/vo', 0); } catch(e){} unsubs.forEach(u => { try { u && u(); } catch(e){} }); }
     window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('resize', resize); R.dispose(); root.remove(); unlockBody(); orientBack(); if (S.ui.tab === 'sim') renderTab(); };
-  root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); else if (b.dataset.w === 'look'){ if (!PANEL && b.dataset.id) profile(b.dataset.id); } else if (b.dataset.w === 'chat'){ if (!PANEL) chat(); } else if (b.dataset.w === 'mic') micToggle(); else if (b.dataset.w === 'qmin') qToggle(); else if (b.dataset.w === 'bag') bag(); else if (b.dataset.w === 'ride') rideToggle(); else if (b.dataset.w === 'plok') placeOk(); else if (b.dataset.w === 'plx') placeEnd(); });
+  root.addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (!b) return; if (b.dataset.w === 'x') exit(); else if (b.dataset.w === 'act') act(); else if (b.dataset.w === 'fs') fsToggle(); else if (b.dataset.w === 'card') cardOpen(); else if (b.dataset.w === 'look'){ if (!PANEL && b.dataset.id) profile(b.dataset.id); } else if (b.dataset.w === 'chat'){ if (!PANEL) chat(); } else if (b.dataset.w === 'mic') micToggle(); else if (b.dataset.w === 'qmin') qToggle(); else if (b.dataset.w === 'bag') bag(); else if (b.dataset.w === 'ride') rideToggle(); else if (b.dataset.w === 'plok') placeOk(); else if (b.dataset.w === 'plx') placeEnd(); });
   $w('#wAct').addEventListener('pointerdown', () => { holdAct = true; }); const rel = () => { holdAct = false; }; $w('#wAct').addEventListener('pointerup', rel); $w('#wAct').addEventListener('pointerleave', rel);
 
   /* ---------- peta mini ---------- */
@@ -20162,7 +20199,7 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     R.render(scene, cam);
   }
   syncPets(); tutPaint(); hud(); frame(); drawMap();
-  window.WLD = { ENV, NPCS, qEv, npcTalk, skinMenu, wSkinNow, LAMPS, profile, ME, FXL, W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
+  window.WLD = { cardOpen, ENV, NPCS, qEv, npcTalk, skinMenu, wSkinNow, LAMPS, profile, ME, FXL, W, P, NET, act, exit, misi, arkad, akademi, dapur, pangkalan, bengkel, kandang, duelIntro, syncPets, WILD, FOL, WAN, chat, chatSend, micToggle, VOICE, CHAT, bub, bag, rideToggle, mount, dismount, RIDEv: () => RIDE, WLVX, wPlayerLvl, wExpTotal, xp, qToggle, gift, TOW, wipeAll, wipeSelf, raidWhy, hitAct, takeHit, takeAck, defeat, destroyKd, kdCheck, kdOf, KDS, WH, DMGIN, placeStart, placeOk, placeEnd, HPv: () => HP, setHP: v => { HP = v; }, tutEv, tutTalk, NPC, WCFG: () => WCFG, land: () => land, TREES, BUSH, BLD, BASES, REM, WB, WT, near, pushInfo, cloudSave, get fishing(){ return fishing; } };   /* untuk ujian */
   if (!W.intro){ W.intro = 1; save(); panel(head('🌍', 'DUNIA ILMU', 'Selamat datang! Belajar untuk jadi kuat, kumpul sumber, bina pangkalan.' + (NET ? '<br><b style="color:#7DD3FC">Kelas ' + esc(NET.cls) + '</b> — pemain lain kelas kamu juga ada di sini!' : '')) +
     '<div class="text-[13px] leading-relaxed mt-3">🧭 <b>Gerak</b>: joystick (kiri skrin) atau W A S D (Shift = lari)<br>👆 <b>Aksi</b>: butang oren bila dekat pokok, kolam, buah, perigi atau bangunan<br>🎬 <b>Dewan Misi</b>: simulasi harian → naik kemahiran<br>🍲 <b>Dapur</b>: makan untuk tenaga ⚡<br>🏕️ <b>Pangkalan</b>: bina dengan kayu 🪵, pasang 🚩 bendera untuk sertai pasukan<br>🗺️ Peta kecil di kanan atas</div>' + btn('close', '▶ Mula', 'btn-o'), a => { if (a === 'close') closePanel(); }); }
   if (W.intro && W.intro2 && !W.intro3 && NET && !PANEL){ W.intro3 = 1; save(); panel(head('⚔️', 'BARU: PERANG PANGKALAN', 'Cabar rakan sekelas — dengan adil!') +
