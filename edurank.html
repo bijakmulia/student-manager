@@ -18687,7 +18687,7 @@ function wNorm(w, key){
   if (W.kd){ const lv = W.kd.lv; if (!W.kd.fh) W.kd.fh = wFenceMax(lv); if (!W.kd.kh) W.kd.kh = wKdHpMax(lv); W.kd.tw = Math.max(0, Math.min(4, W.kd.tw | 0)); W.kd.tp = Math.max(0, Math.min(3, W.kd.tp | 0)); }
   if (!w.xv && !isNew){ ['kuat', 'pint', 'stam'].forEach(k => { W.pts[k] = Math.round((+W.pts[k] || 0) * 100); }); } W.xv = 1;   /* mata kemahiran lama → EXP (1 mata = 100 EXP) */
   W.t0 = +w.t0 || (isNew ? Date.now() : 1); W.wipe = +w.wipe || 0;      /* t0 = masa mula bermain (data lama = 1) — untuk reset oleh guru */
-  W.ac = Math.max(0, Math.min(WAURA.length - 1, W.ac | 0)); W.nq = Object.assign({ d: {}, p: {}, a: {} }, W.nq || {}); ['d', 'p', 'a'].forEach(k => { W.nq[k] = W.nq[k] || {}; }); W.dq = Object.assign({ d: '', p: {}, c: {}, b: 0 }, W.dq || {}); W.dq.p = W.dq.p || {}; W.dq.c = W.dq.c || {}; W.built.hut = Math.max(0, Math.min(5, W.built.hut | 0)); W.sk = Math.max(0, Math.min(6, W.sk | 0)); W.gift = Object.assign({ d: '', n: 0 }, W.gift || {}); W.fed = Math.max(0, Math.min(100, +W.fed || 0));
+  W.ac = Math.max(0, Math.min(WAURA.length - 1, W.ac | 0)); W.rcp = (!w.rcp && (+w.nCook || 0) > 0) ? { buah: 1, air: 1, bakar: 1, sihat: 1, ubat: 1, ubat2: 1 } : Object.assign({ buah: 1, air: 1 }, w.rcp || {}); W.nq = Object.assign({ d: {}, p: {}, a: {} }, W.nq || {}); ['d', 'p', 'a'].forEach(k => { W.nq[k] = W.nq[k] || {}; }); W.dq = Object.assign({ d: '', p: {}, c: {}, b: 0 }, W.dq || {}); W.dq.p = W.dq.p || {}; W.dq.c = W.dq.c || {}; W.built.hut = Math.max(0, Math.min(5, W.built.hut | 0)); W.sk = Math.max(0, Math.min(6, W.sk | 0)); W.gift = Object.assign({ d: '', n: 0 }, W.gift || {}); W.fed = Math.max(0, Math.min(100, +W.fed || 0));
   W.fed = Math.max(0, W.fed - wFedRate(W) * Math.max(0, Date.now() - (+W.t || Date.now())) / 3.6e6);   /* haiwan lapar walaupun app ditutup */
   const max = wMaxE(W); W.energy = Math.min(max, (+W.energy || 0) + Math.max(0, Date.now() - (+W.t || Date.now())) / 30000);   /* pulih perlahan walaupun app ditutup */
   W.t = Date.now(); W.key = key; return W;
@@ -19426,22 +19426,48 @@ function worldGame(THREE, W, NET){
   }
 
   /* Dapur: makan → tenaga */
+  /* ---------- Resepi: belajar di Dapur (jawab soalan); masak di mana-mana dari 🎒 Beg — cukup ada bahan ---------- */
+  const wRecs = () => { const bonus = 1 + (wLvl(W, 'stam') - 1) * .1, e = n => Math.round(n * bonus);      /* [id, nama, bahan, tenaga, ada bahan?, bayar, nota, HP, soalan diperlukan] */
+    return [['sihat', '🍽️ Pinggan Sihat', '🐟1 + 🍓1 + 💧1', e(70), () => W.fish >= 1 && W.fruit >= 1 && W.water >= 1, () => { W.fish--; W.fruit--; W.water--; }, '½ pinggan sayur &amp; buah, ¼ protein, ¼ karbohidrat — seimbang!', 0, 2],
+      ['bakar', '🔥 Ikan Bakar', '🐟1 + 🪵2', e(40), () => W.fish >= 1 && W.wood >= 2, () => { W.fish--; W.wood -= 2; }, 'Protein bagus, tapi tiada sayur.', 0, 1],
+      ['buah', '🍓 Buah Segar', '🍓1', e(15), () => W.fruit >= 1, () => { W.fruit--; }, 'Vitamin &amp; serat.', 0, 0],
+      ['air', '💧 Minum Air', '💧1', e(8), () => W.water >= 1, () => { W.water--; }, 'Minum 6–8 gelas sehari.', 0, 0],
+      ['ubat', '🌿 Ubat Herba', '🍓2 + 💧1', 0, () => W.fruit >= 2 && W.water >= 1, () => { W.fruit -= 2; W.water--; }, 'Memulihkan ❤️ HP semasa bertarung. Bawa bekalan sebelum perang!', 40, 1],
+      ['ubat2', '🧪 Ubat Besar', '🍓3 + 💧2 + 🐟1', 0, () => W.fruit >= 3 && W.water >= 2 && W.fish >= 1, () => { W.fruit -= 3; W.water -= 2; W.fish--; }, 'Memulihkan HP sepenuhnya.', 9999, 3]]; };
+  function cookEat(id){
+    const r = wRecs().find(z => z[0] === id); if (!r || !W.rcp[id]) return false; if (!r[4]()){ say('Bahan tidak cukup: ' + r[2], 1800); return false; }
+    if (r[7]){ if (HP >= wHpMax(W)){ say('❤️ HP sudah penuh.', 1500); return false; } r[5](); HP = Math.min(wHpMax(W), HP + r[7]); healthPush(true); say('🌿 ❤️ HP ' + Math.round(HP) + ' / ' + wHpMax(W), 1500); }
+    else { if (W.energy >= wMaxE(W) - 1){ say('⚡ Tenaga sudah penuh.', 1500); return false; } r[5](); W.energy = Math.min(wMaxE(W), W.energy + r[3]); say('😋 +' + r[3] + ' ⚡', 1500); }
+    W.nCook++; sfx('hi'); save(); hud(); xp('stam', 6); tutEv('cook'); return true;
+  }
+  function cookStore(id){
+    const r = wRecs().find(z => z[0] === id); if (!r || !W.rcp[id]) return false; if (wBagSlots(W) - wBagUsed(W) <= 0){ say(wBagSlots(W) ? '🎒 Beg penuh.' : '🎒 Perlu beg galas (buat di Bengkel) untuk simpan.', 1800); return false; }
+    if (!r[4]()){ say('Bahan tidak cukup: ' + r[2], 1800); return false; }
+    r[5](); W.bag.items[id] = (W.bag.items[id] | 0) + 1; W.nCook++; sfx('hi'); save(); hud(); say('🎒 ' + r[1] + ' disimpan dalam beg', 1500); xp('stam', 3); tutEv('cook'); return true;
+  }
+  const cookRow = (r, bagFree) => '<div class="flex gap-2 mt-2"><button class="btn ' + (r[4]() ? 'btn-o' : '') + ' clip-s flex-1 !py-3 text-[14px] font-bold" data-p="c:' + r[0] + '"' + (r[4]() ? '' : ' style="opacity:.55"') + '>' + r[1] + ' &nbsp;<span style="opacity:.8;font-weight:600">(' + r[2] + ') → ' + (r[7] ? '+' + (r[7] > 999 ? 'penuh' : r[7]) + ' ❤️' : '+' + r[3] + ' ⚡') + '</span><br><span style="font-weight:500;font-size:11px;opacity:.7">' + r[6] + '</span></button><button class="btn clip-s !px-3 text-[18px]" data-p="p:' + r[0] + '" title="Masak &amp; simpan dalam beg"' + (r[4]() && bagFree ? '' : ' disabled style="opacity:.35"') + '>🎒</button></div>';
+  function learnQ(id, got){
+    const r = wRecs().find(z => z[0] === id); if (!r) return;
+    if (got >= r[8]){ W.rcp[id] = 1; sfx('myth'); vibrate([20, 30, 20]); xp('pint', 25 + 15 * r[8]); save(); hud(); tutEv('learn'); dapur(); say('📖 Resepi dipelajari: <b>' + r[1] + '</b><br><span style="font-size:14px">Boleh masak di mana-mana — buka 🎒 Beg → 🍳 Masak</span>', 3400); return; }
+    let q; try { q = runQuestion(); } catch(e){ q = null; } if (!q || !q.c){ closePanel(); return say('Tiada soalan dalam bank. Tambah soalan di app guru.', 2400); }
+    const opts = q.c.map((t, j) => ({ t, ok: j === q.a })).sort(() => Math.random() - .5);
+    panel('<div class="text-[12px] font-bold tracking-widest" style="color:#93C5FD">📖 RESEPI ' + r[1] + ' · soalan ' + (got + 1) + ' / ' + r[8] + '</div><div class="font-bold text-[18px] mt-2 leading-snug">' + esc(q.q) + '</div>' +
+      grid2(opts.map((o, j) => '<button class="btn clip-s w-full !py-3 text-left text-[15px] mt-2" data-p="o:' + j + '" style="justify-content:flex-start">' + 'ABCD'[j] + '. ' + esc(o.t) + '</button>').join('')), (a, b) => {
+      if (a.indexOf('o:') !== 0 || PANEL_LOCK) return; PANEL_LOCK = true; const o = opts[+a.slice(2)], good = o.ok;
+      b.style.background = good ? '#15803D' : '#991B1B'; if (!good){ const k = opts.findIndex(z => z.ok), bb = $w('#wPanel [data-p="o:' + k + '"]'); if (bb) bb.style.background = '#15803D'; }
+      sfx(good ? 'hi' : 'low');
+      setTimeout(() => { PANEL_LOCK = false; if (good) learnQ(id, got + 1); else { dapur(); say('❌ Salah — cuba lagi untuk belajar resepi ini', 2200); } }, 1100); });
+  }
   function dapur(){
-    const bonus = 1 + (wLvl(W, 'stam') - 1) * .1, e = n => Math.round(n * bonus), bagFree = wBagSlots(W) - wBagUsed(W) > 0;
-    const btn2 = (a, pa, label, cls, dis, pdis) => '<div class="flex gap-2 mt-2"><button class="btn ' + (cls || '') + ' clip-s flex-1 !py-3 text-[14px] font-bold" data-p="' + a + '"' + (dis ? ' disabled style="opacity:.45"' : '') + '>' + label + '</button><button class="btn clip-s !px-3 text-[18px]" data-p="' + pa + '" title="Simpan dalam beg"' + (pdis ? ' disabled style="opacity:.35"' : '') + '>🎒</button></div>';
-    const rec = [['sihat', '🍽️ Pinggan Sihat', '🐟1 + 🍓1 + 💧1', e(70), () => W.fish >= 1 && W.fruit >= 1 && W.water >= 1, () => { W.fish--; W.fruit--; W.water--; }, '½ pinggan sayur &amp; buah, ¼ protein, ¼ karbohidrat — seimbang!'],
-      ['bakar', '🔥 Ikan Bakar', '🐟1 + 🪵2', e(40), () => W.fish >= 1 && W.wood >= 2, () => { W.fish--; W.wood -= 2; }, 'Protein bagus, tapi tiada sayur.'],
-      ['buah', '🍓 Buah Segar', '🍓1', e(15), () => W.fruit >= 1, () => { W.fruit--; }, 'Vitamin & serat.'],
-      ['air', '💧 Minum Air', '💧1', e(8), () => W.water >= 1, () => { W.water--; }, 'Minum 6–8 gelas sehari.'],
-      ['ubat', '🌿 Ubat Herba', '🍓2 + 💧1', 0, () => W.fruit >= 2 && W.water >= 1, () => { W.fruit -= 2; W.water--; }, 'Memulihkan ❤️ HP semasa bertarung. Bawa bekalan sebelum perang!', 40],
-      ['ubat2', '🧪 Ubat Besar', '🍓3 + 💧2 + 🐟1', 0, () => W.fruit >= 3 && W.water >= 2 && W.fish >= 1, () => { W.fruit -= 3; W.water -= 2; W.fish--; }, 'Memulihkan HP sepenuhnya.', 9999]];
-    panel(head('🍲', 'DAPUR', 'Makan untuk dapat tenaga ⚡. Makanan <b>seimbang</b> beri paling banyak tenaga! Ubat 🌿 memulihkan ❤️ HP.') +
-      rec.map(r => btn2('c:' + r[0], 'p:' + r[0], r[1] + ' &nbsp;<span style="opacity:.8;font-weight:600">(' + r[2] + ') → ' + (r[7] ? '+' + (r[7] > 999 ? 'penuh' : r[7]) + ' ❤️' : '+' + r[3] + ' ⚡') + '</span><br><span style="font-weight:500;font-size:11px;opacity:.7">' + r[6] + '</span>', r[4]() ? 'btn-o' : '', !r[4](), !r[4]() || !bagFree)).join('') + '<div class="text-[11px] text-muted mt-2 text-center">' + (wBagSlots(W) ? '🎒 Beg: ' + wBagUsed(W) + '/' + wBagSlots(W) + ' — tekan 🎒 untuk simpan hidangan & ubat dibawa bersama' : '🎒 Tiada beg galas — buat di 🔨 Bengkel untuk simpan makanan') + '</div>' + btn('close', 'Tutup', ''), a => {
+    setTimeout(() => tutEv('dapur'), 30);
+    const bagFree = wBagSlots(W) - wBagUsed(W) > 0, recs = wRecs();
+    panel(head('🍲', 'DAPUR', 'Belajar <b>resepi</b> di sini dengan menjawab soalan. Sudah tahu resepi? Kamu boleh <b>masak di mana-mana</b> — buka 🎒 Beg → 🍳 Masak, cukup bawa bahan sahaja!') +
+      recs.map(r => W.rcp[r[0]] ? cookRow(r, bagFree) : btn('l:' + r[0], '📖 Belajar resepi: ' + r[1] + ' &nbsp;<span style="opacity:.8;font-weight:600">(' + r[2] + ')</span><br><span style="font-weight:500;font-size:11px;opacity:.75">Jawab ' + r[8] + ' soalan berturut-turut dengan betul</span>', 'btn-c')).join('') +
+      '<div class="text-[11px] text-muted mt-2 text-center">' + (wBagSlots(W) ? '🎒 Beg: ' + wBagUsed(W) + '/' + wBagSlots(W) + ' — tekan 🎒 untuk masak &amp; simpan' : '🎒 Tiada beg galas — buat di 🔨 Bengkel untuk simpan makanan') + '</div>' + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
-      if (a.indexOf('p:') === 0){ const r = rec.find(z => z[0] === a.slice(2)); if (!r || !r[4]() || !bagFree) return; r[5](); W.bag.items[r[0]] = (W.bag.items[r[0]] | 0) + 1; W.nCook++; sfx('hi'); save(); hud(); dapur(); say('🎒 ' + r[1] + ' disimpan dalam beg', 1500); xp('stam', 3); tutEv('cook'); return; }
-      if (a.indexOf('c:') === 0){ const r = rec.find(z => z[0] === a.slice(2)); if (!r || !r[4]()) return; r[5]();
-        if (r[7]){ HP = Math.min(wHpMax(W), HP + r[7]); healthPush(true); say('🌿 ❤️ HP ' + Math.round(HP) + ' / ' + wHpMax(W), 1500); } else { W.energy = Math.min(wMaxE(W), W.energy + r[3]); say('😋 +' + r[3] + ' ⚡', 1500); }
-        W.nCook++; sfx('hi'); save(); hud(); dapur(); xp('stam', 6); tutEv('cook'); } });
+      if (a.indexOf('l:') === 0) return learnQ(a.slice(2), 0);
+      if (a.indexOf('p:') === 0){ if (cookStore(a.slice(2))) dapur(); return; }
+      if (a.indexOf('c:') === 0){ if (cookEat(a.slice(2))) dapur(); } });
   }
 
   /* Pangkalan: bina + bendera + perbendaharaan pasukan */
@@ -19802,7 +19828,7 @@ function worldGame(THREE, W, NET){
     { ev: 'chop', t: 'Tebang sebatang pokok 🪓', tgt: () => nearestOf(TREES, T => T.alive), hint: 'Tekan butang beberapa kali. Setiap tebangan guna ⚡ tenaga — bar kuning di kiri atas.', rew: { energy: 5, txt: '+5 ⚡' } },
     { ev: 'bush', t: 'Petik buah dari semak 🍓', tgt: () => nearestOf(BUSH, B => B.has), hint: 'Semak merah ada buah. Dekati dan tekan butang.', rew: { energy: 3, txt: '+3 ⚡' } },
     { ev: 'fish', t: 'Pancing seekor ikan 🎣', tgt: () => { const p = pondDist().p; return p ? { x: p.x + (P.x < p.x ? -p.r : p.r) * .9, z: p.z } : null; }, hint: 'Dekati tepi kolam. Tunggu sehingga nampak <b>❗ TEKAN SEKARANG</b> — jangan terlalu awal!', rew: { energy: 5, txt: '+5 ⚡' } },
-    { ev: 'cook', t: 'Makan di 🍲 Dapur', tgt: () => bldPos('dapur'), hint: 'Pilih <b>🍽️ Pinggan Sihat</b> (ikan + buah + air). Makanan seimbang beri tenaga paling banyak!', rew: { energy: 10, txt: '+10 ⚡' } },
+    { ev: 'dapur', t: 'Masuk 🍲 Dapur & belajar resepi', tgt: () => bldPos('dapur'), hint: 'Jawab soalan untuk <b>belajar resepi</b> (cth. 🍽️ Pinggan Sihat). Lepas tu kamu boleh <b>masak di mana-mana</b> lewat 🎒 Beg → 🍳 Masak — hanya perlu bahan!', rew: { energy: 10, txt: '+10 ⚡' } },
     { ev: 'npc', t: 'Kembali kepada Cikgu Ilmu', tgt: () => NPC, say: 'Bagus! Kamu dah tahu asasnya. Ambil <b>🪵 30 kayu</b> sebagai hadiah.<br><br><b>Bab 2: Membina &amp; menawan</b> — kamu akan masuk Dewan Misi, bina pondok, tawan haiwan dan bina kandang.', rew: { wood: 30, txt: '+30 🪵' } },
     { ev: 'misi', t: 'Masuk 🎬 Dewan Misi', tgt: () => bldPos('misi'), hint: 'Di sini kamu tonton simulasi &amp; jawab kuiz → dapat <b>mata kemahiran</b> (💪 Kekuatan, 🧠 Kepintaran, ❤️ Stamina). Inilah cara jadi kuat!', rew: { energy: 10, txt: '+10 ⚡' } },
     { ev: 'hut', t: 'Bina 🛖 Pondok di Pangkalan Saya', tgt: () => bldPos('base'), hint: 'Pangkalan kamu ada di cincin luar kampung (lihat peta kecil — petak berbingkai putih). Tekan butang di sana → 🛖 Pondok.', req: () => reqLine({ wood: 20 }), rew: { energy: 10, txt: '+10 ⚡' } },
@@ -19822,7 +19848,7 @@ function worldGame(THREE, W, NET){
   const emoT = ch => ctex(128, 128, (g, w, h) => { g.font = '96px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); });
   const NMK = { q: emoT('❓'), e: emoT('❗') };
   const NPCDEF = [
-    { id: 'dapur', b: 'dapur', n: 'Chef Mak Esah', sn: 'Chef', ico: '👩‍🍳', ch: 'female-d', col: 0xFB923C, greet: 'Selamat datang ke <b>Dapur</b>! Makan <b>🍽️ Pinggan Sihat</b> (ikan + buah + air) — beri tenaga paling banyak. Makanan juga boleh disimpan dalam 🎒 beg untuk perjalanan jauh.' },
+    { id: 'dapur', b: 'dapur', n: 'Chef Mak Esah', sn: 'Chef', ico: '👩‍🍳', ch: 'female-d', col: 0xFB923C, greet: 'Selamat datang ke <b>Dapur</b>! Masuk dan <b>belajar resepi</b> dengan menjawab soalan. Selepas tahu resepi, kamu boleh <b>masak di mana-mana</b> — buka 🎒 Beg → 🍳 Masak, cukup bawa bahan!' },
     { id: 'akademi', b: 'akademi', n: 'Prof. Hana', sn: 'Prof. Hana', ico: '👩‍🏫', ch: 'female-b', col: 0x60A5FA, greet: 'Selamat datang ke <b>Akademi</b>. Di sini kamu boleh lihat tahap, pangkat &amp; <b>skin watak</b>, kedudukan kelas dan <b>⚔️ Mod Perang</b>. Pangkat baharu = rupa watak lebih hebat!' },
     { id: 'misi', b: 'misi', n: 'Dr. Faiz', sn: 'Dr. Faiz', ico: '👨‍🔬', ch: 'male-d', col: 0xF59E0B, greet: 'Ini <b>Dewan Misi</b>. Tonton simulasi &amp; jawab kuiz → <b>EXP</b>. Itulah cara paling pantas untuk naik level — lima misi baharu setiap hari!' },
     { id: 'bengkel', b: 'bengkel', n: 'Pak Ali Tukang', sn: 'Pak Ali', ico: '👷', ch: 'male-c', col: 0xA3A3A3, greet: 'Aku tukang di <b>Bengkel</b>. Tempa 🛡️ baju &amp; ⚔️ senjata, <b>asah</b> senjata dan buat 🎒 beg. Tebang pokok untuk dapatkan kayu!' },
@@ -19830,9 +19856,9 @@ function worldGame(THREE, W, NET){
     { id: 'pond', pond: 0, n: 'Pak Din Pemancing', sn: 'Pak Din', ico: '🎣', ch: 'male-e', col: 0x38BDF8, greet: 'Memancing perlu <b>masa yang tepat</b>: tunggu pelampung bergoyang. Bila nampak ❗ dan bulatan putih mengecil, <b>tekan bila ia sama dengan bulatan hijau</b> = ✨ SEMPURNA, ikan lebih banyak!' }];
   const NPCQ = {
     dapur: [{ t: 'Makan / masak 2 hidangan', ev: 'cook', n: 2, rew: { exp: 50, fruit: 3 } }, { t: 'Petik buah 4 kali', ev: 'bush', n: 4, rew: { exp: 60, water: 4 } }, { t: 'Pancing 3 ikan untuk menu', ev: 'fish', n: 3, rew: { exp: 80, bulu: 2 } }, { t: 'Makan / masak 6 hidangan', ev: 'cook', n: 6, rew: { exp: 150, bulu: 3 } }],
-    akademi: [{ t: 'Capai Level 5', n: 5, chk: W => wPlayerLvl(W), rew: { exp: 80, wood: 10 } }, { t: 'Bina rumah di Pangkalan', n: 1, chk: W => W.built.hut | 0, rew: { exp: 60, bulu: 2 } }, { t: 'Capai Level 10 (Perantis)', n: 10, chk: W => wPlayerLvl(W), rew: { exp: 200, bulu: 5 } }, { t: 'Tawan 3 haiwan', n: 3, chk: W => W.nTame | 0, rew: { exp: 150, bulu: 4 } }, { t: 'Capai Level 20 (Pahlawan)', n: 20, chk: W => wPlayerLvl(W), rew: { exp: 500, bulu: 8 } }],
+    akademi: [{ t: 'Capai Level 5', pl: 'sim', n: 5, chk: W => wPlayerLvl(W), rew: { exp: 80, wood: 10 } }, { t: 'Bina rumah di Pangkalan', pl: 'hup', n: 1, chk: W => W.built.hut | 0, rew: { exp: 60, bulu: 2 } }, { t: 'Capai Level 10 (Perantis)', pl: 'sim', n: 10, chk: W => wPlayerLvl(W), rew: { exp: 200, bulu: 5 } }, { t: 'Tawan 3 haiwan', pl: 'tame', n: 3, chk: W => W.nTame | 0, rew: { exp: 150, bulu: 4 } }, { t: 'Capai Level 20 (Pahlawan)', pl: 'sim', n: 20, chk: W => wPlayerLvl(W), rew: { exp: 500, bulu: 8 } }],
     misi: [{ t: 'Siapkan 1 simulasi', ev: 'sim', n: 1, rew: { exp: 80, en: 20 } }, { t: 'Siapkan 3 simulasi', ev: 'sim', n: 3, rew: { exp: 160, bulu: 2 } }, { t: 'Siapkan 10 simulasi', ev: 'sim', n: 10, rew: { exp: 400, bulu: 5 } }],
-    bengkel: [{ t: 'Tebang 6 pokok', ev: 'chop', n: 6, rew: { exp: 60, wood: 10 } }, { t: 'Naik taraf rumah ke Tahap 2 (Rumah Kayu)', n: 2, chk: W => W.built.hut | 0, rew: { exp: 120, wood: 20 } }, { t: 'Tebang 20 pokok', ev: 'chop', n: 20, rew: { exp: 200, bulu: 3 } }, { t: 'Naik taraf rumah ke Tahap 4 (Banglo)', n: 4, chk: W => W.built.hut | 0, rew: { exp: 400, bulu: 6 } }],
+    bengkel: [{ t: 'Tebang 6 pokok', ev: 'chop', n: 6, rew: { exp: 60, wood: 10 } }, { t: 'Naik taraf rumah ke Tahap 2 (Rumah Kayu)', pl: 'hup', n: 2, chk: W => W.built.hut | 0, rew: { exp: 120, wood: 20 } }, { t: 'Tebang 20 pokok', ev: 'chop', n: 20, rew: { exp: 200, bulu: 3 } }, { t: 'Naik taraf rumah ke Tahap 4 (Banglo)', pl: 'hup', n: 4, chk: W => W.built.hut | 0, rew: { exp: 400, bulu: 6 } }],
     arkad: [{ t: 'Main Kuiz Pantas 1 kali', ev: 'arkad', n: 1, rew: { exp: 40, fish: 2 } }, { t: 'Dapat 5/5 betul', ev: 'arkad5', n: 1, rew: { exp: 100, fruit: 3 } }, { t: 'Main Kuiz Pantas 5 kali', ev: 'arkad', n: 5, rew: { exp: 150, bulu: 3 } }],
     pond: [{ t: 'Pancing 5 ikan', ev: 'fish', n: 5, rew: { exp: 80, water: 3 } }, { t: 'Pancing tepat (✨ SEMPURNA) 2 kali', ev: 'fishp', n: 2, rew: { exp: 140, bulu: 2 } }, { t: 'Pancing tepat (✨ SEMPURNA) 6 kali', ev: 'fishp', n: 6, rew: { exp: 300, bulu: 5 } }]
   };
@@ -19873,15 +19899,24 @@ function worldGame(THREE, W, NET){
     if (ch){ save(); tutPaint(); }
   }
   const dqPanel = () => { const D = dqEnsure(); return '<div class="panel clip-s p-3 mt-3"><div class="font-bold text-[13px]" style="color:#FDE68A">📅 MISI HARIAN (baharu setiap hari)</div>' + wDq().map(d => { const p = Math.min(d.n, D.p[d.id] | 0), ok = !!D.c[d.id]; return '<div class="text-[12px] mt-2" style="opacity:' + (ok ? .7 : 1) + '">' + (ok ? '✅' : '▫️') + ' ' + d.t.replace('{n}', d.n) + ' <b>(' + p + '/' + d.n + ')</b><br><span style="color:#93C5FD;font-size:11px">' + qRewTxt(Object.assign({ exp: d.exp }, d.rw)) + '</span></div>'; }).join('') + '<div class="text-[11px] text-muted mt-2">Semua siap = bonus +150 EXP 🧶3 ⚡30' + (D.b ? ' ✅' : '') + '</div></div>'; };
+  /* arah misi: nama tempat + sasaran anak panah */
+  const QPL = { cook: ['🍲 Dapur', () => bldPos('dapur')], learn: ['🍲 Dapur', () => bldPos('dapur')], dapur: ['🍲 Dapur', () => bldPos('dapur')], arkad: ['🕹️ Rumah Arkad', () => bldPos('arkad')], arkad5: ['🕹️ Rumah Arkad', () => bldPos('arkad')],
+    sim: ['🎬 Dewan Misi', () => bldPos('misi')], misi: ['🎬 Dewan Misi', () => bldPos('misi')], fish: ['🎣 Kolam', () => { const p = pondDist().p; return p ? { x: p.x, z: p.z } : null; }], fishp: ['🎣 Kolam', () => { const p = pondDist().p; return p ? { x: p.x, z: p.z } : null; }],
+    chop: ['🪓 Pokok', () => nearestOf(TREES, T => T.alive)], bush: ['🍓 Semak buah', () => nearestOf(BUSH, B => B.has)], well: ['💧 Perigi', () => WELL], tame: ['🐇 Haiwan liar', () => nearestOf(WILD, A => A.alive && (A.t === 'arnab' || A.t === 'kancil'))], hup: ['🏕️ Pangkalan', () => bldPos('base')] };
+  const qPl = q => QPL[q.ev || q.pl] || null;
   function qPaint(el){
     npcMarks(); const D = dqEnsure(), dl = wDq(); let dd = 0, h = '', act = 0, hh = '';
-    dl.forEach(d => { const p = Math.min(d.n, D.p[d.id] | 0), ok = !!D.c[d.id]; if (ok) dd++; h += '<div style="font-size:11px;line-height:1.3;margin-top:2px;opacity:' + (ok ? .6 : 1) + '">' + (ok ? '✅' : '▫️') + ' ' + d.t.replace('{n}', d.n) + ' <b>' + p + '/' + d.n + '</b></div>'; });
-    NPCS.forEach(n => { const q = qCur(n.id); if (!q || !W.nq.a[n.id]) return; act++; const p = qProgOf(n.id, q), ok = p >= q.n; hh += '<div style="font-size:11px;line-height:1.3;margin-top:2px">' + (ok ? '❗' : '📜') + ' <b>' + n.sn + ':</b> ' + q.t + ' <b>' + p + '/' + q.n + '</b></div>'; });
+    dl.forEach(d => { const p = Math.min(d.n, D.p[d.id] | 0), ok = !!D.c[d.id], pl = qPl(d); if (ok) dd++; h += '<div style="font-size:11px;line-height:1.3;margin-top:2px;opacity:' + (ok ? .6 : 1) + '">' + (ok ? '✅' : '▫️') + ' ' + d.t.replace('{n}', d.n) + ' <b>' + p + '/' + d.n + '</b>' + (!ok && pl ? ' <span style="opacity:.65">→ ' + pl[0] + '</span>' : '') + '</div>'; });
+    NPCS.forEach(n => { const q = qCur(n.id); if (!q || !W.nq.a[n.id]) return; act++; const p = qProgOf(n.id, q), ok = p >= q.n, pl = qPl(q); hh += '<div style="font-size:11px;line-height:1.3;margin-top:2px">' + (ok ? '❗' : '📜') + ' <b>' + n.sn + ':</b> ' + q.t + ' <b>' + p + '/' + q.n + '</b>' + (ok ? ' <span style="opacity:.65">→ ' + n.sn + '</span>' : pl ? ' <span style="opacity:.65">→ ' + pl[0] + '</span>' : '') + '</div>'; });
     el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.style.padding = QMIN ? '3px 8px' : '6px 10px';
     if (QMIN){ $w('#wQTx').innerHTML = '<div style="font-size:11px;font-weight:800;line-height:1.2">📅 Harian ' + dd + '/' + dl.length + (act ? ' · 📜 ' + act + ' misi NPC' : '') + '</div>'; return; }
     $w('#wQTx').innerHTML = '<div style="font-size:10px;opacity:.75;letter-spacing:.08em">📅 MISI HARIAN ' + dd + '/' + dl.length + '</div>' + h + (act ? '<div style="font-size:10px;opacity:.75;letter-spacing:.08em;margin-top:4px">📜 MISI NPC</div>' + hh : '');
   }
-  const qTgt = () => { let b = null, bd = 1e9; NPCS.forEach(n => { const q = qCur(n.id); if (!q || !W.nq.a[n.id] || !qIsDone(n.id, q)) return; const d = Math.hypot(n.x - P.x, n.z - P.z); if (d < bd){ bd = d; b = n; } }); return b; };
+  const qTgt = () => {
+    let b = null, bd = 1e9; NPCS.forEach(n => { const q = qCur(n.id); if (!q || !W.nq.a[n.id] || !qIsDone(n.id, q)) return; const d = Math.hypot(n.x - P.x, n.z - P.z); if (d < bd){ bd = d; b = n; } }); if (b) return b;
+    for (const n of NPCS){ const q = qCur(n.id); if (q && W.nq.a[n.id] && !qIsDone(n.id, q)){ const p = qPl(q), t = p && p[1](); if (t) return t; } }
+    const D = dqEnsure(); for (const d of wDq()){ if (D.c[d.id]) continue; const p = qPl(d), t = p && p[1](); if (t) return t; } return null;
+  };
   let qSt = 0;
   function npcTick(dt){
     lyT += dt; if (lyT > .7){ lyT = 0; layoutUI(); }
@@ -19964,10 +19999,14 @@ el.style.display = 'flex'; $w('#wQCh').textContent = QMIN ? '▸' : '▾'; el.st
     if (txt){ save(); hud(); pushInfo(); sfx('myth'); say(txt, 3600); vibrate([40, 40, 40]); } }));
   /* ---------- Fasa 8: beg galas ---------- */
   function bag(){
-    const lv = W.bag.lv, sl = wBagSlots(W), used = wBagUsed(W), ids = Object.keys(W.bag.items).filter(k => W.bag.items[k] > 0 && MEALS[k]), bonus = 1 + (wLvl(W, 'stam') - 1) * .1;
-    panel(head('🎒', lv ? WBAG[lv][0].replace('🎒 ', '').toUpperCase() : 'TIADA BEG', lv ? 'Makanan &amp; ubat yang kamu simpan — guna di mana-mana. Ruang: <b>' + used + '/' + sl + '</b>' : 'Buat beg galas di 🔨 Bengkel untuk menyimpan makanan dan ubat yang dimasak di 🍲 Dapur.') +
-      (ids.length ? ids.map(k => { const m = MEALS[k]; return btn('u:' + k, m[0] + ' ×' + W.bag.items[k] + ' &nbsp;<span style="opacity:.8;font-weight:600">→ ' + (m[2] ? '+' + (m[2] > 999 ? 'penuh' : m[2]) + ' ❤️' : '+' + Math.round(m[1] * bonus) + ' ⚡') + '</span>', 'btn-o'); }).join('') : '<div class="text-[13px] text-muted text-center mt-3 leading-relaxed">Beg kosong.<br>Masak di 🍲 Dapur dan tekan 🎒 untuk simpan.</div>') + btn('close', 'Tutup', ''), a => {
+    const lv = W.bag.lv, sl = wBagSlots(W), used = wBagUsed(W), ids = Object.keys(W.bag.items).filter(k => W.bag.items[k] > 0 && MEALS[k]), bonus = 1 + (wLvl(W, 'stam') - 1) * .1, recs = wRecs().filter(r => W.rcp[r[0]]), bagFree = sl - used > 0;
+    panel(head('🎒', lv ? WBAG[lv][0].replace('🎒 ', '').toUpperCase() : 'BEG &amp; MASAK', lv ? 'Makanan &amp; ubat yang kamu simpan — guna di mana-mana. Ruang: <b>' + used + '/' + sl + '</b>' : 'Tiada beg galas (buat di 🔨 Bengkel untuk simpan makanan). Kamu masih boleh <b>masak &amp; makan terus</b> di sini.') +
+      (ids.length ? ids.map(k => { const m = MEALS[k]; return btn('u:' + k, m[0] + ' ×' + W.bag.items[k] + ' &nbsp;<span style="opacity:.8;font-weight:600">→ ' + (m[2] ? '+' + (m[2] > 999 ? 'penuh' : m[2]) + ' ❤️' : '+' + Math.round(m[1] * bonus) + ' ⚡') + '</span>', 'btn-o'); }).join('') : (lv ? '<div class="text-[13px] text-muted text-center mt-3 leading-relaxed">Beg kosong. Masak di bawah dan tekan 🎒 untuk simpan.</div>' : '')) +
+      '<div class="lbl mt-4">🍳 MASAK DI MANA-MANA (bahan dalam poket)</div>' + recs.map(r => cookRow(r, bagFree)).join('') +
+      '<div class="text-[11px] text-muted mt-3 text-center leading-relaxed">📖 Resepi baharu: pergi ke 🍲 Dapur dan jawab soalan. Resepi sedia ada: ' + recs.length + ' / ' + wRecs().length + '</div>' + btn('close', 'Tutup', ''), a => {
       if (a === 'close') return closePanel();
+      if (a.indexOf('c:') === 0){ if (cookEat(a.slice(2))) bag(); return; }
+      if (a.indexOf('p:') === 0){ if (cookStore(a.slice(2))) bag(); return; }
       if (a.indexOf('u:') === 0){ const k = a.slice(2), m = MEALS[k]; if (!m || !(W.bag.items[k] > 0)) return;
         if (m[2]){ if (HP >= wHpMax(W)) return say('❤️ HP sudah penuh.', 1500); HP = Math.min(wHpMax(W), HP + m[2]); healthPush(true); say('🌿 ❤️ HP ' + Math.round(HP) + ' / ' + wHpMax(W), 1500); }
         else { if (W.energy >= wMaxE(W) - 1) return say('⚡ Tenaga sudah penuh.', 1500); const g = Math.round(m[1] * bonus); W.energy = Math.min(wMaxE(W), W.energy + g); say('😋 +' + g + ' ⚡', 1500); }
