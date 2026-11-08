@@ -96,3 +96,5 @@ PALING AKHIR — tekstur & langit (kesan paling kecil) (17)
   bg_langit_senja
 
 Amaran: ikon & potret JANGAN guna warna merah jambu / magenta / ungu pada objek (akan dibuang bersama latar).
+
+MAKANAN & RESEPI: ada fail berasingan PROMPT-MAKANAN.txt (6 gambar food_*.png). Muatkan fail itu dalam skrip Tampermonkey untuk jana makanan sahaja. Game guna gambar ini automatik di menu Dapur dan Beg.

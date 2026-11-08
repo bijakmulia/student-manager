@@ -1,0 +1,30 @@
+PROMPT ASET — MAKANAN & RESEPI (Dunia Ilmu)
+6 aset. Simpan setiap gambar dengan nama fail di bawah (.png) dalam folder ini (assets\dunia).
+Game guna gambar ini automatik di menu Dapur, 🎒 Beg → 🍳 Masak, dan senarai makanan dalam beg.
+Kalau gambar belum ada, game guna emoji — tidak rosak.
+
+LATAR MAGENTA: semua prompt meminta latar magenta tulen #FF00FF. Letak sahaja gambar magenta dalam folder ini —
+auto-push (shrink-assets.ps1) membuang latar magenta secara automatik dan mengecilkan ke 256x256.
+GAYA SERAGAM: sama dengan ikon HUD (kartun tebal, lukisan tangan, garis luar coklat tua, palet tropika).
+Untuk skrip Tampermonkey: muatkan fail ini dan jana mengikut nombor (1 → 6).
+
+
+==================== MAKANAN & UBAT ====================
+
+1. food_sihat.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a round white plate seen from slightly above showing the Malaysian "Suku Suku Separuh" healthy plate — one half filled with colourful vegetables and fruit slices (green leaves, orange carrot, red tomato, yellow mango), one quarter of steamed white rice, one quarter of a grilled fish fillet. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+2. food_bakar.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a whole grilled fish with golden-brown char marks lying on a green banana leaf, a small lime wedge beside it and a tiny wisp of steam. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+3. food_buah.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a small round wooden bowl heaped with fresh tropical fruit — red rambutan, a yellow mango slice, an orange papaya slice and a few green leaves. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+4. food_air.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a tall clear drinking glass filled with fresh clear water, a few water droplets on the glass and a white highlight along the side. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+5. food_ubat.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a small round glass potion bottle with a cork, filled with bright green herbal liquid, a few fresh green herb leaves tied around its neck with brown string. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
+
+6. food_ubat2.png   [nisbah 1:1 segi empat (1024×1024 → simpan 256×256, PNG lutsinar)]
+Stylized chunky cartoon mobile game art, hand-painted soft cel shading, bold clean dark-brown outline, bright warm tropical Malaysian palette, kid-friendly, part of one consistent set. Game icon: a large round-bottomed glass flask with a cork stopper filled with glowing red-orange healing liquid, a small golden heart floating inside and tiny golden sparkles around it, a bigger and more precious version of a herbal potion. ONE object only, centred, filling about 85% of the image, slight three-quarter view. Background: solid flat pure magenta (#FF00FF) everywhere around the object — one single colour, no gradient, no shadow, no floor, no glow. Do NOT use any pink, magenta or purple on the object itself; keep a clean dark outline around it. No text, no letters, no watermark. Square 1:1 image (1024x1024).
