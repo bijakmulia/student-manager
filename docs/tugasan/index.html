@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ms"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pembentangan Tugasan Kumpulan — RPH Inkuiri 5E Kereta Rover Solar</title>
+<meta name="description" content="Slaid pembentangan: pengalaman pembelajaran inkuiri 5E menggunakan Kit STEM kereta rover solar.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<style>
+:root{--bg:#1B1411;--bg2:#2A1D17;--bg3:#3A2820;--fg:#F4E9DC;--mut:#C9B8A6;--or:#E8793A;--bl:#6FB1E8;--sun:#F2B84B}
+body{font-family:'Inter',sans-serif;color:#F4E9DC}
+section{background:#1B1411;color:#F4E9DC;padding:128px 128px 160px;font-family:'Inter',sans-serif;counter-increment:page}
+section.alt{background:#2A1D17}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif}
+.kick{font-size:28px;font-weight:600;color:#E8793A;letter-spacing:4px;margin-bottom:16px}
+.t{font-size:64px;line-height:1.1;font-weight:700;margin-bottom:40px}
+.lead{font-size:34px;line-height:1.4;color:#C9B8A6}
+.foot{position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#C9B8A6}
+.pg{position:absolute;right:128px;bottom:64px;width:120px;font-size:24px;color:#C9B8A6;text-align:right}
+.pg::after{content:counter(page)}
+.row{display:flex;gap:32px}
+.card{background:#2A1D17;border-radius:20px;padding:32px;flex:1}
+.alt .card{background:#3A2820}
+.card h3{font-size:36px;margin-bottom:12px;color:#F4E9DC}
+.card p{font-size:28px;line-height:1.35;color:#C9B8A6}
+.num{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;color:#E8793A}
+.or{color:#E8793A}.bl{color:#6FB1E8}.sn{color:#F2B84B}
+.rise{animation:rise .7s both;animation-delay:calc(var(--i)*150ms)}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}}
+.fragment{opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s}
+.fragment.visible{opacity:1;transform:none}
+
+.pill{font-size:28px;font-weight:600;padding:10px 24px;border-radius:999px;background:#E8793A;color:#1B1411}
+.step{display:flex;gap:20px;align-items:flex-start;background:#3A2820;border-radius:16px;padding:20px 24px}
+.step .n{font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:700;color:#E8793A;width:64px}
+.step p{font-size:26px;line-height:1.3;color:#F4E9DC}
+.step b{color:#F2B84B}
+.cap{font-size:26px;color:#C9B8A6}
+table{font-size:28px;color:#F4E9DC}
+.dot{position:absolute;width:52px;height:52px;border-radius:26px;background:#E8793A;color:#1B1411}
+.dot p{font-size:30px;font-weight:700;text-align:center;line-height:52px;color:#1B1411}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-10px)}100%{transform:translateY(0)}}
+.bob{animation:bob 1.2s ease-in-out infinite alternate}
+.big{font-family:'Space Grotesk',sans-serif;font-size:84px;line-height:1.12;font-weight:700}
+.chev{background:#2A1D17;border-radius:20px;padding:28px;flex:1;border-top:10px solid #E8793A}
+.chev .let{font-family:'Space Grotesk',sans-serif;font-size:96px;font-weight:700;line-height:1}
+.chev h3{font-size:38px;margin:8px 0 10px}
+.chev p{font-size:26px;line-height:1.35;color:#C9B8A6}
+.chev .tm{font-size:28px;font-weight:600;color:#F2B84B;margin-top:14px}
+.c1{border-top-color:#6FB1E8}.c2{border-top-color:#2fb8a6}.c3{border-top-color:#B58CE0}.c4{border-top-color:#F2B84B}.c5{border-top-color:#E8793A}
+.tag{font-size:28px;font-weight:600;color:#1B1411;background:#F2B84B;border-radius:999px;padding:8px 24px}
+.cer h3{font-size:44px}.cer .lbl{font-size:28px;font-weight:700;letter-spacing:3px;color:#E8793A;margin-bottom:12px}
+th{font-weight:700}
+
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+p,h1,h2,h3,ul,ol{margin:0}
+table{border-collapse:collapse;width:100%}
+th{text-align:left;color:#E8793A;font-weight:700;padding:14px 18px;border-bottom:2px solid #4a3228}
+td{padding:16px 18px;border-bottom:1px solid #3A2820;vertical-align:top;line-height:1.3}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:#1B1411}
+.slide{position:absolute;left:0;top:0;width:1920px;height:1080px;box-sizing:border-box;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .45s}
+.slide.on{opacity:1;pointer-events:auto}
+.slide aside{display:none}
+.rise{animation:none;opacity:1}
+.slide.on .rise{animation:rise .7s both;animation-delay:calc(var(--i)*150ms)}
+.foot,.pg{position:absolute}
+.pg::after{content:counter(page) " / 10"}
+iframe{position:absolute}
+#bar{position:fixed;left:0;top:0;height:6px;background:#E8793A;transition:width .3s;z-index:9}
+#hint{position:fixed;right:14px;bottom:10px;color:#C9B8A6;font:14px Inter,sans-serif;z-index:9;opacity:.8}
+#hint button{background:#2A1D17;color:#F4E9DC;border:1px solid #4a3228;border-radius:8px;padding:6px 10px;margin-left:6px;cursor:pointer;font:inherit}
+</style></head><body>
+<div id="bar"></div>
+<div id="stage">
+<section class="slide " id="cover" style="background:linear-gradient(180deg,#1B1411,#2E1B18)">
+<p class="kick rise" style="--i:0;width:900px">TUGASAN KUMPULAN · IBSE · 5E · 6C · SK@S</p>
+<h1 class="rise" style="--i:1;font-size:104px;line-height:1.05;width:860px">Kereta Rover Solar</h1>
+<p class="lead rise" style="--i:2;margin-top:24px;width:820px">Mereka satu pengalaman pembelajaran inkuiri 5E dengan Kit STEM.</p>
+<p class="rise" style="--i:3;margin-top:56px;font-size:30px;color:#C9B8A6;width:820px">Kumpulan: [nama kumpulan]<br>Ahli: [nama ahli]</p>
+<img class="rise" style="--i:2;position:absolute;left:1040px;top:230px;width:752px;height:620px;object-fit:cover;border-radius:28px;border:4px solid #E8793A" src="rover.jpg" alt="Kereta rover kayu bertenaga solar yang dipasang">
+<p class="foot">Daripada inkuiri kepada impak</p>
+
+</section>
+<section class="slide alt" id="soalan" style="">
+<p class="kick">PERSOALAN INKUIRI</p>
+<h2 class="big rise" style="--i:1;width:1500px;margin-top:24px">Bagaimanakah jarak sumber cahaya mempengaruhi kelajuan kereta rover solar?</h2>
+<div class="row" style="margin-top:72px">
+<div class="card rise" style="--i:3"><h3>Topik</h3><p>Penukaran tenaga: tenaga suria kepada elektrik kepada gerakan (Fizik)</p></div>
+<div class="card rise" style="--i:4"><h3>Kit STEM</h3><p>Kereta rover solar T-M189: panel solar, motor, puli dan roda</p></div>
+<div class="card rise" style="--i:5"><h3>Kaedah</h3><p>Inkuiri 5E secara berkumpulan</p></div>
+</div>
+<p class="foot">Persoalan inkuiri</p><p class="pg"></p>
+
+</section>
+<section class="slide " id="pemboleh" style="">
+<p class="kick">RANGKA EKSPERIMEN</p>
+<h2 class="t">Tiga jenis pemboleh ubah</h2>
+<div class="row">
+<div class="card rise" style="--i:1;border-top:10px solid #E8793A"><p class="kick" style="font-size:26px;margin-bottom:8px">DIMANIPULASIKAN</p><h3>Jarak lampu</h3><p>20 cm, 40 cm dan 60 cm dari panel solar.</p></div>
+<div class="card rise" style="--i:2;border-top:10px solid #6FB1E8"><p class="kick" style="font-size:26px;margin-bottom:8px;color:#6FB1E8">BERGERAK BALAS</p><h3>Masa 1 meter</h3><p>Masa kereta menempuh 1 meter, diukur dalam saat.</p></div>
+<div class="card rise" style="--i:3;border-top:10px solid #F2B84B"><p class="kick" style="font-size:26px;margin-bottom:8px;color:#F2B84B">DIMALARKAN</p><h3>Perkara sama</h3><p>Kit yang sama, jenis lampu yang sama, permukaan lantai dan jarak 1 meter.</p></div>
+</div>
+<p class="lead rise" style="--i:5;margin-top:56px;width:1500px">Kita ubah satu perkara sahaja, supaya perbezaan masa benar-benar datang daripada jarak cahaya.</p>
+<p class="foot">Pemboleh ubah</p><p class="pg"></p>
+
+</section>
+<section class="slide alt" id="lima" style="">
+<p class="kick">URUTAN PEMBELAJARAN 5E · KLIK UNTUK SETIAP PERINGKAT</p>
+<h2 class="t" style="margin-bottom:36px">Lima peringkat, 60 minit</h2>
+<div class="row" style="gap:24px;align-items:stretch">
+<div class="chev c1 fragment" data-fragment-index="1"><p class="let" style="color:#6FB1E8">E</p><h3>Engage</h3><p>Video: kereta tanpa bateri bergerak bila disinari. Murid meramal puncanya.</p><p class="tm">5 minit</p></div>
+<div class="chev c2 fragment" data-fragment-index="2"><p class="let" style="color:#2fb8a6">E</p><h3>Explore</h3><p>Pasang kereta, uji pada 3 jarak lampu, ukur masa 1 meter.</p><p class="tm">20 minit</p></div>
+<div class="chev c3 fragment" data-fragment-index="3"><p class="let" style="color:#B58CE0">E</p><h3>Explain</h3><p>Analisis data, graf dan konsep tenaga. Tulis rumusan CER.</p><p class="tm">15 minit</p></div>
+<div class="chev c4 fragment" data-fragment-index="4"><p class="let" style="color:#F2B84B">E</p><h3>Elaborate</h3><p>Cabaran: ubah sudut panel atau tambah panel kedua, ramal dan uji.</p><p class="tm">15 minit</p></div>
+<div class="chev c5 fragment" data-fragment-index="5"><p class="let" style="color:#E8793A">E</p><h3>Evaluate</h3><p>Bentang CER, graf, refleksi dan kuiz pantas.</p><p class="tm">5 minit</p></div>
+</div>
+<p class="foot">Masa ialah cadangan; laraskan ikut tempoh PdP</p><p class="pg"></p>
+
+</section>
+<section class="slide " id="explore" style="">
+<p class="kick">EXPLORE</p>
+<h2 class="t" style="width:760px;font-size:56px">Uji kereta pada tiga jarak</h2>
+<div style="width:760px;display:flex;flex-direction:column;gap:20px">
+<div class="step fragment" data-fragment-index="1"><p class="n">1</p><p><b>Pasang kereta</b><br>Wayar merah dengan merah, hitam dengan hitam.</p></div>
+<div class="step fragment" data-fragment-index="2"><p class="n">2</p><p><b>Letak lampu pada jarak 20 cm</b><br>Ukur masa kereta menempuh 1 meter.</p></div>
+<div class="step fragment" data-fragment-index="3"><p class="n">3</p><p><b>Ulang pada 40 cm dan 60 cm</b><br>Catat setiap bacaan dalam jadual.</p></div>
+<div class="step fragment" data-fragment-index="4"><p class="n">4</p><p><b>Peranan ahli kumpulan</b><br>Pemasang, pengukur masa, pencatat, jurucakap.</p></div>
+</div>
+<svg aria-label="Lampu dengan tiga penanda jarak 20, 40 dan 60 sentimeter ke arah panel kereta rover" width="780" height="520" viewBox="0 0 780 520" style="position:absolute;left:1012px;top:240px">
+<circle cx="110" cy="260" r="150" fill="none" stroke="#F2B84B" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;.5;0" dur="2.4s" begin="0s" repeatCount="indefinite"/></circle>
+<circle cx="110" cy="260" r="260" fill="none" stroke="#F2B84B" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;.4;0" dur="2.4s" begin="0.4s" repeatCount="indefinite"/></circle>
+<circle cx="110" cy="260" r="370" fill="none" stroke="#F2B84B" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;.3;0" dur="2.4s" begin="0.8s" repeatCount="indefinite"/></circle>
+<circle cx="110" cy="260" r="46" fill="#F2B84B"/><rect x="60" y="300" width="100" height="30" rx="6" fill="#8a7d72"/>
+<line x1="110" y1="400" x2="740" y2="400" stroke="#C9B8A6" stroke-width="4"/>
+<path d="M260 385V415M420 385V415M580 385V415" stroke="#C9B8A6" stroke-width="4"/>
+<rect x="640" y="190" width="120" height="70" rx="10" fill="#EBD0A5"/><path d="M630 178H770L790 196H650Z" fill="#1d3557"/>
+<circle cx="665" cy="268" r="20" fill="#222"/><circle cx="740" cy="268" r="20" fill="#222"/>
+</svg>
+<p class="cap" style="position:absolute;left:1220px;top:665px;width:120px;text-align:center;color:#F4E9DC;font-weight:600">20 cm</p>
+<p class="cap" style="position:absolute;left:1380px;top:665px;width:120px;text-align:center;color:#F4E9DC;font-weight:600">40 cm</p>
+<p class="cap" style="position:absolute;left:1540px;top:665px;width:120px;text-align:center;color:#F4E9DC;font-weight:600">60 cm</p>
+<p class="foot">Ukur masa untuk 1 meter pada setiap jarak</p><p class="pg"></p>
+
+</section>
+<section class="slide alt" id="demo" style="">
+<p class="kick">DEMO ANIMASI</p>
+<h2 class="t" style="margin-bottom:0;font-size:56px">Makin terang, makin laju</h2>
+<iframe data-src="embed-demo.html" style="position:absolute;left:128px;top:250px;width:1664px;height:690px;border:0" scrolling="no" title="Animasi"></iframe>
+<p class="foot">Demo berulang secara automatik: cerah, mendung, gelap</p><p class="pg"></p>
+
+</section>
+<section class="slide alt" id="explain" style="">
+<p class="kick">EXPLAIN · CER</p>
+<h2 class="t" style="margin-bottom:32px">Murid menerangkan dengan bukti</h2>
+<div class="row" style="align-items:stretch">
+<div class="card cer fragment" data-fragment-index="1"><p class="lbl">CLAIM</p><h3>Jangkaan</h3><p>Semakin dekat lampu, semakin laju kereta bergerak.</p></div>
+<div class="card cer fragment" data-fragment-index="2"><p class="lbl" style="color:#6FB1E8">EVIDENCE</p><h3>Data kumpulan</h3><p>Masa 1 meter: 20 cm = [__] s, 40 cm = [__] s, 60 cm = [__] s. Murid isi daripada ujian.</p></div>
+<div class="card cer fragment" data-fragment-index="3"><p class="lbl" style="color:#F2B84B">REASONING</p><h3>Sebab saintifik</h3><p>Cahaya lebih kuat, panel solar hasilkan lebih elektrik, motor berputar lebih laju.</p></div>
+</div>
+<div class="row fragment" data-fragment-index="4" style="margin-top:36px;gap:20px;align-items:center">
+<p class="tag" style="background:#F2B84B">Cahaya</p><svg viewBox="0 0 100 50" style="width:72px;height:32px" aria-hidden="true"><path d="M0 15H60V0L100 25L60 50V35H0Z" fill="#C9B8A6"/></svg><p class="tag" style="background:#6FB1E8">Elektrik</p><svg viewBox="0 0 100 50" style="width:72px;height:32px" aria-hidden="true"><path d="M0 15H60V0L100 25L60 50V35H0Z" fill="#C9B8A6"/></svg><p class="tag" style="background:#E8793A">Gerakan</p>
+</div>
+<p class="foot">Angka dalam [__] diisi daripada hasil ujian sebenar</p><p class="pg"></p>
+
+</section>
+<section class="slide " id="kompetensi" style="">
+<p class="kick">KOMPETENSI 6C DAN SK@S</p>
+<h2 class="t" style="margin-bottom:32px">Apa yang murid dan guru lakukan</h2>
+<div class="row" style="align-items:stretch">
+<div class="card fragment" data-fragment-index="1"><p class="kick" style="font-size:26px;margin-bottom:8px">6C</p><h3>Critical Thinking</h3><p>Menilai data masa dan membuat inferens tentang kesan jarak cahaya.</p><p style="margin-top:12px;color:#F2B84B">Evidens: jadual, graf, bahagian Reasoning dalam CER.</p></div>
+<div class="card fragment" data-fragment-index="2"><p class="kick" style="font-size:26px;margin-bottom:8px">6C</p><h3>Collaboration</h3><p>Bekerjasama dalam penyiasatan dengan peranan jelas untuk setiap ahli.</p><p style="margin-top:12px;color:#F2B84B">Evidens: jadual peranan, pemerhatian guru.</p></div>
+</div>
+<div class="row" style="margin-top:28px;align-items:stretch">
+<div class="card fragment" data-fragment-index="3" style="border-left:10px solid #6FB1E8"><p class="kick" style="font-size:26px;margin-bottom:8px;color:#6FB1E8">SK@S 4.3</p><h3>Guru sebagai Pembimbing</h3><p>Guru menyoal dan membimbing, bukan memberi jawapan terus.</p></div>
+<div class="card fragment" data-fragment-index="4" style="border-left:10px solid #6FB1E8"><p class="kick" style="font-size:26px;margin-bottom:8px;color:#6FB1E8">SK@S 4.6</p><h3>Murid sebagai Pembelajar Aktif</h3><p>Murid memasang, menguji, menganalisis dan membentang sendiri.</p></div>
+</div>
+<p class="foot">Dua kompetensi 6C dan dua amalan SK@S</p><p class="pg"></p>
+
+</section>
+<section class="slide alt" id="nilai" style="">
+<p class="kick">PENTAKSIRAN DAN BAHAN</p>
+<h2 class="t" style="margin-bottom:32px">Bagaimana kami menilai</h2>
+<table style="font-size:26px;width:1040px">
+<tr><th style="width:30%">Bukti</th><th style="width:70%">Apa yang dinilai</th></tr>
+<tr><td>Jadual data</td><td>Tiga bacaan masa lengkap dengan unit betul</td></tr>
+<tr><td>Graf</td><td>Paksi berlabel dan titik tepat</td></tr>
+<tr><td>CER</td><td>Claim disokong evidens dan sebab saintifik</td></tr>
+<tr><td>Refleksi</td><td>Sekurang-kurangnya satu cadangan penambahbaikan</td></tr>
+<tr><td>Kuiz pantas</td><td>3 soalan, 2 atau lebih betul</td></tr>
+</table>
+<div class="card" style="position:absolute;left:1232px;top:230px;width:496px"><h3>Bahan</h3>
+<ul style="font-size:28px;line-height:1.5;color:#C9B8A6"><li>Kit STEM rover solar</li><li>Lampu meja</li><li>Pita ukur, jam randik</li><li>Kertas graf</li><li>Lembaran kerja CER</li></ul></div>
+<p class="foot">Keselamatan: lampu meja menjadi panas, jangan disentuh</p><p class="pg"></p>
+
+</section>
+<section class="slide " id="tutup" style="background:linear-gradient(180deg,#1B1411,#2E1B18)">
+<p class="kick">KESIMPULAN</p>
+<h2 class="big rise" style="--i:1;margin-top:24px;width:1500px">Cahaya → Elektrik → Gerakan</h2>
+<div class="row" style="margin-top:64px">
+<div class="card fragment" data-fragment-index="1"><h3>Inkuiri</h3><p>Satu persoalan yang boleh diuji murid sendiri.</p></div>
+<div class="card fragment" data-fragment-index="2"><h3>5E</h3><p>Murid meneroka dahulu, baru guru mengukuhkan konsep.</p></div>
+<div class="card fragment" data-fragment-index="3"><h3>Impak</h3><p>Murid faham tenaga boleh ditukar dan dapat membuktikannya dengan data.</p></div>
+</div>
+<p class="lead fragment" data-fragment-index="4" style="margin-top:56px">Terima kasih. Ada soalan?</p>
+<p class="foot">Daripada inkuiri kepada impak</p>
+
+</section>
+</div>
+<div id="hint">← → / klik / ketik · <button id="fs">Skrin penuh</button></div>
+<script>
+const stage=document.getElementById('stage'),slides=[...document.querySelectorAll('.slide')],bar=document.getElementById('bar');
+let cur=0;
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='translate('+((innerWidth-1920*s)/2)+'px,'+((innerHeight-1080*s)/2)+'px) scale('+s+')'}
+addEventListener('resize',fit);fit();
+function frags(sl){const f=[...sl.querySelectorAll('.fragment')];const idx=e=>e.dataset.fragmentIndex?+e.dataset.fragmentIndex:null;
+ let n=0;const keyed=f.map((e,i)=>({e,k:idx(e)===null?1000+i:idx(e)}));
+ keyed.sort((a,b)=>a.k-b.k);const groups=[];keyed.forEach(o=>{const l=groups[groups.length-1];if(l&&l.k===o.k)l.els.push(o.e);else groups.push({k:o.k,els:[o.e]})});return groups}
+let G=[],step=0;
+function show(n,fromEnd){cur=Math.max(0,Math.min(slides.length-1,n));
+ slides.forEach((s,i)=>{const on=i===cur;s.classList.toggle('on',on);
+  s.querySelectorAll('iframe[data-src]').forEach(f=>{if(on){if(!f.src)f.src=f.dataset.src}else if(f.src){f.removeAttribute('src')}})});
+ const sl=slides[cur];G=frags(sl);step=fromEnd?G.length:0;
+ G.forEach((g,i)=>g.els.forEach(e=>{e.classList.toggle('visible',i<step);e.classList.toggle('current-fragment',i===step-1)}));
+ bar.style.width=((cur+1)/slides.length*100)+'%';history.replaceState(null,'','#'+(cur+1))}
+function next(){if(step<G.length){G[step].els.forEach(e=>e.classList.add('visible'));if(step>0)G[step-1].els.forEach(e=>e.classList.remove('current-fragment'));G[step].els.forEach(e=>e.classList.add('current-fragment'));step++}else if(cur<slides.length-1)show(cur+1)}
+function prev(){if(step>0){step--;G[step].els.forEach(e=>e.classList.remove('visible','current-fragment'))}else if(cur>0)show(cur-1,true)}
+addEventListener('keydown',e=>{if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();next()}else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev()}else if(e.key==='Home')show(0);else if(e.key==='End')show(slides.length-1);else if(e.key==='f'||e.key==='F')tfs()});
+document.addEventListener('click',e=>{if(e.target.id==='fs')return;if(e.clientX<innerWidth*.25)prev();else next()});
+let tx=null;addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50){d<0?next():prev()}tx=null});
+function tfs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+document.getElementById('fs').onclick=e=>{e.stopPropagation();tfs()};
+show((parseInt(location.hash.slice(1))||1)-1);
+</script></body></html>

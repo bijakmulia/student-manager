@@ -1,0 +1,10 @@
+Slaid Pembentangan Tugasan Kumpulan: Kereta Rover Solar
+
+1. Ekstrak (unzip) semua fail ke satu folder. Jangan asingkan fail.
+2. Buka fail index.html menggunakan Chrome atau Edge (klik dua kali).
+3. Tekan F untuk skrin penuh.
+   Seterusnya: klik atau tekan anak panah kanan / Space.
+   Undur: anak panah kiri.
+   Telefon: leret kiri atau kanan.
+4. Slaid 4, 5, 7, 8 dan 10 ada klik bertahap, jadi tekan seterusnya beberapa kali.
+5. Perlu internet untuk fon yang cantik; tanpa internet slaid tetap jalan dengan fon biasa.
