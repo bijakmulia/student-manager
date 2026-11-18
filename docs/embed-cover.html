@@ -1,0 +1,26 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body><canvas id="c"></canvas><script>
+const c=document.getElementById('c'),x=c.getContext('2d');let W=c.width=innerWidth,H=c.height=innerHeight;
+function R(cx,gy,s,a,g){x.save();x.translate(cx,gy);x.scale(s,s);
+x.fillStyle='rgba(0,0,0,.3)';x.beginPath();x.ellipse(105,2,125,9,0,0,7);x.fill();
+x.fillStyle='#E9C99A';x.fillRect(150,-175,8,70);x.beginPath();x.ellipse(154,-176,32,8,0,0,7);x.fill();
+x.fillStyle='#EBD0A5';x.beginPath();x.roundRect(0,-110,210,66,10);x.fill();
+x.fillStyle='#C9A36E';x.fillRect(90,-96,50,8);x.fillRect(90,-80,50,8);
+x.strokeStyle='#C9A36E';x.lineWidth=4;x.beginPath();x.arc(165,-70,15,0,7);x.stroke();
+x.fillStyle='#E9C99A';x.fillRect(28,-190,22,86);x.beginPath();x.roundRect(0,-232,78,56,12);x.fill();
+[[22,-204],[56,-204]].forEach(p=>{x.fillStyle='#C9A36E';x.beginPath();x.arc(p[0],p[1],11,0,7);x.fill();x.fillStyle='#1B1411';x.beginPath();x.arc(p[0],p[1],5,0,7);x.fill()});
+x.fillStyle='#1d3557';x.beginPath();x.moveTo(60,-104);x.lineTo(176,-104);x.lineTo(226,-68);x.lineTo(110,-68);x.closePath();x.fill();
+x.fillStyle='rgba(255,220,120,'+(.35*g)+')';x.fill();
+x.strokeStyle='rgba(143,198,255,.6)';x.lineWidth=2;for(let i=1;i<5;i++){let t=i/5;x.beginPath();x.moveTo(60+116*t,-104);x.lineTo(110+116*t,-68);x.stroke()}
+[38,105,172].forEach(w=>{x.save();x.translate(w,-26);x.fillStyle='#222';x.beginPath();x.arc(0,0,26,0,7);x.fill();x.fillStyle='#eee';x.beginPath();x.arc(0,0,15,0,7);x.fill();x.rotate(a);x.strokeStyle='#555';x.lineWidth=4;for(let i=0;i<5;i++){x.rotate(1.2566);x.beginPath();x.moveTo(0,0);x.lineTo(13,0);x.stroke()}x.restore()});x.restore()}
+function mt(off,amp,base,col,k){x.fillStyle=col;x.beginPath();x.moveTo(0,H);for(let i=0;i<=W;i+=16){let u=(i+off)*k;x.lineTo(i,base-amp*(Math.sin(u)+.6*Math.sin(u*2.3+1)+.3*Math.sin(u*5.1)))}x.lineTo(W,H);x.fill()}
+const rk=[];for(let i=0;i<16;i++)rk.push([Math.random()*W,6+Math.random()*12]);
+let t=0,a=0,last=performance.now();
+function f(n){let d=Math.min(.05,(n-last)/1000);last=n;t+=d;const s=H/330,sp=220;a+=d*sp/(26*s);
+let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2b1a2f');g.addColorStop(.7,'#b4573a');g.addColorStop(1,'#e0905a');x.fillStyle=g;x.fillRect(0,0,W,H);
+x.fillStyle='rgba(255,236,200,.9)';x.beginPath();x.arc(W*.82,H*.28,22,0,7);x.fill();
+mt(t*20,18,H*.62,'#6b3a3a',.006);mt(t*60,14,H*.74,'#8f4a38',.01);
+x.fillStyle='#a8512f';x.fillRect(0,H*.86,W,H);x.fillStyle='#8c4226';x.fillRect(0,H*.9,W,H);
+rk.forEach(r=>{let px=((r[0]-t*sp*.9)%(W+60)+W+60)%(W+60)-30;x.fillStyle='#6f3520';x.beginPath();x.ellipse(px,H*.93,r[1]*1.5,r[1]*.6,0,0,7);x.fill()});
+R(W*.38,H*.9-3*Math.sin(t*18)*.4,s*.95,a,1);requestAnimationFrame(f)}
+requestAnimationFrame(f);
+</script></body></html>

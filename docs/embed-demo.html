@@ -1,0 +1,39 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style></head><body><canvas id="c"></canvas><script>
+const c=document.getElementById('c'),x=c.getContext('2d');let W=c.width=innerWidth,H=c.height=innerHeight;
+const F='600 30px system-ui,Arial,sans-serif';
+function R(cx,gy,s,a,g){x.save();x.translate(cx,gy);x.scale(s,s);
+x.fillStyle='rgba(0,0,0,.3)';x.beginPath();x.ellipse(105,2,125,9,0,0,7);x.fill();
+x.fillStyle='#E9C99A';x.fillRect(150,-175,8,70);x.beginPath();x.ellipse(154,-176,32,8,0,0,7);x.fill();
+x.fillStyle='#EBD0A5';x.beginPath();x.roundRect(0,-110,210,66,10);x.fill();
+x.fillStyle='#C9A36E';x.fillRect(90,-96,50,8);x.fillRect(90,-80,50,8);
+x.fillStyle='#E9C99A';x.fillRect(28,-190,22,86);x.beginPath();x.roundRect(0,-232,78,56,12);x.fill();
+[[22,-204],[56,-204]].forEach(p=>{x.fillStyle='#C9A36E';x.beginPath();x.arc(p[0],p[1],11,0,7);x.fill();x.fillStyle='#1B1411';x.beginPath();x.arc(p[0],p[1],5,0,7);x.fill()});
+x.fillStyle='#1d3557';x.beginPath();x.moveTo(60,-104);x.lineTo(176,-104);x.lineTo(226,-68);x.lineTo(110,-68);x.closePath();x.fill();
+x.fillStyle='rgba(255,220,120,'+(.5*g)+')';x.fill();
+x.strokeStyle='rgba(143,198,255,.6)';x.lineWidth=2;for(let i=1;i<5;i++){let t=i/5;x.beginPath();x.moveTo(60+116*t,-104);x.lineTo(110+116*t,-68);x.stroke()}
+[38,105,172].forEach(w=>{x.save();x.translate(w,-26);x.fillStyle='#222';x.beginPath();x.arc(0,0,26,0,7);x.fill();x.fillStyle='#eee';x.beginPath();x.arc(0,0,15,0,7);x.fill();x.rotate(a);x.strokeStyle='#555';x.lineWidth=4;for(let i=0;i<5;i++){x.rotate(1.2566);x.beginPath();x.moveTo(0,0);x.lineTo(13,0);x.stroke()}x.restore()});x.restore()}
+function mt(off,amp,base,col,k){x.fillStyle=col;x.beginPath();x.moveTo(0,H);for(let i=0;i<=W;i+=16){let u=(i+off)*k;x.lineTo(i,base-amp*(Math.sin(u)+.6*Math.sin(u*2.3+1)+.3*Math.sin(u*5.1)))}x.lineTo(W,H);x.fill()}
+function bar(px,py,w,lab,v,col){x.fillStyle='rgba(20,12,10,.8)';x.beginPath();x.roundRect(px,py,w,92,14);x.fill();x.fillStyle='#F4E9DC';x.font=F;x.textBaseline='top';x.fillText(lab+'  '+Math.round(v*100)+'%',px+20,py+10);
+x.fillStyle='#4a3a32';x.fillRect(px+20,py+58,w-40,16);x.fillStyle=col;x.fillRect(px+20,py+58,(w-40)*v,16)}
+const SC=[['Tengah hari cerah',1],['Mendung',.45],['Teduh / gelap',.03]];
+let t=0,a=0,L=1,V=0,gx=0,last=performance.now();
+function f(n){let d=Math.min(.05,(n-last)/1000);last=n;t+=d;
+const si=Math.floor(t/6)%3,tg=SC[si][1];L+=(tg-L)*d*2.5;
+const tgv=L>.1?(L-.1)/.9:0;V+=(tgv-V)*d*2;const sp=V*320;gx+=sp*d;a+=d*sp/(26*1.5);
+let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2b1a2f');g.addColorStop(.7,'#b4573a');g.addColorStop(1,'#e0905a');x.fillStyle=g;x.fillRect(0,0,W,H);
+const sx=W*.78,sy=H*.42;
+if(L>.05){x.fillStyle='rgba(255,226,140,'+(.25*L)+')';x.beginPath();x.arc(sx,sy,90+30*L,0,7);x.fill();x.fillStyle='rgba(255,236,170,'+Math.min(1,.3+L)+')';x.beginPath();x.arc(sx,sy,46,0,7);x.fill()}
+mt(gx*.1,30,H*.66,'#6b3a3a',.004);mt(gx*.3,24,H*.76,'#8f4a38',.007);
+x.fillStyle='#a8512f';x.fillRect(0,H*.86,W,H);x.fillStyle='#8c4226';x.fillRect(0,H*.9,W,H);
+for(let i=0;i<9;i++){let px=((i*260-gx)%2340+2340)%2340-80;x.fillStyle='#6f3520';x.beginPath();x.ellipse(px,H*.94,26,10,0,0,7);x.fill()}
+const rx=W*.33,ry=H*.88;
+if(L>.05){x.strokeStyle='rgba(255,226,140,'+(.7*L)+')';x.lineWidth=3;x.setLineDash([10,14]);x.lineDashOffset=-t*60;for(let k=0;k<3;k++){x.beginPath();x.moveTo(sx-30+k*12,sy+40);x.lineTo(rx+120+k*30,ry-190+k*40);x.stroke()}x.setLineDash([])}
+R(rx,ry,1.5,a,L);
+if(L<.9){x.fillStyle='rgba(235,225,245,'+(.9*(1-L)+.1)+')';[[sx-120,sy-10,110],[sx-20,sy+10,130],[sx+90,sy-20,100]].forEach(q=>{x.beginPath();x.ellipse(q[0]+Math.sin(t)*12,q[1],q[2],42,0,0,7);x.fill()});}
+if(L<.2){x.fillStyle='rgba(8,6,20,'+(.6*(1-L/.2))+')';x.fillRect(0,0,W,H)}
+const bw=392;bar(0,0,bw,'Cahaya',L,'#F2B84B');bar(bw+32,0,bw,'Kuasa elektrik',L,'#6FB1E8');bar(2*(bw+32),0,bw,'Putaran motor',V,'#E8793A');bar(3*(bw+32),0,bw,'Kelajuan',V,'#F4E9DC');
+x.fillStyle='rgba(20,12,10,.85)';x.beginPath();x.roundRect(0,H-70,640,60,14);x.fill();x.fillStyle='#F2B84B';x.font='700 34px system-ui,Arial,sans-serif';x.fillText('Senario: '+SC[si][0],20,H-60);
+if(V===0||tgv<.01){}
+requestAnimationFrame(f)}
+requestAnimationFrame(f);
+</script></body></html>
